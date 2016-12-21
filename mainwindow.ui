@@ -14,7 +14,8 @@
    <string>EW-Database</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="drive-harddisk"/>
+   <iconset theme="drive-harddisk">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <widget class="QWidget" name="centralWidget"/>
   <widget class="QMenuBar" name="menuBar">
@@ -23,7 +24,7 @@
      <x>0</x>
      <y>0</y>
      <width>400</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -53,11 +54,13 @@
    </attribute>
    <addaction name="actionConnect"/>
    <addaction name="actionDisconnect"/>
+   <addaction name="actionView"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
    <property name="icon">
-    <iconset theme="network-wired"/>
+    <iconset theme="network-wired">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Connect</string>
@@ -65,10 +68,16 @@
   </action>
   <action name="actionDisconnect">
    <property name="icon">
-    <iconset theme="network-offline"/>
+    <iconset theme="network-offline">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Disconnect</string>
+   </property>
+  </action>
+  <action name="actionView">
+   <property name="text">
+    <string>View</string>
    </property>
   </action>
  </widget>

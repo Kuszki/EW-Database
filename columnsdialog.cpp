@@ -18,42 +18,52 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "databasedriver.hpp"
+#include "columnsdialog.hpp"
+#include "ui_columnsdialog.h"
 
-DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent)
+const QMap<QString, QString> ColumnsDialog::Common =
 {
-	Database = QSqlDatabase::addDatabase("QIBASE");
-}
+	{"KOD",			tr("Object code")},
+	{"NUMER",			tr("Object ID")},
+	{"POZYSKANIE",		tr("Source of data")},
+	{"DTU",			tr("Creation date")},
+	{"DTW",			tr("Modification date")},
+	{"DTR",			tr("Delete date")},
+	{"STATUS",		tr("Object status")},
+	{"OPERAT",		tr("Job name")},
+	{"OPERATR",		tr("Operator name")}
+};
 
-DatabaseDriver::~DatabaseDriver(void)
+const QStringList ColumnsDialog::Default =
 {
+	"KOD", "NUMER", "POZYSKANIE", "DTU", "OPERAT"
+};
 
-}
-
-bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
+ColumnsDialog::ColumnsDialog(QWidget* Parent)
+: QDialog(Parent), ui(new Ui::ColumnsDialog)
 {
-	if (Database.isOpen()) Database.close();
+	ui->setupUi(this);
 
-	Database.setHostName(Server);
-	Database.setDatabaseName(Base);
-	Database.setUserName(User);
-	Database.setPassword(Pass);
+	QSettings Settings("EW-Database");
 
-	if (Database.open()) emit onConnect();
-	else emit onError(Database.lastError().text());
+	Settings.beginGroup("Columns");
 
-	return Database.isOpen();
-}
+	const auto Enabled = Settings.value("enabled", Default).toStringList();
 
-bool DatabaseDriver::closeDatabase(void)
-{
-	if (Database.isOpen())
+	for (auto i = Common.constBegin(); i != Common.constEnd(); ++i)
 	{
-		Database.close(); emit onDisconnect(); return true;
+		QCheckBox* Check = new QCheckBox(i.value(), this);
+
+		Check->setChecked(Enabled.contains(i.key()));
+		Check->setProperty("KEY", i.key());
+
+		ui->commonLayout->addWidget(Check);
 	}
-	else
-	{
-		emit onError(tr("Database is not opened")); return false;
-	}
+
+	Settings.endGroup();
+}
+
+ColumnsDialog::~ColumnsDialog(void)
+{
+	delete ui;
 }

@@ -22,9 +22,11 @@
 #define MAINWINDOW_HPP
 
 #include <QMainWindow>
+#include <QThread>
 
 #include "databasedriver.hpp"
 #include "connectdialog.hpp"
+#include "columnsdialog.hpp"
 
 namespace Ui
 {
@@ -41,6 +43,9 @@ class MainWindow : public QMainWindow
 		Ui::MainWindow* ui;
 
 		DatabaseDriver* Driver;
+		ColumnsDialog* Columns;
+
+		QThread Thread;
 
 	public:
 
@@ -50,6 +55,9 @@ class MainWindow : public QMainWindow
 	private slots:
 
 		void ConnectActionClicked(void);
+
+		void databaseConnected(void);
+		void databaseDisconnected(void);
 
 };
 

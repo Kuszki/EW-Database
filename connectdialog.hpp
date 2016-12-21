@@ -23,6 +23,7 @@
 
 #include <QMessageBox>
 #include <QPushButton>
+#include <QSettings>
 #include <QDialog>
 
 namespace Ui

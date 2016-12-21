@@ -18,42 +18,36 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "databasedriver.hpp"
+#ifndef COLUMNSDIALOG_HPP
+#define COLUMNSDIALOG_HPP
 
-DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent)
+#include <QSettings>
+#include <QCheckBox>
+#include <QDialog>
+#include <QMap>
+
+namespace Ui
 {
-	Database = QSqlDatabase::addDatabase("QIBASE");
+	class ColumnsDialog;
 }
 
-DatabaseDriver::~DatabaseDriver(void)
+class ColumnsDialog : public QDialog
 {
 
-}
+		Q_OBJECT
 
-bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
-{
-	if (Database.isOpen()) Database.close();
+	private:
 
-	Database.setHostName(Server);
-	Database.setDatabaseName(Base);
-	Database.setUserName(User);
-	Database.setPassword(Pass);
+		static const QMap<QString, QString> Common;
+		static const QStringList Default;
 
-	if (Database.open()) emit onConnect();
-	else emit onError(Database.lastError().text());
+		Ui::ColumnsDialog* ui;
 
-	return Database.isOpen();
-}
+	public:
 
-bool DatabaseDriver::closeDatabase(void)
-{
-	if (Database.isOpen())
-	{
-		Database.close(); emit onDisconnect(); return true;
-	}
-	else
-	{
-		emit onError(tr("Database is not opened")); return false;
-	}
-}
+		explicit ColumnsDialog(QWidget* Parent = nullptr);
+		virtual ~ColumnsDialog(void) override;
+
+};
+
+#endif // COLUMNSDIALOG_HPP

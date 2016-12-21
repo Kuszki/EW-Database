@@ -27,14 +27,17 @@ CONFIG		+=	C++14
 
 SOURCES		+=	main.cpp \
 				mainwindow.cpp \
-    connectdialog.cpp \
-    databasedriver.cpp
+				connectdialog.cpp \
+				databasedriver.cpp \
+				columnsdialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
-    connectdialog.hpp \
-    databasedriver.hpp
+				connectdialog.hpp \
+				databasedriver.hpp \
+				columnsdialog.hpp
 
 FORMS		+=	mainwindow.ui \
-    connectdialog.ui
+				connectdialog.ui \
+				columnsdialog.ui
 
 QMAKE_CXXFLAGS	+=	-std=c++14

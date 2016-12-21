@@ -46,11 +46,14 @@ class DatabaseDriver : public QObject
 					   const QString& User,
 					   const QString& Pass);
 
+		bool closeDatabase(void);
+
 	signals:
 
 		void onError(const QString&);
 
 		void onConnect(void);
+		void onDisconnect(void);
 
 };
 

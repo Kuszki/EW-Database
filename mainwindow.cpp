@@ -26,13 +26,28 @@ MainWindow::MainWindow(QWidget* Parent)
 {
 	ui->setupUi(this);
 
-	Driver = new DatabaseDriver();
+	ui->actionDisconnect->setEnabled(false);
+
+	Driver = new DatabaseDriver(nullptr);
+	Columns = new ColumnsDialog(this);
+
+	Driver->moveToThread(&Thread);
+	Thread.start();
 
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::ConnectActionClicked);
+	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
+
+	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
+
+	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
+	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
 }
 
 MainWindow::~MainWindow(void)
 {
+	Thread.exit();
+	Thread.wait();
+
 	delete Driver;
 	delete ui;
 }
@@ -45,5 +60,24 @@ void MainWindow::ConnectActionClicked(void)
 	connect(Dialog, &ConnectDialog::accepted, Dialog, &ConnectDialog::deleteLater);
 	connect(Dialog, &ConnectDialog::rejected, Dialog, &ConnectDialog::deleteLater);
 
+	connect(Driver, &DatabaseDriver::onConnect, Dialog, &ConnectDialog::connected);
+	connect(Driver, &DatabaseDriver::onError, Dialog, &ConnectDialog::refused);
+
 	Dialog->open();
+}
+
+void MainWindow::databaseConnected(void)
+{
+	ui->actionConnect->setEnabled(false);
+	ui->actionDisconnect->setEnabled(true);
+
+	ui->statusBar->showMessage(tr("Database connected"));
+}
+
+void MainWindow::databaseDisconnected(void)
+{
+	ui->actionConnect->setEnabled(true);
+	ui->actionDisconnect->setEnabled(false);
+
+	ui->statusBar->showMessage(tr("Database disconnected"));
 }

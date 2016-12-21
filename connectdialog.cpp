@@ -26,7 +26,15 @@ ConnectDialog::ConnectDialog(QWidget *Parent)
 {
 	ui->setupUi(this);
 
-	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(false);
+	ui->buttonBox->button(QDialogButtonBox::Open)->setEnabled(false);
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	ui->Server->setText(Settings.value("server", "").toString());
+	ui->Database->setText(Settings.value("path", "").toString());
+	ui->User->setText(Settings.value("user", "").toString());
+	Settings.endGroup();
 }
 
 ConnectDialog::~ConnectDialog(void)
@@ -36,7 +44,7 @@ ConnectDialog::~ConnectDialog(void)
 
 void ConnectDialog::edited(void)
 {
-	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(
+	ui->buttonBox->button(QDialogButtonBox::Open)->setEnabled(
 				!ui->Server->text().isEmpty() &&
 				!ui->Database->text().isEmpty() &&
 				!ui->User->text().isEmpty() &&
@@ -67,6 +75,14 @@ void ConnectDialog::refused(const QString& Error)
 
 void ConnectDialog::connected(void)
 {
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	Settings.setValue("server", ui->Server->text());
+	Settings.setValue("path", ui->Database->text());
+	Settings.setValue("user", ui->User->text());
+	Settings.endGroup();
+
 	setEnabled(true);
 
 	QDialog::accept();
