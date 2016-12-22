@@ -31,6 +31,26 @@ DatabaseDriver::~DatabaseDriver(void)
 
 }
 
+QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
+{
+	QMap<QString, QString> Res;
+
+	if (Database.isOpen())
+	{
+		QSqlQuery Query(Database);
+
+		if (Keys.isEmpty()) Query.prepare("SELECT DISTINCT NAZWA, TYTUL FROM EW_OB_DDSTR");
+		else Query.prepare(QString("SELECT DISTINCT NAZWA, TYTUL FROM EW_OB_DDSTR WHERE KOD IN ('%1')").arg(Keys.join("','")));
+
+		if (Query.exec()) while (Query.next())
+		{
+			Res.insert(Query.value(0).toString(), Query.value(1).toString());
+		}
+	}
+
+	return Res;
+}
+
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
 {
 	if (Database.isOpen()) Database.close();
@@ -56,4 +76,10 @@ bool DatabaseDriver::closeDatabase(void)
 	{
 		emit onError(tr("Database is not opened")); return false;
 	}
+}
+
+void DatabaseDriver::queryAttributes(const QStringList& Keys)
+{
+	if (Database.isOpen()) emit onAttributesLoad(getAttributes(Keys));
+	else emit onError(tr("Database is not opened"));
 }

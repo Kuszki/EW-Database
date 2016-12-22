@@ -39,16 +39,19 @@ const QStringList ColumnsDialog::Default =
 	"KOD", "NUMER", "POZYSKANIE", "DTU", "OPERAT"
 };
 
-ColumnsDialog::ColumnsDialog(QWidget* Parent)
+ColumnsDialog::ColumnsDialog(QWidget* Parent, const QMap<QString, QString>& Attributes)
 : QDialog(Parent), ui(new Ui::ColumnsDialog)
 {
 	ui->setupUi(this);
 
+	ui->commonLayout->setAlignment(Qt::AlignTop);
+	ui->specialLayout->setAlignment(Qt::AlignTop);
+
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Columns");
-
 	const auto Enabled = Settings.value("enabled", Default).toStringList();
+	Settings.endGroup();
 
 	for (auto i = Common.constBegin(); i != Common.constEnd(); ++i)
 	{
@@ -60,10 +63,40 @@ ColumnsDialog::ColumnsDialog(QWidget* Parent)
 		ui->commonLayout->addWidget(Check);
 	}
 
-	Settings.endGroup();
+	for (auto i = Attributes.constBegin(); i != Attributes.constEnd(); ++i)
+	{
+		QCheckBox* Check = new QCheckBox(i.value(), this);
+
+		Check->setChecked(Enabled.contains(i.key()));
+		Check->setProperty("KEY", i.key());
+
+		ui->specialLayout->addWidget(Check);
+	}
+
 }
 
 ColumnsDialog::~ColumnsDialog(void)
 {
 	delete ui;
+}
+
+void ColumnsDialog::setSpecialAttributes(const QMap<QString, QString>& Attributes)
+{
+	while (auto I = ui->specialLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Columns");
+	const auto Enabled = Settings.value("enabled", Default).toStringList();
+	Settings.endGroup();
+
+	for (auto i = Attributes.constBegin(); i != Attributes.constEnd(); ++i)
+	{
+		QCheckBox* Check = new QCheckBox(i.value(), this);
+
+		Check->setChecked(Enabled.contains(i.key()));
+		Check->setProperty("KEY", i.key());
+
+		ui->specialLayout->addWidget(Check);
+	}
 }

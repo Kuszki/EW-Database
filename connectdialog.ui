@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>175</height>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Open database</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="network-wired"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0">
@@ -83,6 +86,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>Server</tabstop>
+  <tabstop>Database</tabstop>
+  <tabstop>User</tabstop>
+  <tabstop>Password</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

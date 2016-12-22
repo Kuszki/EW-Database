@@ -22,8 +22,11 @@
 #define DATABASEDRIVER_HPP
 
 #include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QSqlError>
+#include <QVariant>
 #include <QObject>
+#include <QMap>
 
 class DatabaseDriver : public QObject
 {
@@ -39,6 +42,8 @@ class DatabaseDriver : public QObject
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 
+		QMap<QString, QString> getAttributes(const QStringList& Keys = QStringList());
+
 	public slots:
 
 		bool openDatabase(const QString& Server,
@@ -48,8 +53,11 @@ class DatabaseDriver : public QObject
 
 		bool closeDatabase(void);
 
+		void queryAttributes(const QStringList& Keys = QStringList());
+
 	signals:
 
+		void onAttributesLoad(const QMap<QString, QString>&);
 		void onError(const QString&);
 
 		void onConnect(void);

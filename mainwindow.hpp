@@ -58,6 +58,7 @@ class MainWindow : public QMainWindow
 
 		void databaseConnected(void);
 		void databaseDisconnected(void);
+		void databaseError(const QString& Error);
 
 };
 

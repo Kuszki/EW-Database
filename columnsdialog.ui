@@ -13,27 +13,83 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="tabPosition">
+      <enum>QTabWidget::West</enum>
+     </property>
      <property name="currentIndex">
       <number>0</number>
+     </property>
+     <property name="documentMode">
+      <bool>true</bool>
      </property>
      <widget class="QWidget" name="commonTab">
       <attribute name="title">
        <string>Common</string>
       </attribute>
-      <layout class="QVBoxLayout" name="commonLayout"/>
+      <layout class="QGridLayout" name="commonGridLayout">
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="commonScrool">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="commonAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>332</width>
+            <height>230</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="commonLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
      </widget>
      <widget class="QWidget" name="specialTab">
       <attribute name="title">
        <string>Special</string>
       </attribute>
-      <layout class="QVBoxLayout" name="specialLayout"/>
+      <layout class="QGridLayout" name="specialGridLayout">
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="specialScrool">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="specialAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>332</width>
+            <height>230</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="specialLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

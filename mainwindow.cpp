@@ -27,6 +27,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->setupUi(this);
 
 	ui->actionDisconnect->setEnabled(false);
+	ui->Data->header()->setSectionsMovable(true);
 
 	Driver = new DatabaseDriver(nullptr);
 	Columns = new ColumnsDialog(this);
@@ -41,6 +42,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
 	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
+	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
 }
 
 MainWindow::~MainWindow(void)
@@ -72,6 +74,8 @@ void MainWindow::databaseConnected(void)
 	ui->actionDisconnect->setEnabled(true);
 
 	ui->statusBar->showMessage(tr("Database connected"));
+
+	Columns->setSpecialAttributes(Driver->getAttributes());
 }
 
 void MainWindow::databaseDisconnected(void)
@@ -80,4 +84,9 @@ void MainWindow::databaseDisconnected(void)
 	ui->actionDisconnect->setEnabled(false);
 
 	ui->statusBar->showMessage(tr("Database disconnected"));
+}
+
+void MainWindow::databaseError(const QString& Error)
+{
+	ui->statusBar->showMessage(Error);
 }

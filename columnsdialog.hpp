@@ -45,8 +45,12 @@ class ColumnsDialog : public QDialog
 
 	public:
 
-		explicit ColumnsDialog(QWidget* Parent = nullptr);
+		explicit ColumnsDialog(QWidget* Parent = nullptr, const QMap<QString, QString>& Attributes = QMap<QString, QString>());
 		virtual ~ColumnsDialog(void) override;
+
+	public slots:
+
+		void setSpecialAttributes(const QMap<QString, QString>& Attributes);
 
 };
 
