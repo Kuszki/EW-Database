@@ -38,19 +38,32 @@ class ColumnsDialog : public QDialog
 
 	private:
 
-		static const QMap<QString, QString> Common;
 		static const QStringList Default;
 
 		Ui::ColumnsDialog* ui;
 
 	public:
 
-		explicit ColumnsDialog(QWidget* Parent = nullptr, const QMap<QString, QString>& Attributes = QMap<QString, QString>());
+		explicit ColumnsDialog(QWidget* Parent = nullptr,
+						   const QMap<QString, QString>& Common = QMap<QString, QString>(),
+						   const QMap<QString, QString>& Special = QMap<QString, QString>());
 		virtual ~ColumnsDialog(void) override;
+
+		QStringList getEnabledColumns(void);
+
+	private slots:
+
+		void searchEdited(const QString& Search);
 
 	public slots:
 
+		virtual void accept(void) override;
+
 		void setSpecialAttributes(const QMap<QString, QString>& Attributes);
+
+	signals:
+
+		void onColumnsUpdate(const QStringList&);
 
 };
 

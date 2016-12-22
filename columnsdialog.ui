@@ -11,10 +11,14 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Visible columns</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
+  <property name="windowIcon">
+   <iconset theme="preferences-system">
+    <normaloff>.</normaloff>.</iconset>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="2">
     <widget class="QTabWidget" name="tabWidget">
      <property name="tabPosition">
       <enum>QTabWidget::West</enum>
@@ -89,7 +93,17 @@
      </widget>
     </widget>
    </item>
-   <item>
+   <item row="1" column="0">
+    <widget class="QLineEdit" name="searchEdit">
+     <property name="placeholderText">
+      <string>Search</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -101,6 +115,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>searchEdit</tabstop>
+  <tabstop>commonScrool</tabstop>
+  <tabstop>specialScrool</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -110,8 +130,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>390</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -126,8 +146,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>390</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -135,5 +155,24 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>searchEdit</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>ColumnsDialog</receiver>
+   <slot>searchEdited(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>68</x>
+     <y>290</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>92</x>
+     <y>521</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>searchEdited(QString)</slot>
+ </slots>
 </ui>
