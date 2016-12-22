@@ -39,6 +39,8 @@ class DatabaseDriver : public QObject
 
 	public:
 
+		static const QMap<QString, QString> commonAttribs;
+
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 

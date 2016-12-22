@@ -20,6 +20,19 @@
 
 #include "databasedriver.hpp"
 
+const QMap<QString, QString> DatabaseDriver::commonAttribs =
+{
+	{"EW_OBIEKTY.KOD",			tr("Object code")},
+	{"EW_OBIEKTY.NUMER",		tr("Object ID")},
+	{"EW_OBIEKTY.POZYSKANIE",	tr("Source of data")},
+	{"EW_OBIEKTY.DTU",			tr("Creation date")},
+	{"EW_OBIEKTY.DTW",			tr("Modification date")},
+	{"EW_OBIEKTY.DTR",			tr("Delete date")},
+	{"EW_OBIEKTY.STATUS",		tr("Object status")},
+	{"EW_OPERATY.NUMER",		tr("Job name")},
+	{"EW_OB_OPISY.OPIS",		tr("Code description")}
+};
+
 DatabaseDriver::DatabaseDriver(QObject* Parent)
 : QObject(Parent)
 {
@@ -37,12 +50,11 @@ QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
 
 	if (Database.isOpen())
 	{
-		QSqlQuery Query(Database);
+		QSqlQuery Query(Database); QString Text = "SELECT DISTINCT NAZWA, TYTUL FROM EW_OB_DDSTR";
 
-		if (Keys.isEmpty()) Query.prepare("SELECT DISTINCT NAZWA, TYTUL FROM EW_OB_DDSTR");
-		else Query.prepare(QString("SELECT DISTINCT NAZWA, TYTUL FROM EW_OB_DDSTR WHERE KOD IN ('%1')").arg(Keys.join("','")));
+		if (!Keys.isEmpty()) Text.append(QString(" WHERE KOD IN ('%1')").arg(Keys.join("','")));
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec(Text)) while (Query.next())
 		{
 			Res.insert(Query.value(0).toString(), Query.value(1).toString());
 		}
@@ -83,3 +95,21 @@ void DatabaseDriver::queryAttributes(const QStringList& Keys)
 	if (Database.isOpen()) emit onAttributesLoad(getAttributes(Keys));
 	else emit onError(tr("Database is not opened"));
 }
+
+/* SQL Query for common data:
+
+SELECT
+    EW_OBIEKTY.KOD,
+    EW_OBIEKTY.NUMER,
+    EW_OBIEKTY.POZYSKANIE,
+    EW_OBIEKTY.DTU,
+    EW_OBIEKTY.DTW,
+    EW_OBIEKTY.DTR,
+    EW_OBIEKTY.STATUS,
+    EW_OPERATY.NUMER,
+    EW_OB_OPISY.OPIS
+FROM EW_OBIEKTY
+    LEFT JOIN EW_OPERATY ON EW_OBIEKTY.OPERAT=EW_OPERATY.UID
+    LEFT JOIN EW_OB_OPISY ON EW_OBIEKTY.KOD=EW_OB_OPISY.KOD;
+
+*/
