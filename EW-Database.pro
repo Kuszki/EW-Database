@@ -29,15 +29,18 @@ SOURCES		+=	main.cpp \
 				mainwindow.cpp \
 				connectdialog.cpp \
 				databasedriver.cpp \
-				columnsdialog.cpp
+				columnsdialog.cpp \
+				groupdialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
 				databasedriver.hpp \
-				columnsdialog.hpp
+				columnsdialog.hpp \
+				groupdialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
-				columnsdialog.ui
+				columnsdialog.ui \
+				groupdialog.ui
 
 QMAKE_CXXFLAGS	+=	-std=c++14
