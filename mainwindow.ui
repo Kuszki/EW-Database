@@ -27,6 +27,11 @@
       <property name="sortingEnabled">
        <bool>true</bool>
       </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
      </widget>
     </item>
    </layout>
@@ -52,6 +57,7 @@
      <string>Data</string>
     </property>
     <addaction name="actionView"/>
+    <addaction name="actionGroup"/>
    </widget>
    <addaction name="menuDatabase"/>
    <addaction name="menuData"/>
@@ -76,6 +82,7 @@
    <addaction name="actionDisconnect"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
+   <addaction name="actionGroup"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
@@ -103,6 +110,14 @@
    </property>
    <property name="text">
     <string>View</string>
+   </property>
+  </action>
+  <action name="actionGroup">
+   <property name="icon">
+    <iconset theme="format-indent-more"/>
+   </property>
+   <property name="text">
+    <string>Group</string>
    </property>
   </action>
  </widget>

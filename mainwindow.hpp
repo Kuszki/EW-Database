@@ -27,6 +27,7 @@
 #include "databasedriver.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
+#include "groupdialog.hpp"
 
 namespace Ui
 {
@@ -44,6 +45,7 @@ class MainWindow : public QMainWindow
 
 		DatabaseDriver* Driver;
 		ColumnsDialog* Columns;
+		GroupDialog* Groups;
 
 		QThread Thread;
 
