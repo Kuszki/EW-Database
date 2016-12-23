@@ -23,7 +23,7 @@
 
 const QStringList GroupDialog::Default =
 {
-	"EW_OBIEKTY.OPERAT"
+	"EW_OPERATY.NUMER"
 };
 
 GroupDialog::GroupDialog(QWidget* Parent, const QMap<QString, QString>& Attributes)

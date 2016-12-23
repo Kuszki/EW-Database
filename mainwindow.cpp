@@ -82,8 +82,14 @@ void MainWindow::ConnectActionClicked(void)
 
 void MainWindow::databaseConnected(void)
 {
-	Columns = new ColumnsDialog(this, Driver->commonAttribs, Driver->getAttributes());
+	const auto Attributes = Driver->getAttributes(); QMap<QString, QString> AllAttributes;
+
+	for (auto i = Driver->commonAttribs.constBegin(); i != Driver->commonAttribs.constEnd(); ++i) AllAttributes.insert(i.key(), i.value());
+	for (auto i = Attributes.constBegin(); i != Attributes.constEnd(); ++i) AllAttributes.insert(i.key(), i.value());
+
+	Columns = new ColumnsDialog(this, Driver->commonAttribs, Attributes);
 	Groups = new GroupDialog(this, Driver->commonAttribs);
+	Filter = new FilterDialog(this, AllAttributes);
 
 	ui->actionConnect->setEnabled(false);
 	ui->actionDisconnect->setEnabled(true);
@@ -94,7 +100,8 @@ void MainWindow::databaseConnected(void)
 	ui->Data->setHeaderLabels(Columns->getEnabledColumns());
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
-	connect(ui->actionGroup, &QAction::triggered, Groups, &ColumnsDialog::open);
+	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
+	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 }
 
 void MainWindow::databaseDisconnected(void)

@@ -33,16 +33,95 @@ const QMap<QString, QString> DatabaseDriver::commonAttribs =
 	{"EW_OB_OPISY.OPIS",		tr("Code description")}
 };
 
+QStringList DatabaseDriver::getAttribTables(void)
+{
+	if (!Database.isOpen()) return QStringList();
+
+	QSqlQuery Query(Database); QStringList List;
+
+	if (Query.exec("SELECT DISTINCT DANE_DOD FROM EW_OB_OPISY")) while (Query.next())
+	{
+		List.append(Query.value(0).toString());
+	}
+
+	return List;
+}
+
+QStringList DatabaseDriver::getTableFields(const QString& Table)
+{
+	if (!Database.isOpen()) return QStringList();
+
+	QSqlQuery Query(Database); QStringList List;
+
+	Query.prepare(QString(
+			"SELECT "
+				"EW_OB_DDSTR.NAZWA "
+			"FROM "
+				"EW_OB_DDSTR "
+			"INNER JOIN "
+				"EW_OB_OPISY "
+			"ON "
+				"EW_OB_DDSTR.KOD=EW_OB_OPISY.KOD "
+			"WHERE "
+				"EW_OB_OPISY.DANE_DOD='%1'")
+			    .arg(Table));
+
+	if (Query.exec()) while (Query.next())
+	{
+		List.append(Query.value(0).toString());
+	}
+
+	return List;
+}
+
+QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QMap<QString, QString>& Map)
+{
+	QStringList Queries;
+
+	for (const auto& Table : Tables)
+	{
+		const QStringList Fields = getTableFields(Table);
+
+		Queries.append(QString(
+			"SELECT "
+				"EW_OBIEKTY.KOD, "
+				"EW_OBIEKTY.NUMER, "
+				"EW_OBIEKTY.POZYSKANIE, "
+				"EW_OBIEKTY.DTU, "
+				"EW_OBIEKTY.DTW, "
+				"EW_OBIEKTY.DTR, "
+				"EW_OBIEKTY.STATUS, "
+				"EW_OPERATY.NUMER, "
+				"EW_OB_OPISY.OPIS, "
+				"%1 "
+			"FROM "
+				"EW_OBIEKTY "
+			"LEFT JOIN "
+				"EW_OPERATY "
+			"ON "
+				"EW_OBIEKTY.OPERAT=EW_OPERATY.UID "
+			"LEFT JOIN "
+				"EW_OB_OPISY "
+			"ON "
+				"EW_OBIEKTY.KOD=EW_OB_OPISY.KOD "
+			"INNER JOIN "
+				"%2 "
+			"ON "
+				"EW_OBIEKTY.UID=%2.UIDO")
+				    .arg(Fields.join(", "))
+				    .arg(Table));
+	}
+
+	return Queries;
+}
+
 DatabaseDriver::DatabaseDriver(QObject* Parent)
 : QObject(Parent)
 {
 	Database = QSqlDatabase::addDatabase("QIBASE");
 }
 
-DatabaseDriver::~DatabaseDriver(void)
-{
-
-}
+DatabaseDriver::~DatabaseDriver(void) {}
 
 QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
 {
@@ -54,10 +133,7 @@ QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
 
 		if (!Keys.isEmpty()) Text.append(QString(" WHERE KOD IN ('%1')").arg(Keys.join("','")));
 
-		if (Query.exec(Text)) while (Query.next())
-		{
-			Res.insert(Query.value(0).toString(), Query.value(1).toString());
-		}
+		if (Query.exec(Text)) while (Query.next()) Res.insert(Query.value(0).toString(), Query.value(1).toString());
 	}
 
 	return Res;

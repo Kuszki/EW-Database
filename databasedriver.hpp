@@ -28,6 +28,8 @@
 #include <QObject>
 #include <QMap>
 
+#include <QDebug>
+
 class DatabaseDriver : public QObject
 {
 
@@ -36,6 +38,12 @@ class DatabaseDriver : public QObject
 	private:
 
 		QSqlDatabase Database;
+
+		QStringList getAttribTables(void);
+
+		QStringList getTableFields(const QString& Table);
+
+		QStringList getDataQueries(const QStringList& Tables, const QMap<QString, QString>& Map = QMap<QString, QString>());
 
 	public:
 

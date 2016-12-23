@@ -18,52 +18,53 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
+#ifndef FILTERDIALOG_HPP
+#define FILTERDIALOG_HPP
 
-#include <QMainWindow>
-#include <QThread>
+#include <QAbstractButton>
+#include <QPushButton>
+#include <QDialog>
+#include <QMap>
 
-#include "databasedriver.hpp"
-#include "connectdialog.hpp"
-#include "columnsdialog.hpp"
-#include "filterdialog.hpp"
-#include "groupdialog.hpp"
+#include "filterwidget.hpp"
 
 namespace Ui
 {
-	class MainWindow;
+	class FilterDialog;
 }
 
-class MainWindow : public QMainWindow
+class FilterDialog : public QDialog
 {
 
 		Q_OBJECT
 
 	private:
 
-		Ui::MainWindow* ui;
-
-		DatabaseDriver* Driver;
-		ColumnsDialog* Columns;
-		GroupDialog* Groups;
-		FilterDialog* Filter;
-
-		QThread Thread;
+		Ui::FilterDialog* ui;
 
 	public:
 
-		explicit MainWindow(QWidget* Parent = nullptr);
-		virtual ~MainWindow(void) override;
+		explicit FilterDialog(QWidget* Parent = nullptr, const QMap<QString, QString>& Fields = QMap<QString, QString>());
+		virtual ~FilterDialog(void) override;
+
+		QString getFilterRules(void);
 
 	private slots:
 
-		void ConnectActionClicked(void);
+		void searchEdited(const QString& Search);
 
-		void databaseConnected(void);
-		void databaseDisconnected(void);
-		void databaseError(const QString& Error);
+		void buttonClicked(QAbstractButton* Button);
+
+	public slots:
+
+		virtual void accept(void) override;
+
+		void setAvailableFields(const QMap<QString, QString>& Fields);
+
+	signals:
+
+		void onFiltersUpdate(const QString&);
 
 };
 
-#endif // MAINWINDOW_HPP
+#endif // FILTERDIALOG_HPP

@@ -18,52 +18,51 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
+#ifndef FILTERWIDGET_HPP
+#define FILTERWIDGET_HPP
 
-#include <QMainWindow>
-#include <QThread>
-
-#include "databasedriver.hpp"
-#include "connectdialog.hpp"
-#include "columnsdialog.hpp"
-#include "filterdialog.hpp"
-#include "groupdialog.hpp"
+#include <QWidget>
 
 namespace Ui
 {
-	class MainWindow;
+	class FilterWidget;
 }
 
-class MainWindow : public QMainWindow
+class FilterWidget : public QWidget
 {
 
 		Q_OBJECT
 
 	private:
 
-		Ui::MainWindow* ui;
-
-		DatabaseDriver* Driver;
-		ColumnsDialog* Columns;
-		GroupDialog* Groups;
-		FilterDialog* Filter;
-
-		QThread Thread;
+		Ui::FilterWidget* ui;
 
 	public:
 
-		explicit MainWindow(QWidget* Parent = nullptr);
-		virtual ~MainWindow(void) override;
+		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr);
+		virtual ~FilterWidget(void) override;
+
+		QString getCondition(void) const;
+		QString getValue(void) const;
 
 	private slots:
 
-		void ConnectActionClicked(void);
+		void editFinished(void);
 
-		void databaseConnected(void);
-		void databaseDisconnected(void);
-		void databaseError(const QString& Error);
+	public slots:
+
+		void setParameters(const QString& Name, const QString& Key, const QString& Value);
+
+		void setName(const QString& Name);
+		void setKey(const QString& Key);
+		void setValue(const QString& Value);
+
+		void reset(void);
+
+	signals:
+
+		void onValueUpdate(const QString&, const QString&);
 
 };
 
-#endif // MAINWINDOW_HPP
+#endif // FILTERWIDGET_HPP

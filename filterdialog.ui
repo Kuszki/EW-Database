@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FilterDialog</class>
+ <widget class="QDialog" name="FilterDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Setup filter</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="2">
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="tabPosition">
+      <enum>QTabWidget::West</enum>
+     </property>
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <property name="documentMode">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="simpleTab">
+      <attribute name="title">
+       <string>Simple</string>
+      </attribute>
+      <layout class="QGridLayout" name="simpleScroolLayout">
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>543</width>
+            <height>235</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="simpleLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="advancedTab">
+      <attribute name="title">
+       <string>Advanced</string>
+      </attribute>
+      <layout class="QGridLayout" name="advancedLayout">
+       <item row="0" column="0">
+        <widget class="QComboBox" name="Action">
+         <item>
+          <property name="text">
+           <string notr="true">AND</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">OR</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="Field"/>
+       </item>
+       <item row="0" column="2">
+        <widget class="QComboBox" name="Operator">
+         <item>
+          <property name="text">
+           <string notr="true">=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">&lt;&gt;</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">&gt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">&gt;</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">&lt;=</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">&lt;</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">IS</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">IS NOT</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">LIKE</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">NOT LIKE</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">IN</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string notr="true">NOT IN</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLineEdit" name="Value">
+         <property name="placeholderText">
+          <string>Value</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QToolButton" name="addButton">
+         <property name="text">
+          <string>Add</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="5">
+        <widget class="QPlainTextEdit" name="Setup"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLineEdit" name="searchEdit">
+     <property name="placeholderText">
+      <string>Search</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>521</x>
+     <y>282</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>589</x>
+     <y>288</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>searchEdit</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>searchEdited(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>75</x>
+     <y>287</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>114</x>
+     <y>433</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>clicked(QAbstractButton*)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>buttonClicked(QAbstractButton*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>426</x>
+     <y>280</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>431</x>
+     <y>422</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>searchEdited(QString)</slot>
+  <slot>buttonClicked(QAbstractButton*)</slot>
+ </slots>
+</ui>
