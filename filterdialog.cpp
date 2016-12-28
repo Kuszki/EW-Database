@@ -26,6 +26,8 @@ FilterDialog::FilterDialog(QWidget* Parent, const QMap<QString, QString>& Fields
 {
 	ui->setupUi(this); setAvailableFields(Fields);
 
+	ui->Operator->addItems(DatabaseDriver::fieldOperators);
+
 	connect(ui->tabWidget, &QTabWidget::currentChanged, ui->searchEdit, &QLineEdit::setHidden);
 }
 
@@ -39,7 +41,7 @@ QString FilterDialog::getFilterRules(void)
 	if (ui->tabWidget->currentIndex() == 1)
 	{
 		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
-		return QString("WHERE %1").arg(ui->Setup->document()->toPlainText());
+		return ui->Setup->document()->toPlainText();
 	}
 	else
 	{
@@ -47,12 +49,12 @@ QString FilterDialog::getFilterRules(void)
 		{
 			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 			{
-				Rules.append(W->getCondition());
+				if (W->isChecked()) Rules.append(W->getCondition());
 			}
 		}
 
 		if (Rules.isEmpty()) return QString();
-		else return QString("WHERE %1").arg(Rules.join(" AND "));
+		else return Rules.join(" AND ");
 	}
 }
 
@@ -74,6 +76,33 @@ void FilterDialog::buttonClicked(QAbstractButton* Button)
 	ui->Setup->document()->clear();
 }
 
+void FilterDialog::addClicked(void)
+{
+	QString Line;
+
+	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
+
+	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+	{
+		Line.append(QString("%1 %2 ('%3')")
+				.arg(ui->Field->currentData(Qt::UserRole).toString())
+				.arg(ui->Operator->currentText())
+				.arg(ui->Value->text().
+					split(QRegExp("\\s*,\\s*"),
+						 QString::SkipEmptyParts)
+					.join("', '")));
+	}
+	else
+	{
+		Line.append(QString("%1 %2 '%3'")
+				.arg(ui->Field->currentData(Qt::UserRole).toString())
+				.arg(ui->Operator->currentText())
+				.arg(ui->Value->text()));
+	}
+
+	ui->Setup->appendPlainText(Line);
+}
+
 void FilterDialog::accept(void)
 {
 	emit onFiltersUpdate(getFilterRules()); QDialog::accept();
@@ -81,10 +110,13 @@ void FilterDialog::accept(void)
 
 void FilterDialog::setAvailableFields(const QMap<QString, QString>& Fields)
 {
+	if (ui->Field->count()) ui->Field->clear(); ui->Field->addItems(Fields.values());
+
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i)
+	int n = 0; for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i, ++n)
 	{
 		ui->simpleLayout->addWidget(new FilterWidget(i.value(), i.key(), this));
+		ui->Field->setItemData(n, i.key(), Qt::UserRole);
 	}
 }

@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>300</height>
+    <width>800</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Setup filter</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="edit-find">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
@@ -20,7 +24,7 @@
       <enum>QTabWidget::West</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="documentMode">
       <bool>true</bool>
@@ -46,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>543</width>
-            <height>235</height>
+            <width>732</width>
+            <height>430</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -79,68 +83,7 @@
         <widget class="QComboBox" name="Field"/>
        </item>
        <item row="0" column="2">
-        <widget class="QComboBox" name="Operator">
-         <item>
-          <property name="text">
-           <string notr="true">=</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">&lt;&gt;</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">&gt;=</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">&gt;</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">&lt;=</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">&lt;</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">IS</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">IS NOT</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">LIKE</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">NOT LIKE</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">IN</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string notr="true">NOT IN</string>
-          </property>
-         </item>
-        </widget>
+        <widget class="QComboBox" name="Operator"/>
        </item>
        <item row="0" column="3">
         <widget class="QLineEdit" name="Value">
@@ -157,7 +100,7 @@
         </widget>
        </item>
        <item row="1" column="0" colspan="5">
-        <widget class="QPlainTextEdit" name="Setup"/>
+        <widget class="QueryEditor" name="Setup"/>
        </item>
       </layout>
      </widget>
@@ -185,6 +128,24 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QueryEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>queryeditor.hpp</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>Action</tabstop>
+  <tabstop>Field</tabstop>
+  <tabstop>Operator</tabstop>
+  <tabstop>Value</tabstop>
+  <tabstop>addButton</tabstop>
+  <tabstop>Setup</tabstop>
+  <tabstop>searchEdit</tabstop>
+  <tabstop>scrollArea</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -194,8 +155,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>521</x>
-     <y>282</y>
+     <x>790</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -210,8 +171,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>589</x>
-     <y>288</y>
+     <x>790</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -226,8 +187,8 @@
    <slot>searchEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>75</x>
-     <y>287</y>
+     <x>84</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>114</x>
@@ -242,8 +203,8 @@
    <slot>buttonClicked(QAbstractButton*)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>426</x>
-     <y>280</y>
+     <x>790</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>431</x>
@@ -251,9 +212,26 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>addButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>addClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>777</x>
+     <y>38</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1060</x>
+     <y>58</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>searchEdited(QString)</slot>
   <slot>buttonClicked(QAbstractButton*)</slot>
+  <slot>addClicked()</slot>
  </slots>
 </ui>

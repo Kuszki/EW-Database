@@ -18,55 +18,66 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef FILTERWIDGET_HPP
-#define FILTERWIDGET_HPP
+#include "queryhlighter.hpp"
 
-#include <QWidget>
-
-#include "databasedriver.hpp"
-
-namespace Ui
+QueryHighlighter::QueryHighlighter(QTextDocument* Parent)
+: QSyntaxHighlighter(Parent)
 {
-	class FilterWidget;
+	KLHighlighterRule Rule;
+
+	Rule.Format.setForeground(Qt::darkMagenta);
+	Rule.Format.setFontWeight(QFont::Normal);
+
+	Rule.Expresion = QRegExp("\\b[0-9]+\\b");
+
+	Rules.insert(NUMBERS, Rule);
+
+	Rule.Format.setForeground(Qt::darkRed);
+	Rule.Format.setFontWeight(QFont::Bold);
+
+	Rule.Expresion = QRegExp("\\b(?:AND|OR|NOT|LIKE|IN|NULL)\\b");
+
+	Rules.insert(KEYWORDS, Rule);
+
+	Rule.Format.setForeground(Qt::darkBlue);
+	Rule.Format.setFontWeight(QFont::Bold);
+
+	Rule.Expresion = QRegExp("(?:\\+|\\-|\\*|\\/|\\=|\\<\\>|\\>|\\<|\\>\\=|\\<\\=|\\(|\\)|\\,|\\')");
+
+	Rules.insert(OPERATORS, Rule);
+
+	Rule.Format.setForeground(Qt::darkGreen);
+	Rule.Format.setFontWeight(QFont::Normal);
+	Rule.Format.setFontItalic(true);
+
+	Rule.Expresion = QRegExp("(?:#|--)[^\n]*");
+
+	Rules.insert(COMMENTS, Rule);
 }
 
-class FilterWidget : public QWidget
+QueryHighlighter::~QueryHighlighter(void) {}
+
+void QueryHighlighter::highlightBlock(const QString& Text)
 {
+	for (const auto& Rule: Rules)
+	{
+		int Index = Rule.Expresion.indexIn(Text);
 
-		Q_OBJECT
+		while (Index >= 0)
+		{
+			int Length = Rule.Expresion.matchedLength();
+			setFormat(Index, Length, Rule.Format);
+			Index = Rule.Expresion.indexIn(Text, Index + Length);
+		}
+	}
+}
 
-	private:
+void QueryHighlighter::SetFormat(STYLE Style, const QTextCharFormat& Format)
+{
+	Rules[Style].Format = Format;
+}
 
-		Ui::FilterWidget* ui;
-
-	public:
-
-		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr);
-		virtual ~FilterWidget(void) override;
-
-		QString getCondition(void) const;
-		QString getValue(void) const;
-
-	private slots:
-
-		void editFinished(void);
-
-	public slots:
-
-		void setParameters(const QString& Name, const QString& Key, const QString& Value);
-
-		void setName(const QString& Name);
-		void setKey(const QString& Key);
-		void setValue(const QString& Value);
-
-		bool isChecked(void) const;
-
-		void reset(void);
-
-	signals:
-
-		void onValueUpdate(const QString&, const QString&);
-
-};
-
-#endif // FILTERWIDGET_HPP
+QTextCharFormat QueryHighlighter::GetFormat(STYLE Style) const
+{
+	return Rules[Style].Format;
+}

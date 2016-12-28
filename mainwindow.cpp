@@ -29,6 +29,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->actionDisconnect->setEnabled(false);
 	ui->actionView->setEnabled(false);
 	ui->actionGroup->setEnabled(false);
+	ui->actionFilter->setEnabled(false);
+
+	ui->Data->setVisible(false);
 
 	Driver = new DatabaseDriver(nullptr);
 
@@ -48,6 +51,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
 	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
 	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
+
+	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
 }
 
 MainWindow::~MainWindow(void)
@@ -80,6 +85,11 @@ void MainWindow::ConnectActionClicked(void)
 	Dialog->open();
 }
 
+void MainWindow::RefreshActionClicked(void)
+{
+	emit onUpdateRequest(Filter->getFilterRules());
+}
+
 void MainWindow::databaseConnected(void)
 {
 	const auto Attributes = Driver->getAttributes(); QMap<QString, QString> AllAttributes;
@@ -91,13 +101,18 @@ void MainWindow::databaseConnected(void)
 	Groups = new GroupDialog(this, Driver->commonAttribs);
 	Filter = new FilterDialog(this, AllAttributes);
 
+	ui->tipLabel->setVisible(false);
 	ui->actionConnect->setEnabled(false);
 	ui->actionDisconnect->setEnabled(true);
 	ui->actionView->setEnabled(true);
 	ui->actionGroup->setEnabled(true);
+	ui->actionFilter->setEnabled(true);
+	ui->Data->setVisible(true);
 
 	ui->statusBar->showMessage(tr("Database connected"));
-	ui->Data->setHeaderLabels(Columns->getEnabledColumns());
+
+	connect(Columns, &ColumnsDialog::onColumnsUpdateByIndex, this, &MainWindow::updateColumns);
+	connect(Filter, &FilterDialog::onFiltersUpdate, Driver, &DatabaseDriver::updateData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -106,10 +121,13 @@ void MainWindow::databaseConnected(void)
 
 void MainWindow::databaseDisconnected(void)
 {
+	ui->tipLabel->setVisible(true);
 	ui->actionConnect->setEnabled(true);
 	ui->actionDisconnect->setEnabled(false);
 	ui->actionView->setEnabled(false);
 	ui->actionGroup->setEnabled(false);
+	ui->actionFilter->setEnabled(false);
+	ui->Data->setVisible(false);
 
 	ui->statusBar->showMessage(tr("Database disconnected"));
 
@@ -120,4 +138,21 @@ void MainWindow::databaseDisconnected(void)
 void MainWindow::databaseError(const QString& Error)
 {
 	ui->statusBar->showMessage(Error);
+}
+
+void MainWindow::updateColumns(const QList<int>& Columns)
+{
+	for (int i = 0; i < ui->Data->model()->columnCount(); ++i)
+	{
+		ui->Data->setColumnHidden(i, !Columns.contains(i));
+	}
+}
+
+void MainWindow::loadData(RecordModel* Model)
+{
+	RecordModel* lastModel = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (lastModel) lastModel->deleteLater();
+
+	ui->Data->setModel(Model);
 }

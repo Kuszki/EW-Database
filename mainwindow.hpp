@@ -59,10 +59,19 @@ class MainWindow : public QMainWindow
 	private slots:
 
 		void ConnectActionClicked(void);
+		void RefreshActionClicked(void);
 
 		void databaseConnected(void);
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
+
+		void updateColumns(const QList<int>& Columns);
+
+		void loadData(RecordModel* Model);
+
+	signals:
+
+		void onUpdateRequest(const QString&);
 
 };
 

@@ -26,6 +26,7 @@
 #include <QDialog>
 #include <QMap>
 
+#include "databasedriver.hpp"
 #include "filterwidget.hpp"
 
 namespace Ui
@@ -54,6 +55,8 @@ class FilterDialog : public QDialog
 		void searchEdited(const QString& Search);
 
 		void buttonClicked(QAbstractButton* Button);
+
+		void addClicked(void);
 
 	public slots:
 

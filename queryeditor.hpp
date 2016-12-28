@@ -18,55 +18,63 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef FILTERWIDGET_HPP
-#define FILTERWIDGET_HPP
+#ifndef KLSCRIPTEDITOR_HPP
+#define KLSCRIPTEDITOR_HPP
 
-#include <QWidget>
+#include <QPlainTextEdit>
+#include <QTextBlock>
+#include <QPainter>
+#include <QObject>
 
-#include "databasedriver.hpp"
+#include "queryhlighter.hpp"
 
-namespace Ui
-{
-	class FilterWidget;
-}
-
-class FilterWidget : public QWidget
+class QueryEditor : public QPlainTextEdit
 {
 
 		Q_OBJECT
 
-	private:
+	protected: class QueryNumberarea final : public QWidget
+	{
 
-		Ui::FilterWidget* ui;
+		protected:
+
+			virtual void paintEvent(QPaintEvent* Event) override;
+
+		public:
+
+			explicit QueryNumberarea(QueryEditor* Editor);
+
+			QSize sizeHint(void) const override;
+
+	};
+
+	protected:
+
+		QueryNumberarea* NumberArea;
+
+		QueryHighlighter* SyntaxHighlighter;
+
+		virtual void resizeEvent(QResizeEvent *Event) override;
 
 	public:
 
-		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr);
-		virtual ~FilterWidget(void) override;
+		explicit QueryEditor(QWidget* Parent = nullptr);
 
-		QString getCondition(void) const;
-		QString getValue(void) const;
+		virtual ~QueryEditor(void) override;
+
+		int numberareaWidth(void) const;
+
+		QueryHighlighter& Highlighter(void);
 
 	private slots:
 
-		void editFinished(void);
+		void numberareaPaintEvent(QPaintEvent *event);
 
-	public slots:
+		void updateNumberareaWidth(int newBlockCount);
+		void updateNumberareaView(const QRect& Rect, int dY);
 
-		void setParameters(const QString& Name, const QString& Key, const QString& Value);
-
-		void setName(const QString& Name);
-		void setKey(const QString& Key);
-		void setValue(const QString& Value);
-
-		bool isChecked(void) const;
-
-		void reset(void);
-
-	signals:
-
-		void onValueUpdate(const QString&, const QString&);
+		void highlightCurrentLine(void);
 
 };
 
-#endif // FILTERWIDGET_HPP
+#endif // KLSCRIPTEDITOR_HPP

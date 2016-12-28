@@ -22,6 +22,7 @@
 #define DATABASEDRIVER_HPP
 
 #include <QSqlDatabase>
+#include <QSqlRecord>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QVariant>
@@ -29,6 +30,8 @@
 #include <QMap>
 
 #include <QDebug>
+
+#include "recordmodel.hpp"
 
 class DatabaseDriver : public QObject
 {
@@ -43,11 +46,17 @@ class DatabaseDriver : public QObject
 
 		QStringList getTableFields(const QString& Table);
 
-		QStringList getDataQueries(const QStringList& Tables, const QMap<QString, QString>& Map = QMap<QString, QString>());
+		QStringList getValuesFields(const QString& Values);
+
+		QStringList getDataQueries(const QStringList& Tables, const QString& Values = QString());
+
+		bool checkFieldsInQuery(const QStringList& Used, const QStringList& Table) const;
 
 	public:
 
 		static const QMap<QString, QString> commonAttribs;
+		static const QStringList readAttribs;
+		static const QStringList fieldOperators;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
@@ -65,7 +74,11 @@ class DatabaseDriver : public QObject
 
 		void queryAttributes(const QStringList& Keys = QStringList());
 
+		void updateData(const QString& Filter);
+
 	signals:
+
+		void onDataLoad(RecordModel*);
 
 		void onAttributesLoad(const QMap<QString, QString>&);
 		void onError(const QString&);

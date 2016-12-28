@@ -49,7 +49,8 @@ class ColumnsDialog : public QDialog
 						   const QMap<QString, QString>& Special = QMap<QString, QString>());
 		virtual ~ColumnsDialog(void) override;
 
-		QStringList getEnabledColumns(void);
+		QStringList getEnabledColumnsByName(void);
+		QList<int> getEnabledColumnsByIndex(void);
 
 	private slots:
 
@@ -63,7 +64,8 @@ class ColumnsDialog : public QDialog
 
 	signals:
 
-		void onColumnsUpdate(const QStringList&);
+		void onColumnsUpdateByName(const QStringList&);
+		void onColumnsUpdateByIndex(const QList<int>&);
 
 };
 

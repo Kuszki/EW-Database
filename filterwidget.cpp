@@ -24,10 +24,12 @@
 FilterWidget::FilterWidget(const QString& Name, const QString& Key, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::FilterWidget)
 {
-	ui->setupUi(this); setName(Key);
+	ui->setupUi(this);
 
-	ui->Field->setProperty("KEY", Key);
 	ui->Field->setText(Name);
+	ui->Operator->addItems(DatabaseDriver::fieldOperators);
+
+	setObjectName(Key);
 }
 
 FilterWidget::~FilterWidget(void)
@@ -37,12 +39,15 @@ FilterWidget::~FilterWidget(void)
 
 QString FilterWidget::getCondition(void) const
 {
-	if (ui->Operator->currentText() == "ON" || ui->Operator->currentText() == "NOT ON")
+	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
 	{
 		return QString("%1 %2 ('%3')")
 				.arg(objectName())
 				.arg(ui->Operator->currentText())
-				.arg(ui->Value->text().split(',', QString::SkipEmptyParts).join("', "));
+				.arg(ui->Value->text().
+					split(QRegExp("\\s*,\\s*"),
+						 QString::SkipEmptyParts)
+					.join("', '"));
 	}
 	else
 	{
@@ -60,16 +65,15 @@ QString FilterWidget::getValue(void) const
 
 void FilterWidget::editFinished(void)
 {
-	emit onValueUpdate(ui->Field->property("KEY").toString(), ui->Value->text());
+	emit onValueUpdate(objectName(), ui->Value->text());
 }
 
 void FilterWidget::setParameters(const QString& Name, const QString& Key, const QString& Value)
 {
-	ui->Field->setProperty("KEY", Key);
 	ui->Field->setText(Name);
 	ui->Value->setText(Value);
 
-	setName(Key);
+	setObjectName(Key);
 }
 
 void FilterWidget::setName(const QString& Name)
@@ -79,12 +83,17 @@ void FilterWidget::setName(const QString& Name)
 
 void FilterWidget::setKey(const QString& Key)
 {
-	ui->Field->setProperty("KEY", Key); setName(Key);
+	setObjectName(Key);
 }
 
 void FilterWidget::setValue(const QString& Value)
 {
 	ui->Value->setText(Value);
+}
+
+bool FilterWidget::isChecked(void) const
+{
+	return ui->Field->isChecked();
 }
 
 void FilterWidget::reset(void)

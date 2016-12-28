@@ -6,82 +6,32 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>40</height>
+    <width>600</width>
+    <height>46</height>
    </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Form</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <widget class="QCheckBox" name="Field"/>
+    <widget class="QCheckBox" name="Field">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>300</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QComboBox" name="Operator">
      <property name="enabled">
       <bool>false</bool>
      </property>
-     <item>
-      <property name="text">
-       <string notr="true">=</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">&lt;&gt;</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">&gt;=</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">&gt;</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">&lt;=</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">&lt;</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">IS</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">IS NOT</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">LIKE</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">NOT LIKE</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">IN</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string notr="true">NOT IN</string>
-      </property>
-     </item>
     </widget>
    </item>
    <item>
@@ -93,6 +43,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>Field</tabstop>
+  <tabstop>Operator</tabstop>
+  <tabstop>Value</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

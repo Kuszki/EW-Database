@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Firebird database editor                                               *
- *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
+ *  KLScript code highlighter for KLLibs                                   *
+ *  Copyright (C) 2015  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
  *                                                                         *
  *  This program is free software: you can redistribute it and/or modify   *
  *  it under the terms of the GNU General Public License as published by   *
@@ -18,55 +18,52 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef FILTERWIDGET_HPP
-#define FILTERWIDGET_HPP
+#ifndef KLHIGHLIGHTER_HPP
+#define KLHIGHLIGHTER_HPP
 
-#include <QWidget>
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
 
-#include "databasedriver.hpp"
-
-namespace Ui
-{
-	class FilterWidget;
-}
-
-class FilterWidget : public QWidget
+class QueryHighlighter : public QSyntaxHighlighter
 {
 
 		Q_OBJECT
 
-	private:
+	public: enum STYLE
+	{
+		NUMBERS,
+		KEYWORDS,
+		OPERATORS,
+		BREAKS,
+		MATHS,
+		COMMENTS
+	};
 
-		Ui::FilterWidget* ui;
+	protected:
+
+		struct KLHighlighterRule
+		{
+			QTextCharFormat Format;
+			QRegExp Expresion;
+		};
+
+		QMap<STYLE, KLHighlighterRule> Rules;
+
+		virtual void highlightBlock(const QString& Text) override;
 
 	public:
 
-		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr);
-		virtual ~FilterWidget(void) override;
 
-		QString getCondition(void) const;
-		QString getValue(void) const;
+		QueryHighlighter(QTextDocument* Parent);
 
-	private slots:
 
-		void editFinished(void);
+		virtual ~QueryHighlighter(void) override;
 
-	public slots:
 
-		void setParameters(const QString& Name, const QString& Key, const QString& Value);
+		void SetFormat(STYLE Style, const QTextCharFormat& Format);
 
-		void setName(const QString& Name);
-		void setKey(const QString& Key);
-		void setValue(const QString& Value);
-
-		bool isChecked(void) const;
-
-		void reset(void);
-
-	signals:
-
-		void onValueUpdate(const QString&, const QString&);
+		QTextCharFormat GetFormat(STYLE Style) const;
 
 };
 
-#endif // FILTERWIDGET_HPP
+#endif // KLHIGHLIGHTER_HPP
