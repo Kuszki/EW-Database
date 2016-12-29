@@ -40,13 +40,16 @@ class DatabaseDriver : public QObject
 
 	private:
 
+		QMap<QString, QString> Attributes;
+		QMap<QString, int> Indexes;
+
 		QSqlDatabase Database;
 
 		QStringList getAttribTables(void);
 
 		QStringList getTableFields(const QString& Table);
-
 		QStringList getValuesFields(const QString& Values);
+		QStringList getQueryFields(QStringList All, const QStringList& Table);
 
 		QStringList getDataQueries(const QStringList& Tables, const QString& Values = QString());
 
@@ -55,13 +58,16 @@ class DatabaseDriver : public QObject
 	public:
 
 		static const QMap<QString, QString> commonAttribs;
-		static const QStringList readAttribs;
 		static const QStringList fieldOperators;
+		static const QStringList readAttribs;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 
 		QMap<QString, QString> getAttributes(const QStringList& Keys = QStringList());
+		QMap<QString, QString> getAttributes(const QString& Key);
+
+		QMap<QString, QString> allAttributes(void);
 
 	public slots:
 
@@ -71,8 +77,6 @@ class DatabaseDriver : public QObject
 					   const QString& Pass);
 
 		bool closeDatabase(void);
-
-		void queryAttributes(const QStringList& Keys = QStringList());
 
 		void updateData(const QString& Filter);
 
@@ -85,6 +89,11 @@ class DatabaseDriver : public QObject
 
 		void onConnect(void);
 		void onDisconnect(void);
+
+		void onBeginProgress(void);
+		void onSetupProgress(int, int);
+		void onUpdateProgress(int);
+		void onEndProgress(void);
 
 };
 

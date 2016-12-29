@@ -111,7 +111,7 @@ class RecordModel : public QAbstractItemModel
 
 		GroupObject* appendItem(RecordObject* Object);
 
-		int removeEmpty(GroupObject* Parent = nullptr);
+		void removeEmpty(GroupObject* Parent = nullptr);
 
 		void groupItems(void);
 
@@ -144,6 +144,8 @@ class RecordModel : public QAbstractItemModel
 
 		QVariant fieldData(const QModelIndex& Index, int Col) const;
 
+	public slots:
+
 		void groupBy(const QStringList& Groupby);
 
 		void addItem(const QMap<int, QVariant>& Attributes);
@@ -151,6 +153,10 @@ class RecordModel : public QAbstractItemModel
 		void addItems(const QList<QMap<int, QVariant>>& Attributes);
 
 		void setItems(const QList<QMap<int, QVariant>>& Attributes);
+
+	signals:
+
+		void onGroupComplete(void);
 
 
 };

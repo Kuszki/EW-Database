@@ -240,7 +240,6 @@ RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Obj
 
 	Parents.insert(Object, Current);
 	Objects.append(Object);
-
 	Current->addChild(Object);
 
 	endInsertRows();
@@ -248,13 +247,16 @@ RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Obj
 	return Current;
 }
 
-int RecordModel::removeEmpty(RecordModel::GroupObject* Parent)
+void RecordModel::removeEmpty(RecordModel::GroupObject* Parent)
 {
 	if (Parent)
 	{
 		if (Parent->hasChids()) for (auto Child : Parent->getChilds())
 		{
-			removeEmpty(dynamic_cast<GroupObject*>(Child));
+			if (GroupObject* Group = dynamic_cast<GroupObject*>(Child))
+			{
+				removeEmpty(Group);
+			}
 		}
 		else if (auto P = Parent->getParent())
 		{
@@ -265,7 +267,7 @@ int RecordModel::removeEmpty(RecordModel::GroupObject* Parent)
 			P->removeChild(Parent);
 			endRemoveRows();
 
-			removeEmpty(P);
+			removeEmpty(P->getParent());
 		}
 	}
 }
@@ -493,24 +495,24 @@ QVariant RecordModel::fieldData(const QModelIndex& Index, int Col) const
 
 void RecordModel::groupBy(const QStringList& Groupby)
 {
-	if (Groups == Groupby) return;
+	if (Groups == Groupby)
+	{
+		emit onGroupComplete(); return;
+	}
 	else Groups = Groupby;
 
-	if (Groups.isEmpty())
-	{
-		beginResetModel();
+	beginResetModel();
 
-		Parents.clear();
-		delete Root;
-		Root = nullptr;
+	Parents.clear();
+	delete Root;
+	Root = nullptr;
 
-		endResetModel();
-	}
-	else
-	{
-		groupItems();
-		removeEmpty(Root);
-	}
+	if (!Groups.isEmpty()) groupItems();
+
+	endResetModel();
+	removeEmpty(Root);
+
+	emit onGroupComplete();
 }
 
 void RecordModel::addItem(const QMap<int, QVariant>& Attributes)
@@ -547,11 +549,7 @@ void RecordModel::setItems(const QList<QMap<int, QVariant>>& Attributes)
 	beginResetModel();
 
 	while (!Objects.isEmpty()) delete Objects.takeLast();
-
-	if (Root)
-	{
-		delete Root; Root = new GroupObject();
-	}
+	if (Root) { delete Root; Root = new GroupObject(); }
 
 	endResetModel();
 

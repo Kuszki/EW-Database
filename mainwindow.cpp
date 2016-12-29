@@ -21,20 +21,69 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 
+void MainWindow::lockUi(MainWindow::STATUS Status)
+{
+	switch (Status)
+	{
+		case CONNECTED:
+			ui->statusBar->showMessage(tr("Database connected"));
+			ui->actionConnect->setEnabled(false);
+			ui->actionDisconnect->setEnabled(true);
+			ui->actionView->setEnabled(true);
+			ui->actionGroup->setEnabled(true);
+			ui->actionFilter->setEnabled(true);
+			ui->actionReload->setEnabled(true);
+			ui->actionEdit->setEnabled(true);
+			ui->actionDelete->setEnabled(true);
+		break;
+		case DISCONNECTED:
+			ui->statusBar->showMessage(tr("Database disconnected"));
+			ui->Data->setVisible(false);
+			ui->tipLabel->setVisible(true);
+			ui->actionConnect->setEnabled(true);
+			ui->actionDisconnect->setEnabled(false);
+			ui->actionView->setEnabled(false);
+			ui->actionGroup->setEnabled(false);
+			ui->actionFilter->setEnabled(false);
+			ui->actionReload->setEnabled(false);
+			ui->actionEdit->setEnabled(false);
+			ui->actionDelete->setEnabled(false);
+		break;
+		case BUSY:
+			ui->actionDisconnect->setEnabled(false);
+			ui->actionView->setEnabled(false);
+			ui->actionGroup->setEnabled(false);
+			ui->actionFilter->setEnabled(false);
+			ui->actionReload->setEnabled(false);
+			ui->actionEdit->setEnabled(false);
+			ui->actionDelete->setEnabled(false);
+			ui->Data->setEnabled(false);
+		break;
+		case DONE:
+			ui->statusBar->showMessage(tr("Job done"));
+			ui->actionDisconnect->setEnabled(true);
+			ui->actionView->setEnabled(true);
+			ui->actionGroup->setEnabled(true);
+			ui->actionFilter->setEnabled(true);
+			ui->actionReload->setEnabled(true);
+			ui->actionEdit->setEnabled(true);
+			ui->actionDelete->setEnabled(true);
+			ui->Data->setEnabled(true);
+		break;
+	}
+}
+
 MainWindow::MainWindow(QWidget* Parent)
 : QMainWindow(Parent), ui(new Ui::MainWindow)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); lockUi(DISCONNECTED);
 
-	ui->actionDisconnect->setEnabled(false);
-	ui->actionView->setEnabled(false);
-	ui->actionGroup->setEnabled(false);
-	ui->actionFilter->setEnabled(false);
-
-	ui->Data->setVisible(false);
-
+	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
 
+	ui->statusBar->addPermanentWidget(Progress);
+
+	Progress->hide();
 	Driver->moveToThread(&Thread);
 	Thread.start();
 
@@ -45,6 +94,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	restoreState(Settings.value("state").toByteArray());
 	Settings.endGroup();
 
+	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshData);
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::ConnectActionClicked);
 	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
 
@@ -53,6 +103,13 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
 
 	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
+
+	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
+	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
+	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
+
+	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
 }
 
 MainWindow::~MainWindow(void)
@@ -85,54 +142,39 @@ void MainWindow::ConnectActionClicked(void)
 	Dialog->open();
 }
 
-void MainWindow::RefreshActionClicked(void)
+void MainWindow::refreshData(void)
 {
+	lockUi(BUSY); ui->statusBar->showMessage(tr("Querying database"));
+
 	emit onUpdateRequest(Filter->getFilterRules());
 }
 
 void MainWindow::databaseConnected(void)
 {
-	const auto Attributes = Driver->getAttributes(); QMap<QString, QString> AllAttributes;
+	const auto Spec = Driver->getAttributes();
+	const auto All = Driver->allAttributes();
 
-	for (auto i = Driver->commonAttribs.constBegin(); i != Driver->commonAttribs.constEnd(); ++i) AllAttributes.insert(i.key(), i.value());
-	for (auto i = Attributes.constBegin(); i != Attributes.constEnd(); ++i) AllAttributes.insert(i.key(), i.value());
-
-	Columns = new ColumnsDialog(this, Driver->commonAttribs, Attributes);
+	Columns = new ColumnsDialog(this, Driver->commonAttribs, Spec);
 	Groups = new GroupDialog(this, Driver->commonAttribs);
-	Filter = new FilterDialog(this, AllAttributes);
+	Filter = new FilterDialog(this, All);
 
-	ui->tipLabel->setVisible(false);
-	ui->actionConnect->setEnabled(false);
-	ui->actionDisconnect->setEnabled(true);
-	ui->actionView->setEnabled(true);
-	ui->actionGroup->setEnabled(true);
-	ui->actionFilter->setEnabled(true);
-	ui->Data->setVisible(true);
-
-	ui->statusBar->showMessage(tr("Database connected"));
-
-	connect(Columns, &ColumnsDialog::onColumnsUpdateByIndex, this, &MainWindow::updateColumns);
-	connect(Filter, &FilterDialog::onFiltersUpdate, Driver, &DatabaseDriver::updateData);
+	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
+	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
+	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
+
+	lockUi(CONNECTED);
 }
 
 void MainWindow::databaseDisconnected(void)
 {
-	ui->tipLabel->setVisible(true);
-	ui->actionConnect->setEnabled(true);
-	ui->actionDisconnect->setEnabled(false);
-	ui->actionView->setEnabled(false);
-	ui->actionGroup->setEnabled(false);
-	ui->actionFilter->setEnabled(false);
-	ui->Data->setVisible(false);
-
-	ui->statusBar->showMessage(tr("Database disconnected"));
-
 	Columns->deleteLater();
 	Groups->deleteLater();
+
+	lockUi(DISCONNECTED);
 }
 
 void MainWindow::databaseError(const QString& Error)
@@ -140,19 +182,44 @@ void MainWindow::databaseError(const QString& Error)
 	ui->statusBar->showMessage(Error);
 }
 
-void MainWindow::updateColumns(const QList<int>& Columns)
+void MainWindow::updateGroups(const QStringList& Groups)
 {
+	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
+
+	lockUi(BUSY); ui->statusBar->showMessage(tr("Grouping items by %1").arg(Groups.join(", ")));
+
+	emit onGroupRequest(Groups);
+}
+
+void MainWindow::updateColumns(const QStringList& Columns)
+{
+	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
+
 	for (int i = 0; i < ui->Data->model()->columnCount(); ++i)
 	{
-		ui->Data->setColumnHidden(i, !Columns.contains(i));
+		ui->Data->setColumnHidden(i, !Columns.contains(ui->Data->model()->headerData(i, Qt::Horizontal, Qt::UserRole).toString()));
 	}
 }
 
 void MainWindow::loadData(RecordModel* Model)
 {
-	RecordModel* lastModel = dynamic_cast<RecordModel*>(ui->Data->model());
+	const auto Groupby = Groups->getEnabledGroups(); emit onDeleteRequest();
 
-	if (lastModel) lastModel->deleteLater();
+	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupBy);
+	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater);
+	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::completeGrouping);
 
+	ui->tipLabel->setVisible(false);
 	ui->Data->setModel(Model);
+	ui->Data->setVisible(true);
+
+	updateColumns(Columns->getEnabledColumns());
+
+	if (!Groupby.isEmpty()) lockUi(DONE);
+	else updateGroups(Groupby);
+}
+
+void MainWindow::completeGrouping(void)
+{
+	lockUi(DONE);
 }

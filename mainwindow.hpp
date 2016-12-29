@@ -21,6 +21,7 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
+#include <QProgressBar>
 #include <QMainWindow>
 #include <QThread>
 
@@ -40,9 +41,19 @@ class MainWindow : public QMainWindow
 
 		Q_OBJECT
 
+	public: enum STATUS
+	{
+		CONNECTED,
+		DISCONNECTED,
+		BUSY,
+		DONE
+	};
+
 	private:
 
 		Ui::MainWindow* ui;
+
+		QProgressBar* Progress;
 
 		DatabaseDriver* Driver;
 		ColumnsDialog* Columns;
@@ -50,6 +61,10 @@ class MainWindow : public QMainWindow
 		FilterDialog* Filter;
 
 		QThread Thread;
+
+	private:
+
+		void lockUi(STATUS Status);
 
 	public:
 
@@ -59,19 +74,26 @@ class MainWindow : public QMainWindow
 	private slots:
 
 		void ConnectActionClicked(void);
-		void RefreshActionClicked(void);
+		void refreshData(void);
 
 		void databaseConnected(void);
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
 
-		void updateColumns(const QList<int>& Columns);
+		void updateGroups(const QStringList& Groups);
+		void updateColumns(const QStringList& Columns);
 
 		void loadData(RecordModel* Model);
 
+		void completeGrouping(void);
+
 	signals:
 
+		void onGroupRequest(const QStringList&);
+
 		void onUpdateRequest(const QString&);
+
+		void onDeleteRequest(void);
 
 };
 

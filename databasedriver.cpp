@@ -34,17 +34,17 @@ const QMap<QString, QString> DatabaseDriver::commonAttribs =
 	{"EW_OB_OPISY.OPIS",		tr("Code description")}
 };
 
-const QStringList DatabaseDriver::readAttribs =
-{
-	"EW_OBIEKTY.UID", "EW_OBIEKTY.KOD", "EW_OBIEKTY.NUMER", "EW_OPERATY.NUMER", "EW_OB_OPISY.OPIS"
-};
-
 const QStringList DatabaseDriver::fieldOperators =
 {
 	"=", "<>", ">=", ">", "<=", "<",
 	"LIKE", "NOT LIKE",
 	"IS", "IS NOT",
 	"IN", "NOT IN"
+};
+
+const QStringList DatabaseDriver::readAttribs =
+{
+	"EW_OBIEKTY.UID", "EW_OBIEKTY.KOD", "EW_OBIEKTY.NUMER", "EW_OPERATY.NUMER", "EW_OB_OPISY.OPIS"
 };
 
 QStringList DatabaseDriver::getAttribTables(void)
@@ -105,9 +105,14 @@ QStringList DatabaseDriver::getValuesFields(const QString& Values)
 	return Fields;
 }
 
+QStringList DatabaseDriver::getQueryFields(QStringList All, const QStringList& Table)
+{
+	for (auto& Field : All) if (!Table.contains(Field)) Field = "NULL"; return All;
+}
+
 QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QString& Values)
 {
-	QStringList Queries; static QStringList Keys = commonAttribs.keys();
+	const auto Attribs = allAttributes().keys(); QStringList Queries;
 
 	for (const auto& Table : Tables)
 	{
@@ -116,9 +121,11 @@ QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QStr
 
 		if (!checkFieldsInQuery(Used, Fields)) continue;
 
+		auto allFields = getQueryFields(Attribs, Fields);
+
 		Queries.append(QString(
 			"SELECT "
-				"%1, %2 "
+				"%1 "
 			"FROM "
 				"EW_OBIEKTY "
 			"LEFT JOIN "
@@ -130,11 +137,10 @@ QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QStr
 			"ON "
 				"EW_OBIEKTY.KOD=EW_OB_OPISY.KOD "
 			"INNER JOIN "
-				"%3 D "
+				"%2 D "
 			"ON "
 				"EW_OBIEKTY.UID=D.UIDO")
-					.arg(Keys.join(", "))
-					.arg(Fields.join(", "))
+					.arg(allFields.join(", "))
 					.arg(Table));
 
 		if (!Values.isEmpty()) Queries.last().append(" WHERE ").append(Values);
@@ -178,6 +184,44 @@ QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
 	return Res;
 }
 
+QMap<QString, QString> DatabaseDriver::getAttributes(const QString& Key)
+{
+	QMap<QString, QString> Res;
+
+	if (Database.isOpen())
+	{
+		QSqlQuery Query(Database);
+
+		Query.prepare(QString(
+			"SELECT DISTINCT "
+				"NAZWA, "
+				"TYTUL "
+			"FROM "
+				"EW_OB_DDSTR "
+			"WHERE "
+				"KOD='%1'")
+				    .arg(Key));
+
+		if (Query.exec()) while (Query.next())
+			Res.insert(QString("D.%1").arg(Query.value(0).toString()), Query.value(1).toString());
+	}
+
+	return Res;
+}
+
+QMap<QString, QString> DatabaseDriver::allAttributes(void)
+{
+	QMap<QString, QString> Attributes = commonAttribs;
+	QMap<QString, QString> Special = getAttributes();
+
+	for (auto i = Special.begin(); i != Special.end(); ++i)
+	{
+		Attributes.insert(i.key(), i.value());
+	}
+
+	return Attributes;
+}
+
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
 {
 	if (Database.isOpen()) Database.close();
@@ -205,59 +249,46 @@ bool DatabaseDriver::closeDatabase(void)
 	}
 }
 
-void DatabaseDriver::queryAttributes(const QStringList& Keys)
-{
-	if (Database.isOpen()) emit onAttributesLoad(getAttributes(Keys));
-	else emit onError(tr("Database is not opened"));
-}
-
 void DatabaseDriver::updateData(const QString& Filter)
 {
-	const QMap<QString, QString> Attribs = getAttributes();
+	if (!Database.isOpen()) return;
 
-	QMap<QString, QString> Fields = commonAttribs;
-	QList<QPair<QString, QStringList>> Pairs;
-
-	for (auto i = Attribs.constBegin(); i != Attribs.constEnd(); ++i)
-	{
-		Fields.insert(i.key(), i.value());
-	}
-
-	for (const auto& Table : getAttribTables())
-	{
-		const QStringList Current = QStringList() << Table;
-		QPair<QString, QStringList> Pair;
-
-		Pair.first = getDataQueries(Current, Filter).first();
-		Pair.second = getAttributes(Current).keys();
-
-		Pairs.append(Pair);
-	}
-
-	const auto Keys = Fields.keys();
+	const auto Queries = getDataQueries(getAttribTables(), Filter);
+	const auto Fields = allAttributes();
+	const int Size = Fields.size();
 
 	RecordModel* Model = new RecordModel(Fields, this);
+	int Progress = 0;
 
-	for (const auto& Pair : Pairs)
+	emit onSetupProgress(0, Queries.size());
+	emit onBeginProgress();
+
+	for (const auto& Request : Queries)
 	{
-		QList<QMap<int, QVariant>> Items;
+		QList<QMap<int, QVariant>> Objects;
 		QSqlQuery Query(Database);
 
-		if (Query.exec(Pair.first)) while (Query.next())
+		if (Query.exec(Request)) while (Query.next())
 		{
 			QMap<int, QVariant> Object;
 
-			int i = 0; for (const auto& Field : Pair.second)
+			for (int i = 0; i < Size; ++i)
 			{
-				Object.insert(Keys.indexOf(Field), Query.value(i++));
+				QVariant Value = Query.value(i);
+
+				if (Value.isValid() && !Value.isNull())
+				{
+					Object.insert(i, Value);
+				}
 			}
 
-			Items.append(Object);
+			if (!Object.isEmpty()) Objects.append(Object);
 		}
 		else qDebug() << Query.lastQuery() << Query.lastError().text();
 
-		Model->addItems(Items);
+		Model->addItems(Objects); emit onUpdateProgress(++Progress);
 	}
 
+	emit onEndProgress();
 	emit onDataLoad(Model);
 }
