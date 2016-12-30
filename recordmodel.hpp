@@ -24,7 +24,7 @@
 #include <QAbstractItemModel>
 #include <QVariant>
 #include <QList>
-#include <QMap>
+#include <QHash>
 
 class RecordModel : public QAbstractItemModel
 {
@@ -36,20 +36,20 @@ class RecordModel : public QAbstractItemModel
 
 		protected:
 
-			QMap<int, QVariant> Attributes;
+			QList<QPair<int, QVariant>> Attributes;
 
 		public:
 
-			RecordObject(const QMap<int, QVariant>& Fields);
+			RecordObject(const QList<QPair<int, QVariant>>& Fields);
 			virtual ~RecordObject(void);
 
-			QMap<int, QVariant> getFields(void) const;
+			QList<QPair<int, QVariant> > getFields(void) const;
 
-			void setFields(const QMap<int, QVariant>& Fields);
+			void setFields(const QList<QPair<int, QVariant>>& Fields);
 			void setField(int Role, const QVariant& Value);
 			QVariant getField(int Role) const;
 
-			bool contain(const QMap<int, QVariant>& Fields) const;
+			bool contain(const QList<QPair<int, QVariant>>& Fields) const;
 
 	};
 
@@ -65,16 +65,16 @@ class RecordModel : public QAbstractItemModel
 
 		public:
 
-			GroupObject(int Level = -1, const QMap<int, QVariant>& Fields = QMap<int, QVariant>());
+			GroupObject(int Level = -1, const QList<QPair<int, QVariant>>& Fields = QList<QPair<int, QVariant>>());
 			virtual ~GroupObject(void) override;
 
 			void addChild(RecordObject* Object);
 
-			bool removeChild(const QMap<int, QVariant>& Fields);
+			bool removeChild(const QList<QPair<int, QVariant>>& Fields);
 			bool removeChild(RecordObject* Object);
 			bool removeChild(int Index);
 
-			RecordObject* takeChild(const QMap<int, QVariant>& Fields);
+			RecordObject* takeChild(const QList<QPair<int, QVariant>>& Fields);
 			RecordObject* takeChild(RecordObject* Object);
 			RecordObject* takeChild(int Index);
 
@@ -97,29 +97,29 @@ class RecordModel : public QAbstractItemModel
 
 	private:
 
-		QMap<RecordObject*, GroupObject*> Parents;
+		QHash<RecordObject*, GroupObject*> Parents;
+		QList<QPair<QString, QString>> Header;
 		QVector<RecordObject*> Objects;
-		QMap<QString, QString> Header;
 
 		GroupObject* Root = nullptr;
 
 		QStringList Groups;
 
-		GroupObject* createGroups(QMap<int, QList<QVariant>>::ConstIterator From,
-							 QMap<int, QList<QVariant>>::ConstIterator To,
+		GroupObject* createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From,
+							 QList<QPair<int, QList<QVariant>>>::ConstIterator To,
 							 GroupObject* Parent = nullptr);
 
 		GroupObject* appendItem(RecordObject* Object);
 
-		void removeEmpty(GroupObject* Parent = nullptr);
+		int getIndex(const QString& Field) const;
+
+		void removeEmpty(GroupObject* Parent = nullptr, bool Emit = true);
 
 		void groupItems(void);
 
 	public:
 
-		explicit RecordModel(const QMap<QString, QString>& Head,
-						 QObject* Parent = nullptr,
-						 const QStringList& Groupby = QStringList());
+		explicit RecordModel(const QList<QPair<QString, QString>>& Head, QObject* Parent = nullptr);
 		virtual ~RecordModel(void) override;
 
 		virtual QModelIndex index(int Row, int Col, const QModelIndex& Parent = QModelIndex()) const override;
@@ -138,9 +138,9 @@ class RecordModel : public QAbstractItemModel
 
 		virtual bool setData(const QModelIndex& Index, const QVariant& Value, int Role = Qt::EditRole) override;
 
-		bool setData(const QModelIndex& Index, const QMap<int, QVariant>& Data);
+		bool setData(const QModelIndex& Index, const QList<QPair<int, QVariant>>& Data);
 
-		QMap<int, QVariant> fullData(const QModelIndex& Index) const;
+		QList<QPair<int, QVariant>> fullData(const QModelIndex& Index) const;
 
 		QVariant fieldData(const QModelIndex& Index, int Col) const;
 
@@ -148,11 +148,11 @@ class RecordModel : public QAbstractItemModel
 
 		void groupBy(const QStringList& Groupby);
 
-		void addItem(const QMap<int, QVariant>& Attributes);
+		void addItem(const QList<QPair<int, QVariant>>& Attributes);
 
-		void addItems(const QList<QMap<int, QVariant>>& Attributes);
+		void addItems(const QList<QList<QPair<int, QVariant>>>& Attributes);
 
-		void setItems(const QList<QMap<int, QVariant>>& Attributes);
+		void setItems(const QList<QList<QPair<int, QVariant>>>& Attributes);
 
 	signals:
 

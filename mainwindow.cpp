@@ -69,6 +69,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionEdit->setEnabled(true);
 			ui->actionDelete->setEnabled(true);
 			ui->Data->setEnabled(true);
+			ui->tipLabel->setVisible(false);
+			ui->Data->setVisible(true);
 		break;
 	}
 }
@@ -166,15 +168,22 @@ void MainWindow::databaseConnected(void)
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 
+	ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
+
 	lockUi(CONNECTED);
 }
 
 void MainWindow::databaseDisconnected(void)
 {
+	ui->tipLabel->setText(tr("Press Ctrl+O or use Connect action to connect to Database"));
+
 	Columns->deleteLater();
 	Groups->deleteLater();
+	Filter->deleteLater();
 
 	lockUi(DISCONNECTED);
+
+	emit onDeleteRequest();
 }
 
 void MainWindow::databaseError(const QString& Error)
@@ -186,9 +195,11 @@ void MainWindow::updateGroups(const QStringList& Groups)
 {
 	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
 
-	lockUi(BUSY); ui->statusBar->showMessage(tr("Grouping items by %1").arg(Groups.join(", ")));
+	ui->statusBar->showMessage(tr("Grouping items by %1").arg(Groups.join(", ")));
 
-	emit onGroupRequest(Groups);
+	Progress->setRange(0, 0); Progress->show();
+
+	lockUi(BUSY); emit onGroupRequest(Groups);
 }
 
 void MainWindow::updateColumns(const QStringList& Columns)
@@ -209,17 +220,13 @@ void MainWindow::loadData(RecordModel* Model)
 	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::completeGrouping);
 
-	ui->tipLabel->setVisible(false);
-	ui->Data->setModel(Model);
-	ui->Data->setVisible(true);
+	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumns());
 
-	updateColumns(Columns->getEnabledColumns());
-
-	if (!Groupby.isEmpty()) lockUi(DONE);
+	if (Groupby.isEmpty()) lockUi(DONE);
 	else updateGroups(Groupby);
 }
 
 void MainWindow::completeGrouping(void)
 {
-	lockUi(DONE);
+	lockUi(DONE); Progress->hide();
 }

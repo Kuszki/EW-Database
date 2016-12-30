@@ -21,7 +21,7 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QMap<QString, QString>& Fields)
+FilterDialog::FilterDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Fields)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
 	ui->setupUi(this); setAvailableFields(Fields);
@@ -108,15 +108,16 @@ void FilterDialog::accept(void)
 	emit onFiltersUpdate(getFilterRules()); QDialog::accept();
 }
 
-void FilterDialog::setAvailableFields(const QMap<QString, QString>& Fields)
+void FilterDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fields)
 {
-	if (ui->Field->count()) ui->Field->clear(); ui->Field->addItems(Fields.values());
+	if (ui->Field->count()) ui->Field->clear();
 
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	int n = 0; for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i, ++n)
+	int i = 0; for (const auto& Field : Fields)
 	{
-		ui->simpleLayout->addWidget(new FilterWidget(i.value(), i.key(), this));
-		ui->Field->setItemData(n, i.key(), Qt::UserRole);
+		ui->simpleLayout->addWidget(new FilterWidget(Field.second, Field.first, this));
+		ui->Field->addItem(Field.second);
+		ui->Field->setItemData(i, Field.first, Qt::UserRole);
 	}
 }

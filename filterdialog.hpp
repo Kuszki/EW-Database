@@ -24,7 +24,7 @@
 #include <QAbstractButton>
 #include <QPushButton>
 #include <QDialog>
-#include <QMap>
+#include <QHash>
 
 #include "databasedriver.hpp"
 #include "filterwidget.hpp"
@@ -45,7 +45,7 @@ class FilterDialog : public QDialog
 
 	public:
 
-		explicit FilterDialog(QWidget* Parent = nullptr, const QMap<QString, QString>& Fields = QMap<QString, QString>());
+		explicit FilterDialog(QWidget* Parent = nullptr, const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>());
 		virtual ~FilterDialog(void) override;
 
 		QString getFilterRules(void);
@@ -62,7 +62,7 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setAvailableFields(const QMap<QString, QString>& Fields);
+		void setAvailableFields(const QList<QPair<QString, QString>>& Fields);
 
 	signals:
 

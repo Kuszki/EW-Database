@@ -20,18 +20,18 @@
 
 #include "databasedriver.hpp"
 
-const QMap<QString, QString> DatabaseDriver::commonAttribs =
+const QList<QPair<QString, QString>> DatabaseDriver::commonAttribs =
 {
-	{"EW_OBIEKTY.UID",			tr("Database ID")},
-	{"EW_OBIEKTY.KOD",			tr("Object code")},
-	{"EW_OBIEKTY.NUMER",		tr("Object ID")},
-	{"EW_OBIEKTY.POZYSKANIE",	tr("Source of data")},
-	{"EW_OBIEKTY.DTU",			tr("Creation date")},
-	{"EW_OBIEKTY.DTW",			tr("Modification date")},
-	{"EW_OBIEKTY.DTR",			tr("Delete date")},
-	{"EW_OBIEKTY.STATUS",		tr("Object status")},
-	{"EW_OPERATY.NUMER",		tr("Job name")},
-	{"EW_OB_OPISY.OPIS",		tr("Code description")}
+	{ "EW_OBIEKTY.UID",			tr("Database ID") },
+	{ "EW_OBIEKTY.KOD",			tr("Object code") },
+	{ "EW_OBIEKTY.NUMER",		tr("Object ID") },
+	{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
+	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
+	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
+	{ "EW_OBIEKTY.DTR",			tr("Delete date") },
+	{ "EW_OBIEKTY.STATUS",		tr("Object status") },
+	{ "EW_OPERATY.NUMER",		tr("Job name") },
+	{ "EW_OB_OPISY.OPIS",		tr("Code description") }
 };
 
 const QStringList DatabaseDriver::fieldOperators =
@@ -65,8 +65,8 @@ QStringList DatabaseDriver::getTableFields(const QString& Table)
 {
 	if (!Database.isOpen()) return QStringList();
 
-	QStringList List = commonAttribs.keys();
 	QSqlQuery Query(Database);
+	QStringList List;
 
 	Query.prepare(QString(
 			"SELECT "
@@ -80,6 +80,8 @@ QStringList DatabaseDriver::getTableFields(const QString& Table)
 			"WHERE "
 				"EW_OB_OPISY.DANE_DOD='%1'")
 			    .arg(Table));
+
+	for (const auto& Field : commonAttribs) List.append(Field.first);
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -112,7 +114,9 @@ QStringList DatabaseDriver::getQueryFields(QStringList All, const QStringList& T
 
 QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QString& Values)
 {
-	const auto Attribs = allAttributes().keys(); QStringList Queries;
+	QStringList Queries, Attribs;
+
+	for (const auto& Field : allAttributes()) Attribs.append(Field.first);
 
 	for (const auto& Table : Tables)
 	{
@@ -151,9 +155,11 @@ QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QStr
 
 bool DatabaseDriver::checkFieldsInQuery(const QStringList& Used, const QStringList& Table) const
 {
+	QStringList Common; for (const auto& Field : commonAttribs) Common.append(Field.first);
+
 	for (const auto Field : Used)
 	{
-		if (!Table.contains(Field) && !commonAttribs.contains(Field)) return false;
+		if (!Table.contains(Field) && !Common.contains(Field)) return false;
 	}
 
 	return true;
@@ -167,9 +173,9 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 
 DatabaseDriver::~DatabaseDriver(void) {}
 
-QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
+QList<QPair<QString, QString>> DatabaseDriver::getAttributes(const QStringList& Keys)
 {
-	QMap<QString, QString> Res;
+	QList<QPair<QString, QString>> Res;
 
 	if (Database.isOpen())
 	{
@@ -177,16 +183,17 @@ QMap<QString, QString> DatabaseDriver::getAttributes(const QStringList& Keys)
 
 		if (!Keys.isEmpty()) Text.append(QString(" WHERE KOD IN ('%1')").arg(Keys.join("','")));
 
-		if (Query.exec(Text)) while (Query.next())
-			Res.insert(QString("D.%1").arg(Query.value(0).toString()), Query.value(1).toString());
+		if (Query.exec(Text)) while (Query.next()) Res.append(qMakePair(
+											QString("D.%1").arg(Query.value(0).toString()),
+											Query.value(1).toString()));
 	}
 
 	return Res;
 }
 
-QMap<QString, QString> DatabaseDriver::getAttributes(const QString& Key)
+QList<QPair<QString, QString>> DatabaseDriver::getAttributes(const QString& Key)
 {
-	QMap<QString, QString> Res;
+	QList<QPair<QString, QString>> Res;
 
 	if (Database.isOpen())
 	{
@@ -202,24 +209,17 @@ QMap<QString, QString> DatabaseDriver::getAttributes(const QString& Key)
 				"KOD='%1'")
 				    .arg(Key));
 
-		if (Query.exec()) while (Query.next())
-			Res.insert(QString("D.%1").arg(Query.value(0).toString()), Query.value(1).toString());
+		if (Query.exec()) while (Query.next()) Res.append(qMakePair(
+										QString("D.%1").arg(Query.value(0).toString()),
+										Query.value(1).toString()));
 	}
 
 	return Res;
 }
 
-QMap<QString, QString> DatabaseDriver::allAttributes(void)
+QList<QPair<QString, QString>> DatabaseDriver::allAttributes(void)
 {
-	QMap<QString, QString> Attributes = commonAttribs;
-	QMap<QString, QString> Special = getAttributes();
-
-	for (auto i = Special.begin(); i != Special.end(); ++i)
-	{
-		Attributes.insert(i.key(), i.value());
-	}
-
-	return Attributes;
+	auto Attrib = commonAttribs; Attrib.append(getAttributes()); return Attrib;
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -265,12 +265,12 @@ void DatabaseDriver::updateData(const QString& Filter)
 
 	for (const auto& Request : Queries)
 	{
-		QList<QMap<int, QVariant>> Objects;
+		QList<QList<QPair<int, QVariant>>> Objects;
 		QSqlQuery Query(Database);
 
 		if (Query.exec(Request)) while (Query.next())
 		{
-			QMap<int, QVariant> Object;
+			QList<QPair<int, QVariant>> Object;
 
 			for (int i = 0; i < Size; ++i)
 			{
@@ -278,13 +278,12 @@ void DatabaseDriver::updateData(const QString& Filter)
 
 				if (Value.isValid() && !Value.isNull())
 				{
-					Object.insert(i, Value);
+					Object.append(qMakePair(i, Value));
 				}
 			}
 
 			if (!Object.isEmpty()) Objects.append(Object);
 		}
-		else qDebug() << Query.lastQuery() << Query.lastError().text();
 
 		Model->addItems(Objects); emit onUpdateProgress(++Progress);
 	}

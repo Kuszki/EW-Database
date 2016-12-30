@@ -27,7 +27,7 @@
 #include <QSqlError>
 #include <QVariant>
 #include <QObject>
-#include <QMap>
+#include <QHash>
 
 #include <QDebug>
 
@@ -40,8 +40,7 @@ class DatabaseDriver : public QObject
 
 	private:
 
-		QMap<QString, QString> Attributes;
-		QMap<QString, int> Indexes;
+		QList<QPair<QString, QString>> Attributes;
 
 		QSqlDatabase Database;
 
@@ -57,17 +56,17 @@ class DatabaseDriver : public QObject
 
 	public:
 
-		static const QMap<QString, QString> commonAttribs;
+		static const QList<QPair<QString, QString>> commonAttribs;
 		static const QStringList fieldOperators;
 		static const QStringList readAttribs;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 
-		QMap<QString, QString> getAttributes(const QStringList& Keys = QStringList());
-		QMap<QString, QString> getAttributes(const QString& Key);
+		QList<QPair<QString, QString>> getAttributes(const QStringList& Keys = QStringList());
+		QList<QPair<QString, QString>> getAttributes(const QString& Key);
 
-		QMap<QString, QString> allAttributes(void);
+		QList<QPair<QString, QString>> allAttributes(void);
 
 	public slots:
 
@@ -84,7 +83,7 @@ class DatabaseDriver : public QObject
 
 		void onDataLoad(RecordModel*);
 
-		void onAttributesLoad(const QMap<QString, QString>&);
+		void onAttributesLoad(const QList<QPair<QString, QString>>&);
 		void onError(const QString&);
 
 		void onConnect(void);

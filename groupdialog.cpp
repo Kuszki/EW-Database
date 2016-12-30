@@ -26,7 +26,7 @@ const QStringList GroupDialog::Default =
 	"EW_OPERATY.NUMER"
 };
 
-GroupDialog::GroupDialog(QWidget* Parent, const QMap<QString, QString>& Attributes)
+GroupDialog::GroupDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Attributes)
 : QDialog(Parent), ui(new Ui::GroupDialog)
 {
 	ui->setupUi(this);
@@ -40,13 +40,10 @@ GroupDialog::GroupDialog(QWidget* Parent, const QMap<QString, QString>& Attribut
 
 GroupDialog::~GroupDialog(void)
 {
-	QSettings Settings("EW-Database"); QStringList Enabled;
-
-	for (int i = 0; i < ui->Enabled->count(); ++i)
-		Enabled.append(ui->Enabled->item(i)->data(Qt::UserRole).toString());
+	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Groups");
-	Settings.setValue("enabled", Enabled);
+	Settings.setValue("enabled", getEnabledGroups());
 	Settings.endGroup();
 
 	delete ui;
@@ -76,33 +73,28 @@ void GroupDialog::accept(void)
 	emit onGroupsUpdate(getEnabledGroups()); QDialog::accept();
 }
 
-void GroupDialog::setAvailableAttributes(QMap<QString, QString> Attributes, const QStringList& Enabled)
+void GroupDialog::setAvailableAttributes(QList<QPair<QString, QString>> Attributes, const QStringList& Enabled)
 {
 	for (int i = 0; i < ui->Disabled->count(); ++i) delete ui->Disabled->takeItem(i);
+	for (int i = 0; i < ui->Enabled->count(); ++i) delete ui->Enabled->takeItem(i);
 
-	for (int i = 0; i < ui->Enabled->count(); ++i)
+	for (const auto& Attrib : Enabled) for (auto& Field : Attributes) if (Field.first == Attrib)
 	{
-		const QString Key = ui->Enabled->item(i)->data(Qt::UserRole).toString();
+		QListWidgetItem* Item = new QListWidgetItem(Field.second);
 
-		if (Attributes.contains(Key)) Attributes.remove(Key);
-		else delete ui->Enabled->takeItem(i--);
-	}
-
-	for (const auto& Key : Enabled) if (Attributes.contains(Key))
-	{
-		QListWidgetItem* Item = new QListWidgetItem(Attributes[Key]);
-
-		Item->setData(Qt::UserRole, Key);
+		Item->setData(Qt::UserRole, Field.first);
 		ui->Enabled->addItem(Item);
 
-		Attributes.remove(Key);
+		Field = QPair<QString, QString>();
 	}
 
-	for (auto i = Attributes.constBegin(); i != Attributes.constEnd(); ++i)
-	{
-		QListWidgetItem* Item = new QListWidgetItem(i.value());
+	Attributes.removeAll(QPair<QString, QString>());
 
-		Item->setData(Qt::UserRole, i.key());
+	for (const auto& Field : Attributes)
+	{
+		QListWidgetItem* Item = new QListWidgetItem(Field.second);
+
+		Item->setData(Qt::UserRole, Field.first);
 		ui->Disabled->addItem(Item);
 	}
 

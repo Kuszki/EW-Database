@@ -24,7 +24,7 @@
 #include <QSettings>
 #include <QCheckBox>
 #include <QDialog>
-#include <QMap>
+#include <QHash>
 
 namespace Ui
 {
@@ -45,8 +45,8 @@ class ColumnsDialog : public QDialog
 	public:
 
 		explicit ColumnsDialog(QWidget* Parent = nullptr,
-						   const QMap<QString, QString>& Common = QMap<QString, QString>(),
-						   const QMap<QString, QString>& Special = QMap<QString, QString>());
+						   const QList<QPair<QString, QString>>& Common = QList<QPair<QString, QString>>(),
+						   const QList<QPair<QString, QString>>& Special = QList<QPair<QString, QString>>());
 		virtual ~ColumnsDialog(void) override;
 
 		QStringList getEnabledColumns(void);
@@ -59,7 +59,7 @@ class ColumnsDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setSpecialAttributes(const QMap<QString, QString>& Attributes);
+		void setSpecialAttributes(const QList<QPair<QString, QString>>& Attributes);
 
 	signals:
 

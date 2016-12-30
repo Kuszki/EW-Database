@@ -26,7 +26,7 @@ const QStringList ColumnsDialog::Default =
 	"EW_OBIEKTY.KOD", "EW_OBIEKTY.NUMER", "EW_OBIEKTY.POZYSKANIE", "EW_OBIEKTY.DTU", "EW_OBIEKTY.OPERAT"
 };
 
-ColumnsDialog::ColumnsDialog(QWidget* Parent, const QMap<QString, QString>& Common, const QMap<QString, QString>& Special)
+ColumnsDialog::ColumnsDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Common, const QList<QPair<QString, QString>>& Special)
 : QDialog(Parent), ui(new Ui::ColumnsDialog)
 {
 	ui->setupUi(this);
@@ -40,22 +40,22 @@ ColumnsDialog::ColumnsDialog(QWidget* Parent, const QMap<QString, QString>& Comm
 	const auto Enabled = Settings.value("enabled", Default).toStringList();
 	Settings.endGroup();
 
-	for (auto i = Common.constBegin(); i != Common.constEnd(); ++i)
+	for (const auto& Field : Common)
 	{
-		QCheckBox* Check = new QCheckBox(i.value(), this);
+		QCheckBox* Check = new QCheckBox(Field.second, this);
 
-		Check->setChecked(Enabled.contains(i.key()));
-		Check->setProperty("KEY", i.key());
+		Check->setChecked(Enabled.contains(Field.first));
+		Check->setProperty("KEY", Field.first);
 
 		ui->commonLayout->addWidget(Check);
 	}
 
-	for (auto i = Special.constBegin(); i != Special.constEnd(); ++i)
+	for (const auto& Field : Special)
 	{
-		QCheckBox* Check = new QCheckBox(i.value(), this);
+		QCheckBox* Check = new QCheckBox(Field.second, this);
 
-		Check->setChecked(Enabled.contains(i.key()));
-		Check->setProperty("KEY", i.key());
+		Check->setChecked(Enabled.contains(Field.first));
+		Check->setProperty("KEY", Field.first);
 
 		ui->specialLayout->addWidget(Check);
 	}
@@ -104,7 +104,7 @@ void ColumnsDialog::accept(void)
 	emit onColumnsUpdate(getEnabledColumns()); QDialog::accept();
 }
 
-void ColumnsDialog::setSpecialAttributes(const QMap<QString, QString>& Attributes)
+void ColumnsDialog::setSpecialAttributes(const QList<QPair<QString, QString>>& Attributes)
 {
 	while (auto I = ui->specialLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
@@ -114,12 +114,12 @@ void ColumnsDialog::setSpecialAttributes(const QMap<QString, QString>& Attribute
 	const auto Enabled = Settings.value("enabled", Default).toStringList();
 	Settings.endGroup();
 
-	for (auto i = Attributes.constBegin(); i != Attributes.constEnd(); ++i)
+	for (const auto& Field : Attributes)
 	{
-		QCheckBox* Check = new QCheckBox(i.value(), this);
+		QCheckBox* Check = new QCheckBox(Field.second, this);
 
-		Check->setChecked(Enabled.contains(i.key()));
-		Check->setProperty("KEY", i.key());
+		Check->setChecked(Enabled.contains(Field.first));
+		Check->setProperty("KEY", Field.first);
 
 		ui->specialLayout->addWidget(Check);
 	}

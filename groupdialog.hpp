@@ -42,7 +42,7 @@ class GroupDialog : public QDialog
 
 	public:
 
-		explicit GroupDialog(QWidget* Parent = nullptr, const QMap<QString, QString>& Attributes = QMap<QString, QString>());
+		explicit GroupDialog(QWidget* Parent = nullptr, const QList<QPair<QString, QString>>& Attributes = QList<QPair<QString, QString>>());
 		virtual ~GroupDialog(void) override;
 
 		QStringList getEnabledGroups(void);
@@ -55,7 +55,7 @@ class GroupDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setAvailableAttributes(QMap<QString, QString> Attributes, const QStringList& Enabled = QStringList());
+		void setAvailableAttributes(QList<QPair<QString, QString>> Attributes, const QStringList& Enabled = QStringList());
 
 	signals:
 
