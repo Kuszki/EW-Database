@@ -18,86 +18,16 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
-
-#include <QProgressBar>
-#include <QMainWindow>
-#include <QThread>
-
-#include "databasedriver.hpp"
-#include "connectdialog.hpp"
-#include "columnsdialog.hpp"
-#include "filterdialog.hpp"
-#include "groupdialog.hpp"
 #include "aboutdialog.hpp"
+#include "ui_aboutdialog.h"
 
-namespace Ui
+AboutDialog::AboutDialog(QWidget* Parent)
+: QDialog(Parent), ui(new Ui::AboutDialog)
 {
-	class MainWindow;
+	ui->setupUi(this);
 }
 
-class MainWindow : public QMainWindow
+AboutDialog::~AboutDialog(void)
 {
-
-		Q_OBJECT
-
-	public: enum STATUS
-	{
-		CONNECTED,
-		DISCONNECTED,
-		BUSY,
-		DONE
-	};
-
-	private:
-
-		Ui::MainWindow* ui;
-
-		AboutDialog* About;
-
-		QProgressBar* Progress;
-
-		DatabaseDriver* Driver;
-		ColumnsDialog* Columns;
-		GroupDialog* Groups;
-		FilterDialog* Filter;
-
-		QThread Thread;
-
-	private:
-
-		void lockUi(STATUS Status);
-
-	public:
-
-		explicit MainWindow(QWidget* Parent = nullptr);
-		virtual ~MainWindow(void) override;
-
-	private slots:
-
-		void ConnectActionClicked(void);
-		void refreshData(void);
-
-		void databaseConnected(void);
-		void databaseDisconnected(void);
-		void databaseError(const QString& Error);
-
-		void updateGroups(const QStringList& Groups);
-		void updateColumns(const QStringList& Columns);
-
-		void loadData(RecordModel* Model);
-
-		void completeGrouping(void);
-
-	signals:
-
-		void onGroupRequest(const QStringList&);
-
-		void onUpdateRequest(const QString&);
-
-		void onDeleteRequest(void);
-
-};
-
-#endif // MAINWINDOW_HPP
+	delete ui;
+}

@@ -21,10 +21,13 @@
 #ifndef RECORDMODEL_HPP
 #define RECORDMODEL_HPP
 
+#include <QFutureSynchronizer>
 #include <QAbstractItemModel>
 #include <QVariant>
 #include <QList>
 #include <QHash>
+
+#include <QtConcurrent>
 
 class RecordModel : public QAbstractItemModel
 {
@@ -50,6 +53,21 @@ class RecordModel : public QAbstractItemModel
 			QVariant getField(int Role) const;
 
 			bool contain(const QList<QPair<int, QVariant>>& Fields) const;
+
+	};
+
+	private: class SortObject
+	{
+		private:
+
+			const int Index;
+			const bool Mode;
+
+		public:
+
+			SortObject(int Column, bool Ascending = true);
+
+			bool operator() (RecordObject* First, RecordObject* Second) const;
 
 	};
 
@@ -93,13 +111,15 @@ class RecordModel : public QAbstractItemModel
 
 			int childIndex(RecordObject* Object) const;
 
+			void sortChilds(const SortObject& Functor, QFutureSynchronizer<void>& Synchronizer);
+
 	};
 
 	private:
 
 		QHash<RecordObject*, GroupObject*> Parents;
 		QList<QPair<QString, QString>> Header;
-		QVector<RecordObject*> Objects;
+		QList<RecordObject*> Objects;
 
 		GroupObject* Root = nullptr;
 
@@ -138,11 +158,15 @@ class RecordModel : public QAbstractItemModel
 
 		virtual bool setData(const QModelIndex& Index, const QVariant& Value, int Role = Qt::EditRole) override;
 
+		virtual void sort(int Column, Qt::SortOrder Order) override;
+
 		bool setData(const QModelIndex& Index, const QList<QPair<int, QVariant>>& Data);
 
 		QList<QPair<int, QVariant>> fullData(const QModelIndex& Index) const;
 
 		QVariant fieldData(const QModelIndex& Index, int Col) const;
+
+		QModelIndexList getIndexes(const QModelIndex& Parent = QModelIndex());
 
 	public slots:
 
@@ -151,8 +175,6 @@ class RecordModel : public QAbstractItemModel
 		void addItem(const QList<QPair<int, QVariant>>& Attributes);
 
 		void addItems(const QList<QList<QPair<int, QVariant>>>& Attributes);
-
-		void setItems(const QList<QList<QPair<int, QVariant>>>& Attributes);
 
 	signals:
 

@@ -35,7 +35,8 @@ SOURCES		+=	main.cpp \
 				filterwidget.cpp \
 				queryhlighter.cpp \
 				queryeditor.cpp \
-				recordmodel.cpp
+				recordmodel.cpp \
+				aboutdialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -46,13 +47,17 @@ HEADERS		+=	mainwindow.hpp \
 				filterwidget.hpp \
 				queryhlighter.hpp \
 				queryeditor.hpp \
-				recordmodel.hpp
+				recordmodel.hpp \
+				aboutdialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
 				columnsdialog.ui \
 				groupdialog.ui \
 				filterdialog.ui \
-				filterwidget.ui
+				filterwidget.ui \
+				aboutdialog.ui
+
+RESOURCES		+=	resources.qrc
 
 QMAKE_CXXFLAGS	+=	-std=c++14

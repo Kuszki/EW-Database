@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file alias="logo">logo-gnu.png</file>
+    </qresource>
+</RCC>

@@ -185,6 +185,29 @@ int RecordModel::GroupObject::childIndex(RecordObject* Object) const
 	return Childs.indexOf(Object);
 }
 
+void RecordModel::GroupObject::sortChilds(const RecordModel::SortObject& Functor, QFutureSynchronizer<void>& Synchronizer)
+{
+	static auto Sort = std::sort<QList<RecordObject*>::iterator, SortObject>;
+
+	for (auto& Child : Childs) if (auto Group = dynamic_cast<GroupObject*>(Child)) Group->sortChilds(Functor, Synchronizer);
+	Synchronizer.addFuture(QtConcurrent::run(Sort, Childs.begin(), Childs.end(), Functor));
+}
+
+RecordModel::SortObject::SortObject(int Column, bool Ascending)
+: Index(Column), Mode(Ascending) {}
+
+bool RecordModel::SortObject::operator() (RecordModel::RecordObject* First, RecordModel::RecordObject* Second) const
+{
+	const auto One = First->getField(Index);
+	const auto Two = Second->getField(Index);
+
+	if (One == Two) return false;
+
+	bool Compare = One < Two;
+
+	return Mode ? Compare : !Compare;
+}
+
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
 {
 	if (!Parent) Parent = new GroupObject();
@@ -477,6 +500,23 @@ bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int R
 	return true;
 }
 
+void RecordModel::sort(int Column, Qt::SortOrder Order)
+{
+	SortObject Sort(Column, Order == Qt::AscendingOrder);
+
+	beginResetModel();
+
+	if (!Root) std::sort(Objects.begin(), Objects.end(), Sort);
+	else
+	{
+		QFutureSynchronizer<void> Synchronizer;
+		Root->sortChilds(Sort, Synchronizer);
+		Synchronizer.waitForFinished();
+	}
+
+	endResetModel();
+}
+
 bool RecordModel::setData(const QModelIndex& Index, const QList<QPair<int, QVariant>>& Data)
 {
 	if (!Index.isValid()) return false;
@@ -525,6 +565,17 @@ QVariant RecordModel::fieldData(const QModelIndex& Index, int Col) const
 	return Object->getField(Col);
 }
 
+QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent)
+{
+	if (!hasChildren(Parent)) return QModelIndexList();
+
+	QModelIndexList List; int Count = rowCount(Parent);
+
+	for (int i = 0; i < Count; ++i) List.append(index(i, 0, Parent));
+
+	return List;
+}
+
 void RecordModel::groupBy(const QStringList& Groupby)
 {
 	if (Groups == Groupby) { emit onGroupComplete(); return; } Groups = Groupby;
@@ -571,21 +622,4 @@ void RecordModel::addItems(const QList<QList<QPair<int, QVariant>>>& Attributes)
 
 		endInsertRows();
 	}
-}
-
-void RecordModel::setItems(const QList<QList<QPair<int, QVariant>>>& Attributes)
-{
-	beginResetModel();
-
-	while (!Objects.isEmpty()) delete Objects.takeLast();
-	if (Root) { delete Root; Root = new GroupObject(); }
-
-	endResetModel();
-
-	for (const auto& Item : Attributes)
-	{
-		Objects.append(new RecordObject(Item));
-	}
-
-	if (!Header.isEmpty()) groupItems();
 }

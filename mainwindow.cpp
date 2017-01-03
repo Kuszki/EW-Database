@@ -82,6 +82,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
+	About = new AboutDialog(this);
 
 	ui->statusBar->addPermanentWidget(Progress);
 
@@ -95,6 +96,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	restoreGeometry(Settings.value("geometry").toByteArray());
 	restoreState(Settings.value("state").toByteArray());
 	Settings.endGroup();
+
+	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshData);
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::ConnectActionClicked);
@@ -214,13 +217,13 @@ void MainWindow::updateColumns(const QStringList& Columns)
 
 void MainWindow::loadData(RecordModel* Model)
 {
+	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumns());
+
 	const auto Groupby = Groups->getEnabledGroups(); emit onDeleteRequest();
 
 	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupBy);
 	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::completeGrouping);
-
-	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumns());
 
 	if (Groupby.isEmpty()) lockUi(DONE);
 	else updateGroups(Groupby);
