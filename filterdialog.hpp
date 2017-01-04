@@ -27,7 +27,7 @@
 #include <QHash>
 
 #include "databasedriver.hpp"
-#include "filterwidget.hpp"
+#include "fieldwidget.hpp"
 
 namespace Ui
 {

@@ -32,7 +32,7 @@ SOURCES		+=	main.cpp \
 				columnsdialog.cpp \
 				groupdialog.cpp \
 				filterdialog.cpp \
-				filterwidget.cpp \
+				fieldwidget.cpp \
 				queryhlighter.cpp \
 				queryeditor.cpp \
 				recordmodel.cpp \
@@ -45,7 +45,7 @@ HEADERS		+=	mainwindow.hpp \
 				columnsdialog.hpp \
 				groupdialog.hpp \
 				filterdialog.hpp \
-				filterwidget.hpp \
+				fieldwidget.hpp \
 				queryhlighter.hpp \
 				queryeditor.hpp \
 				recordmodel.hpp \
@@ -57,7 +57,7 @@ FORMS		+=	mainwindow.ui \
 				columnsdialog.ui \
 				groupdialog.ui \
 				filterdialog.ui \
-				filterwidget.ui \
+				fieldwidget.ui \
 				aboutdialog.ui \
 				updatedialog.ui
 

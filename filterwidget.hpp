@@ -32,7 +32,7 @@ namespace Ui
 	class FilterWidget;
 }
 
-class FilterWidget : public QWidget
+class FieldWidget : public QWidget
 {
 
 		Q_OBJECT
@@ -44,9 +44,9 @@ class FilterWidget : public QWidget
 
 	public:
 
-		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr,
+		explicit FieldWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr,
 						  const QHash<int, QString>& Dictionary = QHash<int, QString>());
-		virtual ~FilterWidget(void) override;
+		virtual ~FieldWidget(void) override;
 
 		QString getCondition(void) const;
 		QString getValue(void) const;

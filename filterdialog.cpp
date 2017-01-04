@@ -47,7 +47,7 @@ QString FilterDialog::getFilterRules(void)
 	{
 		QStringList Rules; for (int i = 0; i < ui->simpleLayout->count(); ++i)
 		{
-			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+			if (auto W = qobject_cast<FieldWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 			{
 				if (W->isChecked()) Rules.append(W->getCondition());
 			}
@@ -70,7 +70,7 @@ void FilterDialog::buttonClicked(QAbstractButton* Button)
 	if (Button != ui->buttonBox->button(QDialogButtonBox::Reset)) return;
 
 	for (int i = 0; i < ui->simpleLayout->count(); ++i)
-		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+		if (auto W = qobject_cast<FieldWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 			W->reset();
 
 	ui->Setup->document()->clear();
@@ -116,7 +116,7 @@ void FilterDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fiel
 
 	int i = 0; for (const auto& Field : Fields)
 	{
-		ui->simpleLayout->addWidget(new FilterWidget(Field.second, Field.first, this, Dictionary.value(Field.first)));
+		ui->simpleLayout->addWidget(new FieldWidget(Field.second, Field.first, this, Dictionary.value(Field.first)));
 		ui->Field->addItem(Field.second);
 		ui->Field->setItemData(i++, Field.first, Qt::UserRole);
 	}
