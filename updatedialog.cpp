@@ -21,13 +21,73 @@
 #include "updatedialog.hpp"
 #include "ui_updatedialog.h"
 
-UpdateDialog::UpdateDialog(QWidget* Parent)
+UpdateDialog::UpdateDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
 : QDialog(Parent), ui(new Ui::UpdateDialog)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); setAvailableFields(Fields, Dictionary);
+
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
 UpdateDialog::~UpdateDialog(void)
 {
 	delete ui;
+}
+
+QString UpdateDialog::getUpdateRules(void)
+{
+	QStringList Rules; for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+	{
+		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+		{
+			if (W->isChecked()) Rules.append(W->getAssigment());
+		}
+	}
+
+	if (Rules.isEmpty()) return QString();
+	else return Rules.join(", ");
+}
+
+void UpdateDialog::searchEdited(const QString& Search)
+{
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+		if (auto W = ui->fieldsLayout->itemAt(i)->widget())
+			W->setVisible(W->objectName().contains(Search, Qt::CaseInsensitive));
+}
+
+void UpdateDialog::fieldChecked(bool Enabled)
+{
+	if (Enabled) ++Count; else --Count;
+
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Count);
+}
+
+void UpdateDialog::accept(void)
+{
+	emit onValuesUpdate(getUpdateRules()); QDialog::accept();
+}
+
+void UpdateDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
+{
+	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
+
+	for (const auto& Field : Fields)
+	{
+		auto Widget = new UpdateWidget(Field.second, Field.first, this, Dictionary.value(Field.first));
+
+		ui->fieldsLayout->addWidget(Widget);
+
+		connect(Widget, &UpdateWidget::onStatusChanged, this, &UpdateDialog::fieldChecked);
+	}
+}
+
+void UpdateDialog::setFieldsData(const QHash<QString, QString>& Data)
+{
+	for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) for (int j = 0; j < ui->fieldsLayout->count(); ++j)
+	{
+		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(j)->widget()))
+		{
+			if (W->objectName() == i.key()) W->setValue(i.value());
+		}
+	}
 }

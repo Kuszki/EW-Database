@@ -71,6 +71,8 @@ class FilterWidget : public QWidget
 
 		void onValueUpdate(const QString&, const QString&);
 
+		void onStatusChanged(bool);
+
 };
 
 #endif // FILTERWIDGET_HPP

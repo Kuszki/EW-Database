@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
+	qRegisterMetaType<QModelIndexList>("QModelIndexList");
+
 	a.setApplicationName("EW-Database");
 	a.setOrganizationName("Łukasz \"Kuszki\" Dróżdż");
 	a.setOrganizationDomain("https://github.com/Kuszki");

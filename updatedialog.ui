@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>596</width>
-    <height>307</height>
+    <width>600</width>
+    <height>350</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Update fields</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
@@ -30,8 +30,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>578</width>
-        <height>260</height>
+        <width>582</width>
+        <height>303</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
@@ -69,8 +69,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>549</x>
+     <y>297</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -85,8 +85,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>586</x>
+     <y>297</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -94,5 +94,24 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>searchEdit</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>UpdateDialog</receiver>
+   <slot>searchEdited(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>197</x>
+     <y>290</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>204</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>searchEdited(QString)</slot>
+ </slots>
 </ui>

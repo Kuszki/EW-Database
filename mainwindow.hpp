@@ -29,6 +29,7 @@
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
 #include "filterdialog.hpp"
+#include "updatedialog.hpp"
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
 
@@ -62,6 +63,7 @@ class MainWindow : public QMainWindow
 		ColumnsDialog* Columns;
 		GroupDialog* Groups;
 		FilterDialog* Filter;
+		UpdateDialog* Update;
 
 		QThread Thread;
 
@@ -87,17 +89,22 @@ class MainWindow : public QMainWindow
 
 		void updateGroups(const QStringList& Groups);
 		void updateColumns(const QStringList& Columns);
+		void updateData(const QString& Values);
 
 		void loadData(RecordModel* Model);
 		void refreshData(void);
 
 		void completeGrouping(void);
 
+		void prepareEdit(void);
+
 	signals:
 
 		void onGroupRequest(const QStringList&);
 
 		void onUpdateRequest(const QString&);
+
+		void onEditRequest(RecordModel*, const QModelIndexList&, const QString&);
 
 		void onDeleteRequest(void);
 

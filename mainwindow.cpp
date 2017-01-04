@@ -33,8 +33,6 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(true);
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
-			ui->actionEdit->setEnabled(true);
-			ui->actionDelete->setEnabled(true);
 		break;
 		case DISCONNECTED:
 			ui->statusBar->showMessage(tr("Database disconnected"));
@@ -66,7 +64,6 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(true);
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
-			ui->actionEdit->setEnabled(true);
 			ui->Data->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setVisible(true);
@@ -97,7 +94,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	Settings.endGroup();
 
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::DeleteActionClicked);
-
+	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::prepareEdit);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshData);
@@ -116,6 +113,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
 
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
+	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::setData);
 }
 
 MainWindow::~MainWindow(void)
@@ -169,6 +167,7 @@ void MainWindow::selectionChanged(void)
 		.arg(Count).arg(Model ? Model->totalCount() : 0));
 
 	ui->actionDelete->setEnabled(Count);
+	ui->actionEdit->setEnabled(Count);
 }
 
 void MainWindow::refreshData(void)
@@ -182,15 +181,18 @@ void MainWindow::databaseConnected(void)
 {
 	const auto Dict = Driver->allDictionary();
 	const auto Spec = Driver->getAttributes();
-	const auto All = Driver->allAttributes();
+	const auto All = Driver->allAttributes(false);
+	const auto Edit = Driver->allAttributes(true);
 
 	Columns = new ColumnsDialog(this, Driver->commonAttribs, Spec);
 	Groups = new GroupDialog(this, Driver->commonAttribs);
 	Filter = new FilterDialog(this, All, Dict);
+	Update = new UpdateDialog(this, Edit, Dict);
 
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
+	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -208,6 +210,7 @@ void MainWindow::databaseDisconnected(void)
 	Columns->deleteLater();
 	Groups->deleteLater();
 	Filter->deleteLater();
+	Update->deleteLater();
 
 	lockUi(DISCONNECTED);
 
@@ -240,6 +243,14 @@ void MainWindow::updateColumns(const QStringList& Columns)
 	}
 }
 
+void MainWindow::updateData(const QString& Values)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel();
+
+	emit onEditRequest(Model, Selection->selectedRows(), "");
+}
+
 void MainWindow::loadData(RecordModel* Model)
 {
 	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumns());
@@ -258,4 +269,14 @@ void MainWindow::loadData(RecordModel* Model)
 void MainWindow::completeGrouping(void)
 {
 	lockUi(DONE); Progress->hide();
+}
+
+void MainWindow::prepareEdit(void)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel();
+	auto Fields = Driver->getEditValues(Model, Selection->selectedRows().first());
+
+	Update->setFieldsData(Fields);
+	Update->open();
 }

@@ -21,6 +21,8 @@
 #ifndef UPDATEWIDGET_HPP
 #define UPDATEWIDGET_HPP
 
+#include <QComboBox>
+#include <QLineEdit>
 #include <QWidget>
 
 namespace Ui
@@ -36,11 +38,38 @@ class UpdateWidget : public QWidget
 	private:
 
 		Ui::UpdateWidget* ui;
+		QWidget* Widget;
 
 	public:
 
-		explicit UpdateWidget(QWidget* Parent = nullptr);
+		explicit UpdateWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr,
+						  const QHash<int, QString>& Dictionary = QHash<int, QString>());
 		virtual ~UpdateWidget(void) override;
+
+		QString getAssigment(void) const;
+		QString getValue(void) const;
+
+	private slots:
+
+		void editFinished(void);
+
+	public slots:
+
+		void setParameters(const QString& Name, const QString& Key, const QString& Value);
+
+		void setName(const QString& Name);
+		void setKey(const QString& Key);
+		void setValue(const QString& Value);
+
+		bool isChecked(void) const;
+
+		void reset(void);
+
+	signals:
+
+		void onValueUpdate(const QString&, const QString&);
+
+		void onStatusChanged(bool);
 
 };
 

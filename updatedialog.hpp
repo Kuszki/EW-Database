@@ -21,7 +21,10 @@
 #ifndef UPDATEDIALOG_HPP
 #define UPDATEDIALOG_HPP
 
+#include <QAbstractButton>
+#include <QPushButton>
 #include <QDialog>
+#include <QHash>
 
 #include "updatewidget.hpp"
 
@@ -38,11 +41,35 @@ class UpdateDialog : public QDialog
 	private:
 
 		Ui::UpdateDialog* ui;
+		int Count = 0;
 
 	public:
 
-		explicit UpdateDialog(QWidget* Parent = nullptr);
+		explicit UpdateDialog(QWidget* Parent = nullptr,
+						  const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>(),
+						  const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
 		virtual ~UpdateDialog(void) override;
+
+		QString getUpdateRules(void);
+
+	private slots:
+
+		void searchEdited(const QString& Search);
+
+		void fieldChecked(bool Enabled);
+
+	public slots:
+
+		virtual void accept(void) override;
+
+		void setAvailableFields(const QList<QPair<QString, QString>>& Fields,
+						    const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+
+		void setFieldsData(const QHash<QString, QString>& Data);
+
+	signals:
+
+		void onValuesUpdate(const QString&);
 
 };
 

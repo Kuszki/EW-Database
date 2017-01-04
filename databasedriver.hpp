@@ -62,6 +62,8 @@ class DatabaseDriver : public QObject
 
 		static const QList<QPair<QString, QString>> commonAttribs;
 		static const QList<QPair<QString, QString>> writeAttribs;
+		static const QHash<QString, QString> writeBridges;
+		static const QHash<QString, QString> dictQueries;
 		static const QStringList fieldOperators;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
@@ -76,7 +78,7 @@ class DatabaseDriver : public QObject
 
 		QHash<QString, QHash<int, QString>> allDictionary(void) const;
 
-
+		QHash<QString, QString> getEditValues(RecordModel* Model, const QModelIndex& Index);
 
 	public slots:
 
@@ -88,6 +90,8 @@ class DatabaseDriver : public QObject
 		bool closeDatabase(void);
 
 		void updateData(const QString& Filter);
+
+		void setData(RecordModel* Model, const QModelIndexList& Items, const QString& Values);
 
 	signals:
 

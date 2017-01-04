@@ -45,13 +45,14 @@ FilterWidget::FilterWidget(const QString& Name, const QString& Key, QWidget* Par
 	}
 
 	Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	Widget->setEnabled(false);
+	Widget->setEnabled(ui->Field->isChecked());
 
 	ui->Field->setText(Name);
 	ui->Operator->addItems(DatabaseDriver::fieldOperators);
 	ui->horizontalLayout->addWidget(Widget);
 
 	connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
+	connect(ui->Field, &QCheckBox::toggled, this, &FilterWidget::onStatusChanged);
 }
 
 FilterWidget::~FilterWidget(void)

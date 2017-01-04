@@ -21,13 +21,94 @@
 #include "updatewidget.hpp"
 #include "ui_updatewidget.h"
 
-UpdateWidget::UpdateWidget(QWidget* Parent)
+UpdateWidget::UpdateWidget(const QString& Name, const QString& Key, QWidget* Parent, const QHash<int, QString>& Dictionary)
 : QWidget(Parent), ui(new Ui::UpdateWidget)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); setObjectName(Key);
+
+	if (Dictionary.isEmpty())
+	{
+		auto Edit = new QLineEdit(this); Widget = Edit;
+
+		connect(Edit, &QLineEdit::editingFinished, this, &UpdateWidget::editFinished);
+	}
+	else
+	{
+		auto Combo = new QComboBox(this); Widget = Combo;
+
+		for (auto i = Dictionary.constBegin(); i != Dictionary.constEnd(); ++i)
+		{
+			Combo->addItem(i.value(), i.key());
+		}
+
+		connect(Combo, &QComboBox::currentTextChanged, this, &UpdateWidget::editFinished);
+	}
+
+	Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	Widget->setEnabled(ui->Field->isChecked());
+
+	ui->Field->setText(Name);
+	ui->horizontalLayout->addWidget(Widget);
+
+	connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
+	connect(ui->Field, &QCheckBox::toggled, this, &UpdateWidget::onStatusChanged);
 }
 
 UpdateWidget::~UpdateWidget(void)
 {
 	delete ui;
+}
+
+QString UpdateWidget::getAssigment(void) const
+{
+	return QString("%1 = '%2'").arg(objectName(), getValue());
+}
+
+QString UpdateWidget::getValue(void) const
+{
+	QString Text;
+
+	if (auto W = dynamic_cast<QComboBox*>(Widget)) Text = W->currentData(Qt::UserRole).toString();
+	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) Text = W->text();
+
+	return Text;
+}
+
+void UpdateWidget::editFinished(void)
+{
+	emit onValueUpdate(objectName(), getValue());
+}
+
+void UpdateWidget::setParameters(const QString& Name, const QString& Key, const QString& Value)
+{
+	ui->Field->setText(Name); setValue(Value); setObjectName(Key);
+}
+
+void UpdateWidget::setName(const QString& Name)
+{
+	ui->Field->setText(Name);
+}
+
+void UpdateWidget::setKey(const QString& Key)
+{
+	setObjectName(Key);
+}
+
+void UpdateWidget::setValue(const QString& Value)
+{
+	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->setCurrentText(Value);
+	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->setText(Value);
+}
+
+bool UpdateWidget::isChecked(void) const
+{
+	return ui->Field->isChecked();
+}
+
+void UpdateWidget::reset(void)
+{
+	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->clear();
+	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->clear();
+
+	ui->Field->setChecked(false);
 }

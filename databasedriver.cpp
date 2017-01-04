@@ -23,26 +23,35 @@
 const QList<QPair<QString, QString>> DatabaseDriver::commonAttribs =
 {
 	{ "EW_OBIEKTY.UID",			tr("Database ID") },
+	{ "EW_OPERATY.NUMER",		tr("Job name") },
 	{ "EW_OBIEKTY.KOD",			tr("Object code") },
+	{ "EW_OB_OPISY.OPIS",		tr("Code description") },
 	{ "EW_OBIEKTY.NUMER",		tr("Object ID") },
 	{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
 	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
 	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
 	{ "EW_OBIEKTY.DTR",			tr("Delete date") },
-	{ "EW_OBIEKTY.STATUS",		tr("Object status") },
-	{ "EW_OPERATY.NUMER",		tr("Job name") },
-	{ "EW_OB_OPISY.OPIS",		tr("Code description") }
+	{ "EW_OBIEKTY.STATUS",		tr("Object status") }
 };
 
 const QList<QPair<QString, QString>> DatabaseDriver::writeAttribs =
 {
-	{ "EW_OBIEKTY.KOD",			tr("Object code") },
+	{ "EW_OBIEKTY.OPERAT",		tr("Job name") },
 	{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
 	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
 	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
 	{ "EW_OBIEKTY.DTR",			tr("Delete date") },
-	{ "EW_OBIEKTY.STATUS",		tr("Object status") },
-	{ "EW_OBIEKTY.OPERAT",		tr("Job name") }
+	{ "EW_OBIEKTY.STATUS",		tr("Object status") }
+};
+
+const QHash<QString, QString> DatabaseDriver::writeBridges  =
+{
+	{ "EW_OBIEKTY.OPERAT",		"EW_OPERATY.NUMER" }
+};
+
+const QHash<QString, QString> DatabaseDriver::dictQueries  =
+{
+	{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER" }
 };
 
 const QStringList DatabaseDriver::fieldOperators =
@@ -257,7 +266,16 @@ QHash<int, QString> DatabaseDriver::getDictionary(const QString& Field) const
 	QSettings Settings(Dictionary, QSettings::IniFormat);
 	QHash<int, QString> Result;
 
-	if (Settings.contains(Field))
+	if (dictQueries.contains(Field))
+	{
+		QSqlQuery Query(dictQueries[Field], Database);
+
+		if (Query.exec()) while (Query.next())
+		{
+			Result.insert(Query.value(0).toInt(), Query.value(1).toString());
+		}
+	}
+	else if (Settings.contains(Field))
 	{
 		Settings.beginGroup(Field);
 
@@ -278,6 +296,19 @@ QHash<QString, QHash<int, QString>> DatabaseDriver::allDictionary(void) const
 	QSettings Settings(Dictionary, QSettings::IniFormat);
 	QHash<QString, QHash<int, QString>> Result;
 
+	for (auto i = dictQueries.constBegin(); i != dictQueries.constEnd(); ++i)
+	{
+		QSqlQuery Query(i.value(), Database);
+		QHash<int, QString> Group;
+
+		if (Query.exec()) while (Query.next())
+		{
+			Group.insert(Query.value(0).toInt(), Query.value(1).toString());
+		}
+
+		if (!Group.isEmpty()) Result.insert(i.key(), Group);
+	}
+
 	for (const auto& Field : Settings.childGroups())
 	{
 		QHash<int, QString> Group;
@@ -292,10 +323,44 @@ QHash<QString, QHash<int, QString>> DatabaseDriver::allDictionary(void) const
 
 		Settings.endGroup();
 
-		Result.insert(Field, Group);
+		if (!Group.isEmpty()) Result.insert(Field, Group);
 	}
 
 	return Result;
+}
+
+QHash<QString, QString> DatabaseDriver::getEditValues(RecordModel* Model, const QModelIndex& Index)
+{
+	const auto Dict = allDictionary();
+	const auto Fields = allAttributes(false);
+	const auto Attr = Model->fullData(Index);
+
+	QHash<QString, QString> Output;
+	QHash<int, QString> Values;
+
+	for (const auto& Item : Attr) Values.insert(Item.first, Item.second.toString());
+
+	int i = 0; for (const auto& Field : Fields)
+	{
+		const QString Key = writeBridges.value(Field.first, Field.first);
+
+		if (Values.contains(i))
+		{
+			const QString Value = Values[i];
+
+			if (Dict.contains(Field.first))
+			{
+				Output.insert(Key, Dict[Field.first].value(Value.toInt(), Dict[Field.first].values().first()));
+			}
+			else
+			{
+				Output.insert(Key, Value);
+			}
+		}
+		else Output.insert(Key, QString()); ++i;
+	}
+
+	return Output;
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -371,4 +436,11 @@ void DatabaseDriver::updateData(const QString& Filter)
 
 	emit onEndProgress();
 	emit onDataLoad(Model);
+}
+
+void DatabaseDriver::setData(RecordModel* Model, const QModelIndexList& Items, const QString& Values)
+{
+	QVector<int> Indexes; Indexes.reserve(Items.count());
+
+	for (const auto& Index : Items) Indexes.append(Model->data(Index).toInt());
 }

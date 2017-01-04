@@ -35,6 +35,13 @@ ConnectDialog::ConnectDialog(QWidget *Parent)
 	ui->Database->setText(Settings.value("path", "").toString());
 	ui->User->setText(Settings.value("user", "").toString());
 	Settings.endGroup();
+
+	if (!ui->Server->text().isEmpty() &&
+	    !ui->Database->text().isEmpty() &&
+	    !ui->User->text().isEmpty())
+	{
+		ui->Password->setFocus();
+	}
 }
 
 ConnectDialog::~ConnectDialog(void)
@@ -61,16 +68,12 @@ void ConnectDialog::accept(void)
 
 void ConnectDialog::reject(void)
 {
-	ui->Password->clear();
-
-	QDialog::reject();
+	ui->Password->clear(); QDialog::reject();
 }
 
 void ConnectDialog::refused(const QString& Error)
 {
-	QMessageBox::critical(this, tr("Error"), Error);
-
-	setEnabled(true);
+	QMessageBox::critical(this, tr("Error"), Error); setEnabled(true);
 }
 
 void ConnectDialog::connected(void)
