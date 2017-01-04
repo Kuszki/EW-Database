@@ -18,32 +18,30 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef UPDATEDIALOG_HPP
-#define UPDATEDIALOG_HPP
+#ifndef UPDATEWIDGET_HPP
+#define UPDATEWIDGET_HPP
 
-#include <QDialog>
-
-#include "updatewidget.hpp"
+#include <QWidget>
 
 namespace Ui
 {
-	class UpdateDialog;
+	class UpdateWidget;
 }
 
-class UpdateDialog : public QDialog
+class UpdateWidget : public QWidget
 {
 
 		Q_OBJECT
 
 	private:
 
-		Ui::UpdateDialog* ui;
+		Ui::UpdateWidget* ui;
 
 	public:
 
-		explicit UpdateDialog(QWidget* Parent = nullptr);
-		virtual ~UpdateDialog(void) override;
+		explicit UpdateWidget(QWidget* Parent = nullptr);
+		virtual ~UpdateWidget(void) override;
 
 };
 
-#endif // UPDATEDIALOG_HPP
+#endif // UPDATEWIDGET_HPP
