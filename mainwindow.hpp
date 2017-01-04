@@ -89,7 +89,7 @@ class MainWindow : public QMainWindow
 
 		void updateGroups(const QStringList& Groups);
 		void updateColumns(const QStringList& Columns);
-		void updateData(const QString& Values);
+		void updateData(const QHash<QString, QString>& Values);
 
 		void loadData(RecordModel* Model);
 		void refreshData(void);
@@ -104,7 +104,7 @@ class MainWindow : public QMainWindow
 
 		void onUpdateRequest(const QString&);
 
-		void onEditRequest(RecordModel*, const QModelIndexList&, const QString&);
+		void onEditRequest(RecordModel*, const QModelIndexList&, const QHash<QString, QString>&);
 
 		void onDeleteRequest(void);
 

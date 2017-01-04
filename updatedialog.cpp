@@ -27,6 +27,7 @@ UpdateDialog::UpdateDialog(QWidget* Parent, const QList<QPair<QString, QString>>
 	ui->setupUi(this); setAvailableFields(Fields, Dictionary);
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+	ui->fieldsLayout->setAlignment(Qt::AlignTop);
 }
 
 UpdateDialog::~UpdateDialog(void)
@@ -34,25 +35,26 @@ UpdateDialog::~UpdateDialog(void)
 	delete ui;
 }
 
-QString UpdateDialog::getUpdateRules(void)
+QHash<QString, QString> UpdateDialog::getUpdateRules(void)
 {
-	QStringList Rules; for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+	QHash<QString, QString> Rules;
+
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 	{
 		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
-			if (W->isChecked()) Rules.append(W->getAssigment());
+			if (W->isChecked()) Rules.insert(W->objectName(), W->getValue());
 		}
 	}
 
-	if (Rules.isEmpty()) return QString();
-	else return Rules.join(", ");
+	return Rules;
 }
 
 void UpdateDialog::searchEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
-		if (auto W = ui->fieldsLayout->itemAt(i)->widget())
-			W->setVisible(W->objectName().contains(Search, Qt::CaseInsensitive));
+		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+			W->setVisible(W->getLabel().contains(Search, Qt::CaseInsensitive));
 }
 
 void UpdateDialog::fieldChecked(bool Enabled)

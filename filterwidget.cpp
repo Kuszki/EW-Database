@@ -91,6 +91,11 @@ QString FilterWidget::getValue(void) const
 	return Text;
 }
 
+QString FilterWidget::getLabel(void) const
+{
+	return ui->Field->text();
+}
+
 void FilterWidget::editFinished(void)
 {
 	emit onValueUpdate(objectName(), getValue());

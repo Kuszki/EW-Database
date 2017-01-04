@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
+	qRegisterMetaType<QHash<QString, QString>>("QHash<QString, QString>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
 
 	a.setApplicationName("EW-Database");

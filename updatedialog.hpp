@@ -50,7 +50,7 @@ class UpdateDialog : public QDialog
 						  const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
 		virtual ~UpdateDialog(void) override;
 
-		QString getUpdateRules(void);
+		QHash<QString, QString> getUpdateRules(void);
 
 	private slots:
 
@@ -69,7 +69,7 @@ class UpdateDialog : public QDialog
 
 	signals:
 
-		void onValuesUpdate(const QString&);
+		void onValuesUpdate(const QHash<QString, QString>&);
 
 };
 

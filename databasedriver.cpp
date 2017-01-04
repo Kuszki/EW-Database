@@ -76,7 +76,30 @@ QStringList DatabaseDriver::getAttribTables(void)
 	return List;
 }
 
-QStringList DatabaseDriver::getTableFields(const QString& Table)
+QString DatabaseDriver::getAttribTable(int ID)
+{
+	if (!Database.isOpen()) return QString();
+
+	QSqlQuery Query(Database);
+
+	Query.prepare(QString(
+			"SELECT "
+				"EW_OB_OPISY.DANE_DOD "
+			"FROM "
+				"EW_OB_OPISY "
+			"INNER JOIN "
+				"EW_OBIEKTY "
+			"ON "
+				"EW_OB_OPISY.KOD=EW_OBIEKTY.KOD "
+			"WHERE "
+				"EW_OBIEKTY.UID='%1'")
+			    .arg(ID));
+
+	if (Query.exec() && Query.next()) return Query.value(0).toString();
+	else return QString();
+}
+
+QStringList DatabaseDriver::getTableFields(const QString& Table, bool Write)
 {
 	if (!Database.isOpen()) return QStringList();
 
@@ -96,7 +119,8 @@ QStringList DatabaseDriver::getTableFields(const QString& Table)
 				"EW_OB_OPISY.DANE_DOD='%1'")
 			    .arg(Table));
 
-	for (const auto& Field : commonAttribs) List.append(Field.first);
+	if (Write) for (const auto& Field : writeAttribs) List.append(Field.first);
+	else for (const auto& Field : commonAttribs) List.append(Field.first);
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -163,6 +187,69 @@ QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QStr
 					.arg(Table));
 
 		if (!Values.isEmpty()) Queries.last().append(" WHERE ").append(Values);
+	}
+
+	return Queries;
+}
+
+QStringList DatabaseDriver::getUpdateQueries(const QList<int>& Indexes, const QHash<QString, QString>& Values)
+{
+	QHash<QString, QPair<QList<int>, QStringList>> Groups; QStringList Queries;
+
+	for (const auto& Index : Indexes)
+	{
+		const QString Table = getAttribTable(Index);
+
+		if (!Groups.contains(Table)) Groups.insert(Table, qMakePair(QList<int>(), getTableFields(Table, true)));
+
+		Groups[Table].first.append(Index);
+	}
+
+	for (auto g = Groups.constBegin(); g != Groups.constEnd(); ++g)
+	{
+		auto Set = Values; QStringList CommonAssign, SpecialAssign, Ids, Delete;
+
+		for (auto i = Set.begin(); i != Set.end(); ++i) for (const auto& Attr : writeAttribs)
+		{
+			if (Attr.first == i.key())
+			{
+				CommonAssign.append(QString("%1 = '%2'").arg(i.key()).arg(i.value()));
+				Delete.append(i.key());
+			}
+		}
+
+		for (const auto& Key : Delete) Set.remove(Key);
+
+		for (auto i = Set.begin(); i != Set.end(); ++i)
+		{
+			if (g.value().second.contains(i.key()))
+			{
+				SpecialAssign.append(QString("%1 = '%2'").arg(i.key()).arg(i.value()));
+			}
+		}
+
+		for (const auto& ID : g.value().first) Ids.append(QString("'%1'").arg(ID));
+
+		Queries.append(QString(
+			"UPDATE "
+				"EW_OBIEKTY "
+			"SET "
+				"%1 "
+			"WHERE "
+				"EW_OBIEKTY.UID IN (%2)")
+					.arg(CommonAssign.join(", "))
+					.arg(Ids.join(", ")));
+
+		Queries.append(QString(
+			"UPDATE "
+				"%1 "
+			"SET "
+				"%2 "
+			"WHERE "
+				"EW_OBIEKTY.UID IN (%3)")
+					.arg(g.key())
+					.arg(SpecialAssign.join(", "))
+					.arg(Ids.join(", ")));
 	}
 
 	return Queries;
@@ -438,9 +525,11 @@ void DatabaseDriver::updateData(const QString& Filter)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::setData(RecordModel* Model, const QModelIndexList& Items, const QString& Values)
+void DatabaseDriver::setData(RecordModel* Model, const QModelIndexList& Items, const QHash<QString, QString>& Values)
 {
-	QVector<int> Indexes; Indexes.reserve(Items.count());
+	QList<int> Indexes; for (const auto Item : Items) Indexes.append(Model->data(Item).toInt());
 
-	for (const auto& Index : Items) Indexes.append(Model->data(Index).toInt());
+	const auto Queries = getUpdateQueries(Indexes, Values);
+
+	qDebug() << Queries;
 }

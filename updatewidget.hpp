@@ -48,6 +48,7 @@ class UpdateWidget : public QWidget
 
 		QString getAssigment(void) const;
 		QString getValue(void) const;
+		QString getLabel(void) const;
 
 	private slots:
 

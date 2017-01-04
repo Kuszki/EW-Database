@@ -50,6 +50,7 @@ class FilterWidget : public QWidget
 
 		QString getCondition(void) const;
 		QString getValue(void) const;
+		QString getLabel(void) const;
 
 	private slots:
 

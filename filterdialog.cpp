@@ -27,6 +27,7 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<QPair<QString, QString>>
 	ui->setupUi(this); setAvailableFields(Fields, Dictionary);
 
 	ui->Operator->addItems(DatabaseDriver::fieldOperators);
+	ui->simpleLayout->setAlignment(Qt::AlignTop);
 
 	connect(ui->tabWidget, &QTabWidget::currentChanged, ui->searchEdit, &QLineEdit::setHidden);
 }
@@ -61,8 +62,8 @@ QString FilterDialog::getFilterRules(void)
 void FilterDialog::searchEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->simpleLayout->count(); ++i)
-		if (auto W = ui->simpleLayout->itemAt(i)->widget())
-			W->setVisible(W->objectName().contains(Search, Qt::CaseInsensitive));
+		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+			W->setVisible(W->getLabel().contains(Search, Qt::CaseInsensitive));
 }
 
 void FilterDialog::buttonClicked(QAbstractButton* Button)

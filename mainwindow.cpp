@@ -243,12 +243,12 @@ void MainWindow::updateColumns(const QStringList& Columns)
 	}
 }
 
-void MainWindow::updateData(const QString& Values)
+void MainWindow::updateData(const QHash<QString, QString>& Values)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
 
-	emit onEditRequest(Model, Selection->selectedRows(), "");
+	emit onEditRequest(Model, Selection->selectedRows(), Values);
 }
 
 void MainWindow::loadData(RecordModel* Model)

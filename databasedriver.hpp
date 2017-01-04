@@ -47,12 +47,14 @@ class DatabaseDriver : public QObject
 		QString Dictionary;
 
 		QStringList getAttribTables(void);
+		QString getAttribTable(int ID);
 
-		QStringList getTableFields(const QString& Table);
+		QStringList getTableFields(const QString& Table, bool Write = false);
 		QStringList getValuesFields(const QString& Values);
 		QStringList getQueryFields(QStringList All, const QStringList& Table);
 
 		QStringList getDataQueries(const QStringList& Tables, const QString& Values = QString());
+		QStringList getUpdateQueries(const QList<int>& Indexes, const QHash<QString, QString>& Values);
 
 		QHash<int, QHash<int, QString>> indexDictionary(void);
 
@@ -91,7 +93,7 @@ class DatabaseDriver : public QObject
 
 		void updateData(const QString& Filter);
 
-		void setData(RecordModel* Model, const QModelIndexList& Items, const QString& Values);
+		void setData(RecordModel* Model, const QModelIndexList& Items, const QHash<QString, QString>& Values);
 
 	signals:
 

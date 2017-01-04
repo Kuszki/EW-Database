@@ -74,6 +74,11 @@ QString UpdateWidget::getValue(void) const
 	return Text;
 }
 
+QString UpdateWidget::getLabel(void) const
+{
+	return ui->Field->text();
+}
+
 void UpdateWidget::editFinished(void)
 {
 	emit onValueUpdate(objectName(), getValue());
