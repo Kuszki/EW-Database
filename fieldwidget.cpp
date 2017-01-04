@@ -18,7 +18,7 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "filterwidget.hpp"
+#include "fieldwidget.hpp"
 #include "ui_filterwidget.h"
 
 FieldWidget::FieldWidget(const QString& Name, const QString& Key, QWidget* Parent, const QHash<int, QString>& Dictionary)
