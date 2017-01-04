@@ -576,6 +576,11 @@ QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent)
 	return List;
 }
 
+int RecordModel::totalCount(void) const
+{
+	return Objects.count();
+}
+
 void RecordModel::groupBy(const QStringList& Groupby)
 {
 	if (Groups == Groupby) { emit onGroupComplete(); return; } Groups = Groupby;

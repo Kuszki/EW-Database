@@ -36,7 +36,8 @@ SOURCES		+=	main.cpp \
 				queryhlighter.cpp \
 				queryeditor.cpp \
 				recordmodel.cpp \
-				aboutdialog.cpp
+				aboutdialog.cpp \
+				updatedialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -48,7 +49,8 @@ HEADERS		+=	mainwindow.hpp \
 				queryhlighter.hpp \
 				queryeditor.hpp \
 				recordmodel.hpp \
-				aboutdialog.hpp
+				aboutdialog.hpp \
+				updatedialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -56,7 +58,8 @@ FORMS		+=	mainwindow.ui \
 				groupdialog.ui \
 				filterdialog.ui \
 				filterwidget.ui \
-				aboutdialog.ui
+				aboutdialog.ui \
+				updatedialog.ui
 
 RESOURCES		+=	resources.qrc
 

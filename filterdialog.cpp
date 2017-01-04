@@ -21,10 +21,10 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Fields)
+FilterDialog::FilterDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setAvailableFields(Fields);
+	ui->setupUi(this); setAvailableFields(Fields, Dictionary);
 
 	ui->Operator->addItems(DatabaseDriver::fieldOperators);
 
@@ -108,7 +108,7 @@ void FilterDialog::accept(void)
 	emit onFiltersUpdate(getFilterRules()); QDialog::accept();
 }
 
-void FilterDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fields)
+void FilterDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
 {
 	if (ui->Field->count()) ui->Field->clear();
 
@@ -116,8 +116,8 @@ void FilterDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fiel
 
 	int i = 0; for (const auto& Field : Fields)
 	{
-		ui->simpleLayout->addWidget(new FilterWidget(Field.second, Field.first, this));
+		ui->simpleLayout->addWidget(new FilterWidget(Field.second, Field.first, this, Dictionary.value(Field.first)));
 		ui->Field->addItem(Field.second);
-		ui->Field->setItemData(i, Field.first, Qt::UserRole);
+		ui->Field->setItemData(i++, Field.first, Qt::UserRole);
 	}
 }

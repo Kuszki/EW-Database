@@ -77,7 +77,9 @@ class MainWindow : public QMainWindow
 	private slots:
 
 		void ConnectActionClicked(void);
-		void refreshData(void);
+		void DeleteActionClicked(void);
+
+		void selectionChanged(void);
 
 		void databaseConnected(void);
 		void databaseDisconnected(void);
@@ -87,6 +89,7 @@ class MainWindow : public QMainWindow
 		void updateColumns(const QStringList& Columns);
 
 		void loadData(RecordModel* Model);
+		void refreshData(void);
 
 		void completeGrouping(void);
 

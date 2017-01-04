@@ -168,6 +168,8 @@ class RecordModel : public QAbstractItemModel
 
 		QModelIndexList getIndexes(const QModelIndex& Parent = QModelIndex());
 
+		int totalCount(void) const;
+
 	public slots:
 
 		void groupBy(const QStringList& Groupby);

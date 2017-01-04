@@ -34,17 +34,23 @@ const QList<QPair<QString, QString>> DatabaseDriver::commonAttribs =
 	{ "EW_OB_OPISY.OPIS",		tr("Code description") }
 };
 
+const QList<QPair<QString, QString>> DatabaseDriver::writeAttribs =
+{
+	{ "EW_OBIEKTY.KOD",			tr("Object code") },
+	{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
+	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
+	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
+	{ "EW_OBIEKTY.DTR",			tr("Delete date") },
+	{ "EW_OBIEKTY.STATUS",		tr("Object status") },
+	{ "EW_OBIEKTY.OPERAT",		tr("Job name") }
+};
+
 const QStringList DatabaseDriver::fieldOperators =
 {
 	"=", "<>", ">=", ">", "<=", "<",
 	"LIKE", "NOT LIKE",
 	"IS", "IS NOT",
 	"IN", "NOT IN"
-};
-
-const QStringList DatabaseDriver::readAttribs =
-{
-	"EW_OBIEKTY.UID", "EW_OBIEKTY.KOD", "EW_OBIEKTY.NUMER", "EW_OPERATY.NUMER", "EW_OB_OPISY.OPIS"
 };
 
 QStringList DatabaseDriver::getAttribTables(void)
@@ -153,6 +159,21 @@ QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QStr
 	return Queries;
 }
 
+QHash<int, QHash<int, QString>> DatabaseDriver::indexDictionary(void)
+{
+	const auto Attribs = allAttributes();
+	const auto Data = allDictionary();
+
+	QHash<int, QHash<int, QString>> Result;
+
+	for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) for (int j = 0; j < Attribs.size(); ++j)
+	{
+		if (Attribs[j].first == i.key()) Result.insert(j, i.value());
+	}
+
+	return Result;
+}
+
 bool DatabaseDriver::checkFieldsInQuery(const QStringList& Used, const QStringList& Table) const
 {
 	QStringList Common; for (const auto& Field : commonAttribs) Common.append(Field.first);
@@ -168,7 +189,16 @@ bool DatabaseDriver::checkFieldsInQuery(const QStringList& Used, const QStringLi
 DatabaseDriver::DatabaseDriver(QObject* Parent)
 : QObject(Parent)
 {
-	Database = QSqlDatabase::addDatabase("QIBASE");
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
+	Settings.endGroup();
+
+	// TODO add basic dictionary to resources and copy if not exists
+	Settings.beginGroup("Columns");
+	Dictionary = Settings.value("dictionary", "Dictionary.ini").toString();
+	Settings.endGroup();
 }
 
 DatabaseDriver::~DatabaseDriver(void) {}
@@ -217,9 +247,55 @@ QList<QPair<QString, QString>> DatabaseDriver::getAttributes(const QString& Key)
 	return Res;
 }
 
-QList<QPair<QString, QString>> DatabaseDriver::allAttributes(void)
+QList<QPair<QString, QString>> DatabaseDriver::allAttributes(bool Write)
 {
-	auto Attrib = commonAttribs; Attrib.append(getAttributes()); return Attrib;
+	auto Attrib = Write ? writeAttribs : commonAttribs; Attrib.append(getAttributes()); return Attrib;
+}
+
+QHash<int, QString> DatabaseDriver::getDictionary(const QString& Field) const
+{
+	QSettings Settings(Dictionary, QSettings::IniFormat);
+	QHash<int, QString> Result;
+
+	if (Settings.contains(Field))
+	{
+		Settings.beginGroup(Field);
+
+		for (const QString& Key : Settings.childKeys())
+		{
+			bool OK = false; const int ID = Key.toInt(&OK);
+			if (OK) Result.insert(ID, Settings.value(Key).toString());
+		}
+
+		Settings.endGroup();
+	}
+
+	return Result;
+}
+
+QHash<QString, QHash<int, QString>> DatabaseDriver::allDictionary(void) const
+{
+	QSettings Settings(Dictionary, QSettings::IniFormat);
+	QHash<QString, QHash<int, QString>> Result;
+
+	for (const auto& Field : Settings.childGroups())
+	{
+		QHash<int, QString> Group;
+
+		Settings.beginGroup(Field);
+
+		for (const QString& Key : Settings.childKeys())
+		{
+			bool OK = false; const int ID = Key.toInt(&OK);
+			if (OK) Group.insert(ID, Settings.value(Key).toString());
+		}
+
+		Settings.endGroup();
+
+		Result.insert(Field, Group);
+	}
+
+	return Result;
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -254,6 +330,7 @@ void DatabaseDriver::updateData(const QString& Filter)
 	if (!Database.isOpen()) return;
 
 	const auto Queries = getDataQueries(getAttribTables(), Filter);
+	const auto Aliases = indexDictionary();
 	const auto Fields = allAttributes();
 	const int Size = Fields.size();
 
@@ -278,7 +355,11 @@ void DatabaseDriver::updateData(const QString& Filter)
 
 				if (Value.isValid() && !Value.isNull())
 				{
-					Object.append(qMakePair(i, Value));
+					if (Aliases.contains(i) && Aliases[i].contains(Value.toInt()))
+					{
+						Object.append(qMakePair(i, Aliases[i][Value.toInt()]));
+					}
+					else Object.append(qMakePair(i, Value));
 				}
 			}
 

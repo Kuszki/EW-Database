@@ -44,6 +44,8 @@ class DatabaseDriver : public QObject
 
 		QSqlDatabase Database;
 
+		QString Dictionary;
+
 		QStringList getAttribTables(void);
 
 		QStringList getTableFields(const QString& Table);
@@ -52,13 +54,15 @@ class DatabaseDriver : public QObject
 
 		QStringList getDataQueries(const QStringList& Tables, const QString& Values = QString());
 
+		QHash<int, QHash<int, QString>> indexDictionary(void);
+
 		bool checkFieldsInQuery(const QStringList& Used, const QStringList& Table) const;
 
 	public:
 
 		static const QList<QPair<QString, QString>> commonAttribs;
+		static const QList<QPair<QString, QString>> writeAttribs;
 		static const QStringList fieldOperators;
-		static const QStringList readAttribs;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
@@ -66,7 +70,13 @@ class DatabaseDriver : public QObject
 		QList<QPair<QString, QString>> getAttributes(const QStringList& Keys = QStringList());
 		QList<QPair<QString, QString>> getAttributes(const QString& Key);
 
-		QList<QPair<QString, QString>> allAttributes(void);
+		QList<QPair<QString, QString>> allAttributes(bool Write = false);
+
+		QHash<int, QString> getDictionary(const QString& Field) const;
+
+		QHash<QString, QHash<int, QString>> allDictionary(void) const;
+
+
 
 	public slots:
 

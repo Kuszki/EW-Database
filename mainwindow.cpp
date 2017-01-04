@@ -67,7 +67,6 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
 			ui->actionEdit->setEnabled(true);
-			ui->actionDelete->setEnabled(true);
 			ui->Data->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setVisible(true);
@@ -96,6 +95,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	restoreGeometry(Settings.value("geometry").toByteArray());
 	restoreState(Settings.value("state").toByteArray());
 	Settings.endGroup();
+
+	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::DeleteActionClicked);
 
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
@@ -147,6 +148,29 @@ void MainWindow::ConnectActionClicked(void)
 	Dialog->open();
 }
 
+void MainWindow::DeleteActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+
+	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
+						 tr("Are you sure to delete selected items?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+
+	}
+}
+
+void MainWindow::selectionChanged(void)
+{
+	const int Count = ui->Data->selectionModel()->selectedRows().count();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	ui->statusBar->showMessage(tr("Selected %1 from %2 objects")
+		.arg(Count).arg(Model ? Model->totalCount() : 0));
+
+	ui->actionDelete->setEnabled(Count);
+}
+
 void MainWindow::refreshData(void)
 {
 	lockUi(BUSY); ui->statusBar->showMessage(tr("Querying database"));
@@ -156,12 +180,13 @@ void MainWindow::refreshData(void)
 
 void MainWindow::databaseConnected(void)
 {
+	const auto Dict = Driver->allDictionary();
 	const auto Spec = Driver->getAttributes();
 	const auto All = Driver->allAttributes();
 
 	Columns = new ColumnsDialog(this, Driver->commonAttribs, Spec);
 	Groups = new GroupDialog(this, Driver->commonAttribs);
-	Filter = new FilterDialog(this, All);
+	Filter = new FilterDialog(this, All, Dict);
 
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
@@ -221,6 +246,7 @@ void MainWindow::loadData(RecordModel* Model)
 
 	const auto Groupby = Groups->getEnabledGroups(); emit onDeleteRequest();
 
+	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged, this, &MainWindow::selectionChanged);
 	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupBy);
 	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::completeGrouping);

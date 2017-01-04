@@ -34,19 +34,11 @@
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QLineEdit" name="Value">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
   </layout>
  </widget>
  <tabstops>
   <tabstop>Field</tabstop>
   <tabstop>Operator</tabstop>
-  <tabstop>Value</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -63,38 +55,6 @@
     <hint type="destinationlabel">
      <x>57</x>
      <y>22</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Field</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>Value</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>14</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>277</x>
-     <y>19</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Value</sender>
-   <signal>editingFinished()</signal>
-   <receiver>FilterWidget</receiver>
-   <slot>editFinished()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>354</x>
-     <y>22</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>385</x>
-     <y>248</y>
     </hint>
    </hints>
   </connection>

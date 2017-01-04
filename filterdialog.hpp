@@ -45,7 +45,9 @@ class FilterDialog : public QDialog
 
 	public:
 
-		explicit FilterDialog(QWidget* Parent = nullptr, const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>());
+		explicit FilterDialog(QWidget* Parent = nullptr,
+						  const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>(),
+						  const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
 		virtual ~FilterDialog(void) override;
 
 		QString getFilterRules(void);
@@ -62,7 +64,8 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setAvailableFields(const QList<QPair<QString, QString>>& Fields);
+		void setAvailableFields(const QList<QPair<QString, QString>>& Fields,
+						    const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
 
 	signals:
 

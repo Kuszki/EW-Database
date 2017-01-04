@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Firebird database editor                                               *
- *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
+ *  KLScript code highlighter for KLLibs                                   *
+ *  Copyright (C) 2015  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
  *                                                                         *
  *  This program is free software: you can redistribute it and/or modify   *
  *  it under the terms of the GNU General Public License as published by   *
@@ -18,59 +18,30 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef FILTERWIDGET_HPP
-#define FILTERWIDGET_HPP
+#ifndef UPDATEDIALOG_HPP
+#define UPDATEDIALOG_HPP
 
-#include <QComboBox>
-#include <QLineEdit>
-#include <QWidget>
-
-#include "databasedriver.hpp"
+#include <QDialog>
 
 namespace Ui
 {
-	class FilterWidget;
+	class UpdateDialog;
 }
 
-class FilterWidget : public QWidget
+class UpdateDialog : public QDialog
 {
 
 		Q_OBJECT
 
 	private:
 
-		Ui::FilterWidget* ui;
-		QWidget* Widget;
+		Ui::UpdateDialog* ui;
 
 	public:
 
-		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr,
-						  const QHash<int, QString>& Dictionary = QHash<int, QString>());
-		virtual ~FilterWidget(void) override;
-
-		QString getCondition(void) const;
-		QString getValue(void) const;
-
-	private slots:
-
-		void editFinished(void);
-
-	public slots:
-
-		void setParameters(const QString& Name, const QString& Key, const QString& Value);
-
-		void setName(const QString& Name);
-		void setKey(const QString& Key);
-		void setValue(const QString& Value);
-
-		bool isChecked(void) const;
-
-		void reset(void);
-
-	signals:
-
-		void onValueUpdate(const QString&, const QString&);
+		explicit UpdateDialog(QWidget* Parent = nullptr);
+		virtual ~UpdateDialog(void) override;
 
 };
 
-#endif // FILTERWIDGET_HPP
+#endif // UPDATEDIALOG_HPP
