@@ -18,10 +18,10 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "fieldwidget.hpp"
+#include "filterwidget.hpp"
 #include "ui_filterwidget.h"
 
-FieldWidget::FieldWidget(const QString& Name, const QString& Key, QWidget* Parent, const QHash<int, QString>& Dictionary)
+FilterWidget::FilterWidget(const QString& Name, const QString& Key, QWidget* Parent, const QHash<int, QString>& Dictionary)
 : QWidget(Parent), ui(new Ui::FilterWidget)
 {
 	ui->setupUi(this); setObjectName(Key);
@@ -30,7 +30,7 @@ FieldWidget::FieldWidget(const QString& Name, const QString& Key, QWidget* Paren
 	{
 		auto Edit = new QLineEdit(this); Widget = Edit;
 
-		connect(Edit, &QLineEdit::editingFinished, this, &FieldWidget::editFinished);
+		connect(Edit, &QLineEdit::editingFinished, this, &FilterWidget::editFinished);
 	}
 	else
 	{
@@ -41,7 +41,7 @@ FieldWidget::FieldWidget(const QString& Name, const QString& Key, QWidget* Paren
 			Combo->addItem(i.value(), i.key());
 		}
 
-		connect(Combo, &QComboBox::currentTextChanged, this, &FieldWidget::editFinished);
+		connect(Combo, &QComboBox::currentTextChanged, this, &FilterWidget::editFinished);
 	}
 
 	Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -54,12 +54,12 @@ FieldWidget::FieldWidget(const QString& Name, const QString& Key, QWidget* Paren
 	connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
 }
 
-FieldWidget::~FieldWidget(void)
+FilterWidget::~FilterWidget(void)
 {
 	delete ui;
 }
 
-QString FieldWidget::getCondition(void) const
+QString FilterWidget::getCondition(void) const
 {
 	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
 	{
@@ -80,7 +80,7 @@ QString FieldWidget::getCondition(void) const
 	}
 }
 
-QString FieldWidget::getValue(void) const
+QString FilterWidget::getValue(void) const
 {
 	QString Text;
 
@@ -90,38 +90,38 @@ QString FieldWidget::getValue(void) const
 	return Text;
 }
 
-void FieldWidget::editFinished(void)
+void FilterWidget::editFinished(void)
 {
 	emit onValueUpdate(objectName(), getValue());
 }
 
-void FieldWidget::setParameters(const QString& Name, const QString& Key, const QString& Value)
+void FilterWidget::setParameters(const QString& Name, const QString& Key, const QString& Value)
 {
 	ui->Field->setText(Name); setValue(Value); setObjectName(Key);
 }
 
-void FieldWidget::setName(const QString& Name)
+void FilterWidget::setName(const QString& Name)
 {
 	ui->Field->setText(Name);
 }
 
-void FieldWidget::setKey(const QString& Key)
+void FilterWidget::setKey(const QString& Key)
 {
 	setObjectName(Key);
 }
 
-void FieldWidget::setValue(const QString& Value)
+void FilterWidget::setValue(const QString& Value)
 {
 	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->setCurrentText(Value);
 	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->setText(Value);
 }
 
-bool FieldWidget::isChecked(void) const
+bool FilterWidget::isChecked(void) const
 {
 	return ui->Field->isChecked();
 }
 
-void FieldWidget::reset(void)
+void FilterWidget::reset(void)
 {
 	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->clear();
 	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->clear();
