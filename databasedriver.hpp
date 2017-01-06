@@ -98,6 +98,7 @@ class DatabaseDriver : public QObject
 	signals:
 
 		void onDataLoad(RecordModel*);
+		void onDataUpdate(RecordModel*);
 
 		void onAttributesLoad(const QList<QPair<QString, QString>>&);
 		void onError(const QString&);

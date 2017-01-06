@@ -106,6 +106,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
 
 	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
+	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::reloadData);
 
 	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -248,6 +249,8 @@ void MainWindow::updateData(const QHash<QString, QString>& Values)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
 
+	lockUi(BUSY); ui->statusBar->showMessage(tr("Updating data"));
+
 	emit onEditRequest(Model, Selection->selectedRows(), Values);
 }
 
@@ -264,6 +267,11 @@ void MainWindow::loadData(RecordModel* Model)
 
 	if (Groupby.isEmpty()) lockUi(DONE);
 	else updateGroups(Groupby);
+}
+
+void MainWindow::reloadData(RecordModel* Model)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated, to reenable filter use reload action"));
 }
 
 void MainWindow::completeGrouping(void)

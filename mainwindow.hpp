@@ -92,6 +92,7 @@ class MainWindow : public QMainWindow
 		void updateData(const QHash<QString, QString>& Values);
 
 		void loadData(RecordModel* Model);
+		void reloadData(RecordModel* Model);
 		void refreshData(void);
 
 		void completeGrouping(void);

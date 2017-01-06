@@ -503,7 +503,7 @@ void DatabaseDriver::updateData(const QString& Filter)
 
 			for (int i = 0; i < Size; ++i)
 			{
-				QVariant Value = Query.value(i);
+				const QVariant Value = Query.value(i);
 
 				if (Value.isValid() && !Value.isNull())
 				{
@@ -527,9 +527,57 @@ void DatabaseDriver::updateData(const QString& Filter)
 
 void DatabaseDriver::setData(RecordModel* Model, const QModelIndexList& Items, const QHash<QString, QString>& Values)
 {
-	QList<int> Indexes; for (const auto Item : Items) Indexes.append(Model->data(Item).toInt());
+	QList<int> Indexes; QStringList Where; int Progress = 0;
 
+	for (const auto Item : Items) Indexes.append(Model->data(Item).toInt());
+
+	for (const auto& ID : Indexes) Where.append(QString::number(ID));
+
+	const auto Check = getDataQueries(getAttribTables(), QString("EW_OBIEKTY.UID IN ('%1')").arg(Where.join("', '")));
 	const auto Queries = getUpdateQueries(Indexes, Values);
+	const auto Aliases = indexDictionary();
+	const int Size = allAttributes().size();
 
-	qDebug() << Queries;
+	emit onSetupProgress(0, Queries.size() + Check.size());
+	emit onBeginProgress();
+
+	for (const auto& Request : Queries)
+	{
+		QSqlQuery Query(Database); Query.exec(Request);
+
+		emit onUpdateProgress(++Progress);
+	}
+
+	for (const auto& Request : Check)
+	{
+		QSqlQuery Query(Database);
+
+		if (Query.exec(Request)) while (Query.next())
+		{
+			QList<QPair<int, QVariant>> Object; int ID = 0;
+
+			for (int i = 0; i < Size; ++i)
+			{
+				const QVariant Value = Query.value(i);
+
+				if (Value.isValid() && !Value.isNull())
+				{
+					if (Aliases.contains(i) && Aliases[i].contains(Value.toInt()))
+					{
+						Object.append(qMakePair(i, Aliases[i][Value.toInt()]));
+					}
+					else Object.append(qMakePair(i, Value));
+				}
+
+				if (i == 0) ID = Value.toInt();
+			}
+
+			if (!Object.isEmpty() && Indexes.contains(ID)) Model->setData(Items[Indexes.indexOf(ID)], Object);
+		}
+
+		emit onUpdateProgress(++Progress);
+	}
+
+	emit onEndProgress();
+	emit onDataUpdate(Model);
 }
