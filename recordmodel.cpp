@@ -576,6 +576,40 @@ QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent)
 	return List;
 }
 
+bool RecordModel::removeItem(const QModelIndex& Index)
+{
+	if (!Index.isValid()) return false;
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (dynamic_cast<GroupObject*>(Object)) return false;
+
+	if (Root)
+	{
+		GroupObject* Parent = Parents[Object];
+		const int Row = Parent->childIndex(Object);
+
+		beginRemoveRows(parent(Index), Row, Row);
+
+		Parent->removeChild(Object);
+		Objects.removeAll(Object);
+
+		endRemoveRows();
+	}
+	else
+	{
+		const int Row = Objects.indexOf(Object);
+
+		beginRemoveRows(parent(Index), Row, Row);
+
+		Objects.removeAll(Object); delete Object;
+
+		endRemoveRows();
+	}
+
+	return true;
+}
+
 int RecordModel::totalCount(void) const
 {
 	return Objects.count();

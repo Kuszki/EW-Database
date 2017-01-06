@@ -55,6 +55,7 @@ class DatabaseDriver : public QObject
 
 		QStringList getDataQueries(const QStringList& Tables, const QString& Values = QString());
 		QStringList getUpdateQueries(const QList<int>& Indexes, const QHash<QString, QString>& Values);
+		QStringList getRemoveQueries(const QList<int>& Indexes);
 
 		QHash<int, QHash<int, QString>> indexDictionary(void);
 
@@ -95,10 +96,13 @@ class DatabaseDriver : public QObject
 
 		void setData(RecordModel* Model, const QModelIndexList& Items, const QHash<QString, QString>& Values);
 
+		void removeData(RecordModel* Model, const QModelIndexList& Items);
+
 	signals:
 
 		void onDataLoad(RecordModel*);
 		void onDataUpdate(RecordModel*);
+		void onDataRemove(RecordModel*);
 
 		void onAttributesLoad(const QList<QPair<QString, QString>>&);
 		void onError(const QString&);

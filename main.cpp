@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 
 	qRegisterMetaType<QHash<QString, QString>>("QHash<QString, QString>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
+	qRegisterMetaType<QVector<int>>("QVector<int>");
 
 	a.setApplicationName("EW-Database");
 	a.setOrganizationName("Łukasz \"Kuszki\" Dróżdż");

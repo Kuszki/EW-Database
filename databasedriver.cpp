@@ -230,7 +230,7 @@ QStringList DatabaseDriver::getUpdateQueries(const QList<int>& Indexes, const QH
 
 		for (const auto& ID : g.value().first) Ids.append(QString("'%1'").arg(ID));
 
-		Queries.append(QString(
+		if (!CommonAssign.isEmpty()) Queries.append(QString(
 			"UPDATE "
 				"EW_OBIEKTY "
 			"SET "
@@ -240,17 +240,44 @@ QStringList DatabaseDriver::getUpdateQueries(const QList<int>& Indexes, const QH
 					.arg(CommonAssign.join(", "))
 					.arg(Ids.join(", ")));
 
-		Queries.append(QString(
+		if (!SpecialAssign.isEmpty()) Queries.append(QString(
 			"UPDATE "
-				"%1 "
+				"%1 D "
 			"SET "
 				"%2 "
 			"WHERE "
-				"EW_OBIEKTY.UID IN (%3)")
+				"D.UIDO IN (%3)")
 					.arg(g.key())
 					.arg(SpecialAssign.join(", "))
 					.arg(Ids.join(", ")));
 	}
+
+	return Queries;
+}
+
+QStringList DatabaseDriver::getRemoveQueries(const QList<int>& Indexes)
+{
+	QStringList Queries, Where;
+
+	for (const auto& ID : Indexes)
+	{
+		Where.append(QString::number(ID));
+
+		Queries.append(QString(
+			"DELETE FROM "
+				"%1 "
+			"WHERE "
+				"UIDO=%2")
+					.arg(ID)
+					.arg(getAttribTable(ID)));
+	}
+
+	Queries.append(QString(
+			"DELETE FROM "
+				"EW_OBIEKTY "
+			"WHERE "
+				"UID IN ('%1')")
+				.arg(Where.join("', '")));
 
 	return Queries;
 }
@@ -580,4 +607,28 @@ void DatabaseDriver::setData(RecordModel* Model, const QModelIndexList& Items, c
 
 	emit onEndProgress();
 	emit onDataUpdate(Model);
+}
+
+void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items)
+{
+	QList<int> Indexes; int Progress = 0;
+
+	for (const auto Item : Items) Indexes.append(Model->data(Item).toInt());
+
+	const auto Queries = getRemoveQueries(Indexes);
+
+	emit onSetupProgress(0, Queries.size());
+	emit onBeginProgress();
+
+	for (const auto& Request : Queries)
+	{
+		QSqlQuery Query(Database); Query.exec(Request);
+
+		emit onUpdateProgress(++Progress);
+	}
+
+	for (const auto Item : Items) Model->removeItem(Item);
+
+	emit onEndProgress();
+	emit onDataRemove(Model);
 }

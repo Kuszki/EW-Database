@@ -168,6 +168,8 @@ class RecordModel : public QAbstractItemModel
 
 		QModelIndexList getIndexes(const QModelIndex& Parent = QModelIndex());
 
+		bool removeItem(const QModelIndex& Index);
+
 		int totalCount(void) const;
 
 	public slots:

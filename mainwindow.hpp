@@ -93,6 +93,7 @@ class MainWindow : public QMainWindow
 
 		void loadData(RecordModel* Model);
 		void reloadData(RecordModel* Model);
+		void removeData(RecordModel* Model);
 		void refreshData(void);
 
 		void completeGrouping(void);
@@ -106,6 +107,8 @@ class MainWindow : public QMainWindow
 		void onUpdateRequest(const QString&);
 
 		void onEditRequest(RecordModel*, const QModelIndexList&, const QHash<QString, QString>&);
+
+		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 
 		void onDeleteRequest(void);
 

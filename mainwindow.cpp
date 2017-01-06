@@ -107,6 +107,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
 	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::reloadData);
+	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
 
 	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -115,6 +116,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::setData);
+	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
 }
 
 MainWindow::~MainWindow(void)
@@ -150,12 +152,13 @@ void MainWindow::ConnectActionClicked(void)
 void MainWindow::DeleteActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
 						 tr("Are you sure to delete selected items?"),
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
-
+		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
 	}
 }
 
@@ -272,6 +275,11 @@ void MainWindow::loadData(RecordModel* Model)
 void MainWindow::reloadData(RecordModel* Model)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated, to reenable filter use reload action"));
+}
+
+void MainWindow::removeData(RecordModel* Model)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data removed"));
 }
 
 void MainWindow::completeGrouping(void)
