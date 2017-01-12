@@ -48,6 +48,7 @@ UpdateWidget::UpdateWidget(const QString& Name, const QString& Key, QWidget* Par
 	Widget->setEnabled(ui->Field->isChecked());
 
 	ui->Field->setText(Name);
+	ui->Field->setToolTip(Key);
 	ui->horizontalLayout->addWidget(Widget);
 
 	connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
@@ -68,7 +69,7 @@ QString UpdateWidget::getValue(void) const
 {
 	QString Text;
 
-	if (auto W = dynamic_cast<QComboBox*>(Widget)) Text = W->currentData(Qt::UserRole).toString();
+	if (auto W = dynamic_cast<QComboBox*>(Widget)) Text = W->currentData().toString();
 	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) Text = W->text();
 
 	return Text;
@@ -86,7 +87,10 @@ void UpdateWidget::editFinished(void)
 
 void UpdateWidget::setParameters(const QString& Name, const QString& Key, const QString& Value)
 {
-	ui->Field->setText(Name); setValue(Value); setObjectName(Key);
+	ui->Field->setText(Name);
+	ui->Field->setToolTip(Key);
+
+	setValue(Value); setObjectName(Key);
 }
 
 void UpdateWidget::setChecked(bool Checked)
@@ -101,6 +105,8 @@ void UpdateWidget::setName(const QString& Name)
 
 void UpdateWidget::setKey(const QString& Key)
 {
+	ui->Field->setToolTip(Key);
+
 	setObjectName(Key);
 }
 

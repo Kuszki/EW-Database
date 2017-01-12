@@ -48,6 +48,7 @@ FilterWidget::FilterWidget(const QString& Name, const QString& Key, QWidget* Par
 	Widget->setEnabled(ui->Field->isChecked());
 
 	ui->Field->setText(Name);
+	ui->Field->setToolTip(Key);
 	ui->Operator->addItems(DatabaseDriver::fieldOperators);
 	ui->horizontalLayout->addWidget(Widget);
 
@@ -62,7 +63,13 @@ FilterWidget::~FilterWidget(void)
 
 QString FilterWidget::getCondition(void) const
 {
-	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
+	{
+		return QString("%1 %2")
+				.arg(objectName())
+				.arg(ui->Operator->currentText());
+	}
+	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
 	{
 		return QString("%1 %2 ('%3')")
 				.arg(objectName())
@@ -83,17 +90,29 @@ QString FilterWidget::getCondition(void) const
 
 QString FilterWidget::getValue(void) const
 {
-	QString Text;
+	if (auto W = dynamic_cast<QComboBox*>(Widget))
+	{
+		const auto Text = W->currentText();;
 
-	if (auto W = dynamic_cast<QComboBox*>(Widget)) Text = W->currentData(Qt::UserRole).toString();
-	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) Text = W->text();
+		if (W->findText(Text) == -1) return Text;
+		else return W->currentData().toString();
 
-	return Text;
+	}
+	else if (auto W = dynamic_cast<QLineEdit*>(Widget))
+	{
+		return W->text();
+	}
+	else return QString();
 }
 
 QString FilterWidget::getLabel(void) const
 {
 	return ui->Field->text();
+}
+
+void FilterWidget::operatorChanged(const QString& Name)
+{
+	Widget->setVisible(Name != "IS NULL" && Name != "IS NOT NULL");
 }
 
 void FilterWidget::editFinished(void)
@@ -103,7 +122,10 @@ void FilterWidget::editFinished(void)
 
 void FilterWidget::setParameters(const QString& Name, const QString& Key, const QString& Value)
 {
-	ui->Field->setText(Name); setValue(Value); setObjectName(Key);
+	ui->Field->setText(Name);
+	ui->Field->setToolTip(Key);
+
+	setValue(Value); setObjectName(Key);
 }
 
 void FilterWidget::setChecked(bool Checked)
@@ -118,6 +140,8 @@ void FilterWidget::setName(const QString& Name)
 
 void FilterWidget::setKey(const QString& Key)
 {
+	ui->Field->setToolTip(Key);
+
 	setObjectName(Key);
 }
 

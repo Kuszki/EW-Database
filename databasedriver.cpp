@@ -24,7 +24,7 @@ const QStringList DatabaseDriver::fieldOperators =
 {
 	"=", "<>", ">=", ">", "<=", "<",
 	"LIKE", "NOT LIKE",
-	"IS", "IS NOT",
+	"IS NULL", "IS NOT NULL",
 	"IN", "NOT IN"
 };
 
@@ -373,29 +373,24 @@ QList<QPair<QString, QString>> DatabaseDriver::allAttributes(bool Write)
 
 QHash<int, QString> DatabaseDriver::getDictionary(const QString& Field) const
 {
-	QSettings Settings(Dictionary, QSettings::IniFormat);
 	QHash<int, QString> Result;
 
-	if (dictQueries.contains(Field))
+	if (Database.isOpen())
 	{
-		QSqlQuery Query(dictQueries[Field], Database);
+		QSqlQuery Query(Database);
 
-		if (Query.exec()) while (Query.next())
-		{
-			Result.insert(Query.value(0).toInt(), Query.value(1).toString());
-		}
-	}
-	else if (Settings.contains(Field))
-	{
-		Settings.beginGroup(Field);
+		Query.prepare(QString(
+			"SELECT DISTINCT "
+				"EW_OB_DDSL.WARTOSC, EW_OB_DDSL.OPIS"
+			"FROM "
+				"EW_OB_DDSL "
+			"INNER JOIN "
+				"EW_OB_DDSTR "
+			"ON "
+				"EW_OB_DDSL.UIDP=EW_OB_DDSTR.UID OR EW_OB_DDSL.UIDP=EW_OB_DDSTR.UIDSL AND EW_OB_DDSTR.NAZWA='%1'")
+				    .arg(Field));
 
-		for (const QString& Key : Settings.childKeys())
-		{
-			bool OK = false; const int ID = Key.toInt(&OK);
-			if (OK) Result.insert(ID, Settings.value(Key).toString());
-		}
-
-		Settings.endGroup();
+		if (Query.exec()) while (Query.next()) Result.insert(Query.value(0).toInt(), Query.value(1).toString());
 	}
 
 	return Result;
@@ -434,6 +429,30 @@ QHash<QString, QHash<int, QString>> DatabaseDriver::allDictionary(void) const
 		Settings.endGroup();
 
 		if (!Group.isEmpty()) Result.insert(Field, Group);
+	}
+
+	if (Database.isOpen())
+	{
+		QSqlQuery Query(Database);
+
+		Query.prepare(
+			"SELECT DISTINCT "
+				"EW_OB_DDSTR.NAZWA, EW_OB_DDSL.WARTOSC, EW_OB_DDSL.OPIS "
+			"FROM "
+				"EW_OB_DDSL "
+			"INNER JOIN "
+				"EW_OB_DDSTR "
+			"ON "
+				"EW_OB_DDSL.UIDP=EW_OB_DDSTR.UID OR EW_OB_DDSL.UIDP=EW_OB_DDSTR.UIDSL");
+
+		if (Query.exec()) while (Query.next())
+		{
+			const auto Field = QString("D.%1").arg(Query.value(0).toString());
+
+			if (!Result.contains(Field)) Result.insert(Field, QHash<int, QString>());
+
+			Result[Field].insert(Query.value(1).toInt(), Query.value(2).toString());
+		}
 	}
 
 	return Result;

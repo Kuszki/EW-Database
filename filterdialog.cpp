@@ -59,6 +59,11 @@ QString FilterDialog::getFilterRules(void)
 	}
 }
 
+void FilterDialog::operatorChanged(const QString& Operator)
+{
+	ui->Value->setVisible(Operator != "IS NULL" && Operator != "IS NOT NULL");
+}
+
 void FilterDialog::searchEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->simpleLayout->count(); ++i)
@@ -83,7 +88,13 @@ void FilterDialog::addClicked(void)
 
 	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
 
-	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
+	{
+		Line.append(QString("%1 %2")
+				.arg(ui->Field->currentData(Qt::UserRole).toString())
+				.arg(ui->Operator->currentText()));
+	}
+	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
 	{
 		Line.append(QString("%1 %2 ('%3')")
 				.arg(ui->Field->currentData(Qt::UserRole).toString())

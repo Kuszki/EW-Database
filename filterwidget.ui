@@ -53,13 +53,30 @@
      <y>22</y>
     </hint>
     <hint type="destinationlabel">
-     <x>57</x>
-     <y>22</y>
+     <x>372</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Operator</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>FilterWidget</receiver>
+   <slot>operatorChanged(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>505</x>
+     <y>23</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>510</x>
+     <y>211</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <slots>
   <slot>editFinished()</slot>
+  <slot>operatorChanged(QString)</slot>
  </slots>
 </ui>

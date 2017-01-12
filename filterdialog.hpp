@@ -54,6 +54,8 @@ class FilterDialog : public QDialog
 
 	private slots:
 
+		void operatorChanged(const QString& Operator);
+
 		void searchEdited(const QString& Search);
 
 		void buttonClicked(QAbstractButton* Button);

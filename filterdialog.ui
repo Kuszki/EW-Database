@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>732</width>
-            <height>430</height>
+            <width>743</width>
+            <height>435</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -187,8 +187,8 @@
    <slot>searchEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>84</x>
-     <y>490</y>
+     <x>93</x>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>114</x>
@@ -219,12 +219,28 @@
    <slot>addClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>777</x>
-     <y>38</y>
+     <x>760</x>
+     <y>20</y>
     </hint>
     <hint type="destinationlabel">
      <x>1060</x>
      <y>58</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Operator</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>operatorChanged(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>26</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>899</x>
+     <y>106</y>
     </hint>
    </hints>
   </connection>
@@ -233,5 +249,6 @@
   <slot>searchEdited(QString)</slot>
   <slot>buttonClicked(QAbstractButton*)</slot>
   <slot>addClicked()</slot>
+  <slot>operatorChanged(QString)</slot>
  </slots>
 </ui>

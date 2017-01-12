@@ -35,7 +35,7 @@ QueryHighlighter::QueryHighlighter(QTextDocument* Parent)
 	Rule.Format.setForeground(Qt::darkRed);
 	Rule.Format.setFontWeight(QFont::Bold);
 
-	Rule.Expresion = QRegExp("\\b(?:AND|OR|NOT|LIKE|IN|NULL)\\b");
+	Rule.Expresion = QRegExp("\\b(?:AND|OR|NOT|LIKE|IN|IS|NULL)\\b");
 
 	Rules.insert(KEYWORDS, Rule);
 

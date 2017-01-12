@@ -43,7 +43,6 @@ class DatabaseDriver : public QObject
 		QList<QPair<QString, QString>> Attributes;
 
 		QSqlDatabase Database;
-
 		QString Dictionary;
 
 		QStringList getAttribTables(void);
