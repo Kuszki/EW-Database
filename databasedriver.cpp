@@ -252,8 +252,7 @@ QHash<int, QHash<int, QString>> DatabaseDriver::indexDictionary(void)
 {
 	const auto Attribs = allAttributes();
 	const auto Data = allDictionary();
-qDebug() << Attribs;
-qDebug() << Data;
+
 	QHash<int, QHash<int, QString>> Result;
 
 	for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) for (int j = 0; j < Attribs.size(); ++j)
@@ -455,19 +454,7 @@ QHash<QString, QString> DatabaseDriver::getEditValues(RecordModel* Model, const 
 	{
 		const QString Key = writeBridges.value(Field.first, Field.first);
 
-		if (Values.contains(i))
-		{
-			const QString Value = Values[i];
-
-			if (Dict.contains(Field.first))
-			{
-				Output.insert(Key, Dict[Field.first].value(Value.toInt(), Dict[Field.first].values().first()));
-			}
-			else
-			{
-				Output.insert(Key, Value);
-			}
-		}
+		if (Values.contains(i)) Output.insert(Key, Values[i]);
 		else Output.insert(Key, QString()); ++i;
 	}
 

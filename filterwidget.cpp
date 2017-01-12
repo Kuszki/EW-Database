@@ -106,6 +106,11 @@ void FilterWidget::setParameters(const QString& Name, const QString& Key, const 
 	ui->Field->setText(Name); setValue(Value); setObjectName(Key);
 }
 
+void FilterWidget::setChecked(bool Checked)
+{
+	ui->Field->setChecked(Checked);
+}
+
 void FilterWidget::setName(const QString& Name)
 {
 	ui->Field->setText(Name);

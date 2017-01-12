@@ -60,6 +60,8 @@ class FilterWidget : public QWidget
 
 		void setParameters(const QString& Name, const QString& Key, const QString& Value);
 
+		void setChecked(bool Checked);
+
 		void setName(const QString& Name);
 		void setKey(const QString& Key);
 		void setValue(const QString& Value);

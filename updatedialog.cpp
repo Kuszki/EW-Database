@@ -93,3 +93,14 @@ void UpdateDialog::setFieldsData(const QHash<QString, QString>& Data)
 		}
 	}
 }
+
+void UpdateDialog::setFieldsUnchecked(void)
+{
+	for (int j = 0; j < ui->fieldsLayout->count(); ++j)
+	{
+		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(j)->widget()))
+		{
+			W->setChecked(false);
+		}
+	}
+}

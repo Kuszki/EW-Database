@@ -67,6 +67,8 @@ class UpdateDialog : public QDialog
 
 		void setFieldsData(const QHash<QString, QString>& Data);
 
+		void setFieldsUnchecked(void);
+
 	signals:
 
 		void onValuesUpdate(const QHash<QString, QString>&);

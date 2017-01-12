@@ -89,6 +89,11 @@ void UpdateWidget::setParameters(const QString& Name, const QString& Key, const 
 	ui->Field->setText(Name); setValue(Value); setObjectName(Key);
 }
 
+void UpdateWidget::setChecked(bool Checked)
+{
+	ui->Field->setChecked(Checked);
+}
+
 void UpdateWidget::setName(const QString& Name)
 {
 	ui->Field->setText(Name);
