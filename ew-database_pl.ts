@@ -14,37 +14,37 @@
         <translation>Zamknij</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="71"/>
+        <location filename="aboutdialog.ui" line="74"/>
         <source>Program name:</source>
         <translation>Program:</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="88"/>
+        <location filename="aboutdialog.ui" line="91"/>
         <source>Author:</source>
         <translation>Autor:</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="105"/>
+        <location filename="aboutdialog.ui" line="108"/>
         <source>Mail:</source>
         <translation>E-mail:</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="125"/>
+        <location filename="aboutdialog.ui" line="128"/>
         <source>Project slite:</source>
         <translation>Strona projektu:</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="145"/>
+        <location filename="aboutdialog.ui" line="148"/>
         <source>License:</source>
         <translation>Licencja:</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="165"/>
+        <location filename="aboutdialog.ui" line="168"/>
         <source>Powered by:</source>
         <translation>Wsparcie:</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="187"/>
+        <location filename="aboutdialog.ui" line="190"/>
         <source>This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
 The program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.</source>
@@ -53,7 +53,7 @@ The program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRAN
 Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny – jednak BEZ ŻADNEJ GWARANCJI, nawet domyślnej gwarancji PRZYDATNOŚCI HANDLOWEJ albo PRZYDATNOŚCI DO OKREŚLONYCH ZASTOSOWAŃ. Bliższe informacje na ten temat można uzyskać z Powszechnej Licencji Publicznej GNU.</translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="202"/>
+        <location filename="aboutdialog.ui" line="205"/>
         <source>&lt;a href=&quot;http://www.fsf.org/&quot;&gt;See more&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;http://www.fsf.org/&quot;&gt;Dowiedz się więcej&lt;/a&gt;</translation>
     </message>
@@ -117,63 +117,63 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
 <context>
     <name>DatabaseDriver</name>
     <message>
-        <location filename="databasedriver.cpp" line="25"/>
+        <location filename="databasedriver.cpp" line="282"/>
         <source>Database ID</source>
         <translation>Identyfikator bazy danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="26"/>
-        <location filename="databasedriver.cpp" line="39"/>
+        <location filename="databasedriver.cpp" line="283"/>
+        <location filename="databasedriver.cpp" line="295"/>
         <source>Job name</source>
         <translation>KERG</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="27"/>
+        <location filename="databasedriver.cpp" line="284"/>
         <source>Object code</source>
         <translation>Kod obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="28"/>
+        <location filename="databasedriver.cpp" line="285"/>
         <source>Code description</source>
         <translation>Opis kodu obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="29"/>
+        <location filename="databasedriver.cpp" line="286"/>
         <source>Object ID</source>
         <translation>Identyfikator obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="30"/>
-        <location filename="databasedriver.cpp" line="40"/>
+        <location filename="databasedriver.cpp" line="287"/>
+        <location filename="databasedriver.cpp" line="296"/>
         <source>Source of data</source>
         <translation>Źródło pozyskania danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="31"/>
-        <location filename="databasedriver.cpp" line="41"/>
+        <location filename="databasedriver.cpp" line="288"/>
+        <location filename="databasedriver.cpp" line="297"/>
         <source>Creation date</source>
         <translation>Data utworzenia</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="32"/>
-        <location filename="databasedriver.cpp" line="42"/>
+        <location filename="databasedriver.cpp" line="289"/>
+        <location filename="databasedriver.cpp" line="298"/>
         <source>Modification date</source>
         <translation>Data modyfikacji</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="33"/>
-        <location filename="databasedriver.cpp" line="43"/>
+        <location filename="databasedriver.cpp" line="290"/>
+        <location filename="databasedriver.cpp" line="299"/>
         <source>Delete date</source>
         <translation>Data usunięcia</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="34"/>
-        <location filename="databasedriver.cpp" line="44"/>
+        <location filename="databasedriver.cpp" line="291"/>
+        <location filename="databasedriver.cpp" line="300"/>
         <source>Object status</source>
         <translation>Status obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="503"/>
+        <location filename="databasedriver.cpp" line="500"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -258,82 +258,82 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Narzędzia</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="133"/>
+        <location filename="mainwindow.ui" line="136"/>
         <source>Support</source>
         <translation>Wsparcie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="158"/>
+        <location filename="mainwindow.ui" line="164"/>
         <source>Connect</source>
         <translation>Połącz</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="161"/>
+        <location filename="mainwindow.ui" line="167"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="170"/>
+        <location filename="mainwindow.ui" line="176"/>
         <source>Disconnect</source>
         <translation>Rozłącz</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="179"/>
+        <location filename="mainwindow.ui" line="185"/>
         <source>View</source>
         <translation>Widok</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="188"/>
+        <location filename="mainwindow.ui" line="194"/>
         <source>Group</source>
         <translation>Grupowanie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="191"/>
+        <location filename="mainwindow.ui" line="197"/>
         <source>Ctrl+G</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="200"/>
+        <location filename="mainwindow.ui" line="206"/>
         <source>Filter</source>
         <translation>Filtr</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="203"/>
+        <location filename="mainwindow.ui" line="209"/>
         <source>Ctrl+F</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="212"/>
+        <location filename="mainwindow.ui" line="218"/>
         <source>About</source>
         <translation>O programie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="215"/>
+        <location filename="mainwindow.ui" line="221"/>
         <source>F1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="224"/>
+        <location filename="mainwindow.ui" line="230"/>
         <source>Reload</source>
         <translation>Odśwież</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="227"/>
+        <location filename="mainwindow.ui" line="233"/>
         <source>F5</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="236"/>
+        <location filename="mainwindow.ui" line="242"/>
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="239"/>
+        <location filename="mainwindow.ui" line="245"/>
         <source>Del</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="248"/>
+        <location filename="mainwindow.ui" line="254"/>
         <source>Edit</source>
         <translation>Edytuj</translation>
     </message>

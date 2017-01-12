@@ -20,40 +20,6 @@
 
 #include "databasedriver.hpp"
 
-const QList<QPair<QString, QString>> DatabaseDriver::commonAttribs =
-{
-	{ "EW_OBIEKTY.UID",			tr("Database ID") },
-	{ "EW_OPERATY.NUMER",		tr("Job name") },
-	{ "EW_OBIEKTY.KOD",			tr("Object code") },
-	{ "EW_OB_OPISY.OPIS",		tr("Code description") },
-	{ "EW_OBIEKTY.NUMER",		tr("Object ID") },
-	{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
-	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
-	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
-	{ "EW_OBIEKTY.DTR",			tr("Delete date") },
-	{ "EW_OBIEKTY.STATUS",		tr("Object status") }
-};
-
-const QList<QPair<QString, QString>> DatabaseDriver::writeAttribs =
-{
-	{ "EW_OBIEKTY.OPERAT",		tr("Job name") },
-	{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
-	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
-	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
-	{ "EW_OBIEKTY.DTR",			tr("Delete date") },
-	{ "EW_OBIEKTY.STATUS",		tr("Object status") }
-};
-
-const QHash<QString, QString> DatabaseDriver::writeBridges  =
-{
-	{ "EW_OBIEKTY.OPERAT",		"EW_OPERATY.NUMER" }
-};
-
-const QHash<QString, QString> DatabaseDriver::dictQueries  =
-{
-	{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER" }
-};
-
 const QStringList DatabaseDriver::fieldOperators =
 {
 	"=", "<>", ">=", ">", "<=", "<",
@@ -310,8 +276,39 @@ bool DatabaseDriver::checkFieldsInQuery(const QStringList& Used, const QStringLi
 }
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent)
-{
+	: QObject(Parent),
+
+	  commonAttribs({
+{ "EW_OBIEKTY.UID",			tr("Database ID") },
+{ "EW_OPERATY.NUMER",		tr("Job name") },
+{ "EW_OBIEKTY.KOD",			tr("Object code") },
+{ "EW_OB_OPISY.OPIS",		tr("Code description") },
+{ "EW_OBIEKTY.NUMER",		tr("Object ID") },
+{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
+{ "EW_OBIEKTY.DTU",			tr("Creation date") },
+{ "EW_OBIEKTY.DTW",			tr("Modification date") },
+{ "EW_OBIEKTY.DTR",			tr("Delete date") },
+{ "EW_OBIEKTY.STATUS",		tr("Object status") }
+				 }),
+
+	  writeAttribs({
+{ "EW_OBIEKTY.OPERAT",		tr("Job name") },
+{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
+{ "EW_OBIEKTY.DTU",			tr("Creation date") },
+{ "EW_OBIEKTY.DTW",			tr("Modification date") },
+{ "EW_OBIEKTY.DTR",			tr("Delete date") },
+{ "EW_OBIEKTY.STATUS",		tr("Object status") }
+				}),
+
+	  writeBridges({
+{ "EW_OBIEKTY.OPERAT",		"EW_OPERATY.NUMER" }
+				}),
+
+	  dictQueries({
+{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER" }
+			    })
+
+{	
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");

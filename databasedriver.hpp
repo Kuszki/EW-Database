@@ -63,10 +63,10 @@ class DatabaseDriver : public QObject
 
 	public:
 
-		static const QList<QPair<QString, QString>> commonAttribs;
-		static const QList<QPair<QString, QString>> writeAttribs;
-		static const QHash<QString, QString> writeBridges;
-		static const QHash<QString, QString> dictQueries;
+		const QList<QPair<QString, QString>> commonAttribs;
+		const QList<QPair<QString, QString>> writeAttribs;
+		const QHash<QString, QString> writeBridges;
+		const QHash<QString, QString> dictQueries;
 		static const QStringList fieldOperators;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
