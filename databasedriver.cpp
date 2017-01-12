@@ -148,11 +148,13 @@ QStringList DatabaseDriver::getDataQueries(const QStringList& Tables, const QStr
 			"INNER JOIN "
 				"%2 D "
 			"ON "
-				"EW_OBIEKTY.UID=D.UIDO")
+				"EW_OBIEKTY.UID=D.UIDO "
+			"WHERE "
+				"EW_OBIEKTY.STATUS=0")
 					.arg(allFields.join(", "))
 					.arg(Table));
 
-		if (!Values.isEmpty()) Queries.last().append(" WHERE ").append(Values);
+		if (!Values.isEmpty()) Queries.last().append(QString(" AND (%1)").arg(Values));
 	}
 
 	return Queries;
@@ -285,17 +287,14 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 { "EW_OB_OPISY.OPIS",		tr("Code description") },
 { "EW_OBIEKTY.NUMER",		tr("Object ID") },
 { "EW_OBIEKTY.DTU",			tr("Creation date") },
-{ "EW_OBIEKTY.DTW",			tr("Modification date") },
-{ "EW_OBIEKTY.DTR",			tr("Delete date") },
-{ "EW_OBIEKTY.STATUS",		tr("Object status") }
+{ "EW_OBIEKTY.DTW",			tr("Modification date") }
 				 }),
 
 	  writeAttribs({
 { "EW_OBIEKTY.OPERAT",		tr("Job name") },
 { "EW_OBIEKTY.DTU",			tr("Creation date") },
 { "EW_OBIEKTY.DTW",			tr("Modification date") },
-{ "EW_OBIEKTY.DTR",			tr("Delete date") },
-{ "EW_OBIEKTY.STATUS",		tr("Object status") }
+{ "EW_OBIEKTY.DTR",			tr("Delete date") }
 				}),
 
 	  writeBridges({
@@ -387,7 +386,9 @@ QHash<int, QString> DatabaseDriver::getDictionary(const QString& Field) const
 			"INNER JOIN "
 				"EW_OB_DDSTR "
 			"ON "
-				"EW_OB_DDSL.UIDP=EW_OB_DDSTR.UID OR EW_OB_DDSL.UIDP=EW_OB_DDSTR.UIDSL AND EW_OB_DDSTR.NAZWA='%1'")
+				"EW_OB_DDSL.UIDP=EW_OB_DDSTR.UID OR EW_OB_DDSL.UIDP=EW_OB_DDSTR.UIDSL "
+			"WHERE "
+				"EW_OB_DDSTR.TYP=4 AND EW_OB_DDSTR.NAZWA='%1'")
 				    .arg(Field));
 
 		if (Query.exec()) while (Query.next()) Result.insert(Query.value(0).toInt(), Query.value(1).toString());
@@ -443,7 +444,9 @@ QHash<QString, QHash<int, QString>> DatabaseDriver::allDictionary(void) const
 			"INNER JOIN "
 				"EW_OB_DDSTR "
 			"ON "
-				"EW_OB_DDSL.UIDP=EW_OB_DDSTR.UID OR EW_OB_DDSL.UIDP=EW_OB_DDSTR.UIDSL");
+				"EW_OB_DDSL.UIDP=EW_OB_DDSTR.UID OR EW_OB_DDSL.UIDP=EW_OB_DDSTR.UIDSL "
+			"WHERE "
+				"EW_OB_DDSTR.TYP=4");
 
 		if (Query.exec()) while (Query.next())
 		{
