@@ -66,6 +66,7 @@ class DatabaseDriver : public QObject
 		const QList<QPair<QString, QString>> writeAttribs;
 		const QHash<QString, QString> writeBridges;
 		const QHash<QString, QString> dictQueries;
+
 		static const QStringList fieldOperators;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);

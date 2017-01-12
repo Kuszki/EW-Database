@@ -545,6 +545,8 @@ bool RecordModel::setData(const QModelIndex& Index, const QList<QPair<int, QVari
 		appendItem(Object);
 	}
 	else	emit dataChanged(Index, Index);
+
+	return true;
 }
 
 QList<QPair<int, QVariant>> RecordModel::fullData(const QModelIndex& Index) const

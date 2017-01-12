@@ -24,9 +24,57 @@ const QStringList DatabaseDriver::fieldOperators =
 {
 	"=", "<>", ">=", ">", "<=", "<",
 	"LIKE", "NOT LIKE",
-	"IS NULL", "IS NOT NULL",
-	"IN", "NOT IN"
+	"IN", "NOT IN",
+	"IS NULL", "IS NOT NULL"
 };
+
+DatabaseDriver::DatabaseDriver(QObject* Parent)
+: QObject(Parent),
+
+commonAttribs
+({
+	{ "EW_OBIEKTY.UID",			tr("Database ID") },
+	{ "EW_OPERATY.NUMER",		tr("Job name") },
+	{ "EW_OBIEKTY.KOD",			tr("Object code") },
+	{ "EW_OB_OPISY.OPIS",		tr("Code description") },
+	{ "EW_OBIEKTY.NUMER",		tr("Object ID") },
+	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
+	{ "EW_OBIEKTY.DTW",			tr("Modification date") }
+}),
+
+writeAttribs
+({
+	{ "EW_OBIEKTY.OPERAT",		tr("Job name") },
+	{ "EW_OBIEKTY.DTU",			tr("Creation date") },
+	{ "EW_OBIEKTY.DTW",			tr("Modification date") },
+	{ "EW_OBIEKTY.DTR",			tr("Delete date") }
+}),
+
+writeBridges
+({
+	{ "EW_OBIEKTY.OPERAT",		"EW_OPERATY.NUMER" }
+}),
+
+dictQueries
+({
+	{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER" }
+})
+
+{
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
+	Settings.endGroup();
+
+	Settings.beginGroup("Columns");
+	Dictionary = Settings.value("dictionary", "Dictionary.ini").toString();
+	Settings.endGroup();
+
+	if (!QFile::exists(Dictionary)) Dictionary = ":/text/dict";
+}
+
+DatabaseDriver::~DatabaseDriver(void) {}
 
 QStringList DatabaseDriver::getAttribTables(void)
 {
@@ -276,50 +324,6 @@ bool DatabaseDriver::checkFieldsInQuery(const QStringList& Used, const QStringLi
 
 	return true;
 }
-
-DatabaseDriver::DatabaseDriver(QObject* Parent)
-	: QObject(Parent),
-
-	  commonAttribs({
-{ "EW_OBIEKTY.UID",			tr("Database ID") },
-{ "EW_OPERATY.NUMER",		tr("Job name") },
-{ "EW_OBIEKTY.KOD",			tr("Object code") },
-{ "EW_OB_OPISY.OPIS",		tr("Code description") },
-{ "EW_OBIEKTY.NUMER",		tr("Object ID") },
-{ "EW_OBIEKTY.DTU",			tr("Creation date") },
-{ "EW_OBIEKTY.DTW",			tr("Modification date") }
-				 }),
-
-	  writeAttribs({
-{ "EW_OBIEKTY.OPERAT",		tr("Job name") },
-{ "EW_OBIEKTY.DTU",			tr("Creation date") },
-{ "EW_OBIEKTY.DTW",			tr("Modification date") },
-{ "EW_OBIEKTY.DTR",			tr("Delete date") }
-				}),
-
-	  writeBridges({
-{ "EW_OBIEKTY.OPERAT",		"EW_OPERATY.NUMER" }
-				}),
-
-	  dictQueries({
-{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER" }
-			    })
-
-{	
-	QSettings Settings("EW-Database");
-
-	Settings.beginGroup("Database");
-	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
-	Settings.endGroup();
-
-	Settings.beginGroup("Columns");
-	Dictionary = Settings.value("dictionary", "Dictionary.ini").toString();
-	Settings.endGroup();
-
-	if (!QFile::exists(Dictionary)) Dictionary = ":/text/dict";
-}
-
-DatabaseDriver::~DatabaseDriver(void) {}
 
 QList<QPair<QString, QString>> DatabaseDriver::getAttributes(const QStringList& Keys)
 {

@@ -3,6 +3,6 @@
         <file alias="logo">logo-gnu.png</file>
     </qresource>
     <qresource prefix="/text">
-        <file alias="dict">Dictionary.ini</file>
+        <file alias="dict">dictionary.ini</file>
     </qresource>
 </RCC>
