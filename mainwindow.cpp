@@ -293,5 +293,6 @@ void MainWindow::prepareEdit(void)
 	auto Fields = Driver->getEditValues(Model, Selection->selectedRows().first());
 
 	Update->setFieldsData(Fields);
+	Update->setFieldsUnchecked();
 	Update->open();
 }

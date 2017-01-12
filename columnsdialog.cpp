@@ -46,6 +46,7 @@ ColumnsDialog::ColumnsDialog(QWidget* Parent, const QList<QPair<QString, QString
 
 		Check->setChecked(Enabled.contains(Field.first));
 		Check->setProperty("KEY", Field.first);
+		Check->setToolTip(Field.first);
 
 		ui->commonLayout->addWidget(Check);
 	}
@@ -56,6 +57,7 @@ ColumnsDialog::ColumnsDialog(QWidget* Parent, const QList<QPair<QString, QString
 
 		Check->setChecked(Enabled.contains(Field.first));
 		Check->setProperty("KEY", Field.first);
+		Check->setToolTip(Field.first);
 
 		ui->specialLayout->addWidget(Check);
 	}

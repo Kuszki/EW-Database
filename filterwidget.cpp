@@ -34,12 +34,15 @@ FilterWidget::FilterWidget(const QString& Name, const QString& Key, QWidget* Par
 	}
 	else
 	{
-		auto Combo = new QComboBox(this); Widget = Combo; Combo->setEditable(true);
+		auto Combo = new QComboBox(this); Widget = Combo;
 
 		for (auto i = Dictionary.constBegin(); i != Dictionary.constEnd(); ++i)
 		{
 			Combo->addItem(i.value(), i.key());
 		}
+
+		Combo->setEditable(true);
+		Combo->setCurrentText(QString());
 
 		connect(Combo, &QComboBox::currentTextChanged, this, &FilterWidget::editFinished);
 	}
@@ -158,7 +161,7 @@ bool FilterWidget::isChecked(void) const
 
 void FilterWidget::reset(void)
 {
-	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->clear();
+	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->clearEditText();
 	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->clear();
 
 	ui->Field->setChecked(false);
