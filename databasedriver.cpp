@@ -252,7 +252,8 @@ QHash<int, QHash<int, QString>> DatabaseDriver::indexDictionary(void)
 {
 	const auto Attribs = allAttributes();
 	const auto Data = allDictionary();
-
+qDebug() << Attribs;
+qDebug() << Data;
 	QHash<int, QHash<int, QString>> Result;
 
 	for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) for (int j = 0; j < Attribs.size(); ++j)
@@ -284,7 +285,6 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 { "EW_OBIEKTY.KOD",			tr("Object code") },
 { "EW_OB_OPISY.OPIS",		tr("Code description") },
 { "EW_OBIEKTY.NUMER",		tr("Object ID") },
-{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
 { "EW_OBIEKTY.DTU",			tr("Creation date") },
 { "EW_OBIEKTY.DTW",			tr("Modification date") },
 { "EW_OBIEKTY.DTR",			tr("Delete date") },
@@ -293,7 +293,6 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 
 	  writeAttribs({
 { "EW_OBIEKTY.OPERAT",		tr("Job name") },
-{ "EW_OBIEKTY.POZYSKANIE",	tr("Source of data") },
 { "EW_OBIEKTY.DTU",			tr("Creation date") },
 { "EW_OBIEKTY.DTW",			tr("Modification date") },
 { "EW_OBIEKTY.DTR",			tr("Delete date") },
@@ -315,10 +314,11 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
 	Settings.endGroup();
 
-	// TODO add basic dictionary to resources and copy if not exists
 	Settings.beginGroup("Columns");
 	Dictionary = Settings.value("dictionary", "Dictionary.ini").toString();
 	Settings.endGroup();
+
+	if (!QFile::exists(Dictionary)) Dictionary = ":/text/dict";
 }
 
 DatabaseDriver::~DatabaseDriver(void) {}

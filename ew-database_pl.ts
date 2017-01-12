@@ -117,63 +117,61 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
 <context>
     <name>DatabaseDriver</name>
     <message>
-        <location filename="databasedriver.cpp" line="282"/>
+        <location filename="databasedriver.cpp" line="283"/>
         <source>Database ID</source>
         <translation>Identyfikator bazy danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="283"/>
+        <location filename="databasedriver.cpp" line="284"/>
         <location filename="databasedriver.cpp" line="295"/>
         <source>Job name</source>
         <translation>KERG</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="284"/>
+        <location filename="databasedriver.cpp" line="285"/>
         <source>Object code</source>
         <translation>Kod obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="285"/>
+        <location filename="databasedriver.cpp" line="286"/>
         <source>Code description</source>
         <translation>Opis kodu obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="286"/>
+        <location filename="databasedriver.cpp" line="287"/>
         <source>Object ID</source>
         <translation>Identyfikator obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="287"/>
-        <location filename="databasedriver.cpp" line="296"/>
         <source>Source of data</source>
-        <translation>Źródło pozyskania danych</translation>
+        <translation type="vanished">Źródło pozyskania danych</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="288"/>
-        <location filename="databasedriver.cpp" line="297"/>
+        <location filename="databasedriver.cpp" line="296"/>
         <source>Creation date</source>
         <translation>Data utworzenia</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="289"/>
-        <location filename="databasedriver.cpp" line="298"/>
+        <location filename="databasedriver.cpp" line="297"/>
         <source>Modification date</source>
         <translation>Data modyfikacji</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="290"/>
-        <location filename="databasedriver.cpp" line="299"/>
+        <location filename="databasedriver.cpp" line="298"/>
         <source>Delete date</source>
         <translation>Data usunięcia</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="291"/>
-        <location filename="databasedriver.cpp" line="300"/>
+        <location filename="databasedriver.cpp" line="299"/>
         <source>Object status</source>
         <translation>Status obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="500"/>
+        <location filename="databasedriver.cpp" line="499"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
