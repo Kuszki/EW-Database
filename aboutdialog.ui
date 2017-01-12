@@ -33,9 +33,6 @@
       <iconset theme="exit">
        <normaloff>.</normaloff>.</iconset>
      </property>
-     <property name="toolButtonStyle">
-      <enum>Qt::ToolButtonTextOnly</enum>
-     </property>
     </widget>
    </item>
    <item row="0" column="3">
