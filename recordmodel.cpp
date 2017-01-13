@@ -208,155 +208,7 @@ bool RecordModel::SortObject::operator() (RecordModel::RecordObject* First, Reco
 	return Mode ? Compare : !Compare;
 }
 
-RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
-{
-	if (!Parent) Parent = new GroupObject();
-
-	for (const auto& Field : (*From).second)
-	{
-		GroupObject* Child = new GroupObject((*From).first, Parent->getFields());
-
-		Child->setField((*From).first, Field);
-		Parent->addChild(Child);
-
-		if (From + 1 != To) createGroups(From + 1, To, Child);
-		else
-		{
-			const auto Fields = Child->getFields();
-
-			for (auto Object : Objects) if (Object->contain(Fields))
-			{
-				Parents.insert(Object, Child);
-				Child->addChild(Object);
-			}
-		}
-	}
-
-	return Parent;
-}
-
-RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Object)
-{
-	if (!Root) return nullptr;
-
-	GroupObject* Current = Root;
-	GroupObject* Result = nullptr;
-
-	for (int i = 0; i < Groups.size(); ++i)
-	{
-		for (auto Group : Current->getChilds())
-		{
-			auto G = dynamic_cast<GroupObject*>(Group);
-			if (G->getData() == Object->getField(G->getColumn()))
-			{
-				Result = G;
-			}
-		}
-
-		if (!Result)
-		{
-			auto Index = createIndex(Current->getIndex(), 0, Current);
-			int Column = getIndex(Groups[i]);
-			const int Count = Current->childrenCount() + 1;
-
-			beginInsertRows(Current == Root ? QModelIndex() : Index, Count, Count);
-
-			Result = new GroupObject(Column, Current->getFields());
-			Result->setField(Column, Object->getField(Column));
-			Current->addChild(Result);
-
-			endInsertRows();
-		}
-
-		Current = Result;
-		Result = nullptr;
-	}
-
-	auto Index = createIndex(Current->getIndex(), 0, Current);
-	const int Count = Current->childrenCount() + 1;
-
-	beginInsertRows(Index, Count, Count);
-
-	Parents.insert(Object, Current);
-	Objects.append(Object);
-	Current->addChild(Object);
-
-	endInsertRows();
-
-	return Current;
-}
-
-int RecordModel::getIndex(const QString& Field) const
-{
-	int i = 0; for (const auto& Item : Header)
-	{
-		if (Item.first == Field) return i; ++i;
-	}
-
-	return -1;
-}
-
-void RecordModel::removeEmpty(RecordModel::GroupObject* Parent, bool Emit)
-{
-	if (Parent)
-	{
-		if (Parent->hasChids()) for (auto Child : Parent->getChilds())
-		{
-			if (GroupObject* Group = dynamic_cast<GroupObject*>(Child))
-			{
-				removeEmpty(Group, Emit);
-			}
-		}
-		else if (auto P = Parent->getParent())
-		{
-			auto From = createIndex(P->getIndex(), 0, P);
-			int Row = Parent->getIndex();
-
-			if (Emit) beginRemoveRows(From, Row, Row);
-			P->removeChild(Parent);
-			if (Emit) endRemoveRows();
-
-			while (P && !P->hasChids()) if (P != Root)
-			{
-				auto Delete = P; P = P->getParent();
-
-				auto From = createIndex(P->getIndex(), 0, P);
-				int Row = Delete->getIndex();
-
-				if (Emit) beginRemoveRows(From, Row, Row);
-				P->removeChild(Delete);
-				if (Emit) endRemoveRows();
-			}
-		}
-	}
-}
-
-void RecordModel::groupItems(void)
-{
-	QList<QPair<int, QList<QVariant>>> Indexes;
-
-	if (Root) delete Root; Parents.clear();
-
-	for (const auto& Group : Groups)
-	{
-		const int Index = getIndex(Group);
-		if (Index == -1) continue;
-
-		auto Current = qMakePair(Index, QList<QVariant>());
-
-		for (const auto& Object : Objects)
-		{
-			const QVariant Value = Object->getField(Index);
-			if (!Current.second.contains(Value)) Current.second.append(Value);
-		}
-
-		Indexes.append(Current);
-	}
-
-	Root = createGroups(Indexes.constBegin(), Indexes.constEnd(), Root);
-}
-
-RecordModel::RecordModel(const QList<QPair<QString, QString> >& Head, QObject* Parent)
+RecordModel::RecordModel(const QStringList& Head, QObject* Parent)
 : QAbstractItemModel(Parent), Header(Head) {}
 
 RecordModel::~RecordModel(void)
@@ -442,11 +294,7 @@ int RecordModel::columnCount(const QModelIndex &Parent) const
 QVariant RecordModel::headerData(int Section, Qt::Orientation Orientation, int Role) const
 {
 	if (Orientation != Qt::Horizontal || Section > Header.size()) return QVariant();
-
-	if (Role == Qt::DisplayRole) return Header[Section].second;
-	else if (Role == Qt::UserRole) return Header[Section].first;
-
-	return QVariant();
+	else return Header[Section];
 }
 
 QVariant RecordModel::data(const QModelIndex &Index, int Role) const
@@ -617,7 +465,164 @@ int RecordModel::totalCount(void) const
 	return Objects.count();
 }
 
-void RecordModel::groupBy(const QStringList& Groupby)
+RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
+{
+	if (!Parent) Parent = new GroupObject();
+
+	for (const auto& Field : (*From).second)
+	{
+		GroupObject* Child = new GroupObject((*From).first, Parent->getFields());
+
+		Child->setField((*From).first, Field);
+		Parent->addChild(Child);
+
+		if (From + 1 != To) createGroups(From + 1, To, Child);
+		else
+		{
+			const auto Fields = Child->getFields();
+
+			for (auto Object : Objects) if (Object->contain(Fields))
+			{
+				Parents.insert(Object, Child);
+				Child->addChild(Object);
+			}
+		}
+	}
+
+	return Parent;
+}
+
+RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Object)
+{
+	if (!Root) return nullptr;
+
+	GroupObject* Current = Root;
+	GroupObject* Result = nullptr;
+
+	for (int i = 0; i < Groups.size(); ++i)
+	{
+		for (auto Group : Current->getChilds())
+		{
+			auto G = dynamic_cast<GroupObject*>(Group);
+			if (G->getData() == Object->getField(G->getColumn()))
+			{
+				Result = G;
+			}
+		}
+
+		if (!Result)
+		{
+			auto Index = createIndex(Current->getIndex(), 0, Current);
+			int Column = getIndex(Groups[i]);
+			const int Count = Current->childrenCount() + 1;
+
+			beginInsertRows(Current == Root ? QModelIndex() : Index, Count, Count);
+
+			Result = new GroupObject(Column, Current->getFields());
+			Result->setField(Column, Object->getField(Column));
+			Current->addChild(Result);
+
+			endInsertRows();
+		}
+
+		Current = Result;
+		Result = nullptr;
+	}
+
+	auto Index = createIndex(Current->getIndex(), 0, Current);
+	const int Count = Current->childrenCount() + 1;
+
+	beginInsertRows(Index, Count, Count);
+
+	Parents.insert(Object, Current);
+	Objects.append(Object);
+	Current->addChild(Object);
+
+	endInsertRows();
+
+	return Current;
+}
+
+int RecordModel::getIndex(const QString& Field) const
+{
+	int i = 0; for (const auto& Item : Header)
+	{
+		if (Item == Field) return i; ++i;
+	}
+
+	return -1;
+}
+
+void RecordModel::removeEmpty(RecordModel::GroupObject* Parent, bool Emit)
+{
+	if (Parent)
+	{
+		if (Parent->hasChids()) for (auto Child : Parent->getChilds())
+		{
+			if (GroupObject* Group = dynamic_cast<GroupObject*>(Child))
+			{
+				removeEmpty(Group, Emit);
+			}
+		}
+		else if (auto P = Parent->getParent())
+		{
+			auto From = createIndex(P->getIndex(), 0, P);
+			int Row = Parent->getIndex();
+
+			if (Emit) beginRemoveRows(From, Row, Row);
+			P->removeChild(Parent);
+			if (Emit) endRemoveRows();
+
+			while (P && !P->hasChids()) if (P != Root)
+			{
+				auto Delete = P; P = P->getParent();
+
+				auto From = createIndex(P->getIndex(), 0, P);
+				int Row = Delete->getIndex();
+
+				if (Emit) beginRemoveRows(From, Row, Row);
+				P->removeChild(Delete);
+				if (Emit) endRemoveRows();
+			}
+		}
+	}
+}
+
+void RecordModel::groupItems(void)
+{
+	QList<QPair<int, QList<QVariant>>> Indexes;
+
+	if (Root) delete Root; Parents.clear();
+
+	for (const auto& Group : Groups)
+	{
+		const int Index = getIndex(Group);
+		if (Index == -1) continue;
+
+		auto Current = qMakePair(Index, QList<QVariant>());
+
+		for (const auto& Object : Objects)
+		{
+			const QVariant Value = Object->getField(Index);
+			if (!Current.second.contains(Value)) Current.second.append(Value);
+		}
+
+		Indexes.append(Current);
+	}
+
+	Root = createGroups(Indexes.constBegin(), Indexes.constEnd(), Root);
+}
+
+void RecordModel::groupByInt(const QList<int>& Levels)
+{
+	QStringList Groupby;
+
+	for (const auto& I : Levels) if (Header.size() < I) Groupby.append(Header[I]);
+
+	groupByStr(Groupby);
+}
+
+void RecordModel::groupByStr(const QStringList& Groupby)
 {
 	if (Groups == Groupby) { emit onGroupComplete(); return; } Groups = Groupby;
 

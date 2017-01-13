@@ -38,7 +38,8 @@ SOURCES		+=	main.cpp \
 				recordmodel.cpp \
 				aboutdialog.cpp \
 				updatedialog.cpp \
-				updatewidget.cpp
+				updatewidget.cpp \
+    databasedriver_v2.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -52,7 +53,8 @@ HEADERS		+=	mainwindow.hpp \
 				recordmodel.hpp \
 				aboutdialog.hpp \
 				updatedialog.hpp \
-				updatewidget.hpp
+				updatewidget.hpp \
+    databasedriver_v2.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \

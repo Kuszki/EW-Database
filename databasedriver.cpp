@@ -523,7 +523,7 @@ void DatabaseDriver::updateData(const QString& Filter)
 	const auto Fields = allAttributes();
 	const int Size = Fields.size();
 
-	RecordModel* Model = new RecordModel(Fields, this);
+	RecordModel* Model = nullptr;//new RecordModel(Fields, this);
 	int Progress = 0;
 
 	emit onSetupProgress(0, Queries.size());

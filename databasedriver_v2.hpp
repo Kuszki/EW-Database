@@ -75,15 +75,19 @@ class DatabaseDriver_v2 : public QObject
 	private:
 
 		QSqlDatabase Database;
+		QStringList Headers;
+
 		QList<TABLE> Tables;
 		QList<FIELD> Fields;
 		QList<FIELD> Common;
-		QStringList Headers;
 
 	public:
 
 		explicit DatabaseDriver_v2(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver_v2(void) override;
+
+		QMap<int, QStringList> getAttribList(void) const;
+		QMap<int, FIELD> getFilterList(void) const;
 
 	protected:
 
@@ -109,7 +113,7 @@ class DatabaseDriver_v2 : public QObject
 
 		void onError(const QString&);
 
-		void onConnect(const QStringList&);
+		void onConnect(const QMap<int, FIELD>&, const QMap<int, QStringList>&, const QStringList&);
 		void onDisconnect(void);
 
 		void onBeginProgress(const QString&);

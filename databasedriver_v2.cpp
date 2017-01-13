@@ -32,6 +32,32 @@ DatabaseDriver_v2::DatabaseDriver_v2(QObject* Parent)
 
 DatabaseDriver_v2::~DatabaseDriver_v2(void) {}
 
+QMap<int, QStringList> DatabaseDriver_v2::getAttribList(void) const
+{
+	QMap<int, QStringList> List;
+
+	for (int i = 0; i < Fields.size(); ++i) List.insert(i, QStringList());
+
+	int i = 0; for (const auto& Field : Fields) for (const auto& Table : Tables)
+	{
+		if (Table.Fields.contains(Field)) List[i].append(Table.Name);
+	}
+
+	return List;
+}
+
+QMap<int, DatabaseDriver_v2::FIELD> DatabaseDriver_v2::getFilterList(void) const
+{
+	QMap<int, FIELD> List; int i = 0;
+
+	for (const auto& Field : Fields)
+	{
+		if ((Field.Type != FOREGIN && Field.Type != MASK) || Field.Dict.size() > 1) List.insert(i, Field); ++i;
+	}
+
+	return List;
+}
+
 QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(void) const
 {
 	if (!Database.isOpen()) return QList<FIELD>();
@@ -39,7 +65,7 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(void) const
 	QList<FIELD> Fields =
 	{
 		{ INT,		"EW_OBIEKTY.UID",		tr("Database ID")		},
-		{ FOREGIN,	"EW_OPERATY.OPERAT",	tr("Job name")			},
+		{ FOREGIN,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
 		{ READONLY, 	"EW_OB_OPISY.OPIS",		tr("Code description")	},
 		{ READONLY, 	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
@@ -235,7 +261,7 @@ bool DatabaseDriver_v2::openDatabase(const QString& Server, const QString& Base,
 		Headers = normalizeHeaders(Tables, Common); emit onUpdateProgress(4);
 
 		emit onEndProgress();
-		emit onConnect(Headers);
+		emit onConnect(getFilterList(), getAttribList(), Headers);
 	}
 	else emit onError(Database.lastError().text());
 

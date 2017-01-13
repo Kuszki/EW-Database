@@ -118,28 +118,16 @@ class RecordModel : public QAbstractItemModel
 	private:
 
 		QHash<RecordObject*, GroupObject*> Parents;
-		QList<QPair<QString, QString>> Header;
 		QList<RecordObject*> Objects;
 
 		GroupObject* Root = nullptr;
 
+		QStringList Header;
 		QStringList Groups;
-
-		GroupObject* createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From,
-							 QList<QPair<int, QList<QVariant>>>::ConstIterator To,
-							 GroupObject* Parent = nullptr);
-
-		GroupObject* appendItem(RecordObject* Object);
-
-		int getIndex(const QString& Field) const;
-
-		void removeEmpty(GroupObject* Parent = nullptr, bool Emit = true);
-
-		void groupItems(void);
 
 	public:
 
-		explicit RecordModel(const QList<QPair<QString, QString>>& Head, QObject* Parent = nullptr);
+		explicit RecordModel(const QStringList& Head, QObject* Parent = nullptr);
 		virtual ~RecordModel(void) override;
 
 		virtual QModelIndex index(int Row, int Col, const QModelIndex& Parent = QModelIndex()) const override;
@@ -172,9 +160,25 @@ class RecordModel : public QAbstractItemModel
 
 		int totalCount(void) const;
 
+	protected:
+
+		GroupObject* createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From,
+							 QList<QPair<int, QList<QVariant>>>::ConstIterator To,
+							 GroupObject* Parent = nullptr);
+
+		GroupObject* appendItem(RecordObject* Object);
+
+		int getIndex(const QString& Field) const;
+
+		void removeEmpty(GroupObject* Parent = nullptr, bool Emit = true);
+
+		void groupItems(void);
+
 	public slots:
 
-		void groupBy(const QStringList& Groupby);
+		void groupByInt(const QList<int>& Levels);
+
+		void groupByStr(const QStringList& Groupby);
 
 		void addItem(const QList<QPair<int, QVariant>>& Attributes);
 

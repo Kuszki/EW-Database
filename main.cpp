@@ -24,11 +24,14 @@
 
 #include "mainwindow.hpp"
 
+#include "databasedriver_v2.hpp"
+
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
-	qRegisterMetaType<QHash<QString, QString>>("QHash<QString, QString>");
+	qRegisterMetaType<QMap<int, DatabaseDriver_v2::FIELD>>("QMap<int, FIELD>");
+	qRegisterMetaType<QMap<int, QStringList>>("QMap<int, QStringList>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 

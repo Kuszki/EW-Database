@@ -38,18 +38,15 @@ class ColumnsDialog : public QDialog
 
 	private:
 
-		static const QStringList Default;
-
 		Ui::ColumnsDialog* ui;
 
 	public:
 
-		explicit ColumnsDialog(QWidget* Parent = nullptr,
-						   const QList<QPair<QString, QString>>& Common = QList<QPair<QString, QString>>(),
-						   const QList<QPair<QString, QString>>& Special = QList<QPair<QString, QString>>());
+		explicit ColumnsDialog(QWidget* Parent = nullptr, const QStringList Headers = QStringList());
 		virtual ~ColumnsDialog(void) override;
 
-		QStringList getEnabledColumns(void);
+		QList<int> getEnabledColumnsIndexes(void);
+		QStringList getEnabledColumnsNames(void);
 
 	private slots:
 
@@ -59,11 +56,11 @@ class ColumnsDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setSpecialAttributes(const QList<QPair<QString, QString>>& Attributes);
+		void setAttributes(const QStringList Headers);
 
 	signals:
 
-		void onColumnsUpdate(const QStringList&);
+		void onColumnsUpdate(const QList<int>&);
 
 };
 
