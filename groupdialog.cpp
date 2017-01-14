@@ -74,8 +74,8 @@ void GroupDialog::accept(void)
 
 void GroupDialog::setAttributes(QStringList Attributes)
 {
-	for (int i = 0; i < ui->Disabled->count(); ++i) delete ui->Disabled->takeItem(i);
-	for (int i = 0; i < ui->Enabled->count(); ++i) delete ui->Enabled->takeItem(i);
+	while (ui->Disabled->count()) delete ui->Disabled->takeItem(0);
+	while (ui->Enabled->count()) delete ui->Enabled->takeItem(0);
 
 	QSettings Settings("EW-Database");
 

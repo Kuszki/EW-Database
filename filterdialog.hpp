@@ -23,10 +23,11 @@
 
 #include <QAbstractButton>
 #include <QPushButton>
+#include <QCheckBox>
 #include <QDialog>
 #include <QHash>
 
-#include "databasedriver.hpp"
+#include "databasedriver_v2.hpp"
 #include "filterwidget.hpp"
 
 namespace Ui
@@ -43,31 +44,39 @@ class FilterDialog : public QDialog
 
 		Ui::FilterDialog* ui;
 
+		QList<QList<int>> Attributes;
+
 	public:
 
 		explicit FilterDialog(QWidget* Parent = nullptr,
-						  const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>(),
-						  const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+						  const QVector<DatabaseDriver_v2::FIELD>& Fields = QVector<DatabaseDriver_v2::FIELD>(),
+						  const QVector<DatabaseDriver_v2::TABLE>& Tables = QVector<DatabaseDriver_v2::TABLE>());
 		virtual ~FilterDialog(void) override;
 
 		QString getFilterRules(void);
 
 	private slots:
 
-		void operatorChanged(const QString& Operator);
+		void operatorTextChanged(const QString& Operator);
 
-		void searchEdited(const QString& Search);
+		void classSearchEdited(const QString& Search);
+		void simpleSearchEdited(const QString& Search);
 
-		void buttonClicked(QAbstractButton* Button);
+		void buttonBoxClicked(QAbstractButton* Button);
 
-		void addClicked(void);
+		void classBoxChecked(void);
+
+		void tabIndexChanged(int Index);
+
+		void addButtonClicked(void);
+		void selectButtonClicked(void);
+		void unselectButtonClicked(void);
 
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setAvailableFields(const QList<QPair<QString, QString>>& Fields,
-						    const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+		void setFields(const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Tables);
 
 	signals:
 

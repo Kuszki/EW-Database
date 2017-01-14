@@ -20,6 +20,14 @@
 
 #include "databasedriver_v2.hpp"
 
+const QStringList DatabaseDriver_v2::Operators =
+{
+	"=", "<>", ">=", ">", "<=", "<",
+	"LIKE", "NOT LIKE",
+	"IN", "NOT IN",
+	"IS NULL", "IS NOT NULL"
+};
+
 DatabaseDriver_v2::DatabaseDriver_v2(QObject* Parent)
 : QObject(Parent)
 {
@@ -32,27 +40,13 @@ DatabaseDriver_v2::DatabaseDriver_v2(QObject* Parent)
 
 DatabaseDriver_v2::~DatabaseDriver_v2(void) {}
 
-QMap<int, QStringList> DatabaseDriver_v2::getAttribList(void) const
-{
-	QMap<int, QStringList> List;
-
-	for (int i = 0; i < Fields.size(); ++i) List.insert(i, QStringList());
-
-	int i = 0; for (const auto& Field : Fields) for (const auto& Table : Tables)
-	{
-		if (Table.Fields.contains(Field)) List[i].append(Table.Name);
-	}
-
-	return List;
-}
-
 QMap<int, DatabaseDriver_v2::FIELD> DatabaseDriver_v2::getFilterList(void) const
 {
 	QMap<int, FIELD> List; int i = 0;
 
 	for (const auto& Field : Fields)
 	{
-		if ((Field.Type != FOREGIN && Field.Type != MASK) || Field.Dict.size() > 1) List.insert(i, Field); ++i;
+		if ((Field.Type != INTEGER && Field.Type != MASK) || Field.Dict.size() > 1) List.insert(i, Field); ++i;
 	}
 
 	return List;
@@ -64,10 +58,9 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(void) const
 
 	QList<FIELD> Fields =
 	{
-		{ INT,		"EW_OBIEKTY.UID",		tr("Database ID")		},
-		{ FOREGIN,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
+		{ INTEGER,	"EW_OBIEKTY.UID",		tr("Database ID")		},
+		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
-		{ READONLY, 	"EW_OB_OPISY.OPIS",		tr("Code description")	},
 		{ READONLY, 	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
 		{ DATE,		"EW_OBIEKTY.DTU",		tr("Creation date")		},
 		{ DATE, 		"EW_OBIEKTY.DTW",		tr("Modification date")	}
@@ -75,22 +68,19 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(void) const
 
 	QMap<QString, QString> Dict =
 	{
-		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER" }
+		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER"	},
+		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY ORDER BY OPIS"		}
 	};
 
 	for (auto i = Dict.constBegin(); i != Dict.constEnd(); ++i)
 	{
+		auto& Field = getFieldByName(Fields, i.key());
+
+		if (Field.Name.isEmpty()) continue;
+
 		QSqlQuery Query(i.value(), Database);
 
-		auto& Ref = getFieldByName(Fields, i.key()).Dict;
-
-		if (Query.exec()) while (Query.next())
-		{
-			Ref.insert(
-				Query.value(0).toInt(),
-				Query.value(1).toString()
-			);
-		}
+		if (Query.exec()) while (Query.next()) Field.Dict.insert(Query.value(0), Query.value(1).toString());
 	}
 
 	return Fields;
@@ -160,12 +150,12 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadFields(const QString& Tab
 	return List;
 }
 
-QMap<int, QString> DatabaseDriver_v2::loadDict(const QString& Field, const QString& Table) const
+QMap<QVariant, QString> DatabaseDriver_v2::loadDict(const QString& Field, const QString& Table) const
 {
-	if (!Database.isOpen()) return QMap<int, QString>();
+	if (!Database.isOpen()) return QMap<QVariant, QString>();
 
 	QSqlQuery Query(Database);
-	QMap<int, QString> List;
+	QMap<QVariant, QString> List;
 
 	Query.prepare(
 		"SELECT "
@@ -175,7 +165,7 @@ QMap<int, QString> DatabaseDriver_v2::loadDict(const QString& Field, const QStri
 		"INNER JOIN "
 		    "EW_OB_DDSTR "
 		"ON "
-		    "EW_OB_DDSL.UIDP = EW_OB_DDSTR.UIDSL OR EW_OB_DDSL.UIDP = EW_OB_DDSTR.UID "
+		    "EW_OB_DDSL.UIDP = EW_OB_DDSTR.UID "
 		"WHERE "
 		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table "
 		"ORDER BY "
@@ -184,13 +174,7 @@ QMap<int, QString> DatabaseDriver_v2::loadDict(const QString& Field, const QStri
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
 
-	if (Query.exec()) while (Query.next())
-	{
-		List.insert(
-			Query.value(0).toInt(),
-			Query.value(1).toString()
-		);
-	}
+	if (Query.exec()) while (Query.next()) List.insert(Query.value(0), Query.value(1).toString());
 
 	return List;
 }
@@ -260,8 +244,15 @@ bool DatabaseDriver_v2::openDatabase(const QString& Server, const QString& Base,
 		Fields = normalizeFields(Tables, Common); emit onUpdateProgress(3);
 		Headers = normalizeHeaders(Tables, Common); emit onUpdateProgress(4);
 
+		for (int i = 0; i < Fields.count(); ++i)
+		{
+			qDebug() << "=============================================================================";
+			qDebug() << i << Fields[i].Name << Fields[i].Label << Fields[i].Type;
+			qDebug() << Fields[i].Dict;
+		}
+
 		emit onEndProgress();
-		emit onConnect(getFilterList(), getAttribList(), Headers);
+		emit onConnect(Fields.toVector(), Tables.toVector(), Headers);
 	}
 	else emit onError(Database.lastError().text());
 

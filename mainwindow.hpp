@@ -84,8 +84,8 @@ class MainWindow : public QMainWindow
 
 		void selectionChanged(void);
 
-		void databaseConnected(const QMap<int, DatabaseDriver_v2::FIELD>& Fields,
-						   const QMap<int, QStringList>& Classes,
+		void databaseConnected(const QVector<DatabaseDriver_v2::FIELD>& Fields,
+						   const QVector<DatabaseDriver_v2::TABLE>& Classes,
 						   const QStringList& Headers);
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);

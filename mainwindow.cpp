@@ -182,7 +182,7 @@ void MainWindow::refreshData(void)
 //	emit onUpdateRequest(Filter->getFilterRules());
 }
 
-void MainWindow::databaseConnected(const QMap<int, DatabaseDriver_v2::FIELD>& Fields, const QMap<int, QStringList>&Classes, const QStringList& Headers)
+void MainWindow::databaseConnected(const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Classes, const QStringList& Headers)
 {
 //	const auto Dict = Driver->allDictionary();
 //	const auto Spec = Driver->getAttributes();
@@ -191,17 +191,17 @@ void MainWindow::databaseConnected(const QMap<int, DatabaseDriver_v2::FIELD>& Fi
 
 	Columns = new ColumnsDialog(this, Headers);
 	Groups = new GroupDialog(this, Headers);
-//	Filter = new FilterDialog(this, All, Dict);
+	Filter = new FilterDialog(this, Fields, Classes);
 //	Update = new UpdateDialog(this, Edit, Dict);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
-//	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
+	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
 //	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
-//	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
+	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 
 	ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 

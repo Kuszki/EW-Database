@@ -30,8 +30,9 @@ int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
-	qRegisterMetaType<QMap<int, DatabaseDriver_v2::FIELD>>("QMap<int, FIELD>");
-	qRegisterMetaType<QMap<int, QStringList>>("QMap<int, QStringList>");
+	qRegisterMetaType<QVector<DatabaseDriver_v2::FIELD>>("QVector<FIELD>");
+	qRegisterMetaType<QVector<DatabaseDriver_v2::TABLE>>("QVector<TABLE>");
+
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 

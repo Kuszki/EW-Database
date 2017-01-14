@@ -32,6 +32,8 @@
 
 #include <QDebug>
 
+#include <boost/bind.hpp>
+
 #include "recordmodel.hpp"
 
 class DatabaseDriver_v2 : public QObject
@@ -43,8 +45,8 @@ class DatabaseDriver_v2 : public QObject
 	{
 		READONLY	= 0,
 		STRING	= 1,
-		FOREGIN	= 4,
-		INT		= 5,
+		INTEGER	= 4,
+		SMALLINT	= 5,
 		BOOL		= 7,
 		DOUBLE	= 8,
 		DATE		= 101,
@@ -58,7 +60,7 @@ class DatabaseDriver_v2 : public QObject
 		QString Name;
 		QString Label;
 
-		QMap<int, QString> Dict;
+		QMap<QVariant, QString> Dict;
 	};
 
 	public: struct TABLE
@@ -83,10 +85,11 @@ class DatabaseDriver_v2 : public QObject
 
 	public:
 
+		static const QStringList Operators;
+
 		explicit DatabaseDriver_v2(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver_v2(void) override;
 
-		QMap<int, QStringList> getAttribList(void) const;
 		QMap<int, FIELD> getFilterList(void) const;
 
 	protected:
@@ -95,7 +98,7 @@ class DatabaseDriver_v2 : public QObject
 		QList<TABLE> loadTables(void) const;
 
 		QList<FIELD> loadFields(const QString& Table) const;
-		QMap<int, QString> loadDict(const QString& Field, const QString& Table) const;
+		QMap<QVariant, QString> loadDict(const QString& Field, const QString& Table) const;
 
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
@@ -113,7 +116,7 @@ class DatabaseDriver_v2 : public QObject
 
 		void onError(const QString&);
 
-		void onConnect(const QMap<int, FIELD>&, const QMap<int, QStringList>&, const QStringList&);
+		void onConnect(const QVector<FIELD>&, const QVector<TABLE>&, const QStringList&);
 		void onDisconnect(void);
 
 		void onBeginProgress(const QString&);

@@ -21,15 +21,16 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
+FilterDialog::FilterDialog(QWidget* Parent, const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Tables)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setAvailableFields(Fields, Dictionary);
+	ui->setupUi(this); setFields(Fields, Tables);
 
-	ui->Operator->addItems(DatabaseDriver::fieldOperators);
+	ui->Operator->addItems(DatabaseDriver_v2::Operators);
+	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
 
-	connect(ui->tabWidget, &QTabWidget::currentChanged, ui->searchEdit, &QLineEdit::setHidden);
+	tabIndexChanged(ui->tabWidget->currentIndex());
 }
 
 FilterDialog::~FilterDialog(void)
@@ -39,80 +40,152 @@ FilterDialog::~FilterDialog(void)
 
 QString FilterDialog::getFilterRules(void)
 {
-	if (ui->tabWidget->currentIndex() == 1)
-	{
-		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
-		return ui->Setup->document()->toPlainText();
-	}
-	else
-	{
-		QStringList Rules; for (int i = 0; i < ui->simpleLayout->count(); ++i)
-		{
-			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
-			{
-				if (W->isChecked()) Rules.append(W->getCondition());
-			}
-		}
+//	if (ui->tabWidget->currentIndex() == 1)
+//	{
+//		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
+//		return ui->Setup->document()->toPlainText();
+//	}
+//	else
+//	{
+//		QStringList Rules; for (int i = 0; i < ui->simpleLayout->count(); ++i)
+//		{
+//			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+//			{
+//				if (W->isChecked()) Rules.append(W->getCondition());
+//			}
+//		}
 
-		if (Rules.isEmpty()) return QString();
-		else return Rules.join(" AND ");
-	}
+//		if (Rules.isEmpty()) return QString();
+//		else return Rules.join(" AND ");
+//	}
 }
 
-void FilterDialog::operatorChanged(const QString& Operator)
+void FilterDialog::operatorTextChanged(const QString& Operator)
 {
 	ui->Value->setVisible(Operator != "IS NULL" && Operator != "IS NOT NULL");
 }
 
-void FilterDialog::searchEdited(const QString& Search)
+void FilterDialog::classSearchEdited(const QString& Search)
+{
+	for (int i = 0; i < ui->classLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+		{
+			W->setVisible(W->isEnabled() && W->text().contains(Search, Qt::CaseInsensitive));
+		}
+}
+
+void FilterDialog::simpleSearchEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->simpleLayout->count(); ++i)
 		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
-			W->setVisible(W->getLabel().contains(Search, Qt::CaseInsensitive));
+		{
+			W->setVisible(W->isEnabled() && W->getLabel().contains(Search, Qt::CaseInsensitive));
+		}
 }
 
-void FilterDialog::buttonClicked(QAbstractButton* Button)
+void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
 {
 	if (Button != ui->buttonBox->button(QDialogButtonBox::Reset)) return;
 
 	for (int i = 0; i < ui->simpleLayout->count(); ++i)
 		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+		{
 			W->reset();
+		}
 
 	ui->Setup->document()->clear();
 }
 
-void FilterDialog::addClicked(void)
+void FilterDialog::classBoxChecked(void)
 {
-	QString Line;
+	QSet<int> Disabled, All;
 
-	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
+	for (int i = 0; i < ui->simpleLayout->count(); ++i) All.insert(i);
 
-	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
+	for (int i = 0; i < ui->classLayout->count(); ++i) if (auto W = ui->classLayout->itemAt(i)->widget())
 	{
-		Line.append(QString("%1 %2")
-				.arg(ui->Field->currentData(Qt::UserRole).toString())
-				.arg(ui->Operator->currentText()));
-	}
-	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
-	{
-		Line.append(QString("%1 %2 ('%3')")
-				.arg(ui->Field->currentData(Qt::UserRole).toString())
-				.arg(ui->Operator->currentText())
-				.arg(ui->Value->text().
-					split(QRegExp("\\s*,\\s*"),
-						 QString::SkipEmptyParts)
-					.join("', '")));
-	}
-	else
-	{
-		Line.append(QString("%1 %2 '%3'")
-				.arg(ui->Field->currentData(Qt::UserRole).toString())
-				.arg(ui->Operator->currentText())
-				.arg(ui->Value->text()));
+		if (auto C = qobject_cast<QCheckBox*>(W)) if (C->isChecked())
+		{
+			const int ID = W->property("KEY").toInt();
+
+			Disabled.unite(QSet<int>(All).subtract(Attributes[ID].toSet()));
+		}
 	}
 
-	ui->Setup->appendPlainText(Line);
+	for (int i = 0; i < ui->simpleLayout->count(); ++i) if (auto W = ui->simpleLayout->itemAt(i)->widget())
+	{
+		W->setEnabled(!Disabled.contains(i));
+	}
+
+	simpleSearchEdited(ui->simpleSearch->text());
+}
+
+void FilterDialog::tabIndexChanged(int Index)
+{
+	ui->classSearch->setVisible(Index == 0);
+	ui->simpleSearch->setVisible(Index == 1);
+
+	ui->selectButton->setVisible(Index == 0);
+	ui->unselectButton->setVisible(Index == 0);
+}
+
+void FilterDialog::addButtonClicked(void)
+{
+//	QString Line;
+
+//	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
+
+//	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
+//	{
+//		Line.append(QString("%1 %2")
+//				.arg(ui->Field->currentData(Qt::UserRole).toString())
+//				.arg(ui->Operator->currentText()));
+//	}
+//	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+//	{
+//		Line.append(QString("%1 %2 ('%3')")
+//				.arg(ui->Field->currentData(Qt::UserRole).toString())
+//				.arg(ui->Operator->currentText())
+//				.arg(ui->Value->text().
+//					split(QRegExp("\\s*,\\s*"),
+//						 QString::SkipEmptyParts)
+//					.join("', '")));
+//	}
+//	else
+//	{
+//		Line.append(QString("%1 %2 '%3'")
+//				.arg(ui->Field->currentData(Qt::UserRole).toString())
+//				.arg(ui->Operator->currentText())
+//				.arg(ui->Value->text()));
+//	}
+
+	//	ui->Setup->appendPlainText(Line);
+}
+
+void FilterDialog::selectButtonClicked(void)
+{
+	for (int i = 0; i < ui->classLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+		{
+			W->blockSignals(true);
+			if (W->isVisible()) W->setChecked(true);
+			W->blockSignals(false);
+		}
+
+	classBoxChecked();
+}
+
+void FilterDialog::unselectButtonClicked(void)
+{
+	for (int i = 0; i < ui->classLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+		{
+			W->blockSignals(true);
+			if (W->isVisible()) W->setChecked(false);
+			W->blockSignals(false);
+		}
+
+	classBoxChecked();
 }
 
 void FilterDialog::accept(void)
@@ -120,16 +193,31 @@ void FilterDialog::accept(void)
 	emit onFiltersUpdate(getFilterRules()); QDialog::accept();
 }
 
-void FilterDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
+void FilterDialog::setFields(const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Tables)
 {
-	if (ui->Field->count()) ui->Field->clear();
+	Attributes.clear(); ui->Field->clear();
 
+	while (auto I = ui->classLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	int i = 0; for (const auto& Field : Fields)
+	for (int i = 0; i < Tables.size(); ++i)
 	{
-		ui->simpleLayout->addWidget(new FilterWidget(Field.second, Field.first, this, Dictionary.value(Field.first)));
-		ui->Field->addItem(Field.second);
-		ui->Field->setItemData(i++, Field.first, Qt::UserRole);
+		auto Check = new QCheckBox(Tables[i].Label, this);
+
+		Check->setProperty("KEY", i);
+		Attributes.append(Tables[i].Indexes);
+		ui->classLayout->addWidget(Check);
+
+		connect(Check, &QCheckBox::toggled, this, &FilterDialog::classBoxChecked);
+	}
+
+	for (int i = 0; i < Fields.size(); ++i)
+	{
+		const int Count = ui->Field->count();
+
+		ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
+
+		ui->Field->addItem(Fields[i].Label);
+		ui->Field->setItemData(Count, Fields[i].Name);
 	}
 }
