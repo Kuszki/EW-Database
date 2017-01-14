@@ -44,6 +44,7 @@ class FilterWidget : public QWidget
 
 	private:
 
+		QLineEdit* Simple = nullptr;
 		QWidget* Widget = nullptr;
 		Ui::FilterWidget* ui;
 
@@ -55,7 +56,7 @@ class FilterWidget : public QWidget
 		virtual ~FilterWidget(void) override;
 
 		QString getCondition(void) const;
-		QString getValue(void) const;
+		QVariant getValue(void) const;
 		QString getLabel(void) const;
 
 		int getIndex(void) const;
@@ -77,7 +78,7 @@ class FilterWidget : public QWidget
 
 	signals:
 
-		void onValueUpdate(const QString&, const QString&);
+		void onValueUpdate(const QString&, const QVariant&);
 
 		void onStatusChanged(bool);
 

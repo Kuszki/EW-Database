@@ -23,6 +23,7 @@
 
 #include <QFutureSynchronizer>
 #include <QAbstractItemModel>
+#include <QMutexLocker>
 #include <QVariant>
 #include <QList>
 #include <QHash>
@@ -39,20 +40,24 @@ class RecordModel : public QAbstractItemModel
 
 		protected:
 
-			QList<QPair<int, QVariant>> Attributes;
+			QMap<int, QVariant> Attributes;
+
+			const int Index;
 
 		public:
 
-			RecordObject(const QList<QPair<int, QVariant>>& Fields);
+			RecordObject(int Uid, const QMap<int, QVariant>& Fields);
 			virtual ~RecordObject(void);
 
-			QList<QPair<int, QVariant> > getFields(void) const;
+			QMap<int, QVariant> getFields(void) const;
 
-			void setFields(const QList<QPair<int, QVariant>>& Fields);
+			void setFields(const QMap<int, QVariant>& Fields);
 			void setField(int Role, const QVariant& Value);
 			QVariant getField(int Role) const;
 
-			bool contain(const QList<QPair<int, QVariant>>& Fields) const;
+			bool contain(const QMap<int, QVariant>& Fields) const;
+
+			int getUid(void) const;
 
 	};
 
@@ -67,7 +72,7 @@ class RecordModel : public QAbstractItemModel
 
 			SortObject(int Column, bool Ascending = true);
 
-			bool operator() (RecordObject* First, RecordObject* Second) const;
+			bool operator () (RecordObject* First, RecordObject* Second) const;
 
 	};
 
@@ -83,16 +88,16 @@ class RecordModel : public QAbstractItemModel
 
 		public:
 
-			GroupObject(int Level = -1, const QList<QPair<int, QVariant>>& Fields = QList<QPair<int, QVariant>>());
+			GroupObject(int Level = -1, const QMap<int, QVariant>& Fields = QMap<int, QVariant>());
 			virtual ~GroupObject(void) override;
 
 			void addChild(RecordObject* Object);
 
-			bool removeChild(const QList<QPair<int, QVariant>>& Fields);
+			bool removeChild(const QMap<int, QVariant>& Fields);
 			bool removeChild(RecordObject* Object);
 			bool removeChild(int Index);
 
-			RecordObject* takeChild(const QList<QPair<int, QVariant>>& Fields);
+			RecordObject* takeChild(const QMap<int, QVariant>& Fields);
 			RecordObject* takeChild(RecordObject* Object);
 			RecordObject* takeChild(int Index);
 
@@ -125,6 +130,8 @@ class RecordModel : public QAbstractItemModel
 		QStringList Header;
 		QStringList Groups;
 
+		QMutex Locker;
+
 	public:
 
 		explicit RecordModel(const QStringList& Head, QObject* Parent = nullptr);
@@ -148,13 +155,15 @@ class RecordModel : public QAbstractItemModel
 
 		virtual void sort(int Column, Qt::SortOrder Order) override;
 
-		bool setData(const QModelIndex& Index, const QList<QPair<int, QVariant>>& Data);
+		bool setData(const QModelIndex& Index, const QMap<int, QVariant>& Data);
 
-		QList<QPair<int, QVariant>> fullData(const QModelIndex& Index) const;
+		QMap<int, QVariant> fullData(const QModelIndex& Index) const;
 
 		QVariant fieldData(const QModelIndex& Index, int Col) const;
 
-		QModelIndexList getIndexes(const QModelIndex& Parent = QModelIndex());
+		QModelIndexList getIndexes(const QModelIndex& Parent = QModelIndex()) const;
+
+		QList<int> getUids(const QModelIndexList& Selection) const;
 
 		bool removeItem(const QModelIndex& Index);
 
@@ -180,9 +189,7 @@ class RecordModel : public QAbstractItemModel
 
 		void groupByStr(const QStringList& Groupby);
 
-		void addItem(const QList<QPair<int, QVariant>>& Attributes);
-
-		void addItems(const QList<QList<QPair<int, QVariant>>>& Attributes);
+		void addItem(int ID, const QMap<int, QVariant>& Attributes);
 
 	signals:
 

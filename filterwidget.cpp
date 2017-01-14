@@ -38,46 +38,82 @@ FilterWidget::~FilterWidget(void)
 
 QString FilterWidget::getCondition(void) const
 {
-//	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
-//	{
-//		return QString("%1 %2")
-//				.arg(objectName())
-//				.arg(ui->Operator->currentText());
-//	}
-//	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
-//	{
-//		return QString("%1 %2 ('%3')")
-//				.arg(objectName())
-//				.arg(ui->Operator->currentText())
-//				.arg(getValue()
-//					.split(QRegExp("\\s*,\\s*"),
-//						  QString::SkipEmptyParts)
-//					.join("', '"));
-//	}
-//	else
-//	{
-//		return QString("%1 %2 '%3'")
-//				.arg(objectName())
-//				.arg(ui->Operator->currentText())
-//				.arg(getValue());
-//	}
+	const bool IS = ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL";
+	const bool IN = ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN";
+
+	if (IS)
+	{
+		return QString("%1 %2")
+				.arg(objectName())
+				.arg(ui->Operator->currentText());
+	}
+	else if (IN)
+	{
+		return QString("%1 %2 ('%3')")
+				.arg(objectName())
+				.arg(ui->Operator->currentText())
+				.arg(getValue().toStringList().join("', '"));
+	}
+	else
+	{
+		return QString("%1 %2 '%3'")
+				.arg(objectName())
+				.arg(ui->Operator->currentText())
+				.arg(getValue().toString());
+	}
 }
 
-QString FilterWidget::getValue(void) const
+QVariant FilterWidget::getValue(void) const
 {
-//	if (auto W = dynamic_cast<QComboBox*>(Widget))
-//	{
-//		const auto Text = W->currentText();;
+	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL") return QVariant();
 
-//		if (W->findText(Text) == -1) return Text;
-//		else return W->currentData().toString();
+	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+	{
+		QLineEdit* Edit = Simple ? Simple : qobject_cast<QLineEdit*>(Widget);
 
-//	}
-//	else if (auto W = dynamic_cast<QLineEdit*>(Widget))
-//	{
-//		return W->text();
-//	}
-//	else return QString();
+		return Edit->text().split(QRegExp("\\s*,\\s*"), QString::SkipEmptyParts);
+	}
+	else if (auto W = dynamic_cast<QComboBox*>(Widget))
+	{
+		if (W->property("MASK").toBool())
+		{
+			auto M = dynamic_cast<QStandardItemModel*>(W->model());
+			unsigned Mask = 0;
+
+			for (int i = 1; i < M->rowCount(); ++i)
+				if (M->item(i)->checkState() == Qt::Checked)
+				{
+					Mask |= M->item(i)->data().toUInt();
+				}
+
+			return Mask;
+		}
+		else
+		{
+			const auto Text = W->currentText();;
+
+			if (W->findText(Text) == -1) return Text;
+			else return W->currentData();
+		}
+
+	}
+	else if (auto W = dynamic_cast<QLineEdit*>(Widget))
+	{
+		return W->text();
+	}
+	else if (auto W = dynamic_cast<QSpinBox*>(Widget))
+	{
+		return W->value();
+	}
+	else if (auto W = dynamic_cast<QDoubleSpinBox*>(Widget))
+	{
+		return W->value();
+	}
+	else if (auto W = dynamic_cast<QDateTimeEdit*>(Widget))
+	{
+		return W->dateTime();
+	}
+	else return QVariant();
 }
 
 QString FilterWidget::getLabel(void) const
@@ -92,7 +128,11 @@ int FilterWidget::getIndex(void) const
 
 void FilterWidget::operatorChanged(const QString& Name)
 {
-	Widget->setVisible(Name != "IS NULL" && Name != "IS NOT NULL");
+	const bool IS = Name == "IS NULL" || Name == "IS NOT NULL";
+	const bool IN = Name == "IN" || Name == "NOT IN";
+
+	if (Widget) Widget->setVisible(!IS && !IN);
+	if (Simple) Simple->setVisible(IN);
 }
 
 void FilterWidget::editFinished(void)
@@ -102,7 +142,10 @@ void FilterWidget::editFinished(void)
 
 void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 {
-	setObjectName(Field.Name); Index = ID; if (Widget) Widget->deleteLater();
+	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
+
+	if (Simple) Simple->deleteLater();
+	if (Widget) Widget->deleteLater();
 
 	if (!Field.Dict.isEmpty()) switch (Field.Type)
 	{
@@ -126,6 +169,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 			Item->setFlags(Qt::ItemIsEnabled);
 			Model->setItem(0, Item);
 			Combo->setModel(Model);
+			Combo->setProperty("MASK", true);
 
 			connect(Combo, &QComboBox::currentTextChanged, boost::bind(&QComboBox::setCurrentIndex, Combo, 0));
 		}
@@ -140,6 +184,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 			}
 
 			Combo->setEditable(true);
+			Combo->setProperty("MASK", false);
 		}
 	}
 	else switch (Field.Type)
@@ -159,6 +204,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 
 			Combo->addItem(tr("Yes"), true);
 			Combo->addItem(tr("No"), false);
+			Combo->setProperty("MASK", false);
 		}
 		break;
 		case DatabaseDriver_v2::DOUBLE:
@@ -183,13 +229,30 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 		break;
 	}
 
-	Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-	Widget->setEnabled(ui->Field->isChecked());
+	if (!qobject_cast<QLineEdit*>(Widget)) Simple = new QLineEdit(this);
 
-	ui->Field->setText(Field.Label);
-	ui->horizontalLayout->addWidget(Widget);
+	if (Widget)
+	{
+		Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+		Widget->setEnabled(ui->Field->isChecked());
 
-	connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
+		ui->horizontalLayout->addWidget(Widget);
+
+		connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
+	}
+
+	if (Simple)
+	{
+		Simple->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+		Simple->setEnabled(ui->Field->isChecked());
+		Simple->setClearButtonEnabled(true);
+
+		ui->horizontalLayout->addWidget(Simple);
+
+		connect(ui->Field, &QCheckBox::toggled, Simple, &QWidget::setEnabled);
+	}
+
+	setObjectName(Field.Name); operatorChanged(ui->Operator->currentText());
 }
 
 void FilterWidget::setValue(const QVariant& Value)
@@ -206,7 +269,7 @@ void FilterWidget::setChecked(bool Checked)
 
 bool FilterWidget::isChecked(void) const
 {
-	return ui->Field->isChecked();
+	return isEnabled() && isVisible() && ui->Field->isChecked();
 }
 
 void FilterWidget::reset(void)

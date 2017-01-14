@@ -94,8 +94,8 @@ class DatabaseDriver_v2 : public QObject
 
 	protected:
 
-		QList<FIELD> loadCommon(void) const;
-		QList<TABLE> loadTables(void) const;
+		QList<FIELD> loadCommon(bool Emit = false);
+		QList<TABLE> loadTables(bool Emit = false);
 
 		QList<FIELD> loadFields(const QString& Table) const;
 		QMap<QVariant, QString> loadDict(const QString& Field, const QString& Table) const;
@@ -103,26 +103,33 @@ class DatabaseDriver_v2 : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
+		QList<int> getUsedFields(const QString& Filter) const;
+
+		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
+
 	public slots:
 
-		bool openDatabase(const QString& Server,
-					   const QString& Base,
-					   const QString& User,
-					   const QString& Pass);
+		bool openDatabase(const QString& Server, const QString& Base,
+					   const QString& User, const QString& Pass);
 
 		bool closeDatabase(void);
+
+		void updateData(const QString& Filter, QList<int> Used = QList<int>());
 
 	signals:
 
 		void onError(const QString&);
 
-		void onConnect(const QVector<FIELD>&, const QVector<TABLE>&, const QStringList&);
+		void onConnect(const QList<FIELD>&, const QList<TABLE>&, const QStringList&);
 		void onDisconnect(void);
+		void onLogin(void);
 
 		void onBeginProgress(const QString&);
 		void onSetupProgress(int, int);
 		void onUpdateProgress(int);
 		void onEndProgress(void);
+
+		void onDataLoad(RecordModel*);
 
 };
 
@@ -130,5 +137,6 @@ bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::
 bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::TABLE& Two);
 
 DatabaseDriver_v2::FIELD& getFieldByName(QList<DatabaseDriver_v2::FIELD>& Fields, const QString& Name);
+const DatabaseDriver_v2::FIELD& getFieldByName(const QList<DatabaseDriver_v2::FIELD>& Fields, const QString& Name);
 
 #endif // DATABASEDRIVER_V2_HPP

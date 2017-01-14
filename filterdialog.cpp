@@ -21,7 +21,7 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Tables)
+FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
 	ui->setupUi(this); setFields(Fields, Tables);
@@ -38,26 +38,47 @@ FilterDialog::~FilterDialog(void)
 	delete ui;
 }
 
-QString FilterDialog::getFilterRules(void)
+QString FilterDialog::getFilterRules(void) const
 {
-//	if (ui->tabWidget->currentIndex() == 1)
-//	{
-//		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
-//		return ui->Setup->document()->toPlainText();
-//	}
-//	else
-//	{
-//		QStringList Rules; for (int i = 0; i < ui->simpleLayout->count(); ++i)
-//		{
-//			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
-//			{
-//				if (W->isChecked()) Rules.append(W->getCondition());
-//			}
-//		}
+	if (ui->tabWidget->currentIndex() == 2)
+	{
+		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
+		return ui->Setup->document()->toPlainText();
+	}
+	else
+	{
+		QStringList Rules;
 
-//		if (Rules.isEmpty()) return QString();
-//		else return Rules.join(" AND ");
-//	}
+		for (int i = 0; i < ui->simpleLayout->count(); ++i)
+		{
+			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+			{
+				if (W->isChecked()) Rules.append(W->getCondition());
+			}
+		}
+
+		if (Rules.isEmpty()) return QString();
+		else return Rules.join(" AND ");
+	}
+}
+
+QList<int> FilterDialog::getUsedFields(void) const
+{
+	if (ui->tabWidget->currentIndex() == 2) return QList<int>();
+	else
+	{
+		QSet<int> Used;
+
+		for (int i = 0; i < ui->simpleLayout->count(); ++i)
+		{
+			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+			{
+				if (W->isChecked()) Used.insert(W->getIndex());
+			}
+		}
+
+		return Used.toList();
+	}
 }
 
 void FilterDialog::operatorTextChanged(const QString& Operator)
@@ -125,41 +146,47 @@ void FilterDialog::tabIndexChanged(int Index)
 	ui->classSearch->setVisible(Index == 0);
 	ui->simpleSearch->setVisible(Index == 1);
 
+	ui->copyButton->setVisible(Index == 1);
 	ui->selectButton->setVisible(Index == 0);
 	ui->unselectButton->setVisible(Index == 0);
 }
 
 void FilterDialog::addButtonClicked(void)
 {
-//	QString Line;
+	QString Line;
 
-//	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
+	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
 
-//	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
-//	{
-//		Line.append(QString("%1 %2")
-//				.arg(ui->Field->currentData(Qt::UserRole).toString())
-//				.arg(ui->Operator->currentText()));
-//	}
-//	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
-//	{
-//		Line.append(QString("%1 %2 ('%3')")
-//				.arg(ui->Field->currentData(Qt::UserRole).toString())
-//				.arg(ui->Operator->currentText())
-//				.arg(ui->Value->text().
-//					split(QRegExp("\\s*,\\s*"),
-//						 QString::SkipEmptyParts)
-//					.join("', '")));
-//	}
-//	else
-//	{
-//		Line.append(QString("%1 %2 '%3'")
-//				.arg(ui->Field->currentData(Qt::UserRole).toString())
-//				.arg(ui->Operator->currentText())
-//				.arg(ui->Value->text()));
-//	}
+	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
+	{
+		Line.append(QString("%1 %2")
+				.arg(ui->Field->currentData(Qt::UserRole).toString())
+				.arg(ui->Operator->currentText()));
+	}
+	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+	{
+		Line.append(QString("%1 %2 ('%3')")
+				.arg(ui->Field->currentData(Qt::UserRole).toString())
+				.arg(ui->Operator->currentText())
+				.arg(ui->Value->text().
+					  split(QRegExp("\\s*,\\s*"),
+						   QString::SkipEmptyParts)
+					  .join("', '")));
+	}
+	else
+	{
+		Line.append(QString("%1 %2 '%3'")
+				.arg(ui->Field->currentData(Qt::UserRole).toString())
+				.arg(ui->Operator->currentText())
+				.arg(ui->Value->text()));
+	}
 
-	//	ui->Setup->appendPlainText(Line);
+	ui->Setup->appendPlainText(Line);
+}
+
+void FilterDialog::copyButtonClicked(void)
+{
+	// TODO copy into clipboard
 }
 
 void FilterDialog::selectButtonClicked(void)
@@ -190,12 +217,12 @@ void FilterDialog::unselectButtonClicked(void)
 
 void FilterDialog::accept(void)
 {
-	emit onFiltersUpdate(getFilterRules()); QDialog::accept();
+	emit onFiltersUpdate(getFilterRules(), getUsedFields()); QDialog::accept();
 }
 
-void FilterDialog::setFields(const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Tables)
+void FilterDialog::setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables)
 {
-	Attributes.clear(); ui->Field->clear();
+	Attributes.clear(); ui->Field->clear(); QStringList Used;
 
 	while (auto I = ui->classLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
@@ -205,6 +232,8 @@ void FilterDialog::setFields(const QVector<DatabaseDriver_v2::FIELD>& Fields, co
 		auto Check = new QCheckBox(Tables[i].Label, this);
 
 		Check->setProperty("KEY", i);
+		Check->setToolTip(Tables[i].Name);
+
 		Attributes.append(Tables[i].Indexes);
 		ui->classLayout->addWidget(Check);
 
@@ -213,11 +242,16 @@ void FilterDialog::setFields(const QVector<DatabaseDriver_v2::FIELD>& Fields, co
 
 	for (int i = 0; i < Fields.size(); ++i)
 	{
-		const int Count = ui->Field->count();
+		if (Fields[i].Dict.size() != 1) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 
-		ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
+		if (!Used.contains(Fields[i].Name))
+		{
+			const int Count = ui->Field->count();
 
-		ui->Field->addItem(Fields[i].Label);
-		ui->Field->setItemData(Count, Fields[i].Name);
+			ui->Field->addItem(Fields[i].Label);
+			ui->Field->setItemData(Count, Fields[i].Name);
+
+			Used.append(Fields[i].Name);
+		}
 	}
 }

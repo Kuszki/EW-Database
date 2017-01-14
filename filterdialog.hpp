@@ -49,11 +49,12 @@ class FilterDialog : public QDialog
 	public:
 
 		explicit FilterDialog(QWidget* Parent = nullptr,
-						  const QVector<DatabaseDriver_v2::FIELD>& Fields = QVector<DatabaseDriver_v2::FIELD>(),
-						  const QVector<DatabaseDriver_v2::TABLE>& Tables = QVector<DatabaseDriver_v2::TABLE>());
+						  const QList<DatabaseDriver_v2::FIELD>& Fields = QList<DatabaseDriver_v2::FIELD>(),
+						  const QList<DatabaseDriver_v2::TABLE>& Tables = QList<DatabaseDriver_v2::TABLE>());
 		virtual ~FilterDialog(void) override;
 
-		QString getFilterRules(void);
+		QString getFilterRules(void) const;
+		QList<int> getUsedFields(void) const;
 
 	private slots:
 
@@ -69,6 +70,7 @@ class FilterDialog : public QDialog
 		void tabIndexChanged(int Index);
 
 		void addButtonClicked(void);
+		void copyButtonClicked(void);
 		void selectButtonClicked(void);
 		void unselectButtonClicked(void);
 
@@ -76,11 +78,11 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setFields(const QVector<DatabaseDriver_v2::FIELD>& Fields, const QVector<DatabaseDriver_v2::TABLE>& Tables);
+		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables);
 
 	signals:
 
-		void onFiltersUpdate(const QString&);
+		void onFiltersUpdate(const QString&, const QList<int>&);
 
 };
 

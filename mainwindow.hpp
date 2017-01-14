@@ -79,27 +79,29 @@ class MainWindow : public QMainWindow
 
 	private slots:
 
-		void ConnectActionClicked(void);
-		void DeleteActionClicked(void);
+		void connectActionClicked(void);
+		void deleteActionClicked(void);
+		void refreshActionClicked(void);
 
 		void selectionChanged(void);
 
-		void databaseConnected(const QVector<DatabaseDriver_v2::FIELD>& Fields,
-						   const QVector<DatabaseDriver_v2::TABLE>& Classes,
+		void databaseConnected(const QList<DatabaseDriver_v2::FIELD>& Fields,
+						   const QList<DatabaseDriver_v2::TABLE>& Classes,
 						   const QStringList& Headers);
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
+		void databaseLogin(void);
 
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
 		void updateData(const QHash<QString, QString>& Values);
+		void refreshData(const QString& Where, const QList<int>& Used);
 
 		void loadData(RecordModel* Model);
-		void reloadData(RecordModel* Model);
-		void removeData(RecordModel* Model);
-		void refreshData(void);
 
-		void completeGrouping(void);
+		void reloadData(void);
+		void removeData(void);
+		void groupData(void);
 
 		void prepareEdit(void);
 
@@ -107,7 +109,7 @@ class MainWindow : public QMainWindow
 
 		void onGroupRequest(const QList<int>&);
 
-		void onUpdateRequest(const QString&);
+		void onUpdateRequest(const QString&, const QList<int>&);
 
 		void onEditRequest(RecordModel*, const QModelIndexList&, const QHash<QString, QString>&);
 

@@ -179,6 +179,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QToolButton" name="copyButton">
+       <property name="text">
+        <string>Copy</string>
+       </property>
+       <property name="icon">
+        <iconset theme="edit-copy"/>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLineEdit" name="classSearch">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -409,8 +419,8 @@
    <slot>selectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>530</x>
-     <y>472</y>
+     <x>575</x>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -425,12 +435,28 @@
    <slot>unselectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>566</x>
-     <y>478</y>
+     <x>605</x>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>567</x>
      <y>560</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>copyButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>copyButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>280</x>
+     <y>471</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>294</x>
+     <y>598</y>
     </hint>
    </hints>
   </connection>
@@ -444,5 +470,6 @@
   <slot>tabIndexChanged(int)</slot>
   <slot>selectButtonClicked()</slot>
   <slot>unselectButtonClicked()</slot>
+  <slot>copyButtonClicked()</slot>
  </slots>
 </ui>

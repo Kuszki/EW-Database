@@ -28,7 +28,7 @@ CONFIG		+=	C++14
 SOURCES		+=	main.cpp \
 				mainwindow.cpp \
 				connectdialog.cpp \
-				databasedriver.cpp \
+#				databasedriver.cpp \
 				columnsdialog.cpp \
 				groupdialog.cpp \
 				filterdialog.cpp \
@@ -43,7 +43,7 @@ SOURCES		+=	main.cpp \
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
-				databasedriver.hpp \
+#				databasedriver.hpp \
 				columnsdialog.hpp \
 				groupdialog.hpp \
 				filterdialog.hpp \
