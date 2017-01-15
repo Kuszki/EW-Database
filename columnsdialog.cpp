@@ -62,7 +62,25 @@ QStringList ColumnsDialog::getEnabledColumnsNames(void)
 	return Enabled;
 }
 
-void ColumnsDialog::searchEdited(const QString& Search)
+void ColumnsDialog::selectButtonClicked(void)
+{
+	for (int i = 0; i < ui->itemsLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
+		{
+			if (W->isVisible()) W->setChecked(true);
+		}
+}
+
+void ColumnsDialog::unselectButtonClicked(void)
+{
+	for (int i = 0; i < ui->itemsLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
+		{
+			if (W->isVisible()) W->setChecked(false);
+		}
+}
+
+void ColumnsDialog::searchTextEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->itemsLayout->count(); ++i)
 		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))

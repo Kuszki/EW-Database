@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(Driver, &DatabaseDriver_v2::onDataLoad, this, &MainWindow::loadData);
 //	connect(Driver, &DatabaseDriver_v2::onDataUpdate, this, &MainWindow::reloadData);
-//	connect(Driver, &DatabaseDriver_v2::onDataRemove, this, &MainWindow::removeData);
+	connect(Driver, &DatabaseDriver_v2::onDataRemove, this, &MainWindow::removeData);
 
 	connect(Driver, &DatabaseDriver_v2::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver_v2::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -67,7 +67,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver_v2::updateData);
 //	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver_v2::setData);
-//	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver_v2::removeData);
+	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver_v2::removeData);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -92,6 +92,8 @@ void MainWindow::connectActionClicked(void)
 {
 	ConnectDialog* Dialog = new ConnectDialog(this);
 
+	connect(Dialog, &ConnectDialog::onAccept, this, &MainWindow::loginAttempt);
+
 	connect(Dialog, &ConnectDialog::onAccept, Driver, &DatabaseDriver_v2::openDatabase);
 	connect(Dialog, &ConnectDialog::accepted, Dialog, &ConnectDialog::deleteLater);
 	connect(Dialog, &ConnectDialog::rejected, Dialog, &ConnectDialog::deleteLater);
@@ -104,15 +106,15 @@ void MainWindow::connectActionClicked(void)
 
 void MainWindow::deleteActionClicked(void)
 {
-//	const auto Selected = ui->Data->selectionModel()->selectedRows();
-//	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-//	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
-//						 tr("Are you sure to delete selected items?"),
-//						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
-//	{
-//		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
-	//	}
+	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
+						 tr("Are you sure to delete selected items?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
+	}
 }
 
 void MainWindow::refreshActionClicked(void)
@@ -164,7 +166,7 @@ void MainWindow::databaseDisconnected(void)
 	Columns->deleteLater();
 	Groups->deleteLater();
 	Filter->deleteLater();
-	Update->deleteLater();
+//	Update->deleteLater();
 
 	lockUi(DISCONNECTED);
 
@@ -176,9 +178,9 @@ void MainWindow::databaseError(const QString& Error)
 	ui->statusBar->showMessage(Error);
 }
 
-void MainWindow::databaseLogin(void)
+void MainWindow::databaseLogin(bool OK)
 {
-	ui->actionConnect->setEnabled(false);
+	ui->actionConnect->setEnabled(!OK);
 }
 
 void MainWindow::updateGroups(const QList<int>& Columns)
@@ -194,7 +196,7 @@ void MainWindow::updateColumns(const QList<int>& Columns)
 
 	for (int i = 0; i < ui->Data->model()->columnCount(); ++i)
 	{
-		ui->Data->setColumnHidden(i, !Columns.contains(i));
+		ui->Data->setColumnHidden(i, !(Columns.isEmpty() || Columns.contains(i)));
 	}
 }
 
@@ -219,6 +221,11 @@ void MainWindow::loadData(RecordModel* Model)
 
 	if (Groupby.isEmpty()) lockUi(DONE);
 	else updateGroups(Groupby);
+}
+
+void MainWindow::loginAttempt(void)
+{
+	ui->actionConnect->setEnabled(false);
 }
 
 void MainWindow::reloadData(void)

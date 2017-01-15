@@ -50,7 +50,10 @@ class ColumnsDialog : public QDialog
 
 	private slots:
 
-		void searchEdited(const QString& Search);
+		void selectButtonClicked(void);
+		void unselectButtonClicked(void);
+
+		void searchTextEdited(const QString& Search);
 
 	public slots:
 

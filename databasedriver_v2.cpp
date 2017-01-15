@@ -124,7 +124,6 @@ QList<DatabaseDriver_v2::TABLE> DatabaseDriver_v2::loadTables(bool Emit)
 		});
 
 		if (Emit) emit onUpdateProgress(++Step);
-
 	}
 
 	return List;
@@ -251,6 +250,45 @@ QStringList DatabaseDriver_v2::normalizeHeaders(QList<DatabaseDriver_v2::TABLE>&
 	return List;
 }
 
+QMap<QString, QStringList> DatabaseDriver_v2::getDeleteGroups(const QList<int>& Indexes) const
+{
+	if (!Database.isOpen()) return QMap<QString, QStringList>();
+
+	QMap<QString, QStringList> List;
+	QSqlQuery Query(Database);
+
+	List.insert("EW_OBIEKTY", QStringList());
+
+	for (const auto& ID : Indexes)
+	{
+		Query.prepare(QString(
+			"SELECT "
+				"EW_OB_OPISY.DANE_DOD "
+			"FROM "
+				"EW_OB_OPISY "
+			"INNER JOIN "
+				"EW_OBIEKTY "
+			"ON "
+				"EW_OB_OPISY.KOD = EW_OBIEKTY.KOD "
+			"WHERE "
+				"EW_OBIEKTY.UID = :id"));
+
+		Query.bindValue(":id", ID);
+
+		if (Query.exec() && Query.next())
+		{
+			const QString Table = Query.value(0).toString();
+
+			if (!List.contains(Table)) List.insert(Table, QStringList());
+
+			List["EW_OBIEKTY"].append(QString::number(ID));
+			List[Table].append(QString::number(ID));
+		}
+	}
+
+	return List;
+}
+
 QList<int> DatabaseDriver_v2::getUsedFields(const QString& Filter) const
 {
 	if (Filter.isEmpty()) return QList<int>(); QList<int> Used;
@@ -291,7 +329,7 @@ bool DatabaseDriver_v2::openDatabase(const QString& Server, const QString& Base,
 
 	if (Database.open())
 	{
-		emit onBeginProgress(tr("Loading database informations")); emit onLogin();
+		emit onBeginProgress(tr("Loading database informations")); emit onLogin(true);
 
 		Common = loadCommon(false);
 		Tables = loadTables(true);
@@ -301,7 +339,10 @@ bool DatabaseDriver_v2::openDatabase(const QString& Server, const QString& Base,
 
 		emit onEndProgress(); emit onConnect(Fields, Tables, Headers);
 	}
-	else emit onError(Database.lastError().text());
+	else
+	{
+		emit onError(Database.lastError().text()); emit onLogin(false);
+	}
 
 	return Database.isOpen();
 }
@@ -382,6 +423,35 @@ void DatabaseDriver_v2::updateData(const QString& Filter, QList<int> Used)
 
 	emit onEndProgress();
 	emit onDataLoad(Model);
+}
+
+void DatabaseDriver_v2::removeData(RecordModel* Model, const QModelIndexList& Items)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(); return; }
+
+	QMap<QString, QStringList> Tasks = getDeleteGroups(Model->getUids(Items));
+	QSqlQuery Query(Database); int Step = 0;
+
+	emit onBeginProgress(tr("Removing data"));
+	emit onSetupProgress(0, Tasks.size());
+
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		Query.exec(QString(
+			"DELETE FROM "
+				"%1 "
+			"WHERE "
+				"UID IN ('%2')")
+				 .arg(i.key())
+				 .arg(i.value().join("', '")));
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (const auto Item : Items) Model->removeItem(Item);
+
+	emit onEndProgress();
+	emit onDataRemove();
 }
 
 bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::FIELD& Two)

@@ -103,6 +103,7 @@ class DatabaseDriver_v2 : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
+		QMap<QString, QStringList> getDeleteGroups(const QList<int>& Indexes) const;
 		QList<int> getUsedFields(const QString& Filter) const;
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
@@ -116,13 +117,15 @@ class DatabaseDriver_v2 : public QObject
 
 		void updateData(const QString& Filter, QList<int> Used = QList<int>());
 
+		void removeData(RecordModel* Model, const QModelIndexList& Items);
+
 	signals:
 
 		void onError(const QString&);
 
 		void onConnect(const QList<FIELD>&, const QList<TABLE>&, const QStringList&);
 		void onDisconnect(void);
-		void onLogin(void);
+		void onLogin(bool);
 
 		void onBeginProgress(const QString&);
 		void onSetupProgress(int, int);
@@ -130,6 +133,7 @@ class DatabaseDriver_v2 : public QObject
 		void onEndProgress(void);
 
 		void onDataLoad(RecordModel*);
+		void onDataRemove(void);
 
 };
 

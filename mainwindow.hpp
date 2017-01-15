@@ -90,7 +90,7 @@ class MainWindow : public QMainWindow
 						   const QStringList& Headers);
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
-		void databaseLogin(void);
+		void databaseLogin(bool OK);
 
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
@@ -98,6 +98,8 @@ class MainWindow : public QMainWindow
 		void refreshData(const QString& Where, const QList<int>& Used);
 
 		void loadData(RecordModel* Model);
+
+		void loginAttempt(void);
 
 		void reloadData(void);
 		void removeData(void);
