@@ -64,7 +64,9 @@ class FilterWidget : public QWidget
 	private slots:
 
 		void operatorChanged(const QString& Name);
+
 		void editFinished(void);
+		void resetIndex(void);
 
 	public slots:
 

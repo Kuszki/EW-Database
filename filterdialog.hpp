@@ -23,6 +23,7 @@
 
 #include <QAbstractButton>
 #include <QPushButton>
+#include <QClipboard>
 #include <QCheckBox>
 #include <QDialog>
 #include <QHash>
@@ -44,13 +45,16 @@ class FilterDialog : public QDialog
 
 		Ui::FilterDialog* ui;
 
-		QList<QList<int>> Attributes;
+		QList<QSet<int>> Attributes;
+
+		unsigned Above = 0;
 
 	public:
 
 		explicit FilterDialog(QWidget* Parent = nullptr,
 						  const QList<DatabaseDriver_v2::FIELD>& Fields = QList<DatabaseDriver_v2::FIELD>(),
-						  const QList<DatabaseDriver_v2::TABLE>& Tables = QList<DatabaseDriver_v2::TABLE>());
+						  const QList<DatabaseDriver_v2::TABLE>& Tables = QList<DatabaseDriver_v2::TABLE>(),
+						  unsigned Common = 0);
 		virtual ~FilterDialog(void) override;
 
 		QString getFilterRules(void) const;
@@ -78,7 +82,7 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables);
+		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables, unsigned Common = 0);
 
 	signals:
 

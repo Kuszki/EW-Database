@@ -19,26 +19,77 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="4">
-    <widget class="QScrollArea" name="itemsScrool">
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="tabPosition">
+      <enum>QTabWidget::West</enum>
      </property>
-     <property name="lineWidth">
+     <property name="currentIndex">
       <number>0</number>
      </property>
-     <property name="widgetResizable">
+     <property name="documentMode">
       <bool>true</bool>
      </property>
-     <widget class="QWidget" name="itemsAreaWidgetContents">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>482</width>
-        <height>298</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="itemsLayout"/>
+     <widget class="QWidget" name="commonTab">
+      <attribute name="title">
+       <string>Common</string>
+      </attribute>
+      <layout class="QGridLayout" name="commonScroolLayout">
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="commonScrool">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="commonAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>432</width>
+            <height>280</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="commonLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="specialTab">
+      <attribute name="title">
+       <string>Special</string>
+      </attribute>
+      <layout class="QGridLayout" name="specialScroolLayout">
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="specialScrool">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="specialAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>432</width>
+            <height>280</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="specialLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

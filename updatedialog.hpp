@@ -41,37 +41,47 @@ class UpdateDialog : public QDialog
 	private:
 
 		Ui::UpdateDialog* ui;
+
+		QList<QMap<int, QVariant>> Values;
+		QList<int> Active;
+
+		int Index = 0;
 		int Count = 0;
 
 	public:
 
-		explicit UpdateDialog(QWidget* Parent = nullptr,
-						  const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>(),
-						  const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+		explicit UpdateDialog(QWidget* Parent = nullptr, const QList<DatabaseDriver_v2::FIELD>& Fields = QList<DatabaseDriver_v2::FIELD>());
 		virtual ~UpdateDialog(void) override;
 
-		QHash<QString, QString> getUpdateRules(void);
+		QMap<int, QVariant> getUpdatedValues(void) const;
 
 	private slots:
 
-		void searchEdited(const QString& Search);
+		void searchBoxEdited(const QString& Search);
 
-		void fieldChecked(bool Enabled);
+		void fieldButtonChecked(bool Enabled);
+		void allButtonChecked(bool Enabled);
+
+		void clearButtonClicked(void);
+		void prevButtonClicked(void);
+		void nextButtonClicked(void);
 
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setAvailableFields(const QList<QPair<QString, QString>>& Fields,
-						    const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields);
 
-		void setFieldsData(const QHash<QString, QString>& Data);
+		void setData(const QList<QMap<int, QVariant>> &Data);
+		void setData(const QMap<int, QVariant>& Data);
 
-		void setFieldsUnchecked(void);
+		void setActive(const QList<int>& Indexes);
+
+		void setUnchecked(void);
 
 	signals:
 
-		void onValuesUpdate(const QHash<QString, QString>&);
+		void onValuesUpdate(const QMap<int, QVariant>&);
 
 };
 

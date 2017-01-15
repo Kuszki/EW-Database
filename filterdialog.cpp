@@ -21,10 +21,10 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables)
+FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables, unsigned Common)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setFields(Fields, Tables);
+	ui->setupUi(this); setFields(Fields, Tables, Common);
 
 	ui->Operator->addItems(DatabaseDriver_v2::Operators);
 	ui->classLayout->setAlignment(Qt::AlignTop);
@@ -47,7 +47,15 @@ QString FilterDialog::getFilterRules(void) const
 	}
 	else
 	{
-		QStringList Rules;
+		QStringList Rules, Classes;
+
+		for (int i = 0; i < ui->classLayout->count(); ++i)
+		{
+			if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+			{
+				if (W->isChecked()) Classes.append(W->toolTip());
+			}
+		}
 
 		for (int i = 0; i < ui->simpleLayout->count(); ++i)
 		{
@@ -56,6 +64,8 @@ QString FilterDialog::getFilterRules(void) const
 				if (W->isChecked()) Rules.append(W->getCondition());
 			}
 		}
+
+		if (!Classes.isEmpty()) Rules.insert(0, QString("EW_OBIEKTY.KOD IN ('%1')").arg(Classes.join("', '")));
 
 		if (Rules.isEmpty()) return QString();
 		else return Rules.join(" AND ");
@@ -121,22 +131,24 @@ void FilterDialog::classBoxChecked(void)
 {
 	QSet<int> Disabled, All;
 
-	for (int i = 0; i < ui->simpleLayout->count(); ++i) All.insert(i);
-
-	for (int i = 0; i < ui->classLayout->count(); ++i) if (auto W = ui->classLayout->itemAt(i)->widget())
-	{
-		if (auto C = qobject_cast<QCheckBox*>(W)) if (C->isChecked())
+	for (int i = Above; i < ui->simpleLayout->count(); ++i)
+		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 		{
-			const int ID = W->property("KEY").toInt();
-
-			Disabled.unite(QSet<int>(All).subtract(Attributes[ID].toSet()));
+			All.insert(W->getIndex());
 		}
-	}
 
-	for (int i = 0; i < ui->simpleLayout->count(); ++i) if (auto W = ui->simpleLayout->itemAt(i)->widget())
-	{
-		W->setEnabled(!Disabled.contains(i));
-	}
+	for (int i = 0; i < ui->classLayout->count(); ++i)
+		if (auto C = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+			if (C->isChecked())
+			{
+				Disabled.unite(QSet<int>(All).subtract(Attributes[i]));
+			}
+
+	for (int i = Above; i < ui->simpleLayout->count(); ++i)
+		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+		{
+			W->setEnabled(!Disabled.contains(W->getIndex()));
+		}
 
 	simpleSearchEdited(ui->simpleSearch->text());
 }
@@ -186,7 +198,7 @@ void FilterDialog::addButtonClicked(void)
 
 void FilterDialog::copyButtonClicked(void)
 {
-	// TODO copy into clipboard
+	QApplication::clipboard()->setText(getFilterRules());
 }
 
 void FilterDialog::selectButtonClicked(void)
@@ -220,9 +232,9 @@ void FilterDialog::accept(void)
 	emit onFiltersUpdate(getFilterRules(), getUsedFields()); QDialog::accept();
 }
 
-void FilterDialog::setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables)
+void FilterDialog::setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables, unsigned Common)
 {
-	Attributes.clear(); ui->Field->clear(); QStringList Used;
+	Attributes.clear(); ui->Field->clear(); Above = Common; QStringList Used;
 
 	while (auto I = ui->classLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
@@ -231,10 +243,9 @@ void FilterDialog::setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, cons
 	{
 		auto Check = new QCheckBox(Tables[i].Label, this);
 
-		Check->setProperty("KEY", i);
 		Check->setToolTip(Tables[i].Name);
 
-		Attributes.append(Tables[i].Indexes);
+		Attributes.append(Tables[i].Indexes.toSet());
 		ui->classLayout->addWidget(Check);
 
 		connect(Check, &QCheckBox::toggled, this, &FilterDialog::classBoxChecked);

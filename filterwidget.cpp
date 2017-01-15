@@ -78,12 +78,13 @@ QVariant FilterWidget::getValue(void) const
 		if (W->property("MASK").toBool())
 		{
 			auto M = dynamic_cast<QStandardItemModel*>(W->model());
-			unsigned Mask = 0;
+
+			int Mask = 0;
 
 			for (int i = 1; i < M->rowCount(); ++i)
 				if (M->item(i)->checkState() == Qt::Checked)
 				{
-					Mask |= M->item(i)->data().toUInt();
+					Mask |= 1 << M->item(i)->data().toInt();
 				}
 
 			return Mask;
@@ -140,6 +141,11 @@ void FilterWidget::editFinished(void)
 	emit onValueUpdate(objectName(), getValue());
 }
 
+void FilterWidget::resetIndex(void)
+{
+	if (auto C = qobject_cast<QComboBox*>(sender())) C->setCurrentIndex(0);
+}
+
 void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 {
 	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
@@ -171,7 +177,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 			Combo->setModel(Model);
 			Combo->setProperty("MASK", true);
 
-			connect(Combo, &QComboBox::currentTextChanged, boost::bind(&QComboBox::setCurrentIndex, Combo, 0));
+			connect(Combo, &QComboBox::currentTextChanged, this, &FilterWidget::resetIndex);
 		}
 		break;
 		default:
@@ -218,6 +224,8 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 		case DatabaseDriver_v2::DATE:
 		{
 			auto Date = new QDateTimeEdit(this); Widget = Date;
+
+			Date->setCalendarPopup(true);
 		}
 		break;
 		default:
@@ -257,8 +265,44 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 
 void FilterWidget::setValue(const QVariant& Value)
 {
-//	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->setCurrentText(Value);
-//	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->setText(Value);
+	if (auto W = dynamic_cast<QComboBox*>(Widget))
+	{
+		if (W->property("MASK").toBool())
+		{
+			auto M = dynamic_cast<QStandardItemModel*>(W->model());
+
+			for (int i = 1; i < M->rowCount(); ++i)
+			{
+				const bool Checked = Value.toInt() & (1 << M->item(i)->data().toInt());
+
+				M->item(i)->setCheckState(Checked ? Qt::Checked : Qt::Unchecked);
+			}
+
+		}
+		else
+		{
+			W->setCurrentText(Value.toString());
+		}
+
+	}
+	else if (auto W = dynamic_cast<QLineEdit*>(Widget))
+	{
+		W->setText(Value.toString());
+	}
+	else if (auto W = dynamic_cast<QSpinBox*>(Widget))
+	{
+		W->setValue(Value.toInt());
+	}
+	else if (auto W = dynamic_cast<QDoubleSpinBox*>(Widget))
+	{
+		W->setValue(Value.toDouble());
+	}
+	else if (auto W = dynamic_cast<QDateTimeEdit*>(Widget))
+	{
+		W->setDateTime(Value.toDateTime());
+	}
+
+	if (Simple) Simple->setText(Value.toString());
 }
 
 
@@ -269,13 +313,10 @@ void FilterWidget::setChecked(bool Checked)
 
 bool FilterWidget::isChecked(void) const
 {
-	return isEnabled() && isVisible() && ui->Field->isChecked();
+	return isEnabled() && ui->Field->isChecked();
 }
 
 void FilterWidget::reset(void)
 {
-//	if (auto W = dynamic_cast<QComboBox*>(Widget)) W->clearEditText();
-//	else if (auto W = dynamic_cast<QLineEdit*>(Widget)) W->clear();
-
-	ui->Field->setChecked(false);
+	setChecked(false); setValue(QVariant());
 }

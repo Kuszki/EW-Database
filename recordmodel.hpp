@@ -130,8 +130,6 @@ class RecordModel : public QAbstractItemModel
 		QStringList Header;
 		QStringList Groups;
 
-		QMutex Locker;
-
 	public:
 
 		explicit RecordModel(const QStringList& Head, QObject* Parent = nullptr);

@@ -82,19 +82,21 @@ class MainWindow : public QMainWindow
 		void connectActionClicked(void);
 		void deleteActionClicked(void);
 		void refreshActionClicked(void);
+		void editActionClicked(void);
 
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver_v2::FIELD>& Fields,
 						   const QList<DatabaseDriver_v2::TABLE>& Classes,
-						   const QStringList& Headers);
+						   const QStringList& Headers, unsigned Common);
+
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
 		void databaseLogin(bool OK);
 
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
-		void updateData(const QHash<QString, QString>& Values);
+		void updateValues(const QMap<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used);
 
 		void loadData(RecordModel* Model);
@@ -103,19 +105,19 @@ class MainWindow : public QMainWindow
 
 		void reloadData(void);
 		void removeData(void);
+		void updateData(void);
 		void groupData(void);
 
-		void prepareEdit(void);
+		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
 
 	signals:
 
-		void onGroupRequest(const QList<int>&);
-
-		void onUpdateRequest(const QString&, const QList<int>&);
-
-		void onEditRequest(RecordModel*, const QModelIndexList&, const QHash<QString, QString>&);
-
+		void onReloadRequest(const QString&, const QList<int>&);
+		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
+		void onUpdateRequest(RecordModel*, const QModelIndexList&, const QMap<int, QVariant>&);
+
+		void onGroupRequest(const QList<int>&);
 
 		void onDeleteRequest(void);
 

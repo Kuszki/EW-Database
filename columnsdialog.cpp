@@ -21,12 +21,13 @@
 #include "columnsdialog.hpp"
 #include "ui_columnsdialog.h"
 
-ColumnsDialog::ColumnsDialog(QWidget* Parent, const QStringList Headers)
+ColumnsDialog::ColumnsDialog(QWidget* Parent, const QStringList Headers, unsigned Common)
 : QDialog(Parent), ui(new Ui::ColumnsDialog)
 {
-	ui->setupUi(this); setAttributes(Headers);
+	ui->setupUi(this); setAttributes(Headers, Common);
 
-	ui->itemsLayout->setAlignment(Qt::AlignTop);
+	ui->commonLayout->setAlignment(Qt::AlignTop);
+	ui->specialLayout->setAlignment(Qt::AlignTop);
 }
 
 ColumnsDialog::~ColumnsDialog(void)
@@ -42,11 +43,15 @@ ColumnsDialog::~ColumnsDialog(void)
 
 QList<int> ColumnsDialog::getEnabledColumnsIndexes(void)
 {
-	QList<int> Enabled;
+	QList<int> Enabled; int Item = 0;
 
-	for (int i = 0; i < ui->itemsLayout->count(); ++i)
-		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
-			if (W->isChecked()) Enabled.append(i);
+	for (int i = 0; i < ui->commonLayout->count(); ++i, ++Item)
+		if (auto W = qobject_cast<QCheckBox*>(ui->commonLayout->itemAt(i)->widget()))
+			if (W->isChecked()) Enabled.append(Item);
+
+	for (int i = 0; i < ui->specialLayout->count(); ++i, ++Item)
+		if (auto W = qobject_cast<QCheckBox*>(ui->specialLayout->itemAt(i)->widget()))
+			if (W->isChecked()) Enabled.append(Item);
 
 	return Enabled;
 }
@@ -55,8 +60,12 @@ QStringList ColumnsDialog::getEnabledColumnsNames(void)
 {
 	QStringList Enabled;
 
-	for (int i = 0; i < ui->itemsLayout->count(); ++i)
-		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
+	for (int i = 0; i < ui->commonLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->commonLayout->itemAt(i)->widget()))
+			if (W->isChecked()) Enabled.append(W->text());
+
+	for (int i = 0; i < ui->specialLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->specialLayout->itemAt(i)->widget()))
 			if (W->isChecked()) Enabled.append(W->text());
 
 	return Enabled;
@@ -64,8 +73,10 @@ QStringList ColumnsDialog::getEnabledColumnsNames(void)
 
 void ColumnsDialog::selectButtonClicked(void)
 {
-	for (int i = 0; i < ui->itemsLayout->count(); ++i)
-		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
+	auto Layout = ui->tabWidget->currentIndex() ? ui->specialLayout : ui->commonLayout;
+
+	for (int i = 0; i < Layout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(Layout->itemAt(i)->widget()))
 		{
 			if (W->isVisible()) W->setChecked(true);
 		}
@@ -73,8 +84,10 @@ void ColumnsDialog::selectButtonClicked(void)
 
 void ColumnsDialog::unselectButtonClicked(void)
 {
-	for (int i = 0; i < ui->itemsLayout->count(); ++i)
-		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
+	auto Layout = ui->tabWidget->currentIndex() ? ui->specialLayout : ui->commonLayout;
+
+	for (int i = 0; i < Layout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(Layout->itemAt(i)->widget()))
 		{
 			if (W->isVisible()) W->setChecked(false);
 		}
@@ -82,8 +95,12 @@ void ColumnsDialog::unselectButtonClicked(void)
 
 void ColumnsDialog::searchTextEdited(const QString& Search)
 {
-	for (int i = 0; i < ui->itemsLayout->count(); ++i)
-		if (auto W = qobject_cast<QCheckBox*>(ui->itemsLayout->itemAt(i)->widget()))
+	for (int i = 0; i < ui->commonLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->commonLayout->itemAt(i)->widget()))
+			W->setVisible(W->text().contains(Search, Qt::CaseInsensitive));
+
+	for (int i = 0; i < ui->specialLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->specialLayout->itemAt(i)->widget()))
 			W->setVisible(W->text().contains(Search, Qt::CaseInsensitive));
 }
 
@@ -92,9 +109,10 @@ void ColumnsDialog::accept(void)
 	emit onColumnsUpdate(getEnabledColumnsIndexes()); QDialog::accept();
 }
 
-void ColumnsDialog::setAttributes(const QStringList Headers)
+void ColumnsDialog::setAttributes(const QStringList Headers, unsigned Common)
 {
-	while (auto I = ui->itemsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
+	while (auto I = ui->commonLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
+	while (auto I = ui->specialLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
 	QSettings Settings("EW-Database");
 
@@ -102,12 +120,14 @@ void ColumnsDialog::setAttributes(const QStringList Headers)
 	const auto Enabled = Settings.value("enabled").toStringList();
 	Settings.endGroup();
 
-	for (const auto& Field : Headers)
+	int i = 0; for (const auto& Field : Headers)
 	{
 		QCheckBox* Check = new QCheckBox(Field, this);
 
 		Check->setChecked(Enabled.contains(Field));
-		ui->itemsLayout->addWidget(Check);
+
+		if (i++ < Common) ui->commonLayout->addWidget(Check);
+		else ui->specialLayout->addWidget(Check);
 	}
 
 	emit onColumnsUpdate(getEnabledColumnsIndexes());

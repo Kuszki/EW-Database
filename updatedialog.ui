@@ -6,18 +6,75 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>350</height>
+    <width>800</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Update fields</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="edit-find-replace"/>
+   <iconset theme="edit-find-replace">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
+   <item row="1" column="4">
+    <widget class="QToolButton" name="allButton">
+     <property name="text">
+      <string>Show all</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-add">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="5">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QToolButton" name="prevButton">
+     <property name="text">
+      <string>Prev</string>
+     </property>
+     <property name="icon">
+      <iconset theme="previous">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QToolButton" name="nextButton">
+     <property name="text">
+      <string>Next</string>
+     </property>
+     <property name="icon">
+      <iconset theme="next">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLineEdit" name="searchEdit">
+     <property name="placeholderText">
+      <string>Search</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="6">
     <widget class="QScrollArea" name="scrollArea">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -33,31 +90,22 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>582</width>
-        <height>298</height>
+        <width>782</width>
+        <height>448</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
      </widget>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLineEdit" name="searchEdit">
-     <property name="placeholderText">
-      <string>Search</string>
+   <item row="1" column="3">
+    <widget class="QToolButton" name="clearButton">
+     <property name="text">
+      <string>Restore</string>
      </property>
-     <property name="clearButtonEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     <property name="icon">
+      <iconset theme="edit-clear">
+       <normaloff>.</normaloff>.</iconset>
      </property>
     </widget>
    </item>
@@ -72,8 +120,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>549</x>
-     <y>297</y>
+     <x>790</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -88,8 +136,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>586</x>
-     <y>297</y>
+     <x>790</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -101,11 +149,11 @@
    <sender>searchEdit</sender>
    <signal>textChanged(QString)</signal>
    <receiver>UpdateDialog</receiver>
-   <slot>searchEdited(QString)</slot>
+   <slot>searchBoxEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>197</x>
-     <y>290</y>
+     <x>212</x>
+     <y>490</y>
     </hint>
     <hint type="destinationlabel">
      <x>204</x>
@@ -113,8 +161,76 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>prevButton</sender>
+   <signal>clicked()</signal>
+   <receiver>UpdateDialog</receiver>
+   <slot>prevButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>366</x>
+     <y>487</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>221</x>
+     <y>486</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>nextButton</sender>
+   <signal>clicked()</signal>
+   <receiver>UpdateDialog</receiver>
+   <slot>nextButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>396</x>
+     <y>487</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>262</x>
+     <y>452</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>clearButton</sender>
+   <signal>clicked()</signal>
+   <receiver>UpdateDialog</receiver>
+   <slot>clearButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>426</x>
+     <y>487</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>333</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>allButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>UpdateDialog</receiver>
+   <slot>allButtonChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>449</x>
+     <y>476</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>449</x>
+     <y>594</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
-  <slot>searchEdited(QString)</slot>
+  <slot>searchBoxEdited(QString)</slot>
+  <slot>allButtonChecked(bool)</slot>
+  <slot>nextButtonClicked()</slot>
+  <slot>prevButtonClicked()</slot>
+  <slot>clearButtonClicked()</slot>
  </slots>
 </ui>

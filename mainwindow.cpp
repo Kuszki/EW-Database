@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	Settings.endGroup();
 
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
-	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::prepareEdit);
+	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -57,17 +57,19 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver_v2::onLogin, this, &MainWindow::databaseLogin);
 
 	connect(Driver, &DatabaseDriver_v2::onDataLoad, this, &MainWindow::loadData);
-//	connect(Driver, &DatabaseDriver_v2::onDataUpdate, this, &MainWindow::reloadData);
+	connect(Driver, &DatabaseDriver_v2::onDataUpdate, this, &MainWindow::updateData);
 	connect(Driver, &DatabaseDriver_v2::onDataRemove, this, &MainWindow::removeData);
+	connect(Driver, &DatabaseDriver_v2::onPresetReady, this, &MainWindow::prepareEdit);
 
 	connect(Driver, &DatabaseDriver_v2::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver_v2::onSetupProgress, Progress, &QProgressBar::setRange);
 	connect(Driver, &DatabaseDriver_v2::onUpdateProgress, Progress, &QProgressBar::setValue);
 	connect(Driver, &DatabaseDriver_v2::onEndProgress, Progress, &QProgressBar::hide);
 
-	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver_v2::updateData);
-//	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver_v2::setData);
+	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver_v2::reloadData);
 	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver_v2::removeData);
+	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver_v2::updateData);
+	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver_v2::getPreset);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -122,6 +124,14 @@ void MainWindow::refreshActionClicked(void)
 	refreshData(Filter->getFilterRules(), Filter->getUsedFields());
 }
 
+void MainWindow::editActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onEditRequest(Model, Selected);
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -135,20 +145,20 @@ void MainWindow::selectionChanged(void)
 
 void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 {
-	lockUi(BUSY); emit onUpdateRequest(Where, Used);
+	lockUi(BUSY); emit onReloadRequest(Where, Used);
 }
 
-void MainWindow::databaseConnected(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Classes, const QStringList& Headers)
+void MainWindow::databaseConnected(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
-	Columns = new ColumnsDialog(this, Headers);
+	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);
-	Filter = new FilterDialog(this, Fields, Classes);
-//	Update = new UpdateDialog(this, Edit, Dict);
+	Filter = new FilterDialog(this, Fields, Classes, Common);
+	Update = new UpdateDialog(this, Fields);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
-//	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateData);
+	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -166,7 +176,7 @@ void MainWindow::databaseDisconnected(void)
 	Columns->deleteLater();
 	Groups->deleteLater();
 	Filter->deleteLater();
-//	Update->deleteLater();
+	Update->deleteLater();
 
 	lockUi(DISCONNECTED);
 
@@ -200,12 +210,12 @@ void MainWindow::updateColumns(const QList<int>& Columns)
 	}
 }
 
-void MainWindow::updateData(const QHash<QString, QString>& Values)
+void MainWindow::updateValues(const QMap<int, QVariant>& Values)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
 
-	lockUi(BUSY); emit onEditRequest(Model, Selection->selectedRows(), Values);
+	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values);
 }
 
 void MainWindow::loadData(RecordModel* Model)
@@ -215,8 +225,8 @@ void MainWindow::loadData(RecordModel* Model)
 	const auto Groupby = Groups->getEnabledGroupsIndexes(); emit onDeleteRequest();
 
 	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged, this, &MainWindow::selectionChanged);
+	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater, Qt::DirectConnection);
 	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupByInt);
-	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::groupData);
 
 	if (Groupby.isEmpty()) lockUi(DONE);
@@ -238,20 +248,24 @@ void MainWindow::removeData(void)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data removed"));
 }
 
+void MainWindow::updateData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
+
+	const int Count = ui->Data->selectionModel()->selectedRows().count();
+
+	ui->actionDelete->setEnabled(Count);
+	ui->actionEdit->setEnabled(Count);
+}
+
 void MainWindow::groupData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data groupped"));
 }
 
-void MainWindow::prepareEdit(void)
+void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
 {
-//	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-//	auto Selection = ui->Data->selectionModel();
-//	auto Fields = Driver->getEditValues(Model, Selection->selectedRows().first());
-
-//	Update->setFieldsData(Fields);
-//	Update->setFieldsUnchecked();
-//	Update->open();
+	lockUi(DONE); Update->setData(Values); Update->setActive(Used); Update->open();
 }
 
 void MainWindow::lockUi(MainWindow::STATUS Status)

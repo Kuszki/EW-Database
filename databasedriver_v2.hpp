@@ -32,8 +32,6 @@
 
 #include <QDebug>
 
-#include <boost/bind.hpp>
-
 #include "recordmodel.hpp"
 
 class DatabaseDriver_v2 : public QObject
@@ -103,8 +101,10 @@ class DatabaseDriver_v2 : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
-		QMap<QString, QStringList> getDeleteGroups(const QList<int>& Indexes) const;
+		QMap<QString, QStringList> getClassGroups(const QList<int>& Indexes, bool Common) const;
+
 		QList<int> getUsedFields(const QString& Filter) const;
+		QList<int> getCommonFields(const QStringList& Classes) const;
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 
@@ -115,15 +115,17 @@ class DatabaseDriver_v2 : public QObject
 
 		bool closeDatabase(void);
 
-		void updateData(const QString& Filter, QList<int> Used = QList<int>());
-
+		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
+		void updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
+
+		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 
 	signals:
 
 		void onError(const QString&);
 
-		void onConnect(const QList<FIELD>&, const QList<TABLE>&, const QStringList&);
+		void onConnect(const QList<FIELD>&, const QList<TABLE>&, const QStringList&, unsigned);
 		void onDisconnect(void);
 		void onLogin(bool);
 
@@ -134,13 +136,21 @@ class DatabaseDriver_v2 : public QObject
 
 		void onDataLoad(RecordModel*);
 		void onDataRemove(void);
+		void onDataUpdate(void);
+
+		void onPresetReady(const QList<QMap<int, QVariant>>&, const QList<int>&);
 
 };
 
 bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::FIELD& Two);
 bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::TABLE& Two);
 
-DatabaseDriver_v2::FIELD& getFieldByName(QList<DatabaseDriver_v2::FIELD>& Fields, const QString& Name);
-const DatabaseDriver_v2::FIELD& getFieldByName(const QList<DatabaseDriver_v2::FIELD>& Fields, const QString& Name);
+QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, bool Mask = false);
+
+template<class Type, class Field, template<class> class Container>
+Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);
+
+template<class Type, class Field, template<class> class Container>
+const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
 
 #endif // DATABASEDRIVER_V2_HPP
