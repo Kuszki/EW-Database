@@ -21,21 +21,10 @@
 #include "groupdialog.hpp"
 #include "ui_groupdialog.h"
 
-const QStringList GroupDialog::Default =
-{
-	"EW_OPERATY.NUMER"
-};
-
-GroupDialog::GroupDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Attributes)
+GroupDialog::GroupDialog(QWidget* Parent, const QStringList& Attributes)
 : QDialog(Parent), ui(new Ui::GroupDialog)
 {
-	ui->setupUi(this);
-
-	QSettings Settings("EW-Database");
-
-	Settings.beginGroup("Groups");
-	setAvailableAttributes(Attributes, Settings.value("enabled").toStringList());
-	Settings.endGroup();
+	ui->setupUi(this); setAttributes(Attributes);
 }
 
 GroupDialog::~GroupDialog(void)
@@ -43,18 +32,28 @@ GroupDialog::~GroupDialog(void)
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Groups");
-	Settings.setValue("enabled", getEnabledGroups());
+	Settings.setValue("enabled", getEnabledGroupsNames());
 	Settings.endGroup();
 
 	delete ui;
 }
 
-QStringList GroupDialog::getEnabledGroups(void)
+QList<int> GroupDialog::getEnabledGroupsIndexes(void)
+{
+	QList<int> Enabled;
+
+	for (int i = 0; i < ui->Enabled->count(); ++i)
+		Enabled.append(ui->Enabled->item(i)->data(Qt::UserRole).toInt());
+
+	return Enabled;
+}
+
+QStringList GroupDialog::getEnabledGroupsNames(void)
 {
 	QStringList Enabled;
 
 	for (int i = 0; i < ui->Enabled->count(); ++i)
-		Enabled.append(ui->Enabled->item(i)->data(Qt::UserRole).toString());
+		Enabled.append(ui->Enabled->item(i)->text());
 
 	return Enabled;
 }
@@ -70,33 +69,37 @@ void GroupDialog::searchEdited(const QString& Search)
 
 void GroupDialog::accept(void)
 {
-	emit onGroupsUpdate(getEnabledGroups()); QDialog::accept();
+	emit onGroupsUpdate(getEnabledGroupsIndexes()); QDialog::accept();
 }
 
-void GroupDialog::setAvailableAttributes(QList<QPair<QString, QString>> Attributes, const QStringList& Enabled)
+void GroupDialog::setAttributes(QStringList Attributes)
 {
-	for (int i = 0; i < ui->Disabled->count(); ++i) delete ui->Disabled->takeItem(i);
-	for (int i = 0; i < ui->Enabled->count(); ++i) delete ui->Enabled->takeItem(i);
+	while (ui->Disabled->count()) delete ui->Disabled->takeItem(0);
+	while (ui->Enabled->count()) delete ui->Enabled->takeItem(0);
 
-	for (const auto& Attrib : Enabled) for (auto& Field : Attributes) if (Field.first == Attrib)
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Groups");
+	auto Enabled = Settings.value("enabled").toStringList();
+	Settings.endGroup();
+
+	for (auto& Field : Attributes) if (Enabled.contains(Field))
 	{
-		QListWidgetItem* Item = new QListWidgetItem(Field.second);
+		QListWidgetItem* Item = new QListWidgetItem(Field);
 
-		Item->setData(Qt::UserRole, Field.first);
+		Item->setData(Qt::UserRole, Attributes.indexOf(Field));
 		ui->Enabled->addItem(Item);
 
-		Field = QPair<QString, QString>();
+		Field = QString();
 	}
 
-	Attributes.removeAll(QPair<QString, QString>());
-
-	for (const auto& Field : Attributes)
+	for (auto& Field : Attributes) if (!Field.isEmpty())
 	{
-		QListWidgetItem* Item = new QListWidgetItem(Field.second);
+		QListWidgetItem* Item = new QListWidgetItem(Field);
 
-		Item->setData(Qt::UserRole, Field.first);
+		Item->setData(Qt::UserRole, Attributes.indexOf(Field));
 		ui->Disabled->addItem(Item);
 	}
 
-	emit onGroupsUpdate(getEnabledGroups());
+	emit onGroupsUpdate(getEnabledGroupsIndexes());
 }

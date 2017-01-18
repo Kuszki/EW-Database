@@ -38,32 +38,32 @@ class ColumnsDialog : public QDialog
 
 	private:
 
-		static const QStringList Default;
-
 		Ui::ColumnsDialog* ui;
 
 	public:
 
-		explicit ColumnsDialog(QWidget* Parent = nullptr,
-						   const QList<QPair<QString, QString>>& Common = QList<QPair<QString, QString>>(),
-						   const QList<QPair<QString, QString>>& Special = QList<QPair<QString, QString>>());
+		explicit ColumnsDialog(QWidget* Parent = nullptr, const QStringList Headers = QStringList(), unsigned Common = 0);
 		virtual ~ColumnsDialog(void) override;
 
-		QStringList getEnabledColumns(void);
+		QList<int> getEnabledColumnsIndexes(void);
+		QStringList getEnabledColumnsNames(void);
 
 	private slots:
 
-		void searchEdited(const QString& Search);
+		void selectButtonClicked(void);
+		void unselectButtonClicked(void);
+
+		void searchTextEdited(const QString& Search);
 
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setSpecialAttributes(const QList<QPair<QString, QString>>& Attributes);
+		void setAttributes(const QStringList Headers, unsigned Common = 0);
 
 	signals:
 
-		void onColumnsUpdate(const QStringList&);
+		void onColumnsUpdate(const QList<int>&);
 
 };
 

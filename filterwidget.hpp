@@ -21,8 +21,13 @@
 #ifndef FILTERWIDGET_HPP
 #define FILTERWIDGET_HPP
 
+#include <QStandardItemModel>
+#include <QDoubleSpinBox>
+#include <QDateTimeEdit>
+#include <QListWidget>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QSpinBox>
 #include <QWidget>
 
 #include "databasedriver.hpp"
@@ -39,33 +44,35 @@ class FilterWidget : public QWidget
 
 	private:
 
+		QLineEdit* Simple = nullptr;
+		QWidget* Widget = nullptr;
 		Ui::FilterWidget* ui;
-		QWidget* Widget;
+
+		int Index = 0;
 
 	public:
 
-		explicit FilterWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr,
-						  const QHash<int, QString>& Dictionary = QHash<int, QString>());
+		explicit FilterWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent = nullptr);
 		virtual ~FilterWidget(void) override;
 
 		QString getCondition(void) const;
-		QString getValue(void) const;
+		QVariant getValue(void) const;
 		QString getLabel(void) const;
+
+		int getIndex(void) const;
 
 	private slots:
 
 		void operatorChanged(const QString& Name);
+
 		void editFinished(void);
+		void resetIndex(void);
 
 	public slots:
 
-		void setParameters(const QString& Name, const QString& Key, const QString& Value);
-
+		void setParameters(int ID, const DatabaseDriver::FIELD& Field);
+		void setValue(const QVariant& Value);
 		void setChecked(bool Checked);
-
-		void setName(const QString& Name);
-		void setKey(const QString& Key);
-		void setValue(const QString& Value);
 
 		bool isChecked(void) const;
 
@@ -73,7 +80,7 @@ class FilterWidget : public QWidget
 
 	signals:
 
-		void onValueUpdate(const QString&, const QString&);
+		void onValueUpdate(const QString&, const QVariant&);
 
 		void onStatusChanged(bool);
 

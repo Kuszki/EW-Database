@@ -21,47 +21,13 @@
 #include "columnsdialog.hpp"
 #include "ui_columnsdialog.h"
 
-const QStringList ColumnsDialog::Default =
-{
-	"EW_OBIEKTY.KOD", "EW_OBIEKTY.NUMER", "EW_OBIEKTY.POZYSKANIE", "EW_OBIEKTY.DTU", "EW_OBIEKTY.OPERAT"
-};
-
-ColumnsDialog::ColumnsDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Common, const QList<QPair<QString, QString>>& Special)
+ColumnsDialog::ColumnsDialog(QWidget* Parent, const QStringList Headers, unsigned Common)
 : QDialog(Parent), ui(new Ui::ColumnsDialog)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); setAttributes(Headers, Common);
 
 	ui->commonLayout->setAlignment(Qt::AlignTop);
 	ui->specialLayout->setAlignment(Qt::AlignTop);
-
-	QSettings Settings("EW-Database");
-
-	Settings.beginGroup("Columns");
-	const auto Enabled = Settings.value("enabled", Default).toStringList();
-	Settings.endGroup();
-
-	for (const auto& Field : Common)
-	{
-		QCheckBox* Check = new QCheckBox(Field.second, this);
-
-		Check->setChecked(Enabled.contains(Field.first));
-		Check->setProperty("KEY", Field.first);
-		Check->setToolTip(Field.first);
-
-		ui->commonLayout->addWidget(Check);
-	}
-
-	for (const auto& Field : Special)
-	{
-		QCheckBox* Check = new QCheckBox(Field.second, this);
-
-		Check->setChecked(Enabled.contains(Field.first));
-		Check->setProperty("KEY", Field.first);
-		Check->setToolTip(Field.first);
-
-		ui->specialLayout->addWidget(Check);
-	}
-
 }
 
 ColumnsDialog::~ColumnsDialog(void)
@@ -69,28 +35,65 @@ ColumnsDialog::~ColumnsDialog(void)
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Columns");
-	Settings.setValue("enabled", QStringList(getEnabledColumns()));
+	Settings.setValue("enabled", QStringList(getEnabledColumnsNames()));
 	Settings.endGroup();
 
 	delete ui;
 }
 
-QStringList ColumnsDialog::getEnabledColumns(void)
+QList<int> ColumnsDialog::getEnabledColumnsIndexes(void)
+{
+	QList<int> Enabled; int Item = 0;
+
+	for (int i = 0; i < ui->commonLayout->count(); ++i, ++Item)
+		if (auto W = qobject_cast<QCheckBox*>(ui->commonLayout->itemAt(i)->widget()))
+			if (W->isChecked()) Enabled.append(Item);
+
+	for (int i = 0; i < ui->specialLayout->count(); ++i, ++Item)
+		if (auto W = qobject_cast<QCheckBox*>(ui->specialLayout->itemAt(i)->widget()))
+			if (W->isChecked()) Enabled.append(Item);
+
+	return Enabled;
+}
+
+QStringList ColumnsDialog::getEnabledColumnsNames(void)
 {
 	QStringList Enabled;
 
 	for (int i = 0; i < ui->commonLayout->count(); ++i)
 		if (auto W = qobject_cast<QCheckBox*>(ui->commonLayout->itemAt(i)->widget()))
-			if (W->isChecked()) Enabled.append(W->property("KEY").toString());
+			if (W->isChecked()) Enabled.append(W->text());
 
 	for (int i = 0; i < ui->specialLayout->count(); ++i)
 		if (auto W = qobject_cast<QCheckBox*>(ui->specialLayout->itemAt(i)->widget()))
-			if (W->isChecked()) Enabled.append(W->property("KEY").toString());
+			if (W->isChecked()) Enabled.append(W->text());
 
 	return Enabled;
 }
 
-void ColumnsDialog::searchEdited(const QString& Search)
+void ColumnsDialog::selectButtonClicked(void)
+{
+	auto Layout = ui->tabWidget->currentIndex() ? ui->specialLayout : ui->commonLayout;
+
+	for (int i = 0; i < Layout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(Layout->itemAt(i)->widget()))
+		{
+			if (W->isVisible()) W->setChecked(true);
+		}
+}
+
+void ColumnsDialog::unselectButtonClicked(void)
+{
+	auto Layout = ui->tabWidget->currentIndex() ? ui->specialLayout : ui->commonLayout;
+
+	for (int i = 0; i < Layout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(Layout->itemAt(i)->widget()))
+		{
+			if (W->isVisible()) W->setChecked(false);
+		}
+}
+
+void ColumnsDialog::searchTextEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->commonLayout->count(); ++i)
 		if (auto W = qobject_cast<QCheckBox*>(ui->commonLayout->itemAt(i)->widget()))
@@ -103,28 +106,29 @@ void ColumnsDialog::searchEdited(const QString& Search)
 
 void ColumnsDialog::accept(void)
 {
-	emit onColumnsUpdate(getEnabledColumns()); QDialog::accept();
+	emit onColumnsUpdate(getEnabledColumnsIndexes()); QDialog::accept();
 }
 
-void ColumnsDialog::setSpecialAttributes(const QList<QPair<QString, QString>>& Attributes)
+void ColumnsDialog::setAttributes(const QStringList Headers, unsigned Common)
 {
+	while (auto I = ui->commonLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->specialLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Columns");
-	const auto Enabled = Settings.value("enabled", Default).toStringList();
+	const auto Enabled = Settings.value("enabled").toStringList();
 	Settings.endGroup();
 
-	for (const auto& Field : Attributes)
+	int i = 0; for (const auto& Field : Headers)
 	{
-		QCheckBox* Check = new QCheckBox(Field.second, this);
+		QCheckBox* Check = new QCheckBox(Field, this);
 
-		Check->setChecked(Enabled.contains(Field.first));
-		Check->setProperty("KEY", Field.first);
+		Check->setChecked(Enabled.contains(Field));
 
-		ui->specialLayout->addWidget(Check);
+		if (i++ < Common) ui->commonLayout->addWidget(Check);
+		else ui->specialLayout->addWidget(Check);
 	}
 
-	emit onColumnsUpdate(getEnabledColumns());
+	emit onColumnsUpdate(getEnabledColumnsIndexes());
 }

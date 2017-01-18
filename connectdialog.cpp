@@ -76,8 +76,10 @@ void ConnectDialog::refused(const QString& Error)
 	QMessageBox::critical(this, tr("Error"), Error); setEnabled(true);
 }
 
-void ConnectDialog::connected(void)
+void ConnectDialog::connected(bool OK)
 {
+	if (!OK) return;
+
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
@@ -86,9 +88,7 @@ void ConnectDialog::connected(void)
 	Settings.setValue("user", ui->User->text());
 	Settings.endGroup();
 
-	setEnabled(true);
+	ui->Password->clear(); setEnabled(true);
 
 	QDialog::accept();
-
-	ui->Password->clear();
 }

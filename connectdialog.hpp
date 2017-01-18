@@ -55,7 +55,7 @@ class ConnectDialog : public QDialog
 		virtual void reject(void) override;
 
 		void refused(const QString& Error);
-		void connected(void);
+		void connected(bool OK);
 
 	signals:
 

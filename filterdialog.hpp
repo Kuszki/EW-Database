@@ -23,6 +23,8 @@
 
 #include <QAbstractButton>
 #include <QPushButton>
+#include <QClipboard>
+#include <QCheckBox>
 #include <QDialog>
 #include <QHash>
 
@@ -43,35 +45,48 @@ class FilterDialog : public QDialog
 
 		Ui::FilterDialog* ui;
 
+		QList<QSet<int>> Attributes;
+
+		unsigned Above = 0;
+
 	public:
 
 		explicit FilterDialog(QWidget* Parent = nullptr,
-						  const QList<QPair<QString, QString>>& Fields = QList<QPair<QString, QString>>(),
-						  const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+						  const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>(),
+						  const QList<DatabaseDriver::TABLE>& Tables = QList<DatabaseDriver::TABLE>(),
+						  unsigned Common = 0);
 		virtual ~FilterDialog(void) override;
 
-		QString getFilterRules(void);
+		QString getFilterRules(void) const;
+		QList<int> getUsedFields(void) const;
 
 	private slots:
 
-		void operatorChanged(const QString& Operator);
+		void operatorTextChanged(const QString& Operator);
 
-		void searchEdited(const QString& Search);
+		void classSearchEdited(const QString& Search);
+		void simpleSearchEdited(const QString& Search);
 
-		void buttonClicked(QAbstractButton* Button);
+		void buttonBoxClicked(QAbstractButton* Button);
 
-		void addClicked(void);
+		void classBoxChecked(void);
+
+		void tabIndexChanged(int Index);
+
+		void addButtonClicked(void);
+		void copyButtonClicked(void);
+		void selectButtonClicked(void);
+		void unselectButtonClicked(void);
 
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setAvailableFields(const QList<QPair<QString, QString>>& Fields,
-						    const QHash<QString, QHash<int, QString>>& Dictionary = QHash<QString, QHash<int, QString>>());
+		void setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common = 0);
 
 	signals:
 
-		void onFiltersUpdate(const QString&);
+		void onFiltersUpdate(const QString&, const QList<int>&);
 
 };
 

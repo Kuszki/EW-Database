@@ -18,7 +18,7 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
+   <item row="0" column="0" colspan="4">
     <widget class="QTabWidget" name="tabWidget">
      <property name="tabPosition">
       <enum>QTabWidget::West</enum>
@@ -33,7 +33,7 @@
       <attribute name="title">
        <string>Common</string>
       </attribute>
-      <layout class="QGridLayout" name="commonGridLayout">
+      <layout class="QGridLayout" name="commonScroolLayout">
        <item row="0" column="0">
         <widget class="QScrollArea" name="commonScrool">
          <property name="frameShape">
@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>432</width>
-            <height>280</height>
+            <width>439</width>
+            <height>285</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="commonLayout"/>
@@ -64,7 +64,7 @@
       <attribute name="title">
        <string>Special</string>
       </attribute>
-      <layout class="QGridLayout" name="specialGridLayout">
+      <layout class="QGridLayout" name="specialScroolLayout">
        <item row="0" column="0">
         <widget class="QScrollArea" name="specialScrool">
          <property name="frameShape">
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>432</width>
-            <height>280</height>
+            <width>439</width>
+            <height>285</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="specialLayout"/>
@@ -104,6 +104,28 @@
     </widget>
    </item>
    <item row="1" column="1">
+    <widget class="QToolButton" name="selectButton">
+     <property name="text">
+      <string>All</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-add">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QToolButton" name="unselectButton">
+     <property name="text">
+      <string>None</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-remove">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -116,10 +138,7 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
   <tabstop>searchEdit</tabstop>
-  <tabstop>commonScrool</tabstop>
-  <tabstop>specialScrool</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -130,8 +149,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>390</x>
-     <y>290</y>
+     <x>490</x>
+     <y>340</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -146,8 +165,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>390</x>
-     <y>290</y>
+     <x>490</x>
+     <y>340</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -159,11 +178,11 @@
    <sender>searchEdit</sender>
    <signal>textChanged(QString)</signal>
    <receiver>ColumnsDialog</receiver>
-   <slot>searchEdited(QString)</slot>
+   <slot>searchTextEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>68</x>
-     <y>290</y>
+     <x>77</x>
+     <y>340</y>
     </hint>
     <hint type="destinationlabel">
      <x>92</x>
@@ -171,8 +190,42 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>selectButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ColumnsDialog</receiver>
+   <slot>selectButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>239</x>
+     <y>324</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>275</x>
+     <y>568</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>unselectButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ColumnsDialog</receiver>
+   <slot>unselectButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>272</x>
+     <y>331</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>287</x>
+     <y>451</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
-  <slot>searchEdited(QString)</slot>
+  <slot>searchTextEdited(QString)</slot>
+  <slot>selectButtonClicked()</slot>
+  <slot>unselectButtonClicked()</slot>
  </slots>
 </ui>

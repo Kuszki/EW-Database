@@ -36,16 +36,15 @@ class GroupDialog : public QDialog
 
 	private:
 
-		static const QStringList Default;
-
 		Ui::GroupDialog* ui;
 
 	public:
 
-		explicit GroupDialog(QWidget* Parent = nullptr, const QList<QPair<QString, QString>>& Attributes = QList<QPair<QString, QString>>());
+		explicit GroupDialog(QWidget* Parent = nullptr, const QStringList& Attributes = QStringList());
 		virtual ~GroupDialog(void) override;
 
-		QStringList getEnabledGroups(void);
+		QList<int> getEnabledGroupsIndexes(void);
+		QStringList getEnabledGroupsNames(void);
 
 	private slots:
 
@@ -55,11 +54,11 @@ class GroupDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setAvailableAttributes(QList<QPair<QString, QString>> Attributes, const QStringList& Enabled = QStringList());
+		void setAttributes(QStringList Attributes);
 
 	signals:
 
-		void onGroupsUpdate(const QStringList&);
+		void onGroupsUpdate(const QList<int>);
 
 };
 

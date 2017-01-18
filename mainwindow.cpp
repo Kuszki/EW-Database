@@ -21,6 +21,251 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 
+MainWindow::MainWindow(QWidget* Parent)
+: QMainWindow(Parent), ui(new Ui::MainWindow)
+{
+	ui->setupUi(this); lockUi(DISCONNECTED);
+
+	Progress = new QProgressBar(this);
+	Driver = new DatabaseDriver(nullptr);
+	About = new AboutDialog(this);
+
+	ui->statusBar->addPermanentWidget(Progress);
+
+	Progress->hide();
+	Driver->moveToThread(&Thread);
+	Thread.start();
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Window");
+	restoreGeometry(Settings.value("geometry").toByteArray());
+	restoreState(Settings.value("state").toByteArray());
+	Settings.endGroup();
+
+	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
+	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
+	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
+
+	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
+	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::connectActionClicked);
+	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
+
+	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
+	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
+	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
+	connect(Driver, &DatabaseDriver::onLogin, this, &MainWindow::databaseLogin);
+
+	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
+	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::updateData);
+	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
+	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
+
+	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
+	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
+	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
+
+	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver::reloadData);
+	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
+	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
+	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
+
+	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
+}
+
+MainWindow::~MainWindow(void)
+{
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Window");
+	Settings.setValue("state", saveState());
+	Settings.setValue("geometry", saveGeometry());
+	Settings.endGroup();
+
+	Thread.exit();
+	Thread.wait();
+
+	delete Driver;
+	delete ui;
+}
+
+void MainWindow::connectActionClicked(void)
+{
+	ConnectDialog* Dialog = new ConnectDialog(this);
+
+	connect(Dialog, &ConnectDialog::onAccept, this, &MainWindow::loginAttempt);
+
+	connect(Dialog, &ConnectDialog::onAccept, Driver, &DatabaseDriver::openDatabase);
+	connect(Dialog, &ConnectDialog::accepted, Dialog, &ConnectDialog::deleteLater);
+	connect(Dialog, &ConnectDialog::rejected, Dialog, &ConnectDialog::deleteLater);
+
+	connect(Driver, &DatabaseDriver::onLogin, Dialog, &ConnectDialog::connected);
+	connect(Driver, &DatabaseDriver::onError, Dialog, &ConnectDialog::refused);
+
+	Dialog->open();
+}
+
+void MainWindow::deleteActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
+						 tr("Are you sure to delete selected items?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
+	}
+}
+
+void MainWindow::refreshActionClicked(void)
+{
+	refreshData(Filter->getFilterRules(), Filter->getUsedFields());
+}
+
+void MainWindow::editActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onEditRequest(Model, Selected);
+}
+
+void MainWindow::selectionChanged(void)
+{
+	const int Count = ui->Data->selectionModel()->selectedRows().count();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, Model ? Model->totalCount() : 0).arg(Count));
+
+	ui->actionDelete->setEnabled(Count);
+	ui->actionEdit->setEnabled(Count);
+}
+
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
+{
+	lockUi(BUSY); emit onReloadRequest(Where, Used);
+}
+
+void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
+{
+	Columns = new ColumnsDialog(this, Headers, Common);
+	Groups = new GroupDialog(this, Headers);
+	Filter = new FilterDialog(this, Fields, Classes, Common);
+	Update = new UpdateDialog(this, Fields);
+
+	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
+	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
+	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
+	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
+
+	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
+	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
+	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
+
+	connect(Update, &UpdateDialog::accepted, this, &MainWindow::selectionChanged);
+	connect(Update, &UpdateDialog::rejected, this, &MainWindow::selectionChanged);
+
+	ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
+
+	lockUi(CONNECTED);
+}
+
+void MainWindow::databaseDisconnected(void)
+{
+	ui->tipLabel->setText(tr("Press Ctrl+O or use Connect action to connect to Database"));
+
+	Columns->deleteLater();
+	Groups->deleteLater();
+	Filter->deleteLater();
+	Update->deleteLater();
+
+	lockUi(DISCONNECTED);
+
+	emit onDeleteRequest();
+}
+
+void MainWindow::databaseError(const QString& Error)
+{
+	ui->statusBar->showMessage(Error);
+}
+
+void MainWindow::databaseLogin(bool OK)
+{
+	ui->actionConnect->setEnabled(!OK);
+}
+
+void MainWindow::updateGroups(const QList<int>& Columns)
+{
+	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
+
+	lockUi(BUSY); emit onGroupRequest(Columns);
+}
+
+void MainWindow::updateColumns(const QList<int>& Columns)
+{
+	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
+
+	for (int i = 0; i < ui->Data->model()->columnCount(); ++i)
+	{
+		ui->Data->setColumnHidden(i, !(Columns.isEmpty() || Columns.contains(i)));
+	}
+}
+
+void MainWindow::updateValues(const QMap<int, QVariant>& Values)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel();
+
+	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values);
+}
+
+void MainWindow::loadData(RecordModel* Model)
+{
+	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumnsIndexes());
+
+	const auto Groupby = Groups->getEnabledGroupsIndexes(); emit onDeleteRequest();
+
+	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged, this, &MainWindow::selectionChanged);
+	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater, Qt::DirectConnection);
+	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupByInt);
+	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::groupData);
+
+	if (Groupby.isEmpty()) lockUi(DONE);
+	else updateGroups(Groupby);
+}
+
+void MainWindow::loginAttempt(void)
+{
+	ui->actionConnect->setEnabled(false);
+}
+
+void MainWindow::reloadData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated, to reenable filter use reload action"));
+}
+
+void MainWindow::removeData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data removed"));
+}
+
+void MainWindow::updateData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
+}
+
+void MainWindow::groupData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data groupped"));
+}
+
+void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
+{
+	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
+}
+
 void MainWindow::lockUi(MainWindow::STATUS Status)
 {
 	switch (Status)
@@ -69,230 +314,4 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->Data->setVisible(true);
 		break;
 	}
-}
-
-MainWindow::MainWindow(QWidget* Parent)
-: QMainWindow(Parent), ui(new Ui::MainWindow)
-{
-	ui->setupUi(this); lockUi(DISCONNECTED);
-
-	Progress = new QProgressBar(this);
-	Driver = new DatabaseDriver(nullptr);
-	About = new AboutDialog(this);
-
-	ui->statusBar->addPermanentWidget(Progress);
-
-	Progress->hide();
-	Driver->moveToThread(&Thread);
-	Thread.start();
-
-	QSettings Settings("EW-Database");
-
-	Settings.beginGroup("Window");
-	restoreGeometry(Settings.value("geometry").toByteArray());
-	restoreState(Settings.value("state").toByteArray());
-	Settings.endGroup();
-
-	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::DeleteActionClicked);
-	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::prepareEdit);
-	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
-
-	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshData);
-	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::ConnectActionClicked);
-	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
-
-	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
-	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
-	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
-
-	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
-	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::reloadData);
-	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
-
-	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
-	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
-	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
-	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
-
-	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
-	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::setData);
-	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
-}
-
-MainWindow::~MainWindow(void)
-{
-	QSettings Settings("EW-Database");
-
-	Settings.beginGroup("Window");
-	Settings.setValue("state", saveState());
-	Settings.setValue("geometry", saveGeometry());
-	Settings.endGroup();
-
-	Thread.exit();
-	Thread.wait();
-
-	delete Driver;
-	delete ui;
-}
-
-void MainWindow::ConnectActionClicked(void)
-{
-	ConnectDialog* Dialog = new ConnectDialog(this);
-
-	connect(Dialog, &ConnectDialog::onAccept, Driver, &DatabaseDriver::openDatabase);
-	connect(Dialog, &ConnectDialog::accepted, Dialog, &ConnectDialog::deleteLater);
-	connect(Dialog, &ConnectDialog::rejected, Dialog, &ConnectDialog::deleteLater);
-
-	connect(Driver, &DatabaseDriver::onConnect, Dialog, &ConnectDialog::connected);
-	connect(Driver, &DatabaseDriver::onError, Dialog, &ConnectDialog::refused);
-
-	Dialog->open();
-}
-
-void MainWindow::DeleteActionClicked(void)
-{
-	const auto Selected = ui->Data->selectionModel()->selectedRows();
-	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-
-	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
-						 tr("Are you sure to delete selected items?"),
-						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
-	{
-		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
-	}
-}
-
-void MainWindow::selectionChanged(void)
-{
-	const int Count = ui->Data->selectionModel()->selectedRows().count();
-	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-
-	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, Model ? Model->totalCount() : 0).arg(Count));
-
-	ui->actionDelete->setEnabled(Count);
-	ui->actionEdit->setEnabled(Count);
-}
-
-void MainWindow::refreshData(void)
-{
-	lockUi(BUSY); ui->statusBar->showMessage(tr("Querying database"));
-
-	emit onUpdateRequest(Filter->getFilterRules());
-}
-
-void MainWindow::databaseConnected(void)
-{
-	const auto Dict = Driver->allDictionary();
-	const auto Spec = Driver->getAttributes();
-	const auto All = Driver->allAttributes(false);
-	const auto Edit = Driver->allAttributes(true);
-
-	Columns = new ColumnsDialog(this, Driver->commonAttribs, Spec);
-	Groups = new GroupDialog(this, Driver->commonAttribs);
-	Filter = new FilterDialog(this, All, Dict);
-	Update = new UpdateDialog(this, Edit, Dict);
-
-	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
-	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
-	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
-	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateData);
-
-	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
-	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
-	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
-
-	ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
-
-	lockUi(CONNECTED);
-}
-
-void MainWindow::databaseDisconnected(void)
-{
-	ui->tipLabel->setText(tr("Press Ctrl+O or use Connect action to connect to Database"));
-
-	Columns->deleteLater();
-	Groups->deleteLater();
-	Filter->deleteLater();
-	Update->deleteLater();
-
-	lockUi(DISCONNECTED);
-
-	emit onDeleteRequest();
-}
-
-void MainWindow::databaseError(const QString& Error)
-{
-	ui->statusBar->showMessage(Error);
-}
-
-void MainWindow::updateGroups(const QStringList& Groups)
-{
-	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
-
-	ui->statusBar->showMessage(tr("Grouping items by %1").arg(Groups.join(", ")));
-
-	Progress->setRange(0, 0); Progress->show();
-
-	lockUi(BUSY); emit onGroupRequest(Groups);
-}
-
-void MainWindow::updateColumns(const QStringList& Columns)
-{
-	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
-
-	for (int i = 0; i < ui->Data->model()->columnCount(); ++i)
-	{
-		ui->Data->setColumnHidden(i, !Columns.contains(ui->Data->model()->headerData(i, Qt::Horizontal, Qt::UserRole).toString()));
-	}
-}
-
-void MainWindow::updateData(const QHash<QString, QString>& Values)
-{
-	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-	auto Selection = ui->Data->selectionModel();
-
-	lockUi(BUSY); ui->statusBar->showMessage(tr("Updating data"));
-
-	emit onEditRequest(Model, Selection->selectedRows(), Values);
-}
-
-void MainWindow::loadData(RecordModel* Model)
-{
-	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumns());
-
-	const auto Groupby = Groups->getEnabledGroups(); emit onDeleteRequest();
-
-	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged, this, &MainWindow::selectionChanged);
-	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupBy);
-	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater);
-	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::completeGrouping);
-
-	if (Groupby.isEmpty()) lockUi(DONE);
-	else updateGroups(Groupby);
-}
-
-void MainWindow::reloadData(RecordModel* Model)
-{
-	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated, to reenable filter use reload action"));
-}
-
-void MainWindow::removeData(RecordModel* Model)
-{
-	lockUi(DONE); ui->statusBar->showMessage(tr("Data removed"));
-}
-
-void MainWindow::completeGrouping(void)
-{
-	lockUi(DONE); Progress->hide();
-}
-
-void MainWindow::prepareEdit(void)
-{
-	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-	auto Selection = ui->Data->selectionModel();
-	auto Fields = Driver->getEditValues(Model, Selection->selectedRows().first());
-
-	Update->setFieldsData(Fields);
-	Update->setFieldsUnchecked();
-	Update->open();
 }

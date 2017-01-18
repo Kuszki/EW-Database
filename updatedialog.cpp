@@ -21,13 +21,15 @@
 #include "updatedialog.hpp"
 #include "ui_updatedialog.h"
 
-UpdateDialog::UpdateDialog(QWidget* Parent, const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
+UpdateDialog::UpdateDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields)
 : QDialog(Parent), ui(new Ui::UpdateDialog)
 {
-	ui->setupUi(this); setAvailableFields(Fields, Dictionary);
+	ui->setupUi(this); setFields(Fields);
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
+	ui->prevButton->setEnabled(false);
+	ui->nextButton->setEnabled(false);
 }
 
 UpdateDialog::~UpdateDialog(void)
@@ -35,70 +37,124 @@ UpdateDialog::~UpdateDialog(void)
 	delete ui;
 }
 
-QHash<QString, QString> UpdateDialog::getUpdateRules(void)
+QMap<int, QVariant> UpdateDialog::getUpdatedValues(void) const
 {
-	QHash<QString, QString> Rules;
+	QMap<int, QVariant> List;
 
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
-	{
+		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+			if (W->isChecked()) List.insert(W->getIndex(), W->getValue());
+
+	return List;
+}
+
+void UpdateDialog::searchBoxEdited(const QString& Search)
+{
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
-			if (W->isChecked()) Rules.insert(W->objectName(), W->getValue());
+			W->setVisible(W->isEnabled() && W->getLabel().contains(Search, Qt::CaseInsensitive));
+		}
+}
+
+void UpdateDialog::fieldButtonChecked(bool Enabled)
+{
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Enabled ? ++Count : --Count);
+}
+
+void UpdateDialog::allButtonChecked(bool Enabled)
+{
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+	{
+		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+		{
+			W->setEnabled(Enabled || Active.contains(W->getIndex()));
 		}
 	}
 
-	return Rules;
+	searchBoxEdited(ui->searchEdit->text());
 }
 
-void UpdateDialog::searchEdited(const QString& Search)
+void UpdateDialog::clearButtonClicked()
 {
-	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
-		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
-			W->setVisible(W->getLabel().contains(Search, Qt::CaseInsensitive));
+	setData(Values[Index]);
 }
 
-void UpdateDialog::fieldChecked(bool Enabled)
+void UpdateDialog::prevButtonClicked(void)
 {
-	if (Enabled) ++Count; else --Count;
+	setData(Values[--Index]);
 
-	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Count);
+	ui->prevButton->setEnabled(Index);
+	ui->nextButton->setEnabled(Index + 1 < Values.size());
+}
+
+void UpdateDialog::nextButtonClicked(void)
+{
+	setData(Values[++Index]);
+
+	ui->prevButton->setEnabled(Index);
+	ui->nextButton->setEnabled(Index + 1 < Values.size());
 }
 
 void UpdateDialog::accept(void)
 {
-	emit onValuesUpdate(getUpdateRules()); QDialog::accept();
+	emit onValuesUpdate(getUpdatedValues()); QDialog::accept();
 }
 
-void UpdateDialog::setAvailableFields(const QList<QPair<QString, QString>>& Fields, const QHash<QString, QHash<int, QString>>& Dictionary)
+void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 {
 	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	for (const auto& Field : Fields)
+	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY)
 	{
-		auto Widget = new UpdateWidget(Field.second, Field.first, this, Dictionary.value(Field.first));
+		auto Widget = new UpdateWidget(i, Fields[i], this);
 
 		ui->fieldsLayout->addWidget(Widget);
 
-		connect(Widget, &UpdateWidget::onStatusChanged, this, &UpdateDialog::fieldChecked);
+		connect(Widget, &UpdateWidget::onStatusChanged, this, &UpdateDialog::fieldButtonChecked);
 	}
 }
 
-void UpdateDialog::setFieldsData(const QHash<QString, QString>& Data)
+void UpdateDialog::setPrepared(const QList<QMap<int, QVariant> >& Data, const QList<int>& Indexes)
 {
-	for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) for (int j = 0; j < ui->fieldsLayout->count(); ++j)
+	setData(Data); setActive(Indexes); setUnchecked();
+}
+
+void UpdateDialog::setData(const QList<QMap<int, QVariant>>& Data)
+{
+	Values = Data; Index = 0;
+
+	if (!Values.isEmpty()) setData(Values.first());
+
+	ui->clearButton->setVisible(!Values.isEmpty());
+	ui->nextButton->setVisible(!Values.isEmpty());
+	ui->prevButton->setVisible(!Values.isEmpty());
+
+	ui->nextButton->setEnabled(Values.size() > 1);
+	ui->prevButton->setEnabled(false);
+}
+
+void UpdateDialog::setData(const QMap<int, QVariant>& Data)
+{
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 	{
-		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(j)->widget()))
+		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
-			if (W->objectName() == i.key()) W->setValue(i.value());
+			W->setValue(Data.value(W->getIndex()));
 		}
 	}
 }
 
-void UpdateDialog::setFieldsUnchecked(void)
+void UpdateDialog::setActive(const QList<int>& Indexes)
 {
-	for (int j = 0; j < ui->fieldsLayout->count(); ++j)
+	Active = Indexes; allButtonChecked(ui->allButton->isChecked());
+}
+
+void UpdateDialog::setUnchecked(void)
+{
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 	{
-		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(j)->widget()))
+		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
 			W->setChecked(false);
 		}

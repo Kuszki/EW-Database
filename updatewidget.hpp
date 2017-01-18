@@ -21,9 +21,16 @@
 #ifndef UPDATEWIDGET_HPP
 #define UPDATEWIDGET_HPP
 
+#include <QStandardItemModel>
+#include <QDoubleSpinBox>
+#include <QDateTimeEdit>
+#include <QListWidget>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QSpinBox>
 #include <QWidget>
+
+#include "databasedriver.hpp"
 
 namespace Ui
 {
@@ -37,32 +44,34 @@ class UpdateWidget : public QWidget
 
 	private:
 
+		QWidget* Widget = nullptr;
 		Ui::UpdateWidget* ui;
-		QWidget* Widget;
+
+		QVariant Default;
+		int Index = 0;
 
 	public:
 
-		explicit UpdateWidget(const QString& Name, const QString& Key, QWidget* Parent = nullptr,
-						  const QHash<int, QString>& Dictionary = QHash<int, QString>());
+		explicit UpdateWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent = nullptr);
 		virtual ~UpdateWidget(void) override;
 
 		QString getAssigment(void) const;
-		QString getValue(void) const;
+		QVariant getValue(void) const;
 		QString getLabel(void) const;
+
+		int getIndex(void) const;
 
 	private slots:
 
+		void undoClicked(void);
 		void editFinished(void);
+		void resetIndex(void);
 
 	public slots:
 
-		void setParameters(const QString& Name, const QString& Key, const QString& Value);
-
+		void setParameters(int ID, const DatabaseDriver::FIELD& Field);
+		void setValue(const QVariant& Value);
 		void setChecked(bool Checked);
-
-		void setName(const QString& Name);
-		void setKey(const QString& Key);
-		void setValue(const QString& Value);
 
 		bool isChecked(void) const;
 
@@ -70,7 +79,7 @@ class UpdateWidget : public QWidget
 
 	signals:
 
-		void onValueUpdate(const QString&, const QString&);
+		void onValueUpdate(const QString&, const QVariant&);
 
 		void onStatusChanged(bool);
 

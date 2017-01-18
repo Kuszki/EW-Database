@@ -24,13 +24,19 @@
 
 #include "mainwindow.hpp"
 
+
+
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
-	qRegisterMetaType<QHash<QString, QString>>("QHash<QString, QString>");
+	qRegisterMetaType<QList<DatabaseDriver::FIELD>>("QList<FIELD>");
+	qRegisterMetaType<QList<DatabaseDriver::TABLE>>("QList<TABLE>");
+
+	qRegisterMetaType<QList<QMap<int,QVariant>>>("QList<QMap<int,QVariant>>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
+	qRegisterMetaType<QList<int>>("QList<int>");
 
 	a.setApplicationName("EW-Database");
 	a.setOrganizationName("Łukasz \"Kuszki\" Dróżdż");

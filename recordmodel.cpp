@@ -20,59 +20,52 @@
 
 #include "recordmodel.hpp"
 
-RecordModel::RecordObject::RecordObject(const QList<QPair<int, QVariant>>& Fields)
-: Attributes(Fields) {}
+RecordModel::RecordObject::RecordObject(int Uid, const QMap<int, QVariant>& Fields)
+: Attributes(Fields), Index(Uid) {}
 
 RecordModel::RecordObject::~RecordObject(void) {}
 
-QList<QPair<int, QVariant>> RecordModel::RecordObject::getFields(void) const
+QMap<int, QVariant> RecordModel::RecordObject::getFields(void) const
 {
 	return Attributes;
 }
 
-void RecordModel::RecordObject::setFields(const QList<QPair<int, QVariant>>& Fields)
+void RecordModel::RecordObject::setFields(const QMap<int, QVariant>& Fields, bool Replace)
 {
-	Attributes = Fields;
+	if (!Replace) for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i)
+	{
+		Attributes[i.key()] = i.value();
+	}
+	else Attributes = Fields;
 }
 
 void RecordModel::RecordObject::setField(int Role, const QVariant& Value)
 {
-	for (auto& Attrib : Attributes) if (Attrib.first == Role)
-	{
-		Attrib.second = Value; return;
-	}
-
-	Attributes.append(qMakePair(Role, Value));
+	Attributes[Role] = Value;
 }
 
 QVariant RecordModel::RecordObject::getField(int Role) const
 {
-	for (auto& Attrib : Attributes) if (Attrib.first == Role)
-	{
-		return Attrib.second;
-	}
-
-	return QVariant();
+	return Attributes.value(Role);
 }
 
-bool RecordModel::RecordObject::contain(const QList<QPair<int, QVariant>>& Fields) const
+bool RecordModel::RecordObject::contain(const QMap<int, QVariant>& Fields) const
 {
-	QVector<int> Indexes; Indexes.reserve(Attributes.size());
-
-	for (const auto& One : Attributes) Indexes.append(One.first);
-
-	for (const auto& Two : Fields) if (!Indexes.contains(Two.first)) return false;
-
-	for (const auto& One : Fields) for (const auto& Two : Attributes)
+	for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i)
 	{
-		if (One.first == Two.first && One.second != Two.second) return false;
+		if (!Attributes.contains(i.key()) || Attributes[i.key()] != i.value()) return false;
 	}
 
 	return true;
 }
 
-RecordModel::GroupObject::GroupObject(int Level, const QList<QPair<int, QVariant>>& Fields)
-: RecordObject(Fields), Root(nullptr), Column(Level) {}
+int RecordModel::RecordObject::getUid(void) const
+{
+	return Index;
+}
+
+RecordModel::GroupObject::GroupObject(int Level, const QMap<int, QVariant>& Fields)
+: RecordObject(-1, Fields), Root(nullptr), Column(Level) {}
 
 RecordModel::GroupObject::~GroupObject(void)
 {
@@ -89,7 +82,7 @@ void RecordModel::GroupObject::addChild(RecordModel::RecordObject* Object)
 	Childs.append(Object);
 }
 
-bool RecordModel::GroupObject::removeChild(const QList<QPair<int, QVariant>>& Fields)
+bool RecordModel::GroupObject::removeChild(const QMap<int, QVariant>& Fields)
 {
 	for (auto& Child : Childs) if (Child->contain(Fields))
 	{
@@ -119,7 +112,7 @@ bool RecordModel::GroupObject::removeChild(int Index)
 	else return false;
 }
 
-RecordModel::RecordObject* RecordModel::GroupObject::takeChild(const QList<QPair<int, QVariant>>& Fields)
+RecordModel::RecordObject* RecordModel::GroupObject::takeChild(const QMap<int, QVariant>& Fields)
 {
 	for (auto& Child : Childs) if (Child->contain(Fields)) return Child; return nullptr;
 }
@@ -170,6 +163,11 @@ bool RecordModel::GroupObject::hasChids(void) const
 	return !Childs.isEmpty();
 }
 
+int RecordModel::GroupObject::getIndex(RecordModel::RecordObject* Child) const
+{
+	return Childs.indexOf(Child);
+}
+
 int RecordModel::GroupObject::getColumn(void) const
 {
 	return Column;
@@ -187,7 +185,7 @@ int RecordModel::GroupObject::childIndex(RecordObject* Object) const
 
 void RecordModel::GroupObject::sortChilds(const RecordModel::SortObject& Functor, QFutureSynchronizer<void>& Synchronizer)
 {
-	static auto Sort = std::sort<QList<RecordObject*>::iterator, SortObject>;
+	static auto Sort = std::stable_sort<QList<RecordObject*>::iterator, SortObject>;
 
 	for (auto& Child : Childs) if (auto Group = dynamic_cast<GroupObject*>(Child)) Group->sortChilds(Functor, Synchronizer);
 	Synchronizer.addFuture(QtConcurrent::run(Sort, Childs.begin(), Childs.end(), Functor));
@@ -196,7 +194,7 @@ void RecordModel::GroupObject::sortChilds(const RecordModel::SortObject& Functor
 RecordModel::SortObject::SortObject(int Column, bool Ascending)
 : Index(Column), Mode(Ascending) {}
 
-bool RecordModel::SortObject::operator() (RecordModel::RecordObject* First, RecordModel::RecordObject* Second) const
+bool RecordModel::SortObject::operator () (RecordModel::RecordObject* First, RecordModel::RecordObject* Second) const
 {
 	const auto One = First->getField(Index);
 	const auto Two = Second->getField(Index);
@@ -206,6 +204,292 @@ bool RecordModel::SortObject::operator() (RecordModel::RecordObject* First, Reco
 	bool Compare = One < Two;
 
 	return Mode ? Compare : !Compare;
+}
+
+RecordModel::RecordModel(const QStringList& Head, QObject* Parent)
+: QAbstractItemModel(Parent), Header(Head) {}
+
+RecordModel::~RecordModel(void)
+{
+	for (const auto& Object : Objects) delete Object;
+}
+
+QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) const
+{
+	if (!hasIndex(Row, Col, Parent)) return QModelIndex();
+	if (!Root) return createIndex(Row, Col, Objects[Row]);
+
+	GroupObject* parentObject = Parent.isValid() ? (GroupObject*) Parent.internalPointer() : Root;
+
+	if (auto Child = parentObject->getChild(Row))
+	{
+		return createIndex(Row, Col, Child);
+	}
+	else return QModelIndex();
+}
+
+QModelIndex RecordModel::parent(const QModelIndex& Index) const
+{
+	if (!Index.isValid()) return QModelIndex();
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (auto Group = dynamic_cast<GroupObject*>(Object))
+	{
+		if (auto Parent = Group->getParent())
+		{
+			return createIndex(Parent->getIndex(), 0, Parent);
+		}
+	}
+	else if (auto Parent = Parents.value(Object, nullptr))
+	{
+		return createIndex(Parent->getIndex(), 0, Parent);
+	}
+
+	return QModelIndex();
+}
+
+bool RecordModel::hasChildren(const QModelIndex& Parent) const
+{
+	if (Parent == QModelIndex()) return true;
+
+	RecordObject* Object = (RecordObject*) Parent.internalPointer();
+
+	if (auto Group = dynamic_cast<GroupObject*>(Object))
+	{
+		return Group->hasChids();
+	}
+	else return false;
+}
+
+int RecordModel::rowCount(const QModelIndex& Parent) const
+{
+	if (!Parent.isValid())
+	{
+		if (Root) return Root->childrenCount();
+		else return Objects.size();
+	}
+
+	RecordObject* Object = (RecordObject*) Parent.internalPointer();
+
+	if (auto Group = dynamic_cast<GroupObject*>(Object))
+	{
+		return Group->childrenCount();
+	}
+	else return 0;
+}
+
+int RecordModel::columnCount(const QModelIndex &Parent) const
+{
+	return Header.size();
+}
+
+QVariant RecordModel::headerData(int Section, Qt::Orientation Orientation, int Role) const
+{
+	if (Orientation != Qt::Horizontal || Section > Header.size()) return QVariant();
+
+	if (Role != Qt::DisplayRole) return QVariant();
+	else return Header[Section];
+}
+
+QVariant RecordModel::data(const QModelIndex &Index, int Role) const
+{
+	if (!Index.isValid() || !(Role == Qt::DisplayRole || Role == Qt::EditRole)) return QVariant();
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	return Object->getField(Index.column());
+}
+
+Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
+{
+	if (!Index.isValid()) return Qt::ItemFlags(0);
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (dynamic_cast<GroupObject*>(Object)) return Qt::ItemIsEnabled;
+	else return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+}
+
+bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int Role)
+{
+	if (!Index.isValid() || !(Role == Qt::DisplayRole || Role == Qt::EditRole)) return false;
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (dynamic_cast<GroupObject*>(Object)) return false;
+
+	Object->setField(Index.column(), Value);
+
+	if (Root && !Object->contain(Parents[Object]->getFields()))
+	{
+		auto Parent = Parents[Object];
+		auto From = createIndex(Parent->getIndex(), 0, Parent);
+		int Row = Parent->childIndex(Object);
+
+		beginRemoveRows(From, Row, Row);
+
+		Parent->takeChild(Object);
+		Objects.removeOne(Object);
+		Parents.remove(Object);
+
+		endRemoveRows();
+
+		removeEmpty(Parent->getParent());
+		appendItem(Object);
+	}
+	else	emit dataChanged(Index, Index);
+
+	return true;
+}
+
+void RecordModel::sort(int Column, Qt::SortOrder Order)
+{
+	SortObject Sort(Column, Order == Qt::AscendingOrder);
+
+	beginResetModel();
+
+	if (!Root) std::stable_sort(Objects.begin(), Objects.end(), Sort);
+	else
+	{
+		QFutureSynchronizer<void> Synchronizer;
+		Root->sortChilds(Sort, Synchronizer);
+		Synchronizer.waitForFinished();
+	}
+
+	endResetModel();
+}
+
+bool RecordModel::setData(int Index, const QMap<int, QVariant>& Data, bool Replace)
+{
+	for (const auto& Item : Objects) if (Item->getUid() == Index)
+	{
+		if (Root)
+		{
+			return setData(createIndex(Parents[Item]->getIndex(Item), 0, Item), Data, Replace);
+		}
+		else
+		{
+			return setData(createIndex(Objects.indexOf(Item), 0, Item), Data, Replace);
+		}
+	}
+	return false;
+}
+
+bool RecordModel::setData(const QModelIndex& Index, const QMap<int, QVariant>& Data, bool Replace)
+{
+	if (!Index.isValid()) return false;
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (dynamic_cast<GroupObject*>(Object)) return false;
+
+	Object->setFields(Data, Replace);
+
+	if (Root && !Object->contain(Parents[Object]->getFields()))
+	{
+		auto Parent = Parents[Object];
+		auto From = createIndex(Parent->getIndex(), 0, Parent);
+		int Row = Parent->childIndex(Object);
+
+		beginRemoveRows(From, Row, Row);
+
+		Parent->takeChild(Object);
+		Objects.removeOne(Object);
+		Parents.remove(Object);
+
+		endRemoveRows();
+
+		removeEmpty(Parent->getParent());
+		appendItem(Object);
+	}
+	else	emit dataChanged(Index, Index);
+
+	return true;
+}
+
+QMap<int, QVariant> RecordModel::fullData(const QModelIndex& Index) const
+{
+	if (!Index.isValid()) return QMap<int, QVariant>();
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	return Object->getFields();
+}
+
+QVariant RecordModel::fieldData(const QModelIndex& Index, int Col) const
+{
+	if (!Index.isValid()) return QVariant();
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	return Object->getField(Col);
+}
+
+QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent) const
+{
+	if (!hasChildren(Parent)) return QModelIndexList();
+
+	QModelIndexList List; int Count = rowCount(Parent);
+
+	for (int i = 0; i < Count; ++i) List.append(index(i, 0, Parent));
+
+	return List;
+}
+
+QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
+{
+	QList<int> List;
+
+	for (const auto& Index : Selection)
+	{
+		RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+		if (dynamic_cast<GroupObject*>(Object)) continue;
+
+		List.append(Object->getUid());
+	}
+
+	return List;
+}
+
+bool RecordModel::removeItem(const QModelIndex& Index)
+{
+	if (!Index.isValid()) return false;
+
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (dynamic_cast<GroupObject*>(Object)) return false;
+
+	if (Root)
+	{
+		GroupObject* Parent = Parents[Object];
+		const int Row = Parent->childIndex(Object);
+
+		beginRemoveRows(parent(Index), Row, Row);
+
+		Parent->removeChild(Object);
+		Objects.removeOne(Object);
+
+		endRemoveRows();
+	}
+	else
+	{
+		const int Row = Objects.indexOf(Object);
+
+		beginRemoveRows(parent(Index), Row, Row);
+
+		Objects.removeOne(Object); delete Object;
+
+		endRemoveRows();
+	}
+
+	return true;
+}
+
+int RecordModel::totalCount(void) const
+{
+	return Objects.count();
 }
 
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
@@ -290,7 +574,7 @@ int RecordModel::getIndex(const QString& Field) const
 {
 	int i = 0; for (const auto& Item : Header)
 	{
-		if (Item.first == Field) return i; ++i;
+		if (Item == Field) return i; ++i;
 	}
 
 	return -1;
@@ -356,268 +640,16 @@ void RecordModel::groupItems(void)
 	Root = createGroups(Indexes.constBegin(), Indexes.constEnd(), Root);
 }
 
-RecordModel::RecordModel(const QList<QPair<QString, QString> >& Head, QObject* Parent)
-: QAbstractItemModel(Parent), Header(Head) {}
-
-RecordModel::~RecordModel(void)
+void RecordModel::groupByInt(const QList<int>& Levels)
 {
-	for (const auto& Object : Objects) delete Object;
+	QStringList Groupby;
+
+	for (const auto& I : Levels) if (I < Header.size()) Groupby.append(Header[I]);
+
+	groupByStr(Groupby);
 }
 
-QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) const
-{
-	if (!hasIndex(Row, Col, Parent)) return QModelIndex();
-	if (!Root) return createIndex(Row, Col, Objects[Row]);
-
-	GroupObject* parentObject = Parent.isValid() ? (GroupObject*) Parent.internalPointer() : Root;
-
-	if (auto Child = parentObject->getChild(Row))
-	{
-		return createIndex(Row, Col, Child);
-	}
-	else return QModelIndex();
-}
-
-QModelIndex RecordModel::parent(const QModelIndex& Index) const
-{
-	if (!Index.isValid()) return QModelIndex();
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	if (auto Group = dynamic_cast<GroupObject*>(Object))
-	{
-		if (auto Parent = Group->getParent())
-		{
-			return createIndex(Parent->getIndex(), 0, Parent);
-		}
-		else return QModelIndex();
-	}
-	else
-	{
-		GroupObject* Parent = Parents.value(Object);
-
-		if (Parent)
-		{
-			return createIndex(Parent->getIndex(), 0, Parent);
-		}
-		else return QModelIndex();
-	}
-}
-
-bool RecordModel::hasChildren(const QModelIndex& Parent) const
-{
-	if (Parent == QModelIndex()) return true;
-
-	RecordObject* Object = (RecordObject*) Parent.internalPointer();
-
-	if (auto Group = dynamic_cast<GroupObject*>(Object))
-	{
-		return Group->hasChids();
-	}
-	else return false;
-}
-
-int RecordModel::rowCount(const QModelIndex& Parent) const
-{
-	if (!Parent.isValid())
-	{
-		if (Root) return Root->childrenCount();
-		else return Objects.size();
-	}
-
-	RecordObject* Object = (RecordObject*) Parent.internalPointer();
-
-	if (auto Group = dynamic_cast<GroupObject*>(Object))
-	{
-		return Group->childrenCount();
-	}
-	else return 0;
-}
-
-int RecordModel::columnCount(const QModelIndex &Parent) const
-{
-	return Header.size();
-}
-
-QVariant RecordModel::headerData(int Section, Qt::Orientation Orientation, int Role) const
-{
-	if (Orientation != Qt::Horizontal || Section > Header.size()) return QVariant();
-
-	if (Role == Qt::DisplayRole) return Header[Section].second;
-	else if (Role == Qt::UserRole) return Header[Section].first;
-
-	return QVariant();
-}
-
-QVariant RecordModel::data(const QModelIndex &Index, int Role) const
-{
-	if (!Index.isValid() || !(Role == Qt::DisplayRole || Role == Qt::EditRole)) return QVariant();
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	return Object->getField(Index.column());
-}
-
-Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
-{
-	if (!Index.isValid()) return Qt::ItemFlags(0);
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	if (dynamic_cast<GroupObject*>(Object)) return Qt::ItemIsEnabled;
-	else return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-}
-
-bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int Role)
-{
-	if (!Index.isValid() || !(Role == Qt::DisplayRole || Role == Qt::EditRole)) return false;
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	if (dynamic_cast<GroupObject*>(Object)) return false;
-
-	Object->setField(Index.column(), Value);
-
-	if (Root && !Object->contain(Parents[Object]->getFields()))
-	{
-		auto Parent = Parents[Object];
-		auto From = createIndex(Parent->getIndex(), 0, Parent);
-		int Row = Parent->childIndex(Object);
-
-		beginRemoveRows(From, Row, Row);
-
-		Parent->takeChild(Object);
-		Parents.remove(Object);
-		Objects.removeOne(Object);
-
-		endRemoveRows();
-
-		removeEmpty(Parent->getParent());
-		appendItem(Object);
-	}
-	else	emit dataChanged(Index, Index);
-
-	return true;
-}
-
-void RecordModel::sort(int Column, Qt::SortOrder Order)
-{
-	SortObject Sort(Column, Order == Qt::AscendingOrder);
-
-	beginResetModel();
-
-	if (!Root) std::sort(Objects.begin(), Objects.end(), Sort);
-	else
-	{
-		QFutureSynchronizer<void> Synchronizer;
-		Root->sortChilds(Sort, Synchronizer);
-		Synchronizer.waitForFinished();
-	}
-
-	endResetModel();
-}
-
-bool RecordModel::setData(const QModelIndex& Index, const QList<QPair<int, QVariant>>& Data)
-{
-	if (!Index.isValid()) return false;
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	if (dynamic_cast<GroupObject*>(Object)) return false;
-
-	Object->setFields(Data);
-
-	if (Root && !Object->contain(Parents[Object]->getFields()))
-	{
-		auto Parent = Parents[Object];
-		auto From = createIndex(Parent->getIndex(), 0, Parent);
-		int Row = Parent->childIndex(Object);
-
-		beginRemoveRows(From, Row, Row);
-
-		Parent->takeChild(Object);
-		Parents.remove(Object);
-		Objects.removeOne(Object);
-
-		endRemoveRows();
-
-		removeEmpty(Parent->getParent());
-		appendItem(Object);
-	}
-	else	emit dataChanged(Index, Index);
-
-	return true;
-}
-
-QList<QPair<int, QVariant>> RecordModel::fullData(const QModelIndex& Index) const
-{
-	if (!Index.isValid()) return QList<QPair<int, QVariant>>();
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	return Object->getFields();
-}
-
-QVariant RecordModel::fieldData(const QModelIndex& Index, int Col) const
-{
-	if (!Index.isValid()) return QVariant();
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	return Object->getField(Col);
-}
-
-QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent)
-{
-	if (!hasChildren(Parent)) return QModelIndexList();
-
-	QModelIndexList List; int Count = rowCount(Parent);
-
-	for (int i = 0; i < Count; ++i) List.append(index(i, 0, Parent));
-
-	return List;
-}
-
-bool RecordModel::removeItem(const QModelIndex& Index)
-{
-	if (!Index.isValid()) return false;
-
-	RecordObject* Object = (RecordObject*) Index.internalPointer();
-
-	if (dynamic_cast<GroupObject*>(Object)) return false;
-
-	if (Root)
-	{
-		GroupObject* Parent = Parents[Object];
-		const int Row = Parent->childIndex(Object);
-
-		beginRemoveRows(parent(Index), Row, Row);
-
-		Parent->removeChild(Object);
-		Objects.removeAll(Object);
-
-		endRemoveRows();
-	}
-	else
-	{
-		const int Row = Objects.indexOf(Object);
-
-		beginRemoveRows(parent(Index), Row, Row);
-
-		Objects.removeAll(Object); delete Object;
-
-		endRemoveRows();
-	}
-
-	return true;
-}
-
-int RecordModel::totalCount(void) const
-{
-	return Objects.count();
-}
-
-void RecordModel::groupBy(const QStringList& Groupby)
+void RecordModel::groupByStr(const QStringList& Groupby)
 {
 	if (Groups == Groupby) { emit onGroupComplete(); return; } Groups = Groupby;
 
@@ -636,9 +668,9 @@ void RecordModel::groupBy(const QStringList& Groupby)
 	emit onGroupComplete();
 }
 
-void RecordModel::addItem(const QList<QPair<int, QVariant>>& Attributes)
+void RecordModel::addItem(int ID, const QMap<int, QVariant>& Attributes)
 {
-	auto Object = new RecordObject(Attributes);
+	auto Object = new RecordObject(ID, Attributes);
 
 	if (Root) appendItem(Object);
 	else
@@ -646,21 +678,8 @@ void RecordModel::addItem(const QList<QPair<int, QVariant>>& Attributes)
 		const int Count = Objects.size() + 1;
 
 		beginInsertRows(QModelIndex(), Count, Count);
-		Objects.append(Object);
+		Objects.insert(ID, Object);
 		endInsertRows();
 	}
 
-}
-
-void RecordModel::addItems(const QList<QList<QPair<int, QVariant>>>& Attributes)
-{
-	if (Root) for (const auto& Item : Attributes) appendItem(new RecordObject(Item));
-	else
-	{
-		beginInsertRows(QModelIndex(), Objects.size() + 1, Objects.size() + Attributes.size());
-
-		for (const auto& Item : Attributes) Objects.append(new RecordObject(Item));
-
-		endInsertRows();
-	}
 }

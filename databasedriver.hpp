@@ -18,9 +18,10 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef DATABASEDRIVER_HPP
-#define DATABASEDRIVER_HPP
+#ifndef DATABASEDRIVER_V2_HPP
+#define DATABASEDRIVER_V2_HPP
 
+#include <QSharedDataPointer>
 #include <QSqlDatabase>
 #include <QSqlRecord>
 #include <QSqlQuery>
@@ -38,83 +39,118 @@ class DatabaseDriver : public QObject
 
 		Q_OBJECT
 
+	public: enum TYPE
+	{
+		READONLY	= 0,
+		STRING	= 1,
+		INTEGER	= 4,
+		SMALLINT	= 5,
+		BOOL		= 7,
+		DOUBLE	= 8,
+		DATE		= 101,
+		MASK		= 102
+	};
+
+	public: struct FIELD
+	{
+		TYPE Type;
+
+		QString Name;
+		QString Label;
+
+		QMap<QVariant, QString> Dict;
+	};
+
+	public: struct TABLE
+	{
+		QString Name;
+		QString Label;
+		QString Data;
+
+		QList<FIELD> Fields;
+		QList<int> Indexes;
+		QList<int> Headers;
+	};
+
 	private:
 
-		QList<QPair<QString, QString>> Attributes;
-
 		QSqlDatabase Database;
-		QString Dictionary;
+		QStringList Headers;
 
-		QStringList getAttribTables(void);
-		QString getAttribTable(int ID);
-
-		QStringList getTableFields(const QString& Table, bool Write = false);
-		QStringList getValuesFields(const QString& Values);
-		QStringList getQueryFields(QStringList All, const QStringList& Table);
-
-		QStringList getDataQueries(const QStringList& Tables, const QString& Values = QString());
-		QStringList getUpdateQueries(const QList<int>& Indexes, const QHash<QString, QString>& Values);
-		QStringList getRemoveQueries(const QList<int>& Indexes);
-
-		QHash<int, QHash<int, QString>> indexDictionary(void);
-
-		bool checkFieldsInQuery(const QStringList& Used, const QStringList& Table) const;
+		QList<TABLE> Tables;
+		QList<FIELD> Fields;
+		QList<FIELD> Common;
 
 	public:
 
-		const QList<QPair<QString, QString>> commonAttribs;
-		const QList<QPair<QString, QString>> writeAttribs;
-		const QHash<QString, QString> writeBridges;
-		const QHash<QString, QString> dictQueries;
-
-		static const QStringList fieldOperators;
+		static const QStringList Operators;
 
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 
-		QList<QPair<QString, QString>> getAttributes(const QStringList& Keys = QStringList());
-		QList<QPair<QString, QString>> getAttributes(const QString& Key);
+		QMap<int, FIELD> getFilterList(void) const;
 
-		QList<QPair<QString, QString>> allAttributes(bool Write = false);
+	protected:
 
-		QHash<int, QString> getDictionary(const QString& Field) const;
+		QList<FIELD> loadCommon(bool Emit = false);
+		QList<TABLE> loadTables(bool Emit = false);
 
-		QHash<QString, QHash<int, QString>> allDictionary(void) const;
+		QList<FIELD> loadFields(const QString& Table) const;
+		QMap<QVariant, QString> loadDict(const QString& Field, const QString& Table) const;
 
-		QHash<QString, QString> getEditValues(RecordModel* Model, const QModelIndex& Index);
+		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
+		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
+
+		QMap<QString, QStringList> getClassGroups(const QList<int>& Indexes, bool Common) const;
+
+		QList<int> getUsedFields(const QString& Filter) const;
+		QList<int> getCommonFields(const QStringList& Classes) const;
+
+		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 
 	public slots:
 
-		bool openDatabase(const QString& Server,
-					   const QString& Base,
-					   const QString& User,
-					   const QString& Pass);
+		bool openDatabase(const QString& Server, const QString& Base,
+					   const QString& User, const QString& Pass);
 
 		bool closeDatabase(void);
 
-		void updateData(const QString& Filter);
-
-		void setData(RecordModel* Model, const QModelIndexList& Items, const QHash<QString, QString>& Values);
-
+		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
+		void updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
+
+		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 
 	signals:
 
-		void onDataLoad(RecordModel*);
-		void onDataUpdate(RecordModel*);
-		void onDataRemove(RecordModel*);
-
-		void onAttributesLoad(const QList<QPair<QString, QString>>&);
 		void onError(const QString&);
 
-		void onConnect(void);
+		void onConnect(const QList<FIELD>&, const QList<TABLE>&, const QStringList&, unsigned);
 		void onDisconnect(void);
+		void onLogin(bool);
 
-		void onBeginProgress(void);
+		void onBeginProgress(const QString&);
 		void onSetupProgress(int, int);
 		void onUpdateProgress(int);
 		void onEndProgress(void);
 
+		void onDataLoad(RecordModel*);
+		void onDataRemove(void);
+		void onDataUpdate(void);
+
+		void onPresetReady(const QList<QMap<int, QVariant>>&, const QList<int>&);
+
 };
 
-#endif // DATABASEDRIVER_HPP
+bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two);
+bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE& Two);
+
+QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
+
+template<class Type, class Field, template<class> class Container>
+Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);
+
+template<class Type, class Field, template<class> class Container>
+const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
+
+#endif // DATABASEDRIVER_V2_HPP
