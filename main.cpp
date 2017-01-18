@@ -22,9 +22,8 @@
 #include <QLibraryInfo>
 #include <QTranslator>
 
+#include "databasedriver.hpp"
 #include "mainwindow.hpp"
-
-
 
 int main(int argc, char *argv[])
 {
