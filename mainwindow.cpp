@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
 	Progress = new QProgressBar(this);
-	Driver = new DatabaseDriver_v2(nullptr);
+	Driver = new DatabaseDriver(nullptr);
 	About = new AboutDialog(this);
 
 	ui->statusBar->addPermanentWidget(Progress);
@@ -49,27 +49,27 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::connectActionClicked);
-	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver_v2::closeDatabase);
+	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
 
-	connect(Driver, &DatabaseDriver_v2::onConnect, this, &MainWindow::databaseConnected);
-	connect(Driver, &DatabaseDriver_v2::onDisconnect, this, &MainWindow::databaseDisconnected);
-	connect(Driver, &DatabaseDriver_v2::onError, this, &MainWindow::databaseError);
-	connect(Driver, &DatabaseDriver_v2::onLogin, this, &MainWindow::databaseLogin);
+	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
+	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
+	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
+	connect(Driver, &DatabaseDriver::onLogin, this, &MainWindow::databaseLogin);
 
-	connect(Driver, &DatabaseDriver_v2::onDataLoad, this, &MainWindow::loadData);
-	connect(Driver, &DatabaseDriver_v2::onDataUpdate, this, &MainWindow::updateData);
-	connect(Driver, &DatabaseDriver_v2::onDataRemove, this, &MainWindow::removeData);
-	connect(Driver, &DatabaseDriver_v2::onPresetReady, this, &MainWindow::prepareEdit);
+	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
+	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::updateData);
+	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
+	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
 
-	connect(Driver, &DatabaseDriver_v2::onBeginProgress, Progress, &QProgressBar::show);
-	connect(Driver, &DatabaseDriver_v2::onSetupProgress, Progress, &QProgressBar::setRange);
-	connect(Driver, &DatabaseDriver_v2::onUpdateProgress, Progress, &QProgressBar::setValue);
-	connect(Driver, &DatabaseDriver_v2::onEndProgress, Progress, &QProgressBar::hide);
+	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
+	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
+	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
 
-	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver_v2::reloadData);
-	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver_v2::removeData);
-	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver_v2::updateData);
-	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver_v2::getPreset);
+	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver::reloadData);
+	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
+	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
+	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -96,12 +96,12 @@ void MainWindow::connectActionClicked(void)
 
 	connect(Dialog, &ConnectDialog::onAccept, this, &MainWindow::loginAttempt);
 
-	connect(Dialog, &ConnectDialog::onAccept, Driver, &DatabaseDriver_v2::openDatabase);
+	connect(Dialog, &ConnectDialog::onAccept, Driver, &DatabaseDriver::openDatabase);
 	connect(Dialog, &ConnectDialog::accepted, Dialog, &ConnectDialog::deleteLater);
 	connect(Dialog, &ConnectDialog::rejected, Dialog, &ConnectDialog::deleteLater);
 
-	connect(Driver, &DatabaseDriver_v2::onLogin, Dialog, &ConnectDialog::connected);
-	connect(Driver, &DatabaseDriver_v2::onError, Dialog, &ConnectDialog::refused);
+	connect(Driver, &DatabaseDriver::onLogin, Dialog, &ConnectDialog::connected);
+	connect(Driver, &DatabaseDriver::onError, Dialog, &ConnectDialog::refused);
 
 	Dialog->open();
 }
@@ -148,7 +148,7 @@ void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 	lockUi(BUSY); emit onReloadRequest(Where, Used);
 }
 
-void MainWindow::databaseConnected(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Classes, const QStringList& Headers, unsigned Common)
+void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
 	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);

@@ -34,7 +34,7 @@
 
 #include "recordmodel.hpp"
 
-class DatabaseDriver_v2 : public QObject
+class DatabaseDriver : public QObject
 {
 
 		Q_OBJECT
@@ -85,8 +85,8 @@ class DatabaseDriver_v2 : public QObject
 
 		static const QStringList Operators;
 
-		explicit DatabaseDriver_v2(QObject* Parent = nullptr);
-		virtual ~DatabaseDriver_v2(void) override;
+		explicit DatabaseDriver(QObject* Parent = nullptr);
+		virtual ~DatabaseDriver(void) override;
 
 		QMap<int, FIELD> getFilterList(void) const;
 
@@ -142,10 +142,10 @@ class DatabaseDriver_v2 : public QObject
 
 };
 
-bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::FIELD& Two);
-bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::TABLE& Two);
+bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two);
+bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE& Two);
 
-QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver_v2::TYPE Type);
+QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
 
 template<class Type, class Field, template<class> class Container>
 Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);

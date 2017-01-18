@@ -21,7 +21,7 @@
 #include "updatedialog.hpp"
 #include "ui_updatedialog.h"
 
-UpdateDialog::UpdateDialog(QWidget* Parent, const QList<DatabaseDriver_v2::FIELD>& Fields)
+UpdateDialog::UpdateDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields)
 : QDialog(Parent), ui(new Ui::UpdateDialog)
 {
 	ui->setupUi(this); setFields(Fields);
@@ -101,11 +101,11 @@ void UpdateDialog::accept(void)
 	emit onValuesUpdate(getUpdatedValues()); QDialog::accept();
 }
 
-void UpdateDialog::setFields(const QList<DatabaseDriver_v2::FIELD>& Fields)
+void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 {
 	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver_v2::READONLY)
+	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY)
 	{
 		auto Widget = new UpdateWidget(i, Fields[i], this);
 

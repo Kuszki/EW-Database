@@ -30,7 +30,7 @@
 #include <QSpinBox>
 #include <QWidget>
 
-#include "databasedriver_v2.hpp"
+#include "databasedriver.hpp"
 
 namespace Ui
 {
@@ -52,7 +52,7 @@ class UpdateWidget : public QWidget
 
 	public:
 
-		explicit UpdateWidget(int ID, const DatabaseDriver_v2::FIELD& Field, QWidget* Parent = nullptr);
+		explicit UpdateWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent = nullptr);
 		virtual ~UpdateWidget(void) override;
 
 		QString getAssigment(void) const;
@@ -69,7 +69,7 @@ class UpdateWidget : public QWidget
 
 	public slots:
 
-		void setParameters(int ID, const DatabaseDriver_v2::FIELD& Field);
+		void setParameters(int ID, const DatabaseDriver::FIELD& Field);
 		void setValue(const QVariant& Value);
 		void setChecked(bool Checked);
 

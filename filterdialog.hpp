@@ -28,7 +28,7 @@
 #include <QDialog>
 #include <QHash>
 
-#include "databasedriver_v2.hpp"
+#include "databasedriver.hpp"
 #include "filterwidget.hpp"
 
 namespace Ui
@@ -52,8 +52,8 @@ class FilterDialog : public QDialog
 	public:
 
 		explicit FilterDialog(QWidget* Parent = nullptr,
-						  const QList<DatabaseDriver_v2::FIELD>& Fields = QList<DatabaseDriver_v2::FIELD>(),
-						  const QList<DatabaseDriver_v2::TABLE>& Tables = QList<DatabaseDriver_v2::TABLE>(),
+						  const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>(),
+						  const QList<DatabaseDriver::TABLE>& Tables = QList<DatabaseDriver::TABLE>(),
 						  unsigned Common = 0);
 		virtual ~FilterDialog(void) override;
 
@@ -82,7 +82,7 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables, unsigned Common = 0);
+		void setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common = 0);
 
 	signals:
 

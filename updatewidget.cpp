@@ -21,7 +21,7 @@
 #include "updatewidget.hpp"
 #include "ui_updatewidget.h"
 
-UpdateWidget::UpdateWidget(int ID, const DatabaseDriver_v2::FIELD& Field, QWidget* Parent)
+UpdateWidget::UpdateWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::UpdateWidget)
 {
 	ui->setupUi(this); setParameters(ID, Field);
@@ -110,7 +110,7 @@ void UpdateWidget::resetIndex(void)
 	if (auto C = qobject_cast<QComboBox*>(sender())) C->setCurrentIndex(0);
 }
 
-void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
+void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 {
 	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
 
@@ -118,7 +118,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 
 	if (!Field.Dict.isEmpty()) switch (Field.Type)
 	{
-		case DatabaseDriver_v2::MASK:
+		case DatabaseDriver::MASK:
 		{
 			auto Combo = new QComboBox(this); Widget = Combo; int j = 1;
 			auto Model = new QStandardItemModel(Field.Dict.size() + 1, 1, Widget);
@@ -157,8 +157,8 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 	}
 	else switch (Field.Type)
 	{
-		case DatabaseDriver_v2::INTEGER:
-		case DatabaseDriver_v2::SMALLINT:
+		case DatabaseDriver::INTEGER:
+		case DatabaseDriver::SMALLINT:
 		{
 			auto Spin = new QSpinBox(this); Widget = Spin;
 
@@ -166,7 +166,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 			Spin->setRange(0, 100);
 		}
 		break;
-		case DatabaseDriver_v2::BOOL:
+		case DatabaseDriver::BOOL:
 		{
 			auto Combo = new QComboBox(this); Widget = Combo;
 
@@ -175,7 +175,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 			Combo->setProperty("MASK", false);
 		}
 		break;
-		case DatabaseDriver_v2::DOUBLE:
+		case DatabaseDriver::DOUBLE:
 		{
 			auto Spin = new QDoubleSpinBox(this); Widget = Spin;
 
@@ -183,7 +183,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 			Spin->setRange(0.0, 10000.0);
 		}
 		break;
-		case DatabaseDriver_v2::DATE:
+		case DatabaseDriver::DATE:
 		{
 			auto Date = new QDateTimeEdit(this); Widget = Date;
 

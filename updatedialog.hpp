@@ -50,7 +50,7 @@ class UpdateDialog : public QDialog
 
 	public:
 
-		explicit UpdateDialog(QWidget* Parent = nullptr, const QList<DatabaseDriver_v2::FIELD>& Fields = QList<DatabaseDriver_v2::FIELD>());
+		explicit UpdateDialog(QWidget* Parent = nullptr, const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>());
 		virtual ~UpdateDialog(void) override;
 
 		QMap<int, QVariant> getUpdatedValues(void) const;
@@ -70,7 +70,7 @@ class UpdateDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields);
+		void setFields(const QList<DatabaseDriver::FIELD>& Fields);
 
 		void setPrepared(const QList<QMap<int, QVariant>> &Data, const QList<int>& Indexes);
 

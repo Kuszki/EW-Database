@@ -18,9 +18,9 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "databasedriver_v2.hpp"
 
-const QStringList DatabaseDriver_v2::Operators =
+
+const QStringList DatabaseDriver::Operators =
 {
 	"=", "<>", ">=", ">", "<=", "<",
 	"LIKE", "NOT LIKE",
@@ -28,7 +28,7 @@ const QStringList DatabaseDriver_v2::Operators =
 	"IS NULL", "IS NOT NULL"
 };
 
-DatabaseDriver_v2::DatabaseDriver_v2(QObject* Parent)
+DatabaseDriver::DatabaseDriver(QObject* Parent)
 : QObject(Parent)
 {
 	QSettings Settings("EW-Database");
@@ -38,9 +38,9 @@ DatabaseDriver_v2::DatabaseDriver_v2(QObject* Parent)
 	Settings.endGroup();
 }
 
-DatabaseDriver_v2::~DatabaseDriver_v2(void) {}
+DatabaseDriver::~DatabaseDriver(void) {}
 
-QMap<int, DatabaseDriver_v2::FIELD> DatabaseDriver_v2::getFilterList(void) const
+QMap<int, DatabaseDriver::FIELD> DatabaseDriver::getFilterList(void) const
 {
 	QMap<int, FIELD> List; int i = 0;
 
@@ -52,7 +52,7 @@ QMap<int, DatabaseDriver_v2::FIELD> DatabaseDriver_v2::getFilterList(void) const
 	return List;
 }
 
-QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(bool Emit)
+QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 {
 	if (!Database.isOpen()) return QList<FIELD>();
 
@@ -93,7 +93,7 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(bool Emit)
 	return Fields;
 }
 
-QList<DatabaseDriver_v2::TABLE> DatabaseDriver_v2::loadTables(bool Emit)
+QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 {
 	if (!Database.isOpen()) return QList<TABLE>();
 
@@ -133,7 +133,7 @@ QList<DatabaseDriver_v2::TABLE> DatabaseDriver_v2::loadTables(bool Emit)
 	return List;
 }
 
-QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadFields(const QString& Table) const
+QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) const
 {
 	if (!Database.isOpen()) return QList<FIELD>();
 
@@ -166,7 +166,7 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadFields(const QString& Tab
 	return List;
 }
 
-QMap<QVariant, QString> DatabaseDriver_v2::loadDict(const QString& Field, const QString& Table) const
+QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QString& Table) const
 {
 	if (!Database.isOpen()) return QMap<QVariant, QString>();
 
@@ -210,7 +210,7 @@ QMap<QVariant, QString> DatabaseDriver_v2::loadDict(const QString& Field, const 
 	return List;
 }
 
-QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::normalizeFields(QList<DatabaseDriver_v2::TABLE>& Tabs, const QList<DatabaseDriver_v2::FIELD>& Base) const
+QList<DatabaseDriver::FIELD> DatabaseDriver::normalizeFields(QList<DatabaseDriver::TABLE>& Tabs, const QList<DatabaseDriver::FIELD>& Base) const
 {
 	QList<FIELD> List;
 
@@ -232,7 +232,7 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::normalizeFields(QList<Databas
 	return List;
 }
 
-QStringList DatabaseDriver_v2::normalizeHeaders(QList<DatabaseDriver_v2::TABLE>& Tabs, const QList<DatabaseDriver_v2::FIELD>& Base) const
+QStringList DatabaseDriver::normalizeHeaders(QList<DatabaseDriver::TABLE>& Tabs, const QList<DatabaseDriver::FIELD>& Base) const
 {
 	QStringList List;
 
@@ -254,7 +254,7 @@ QStringList DatabaseDriver_v2::normalizeHeaders(QList<DatabaseDriver_v2::TABLE>&
 	return List;
 }
 
-QMap<QString, QStringList> DatabaseDriver_v2::getClassGroups(const QList<int>& Indexes, bool Common) const
+QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Indexes, bool Common) const
 {
 	if (!Database.isOpen()) return QMap<QString, QStringList>();
 
@@ -294,7 +294,7 @@ QMap<QString, QStringList> DatabaseDriver_v2::getClassGroups(const QList<int>& I
 	return List;
 }
 
-QList<int> DatabaseDriver_v2::getUsedFields(const QString& Filter) const
+QList<int> DatabaseDriver::getUsedFields(const QString& Filter) const
 {
 	if (Filter.isEmpty()) return QList<int>(); QList<int> Used;
 
@@ -313,7 +313,7 @@ QList<int> DatabaseDriver_v2::getUsedFields(const QString& Filter) const
 	return Used;
 }
 
-QList<int> DatabaseDriver_v2::getCommonFields(const QStringList& Classes) const
+QList<int> DatabaseDriver::getCommonFields(const QStringList& Classes) const
 {
 	QSet<int> Disabled, All;
 
@@ -327,7 +327,7 @@ QList<int> DatabaseDriver_v2::getCommonFields(const QStringList& Classes) const
 	return All.toList();
 }
 
-bool DatabaseDriver_v2::hasAllIndexes(const DatabaseDriver_v2::TABLE& Tab, const QList<int>& Used)
+bool DatabaseDriver::hasAllIndexes(const DatabaseDriver::TABLE& Tab, const QList<int>& Used)
 {
 	for (const auto& Index : Used) if (Index >= Common.size())
 	{
@@ -337,7 +337,7 @@ bool DatabaseDriver_v2::hasAllIndexes(const DatabaseDriver_v2::TABLE& Tab, const
 	return true;
 }
 
-bool DatabaseDriver_v2::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
+bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
 {
 	if (Database.isOpen()) Database.close();
 
@@ -366,7 +366,7 @@ bool DatabaseDriver_v2::openDatabase(const QString& Server, const QString& Base,
 	return Database.isOpen();
 }
 
-bool DatabaseDriver_v2::closeDatabase(void)
+bool DatabaseDriver::closeDatabase(void)
 {
 	if (Database.isOpen())
 	{
@@ -378,7 +378,7 @@ bool DatabaseDriver_v2::closeDatabase(void)
 	}
 }
 
-void DatabaseDriver_v2::reloadData(const QString& Filter, QList<int> Used)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -438,7 +438,7 @@ void DatabaseDriver_v2::reloadData(const QString& Filter, QList<int> Used)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver_v2::updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values)
+void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
@@ -542,7 +542,7 @@ void DatabaseDriver_v2::updateData(RecordModel* Model, const QModelIndexList& It
 	emit onDataUpdate();
 }
 
-void DatabaseDriver_v2::removeData(RecordModel* Model, const QModelIndexList& Items)
+void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(); return; }
 
@@ -585,7 +585,7 @@ void DatabaseDriver_v2::removeData(RecordModel* Model, const QModelIndexList& It
 	emit onDataRemove();
 }
 
-void DatabaseDriver_v2::getPreset(RecordModel* Model, const QModelIndexList& Items)
+void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QMap<int, QVariant>>(), QList<int>()); return; }
 
@@ -644,7 +644,7 @@ void DatabaseDriver_v2::getPreset(RecordModel* Model, const QModelIndexList& Ite
 	emit onPresetReady(Values, Used);
 }
 
-bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::FIELD& Two)
+bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two)
 {
 	return
 	(
@@ -655,7 +655,7 @@ bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::
 	);
 }
 
-bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::TABLE& Two)
+bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE& Two)
 {
 	return
 	(
@@ -666,17 +666,17 @@ bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::
 	);
 }
 
-QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver_v2::TYPE Type)
+QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
 {	
-	if (Type == DatabaseDriver_v2::BOOL)
+	if (Type == DatabaseDriver::BOOL)
 	{
-		return Value.toBool() ? DatabaseDriver_v2::tr("Yes") : DatabaseDriver_v2::tr("No");
+		return Value.toBool() ? DatabaseDriver::tr("Yes") : DatabaseDriver::tr("No");
 	}
 	else if (Dict.isEmpty())
 	{
 		return Value;
 	}
-	else if (Type == DatabaseDriver_v2::MASK)
+	else if (Type == DatabaseDriver::MASK)
 	{
 		QStringList Values; const int Bits = Value.toInt();
 

@@ -24,14 +24,14 @@
 
 #include "mainwindow.hpp"
 
-#include "databasedriver_v2.hpp"
+
 
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
 
-	qRegisterMetaType<QList<DatabaseDriver_v2::FIELD>>("QList<FIELD>");
-	qRegisterMetaType<QList<DatabaseDriver_v2::TABLE>>("QList<TABLE>");
+	qRegisterMetaType<QList<DatabaseDriver::FIELD>>("QList<FIELD>");
+	qRegisterMetaType<QList<DatabaseDriver::TABLE>>("QList<TABLE>");
 
 	qRegisterMetaType<QList<QMap<int,QVariant>>>("QList<QMap<int,QVariant>>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");

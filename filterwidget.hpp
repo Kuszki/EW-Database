@@ -30,7 +30,7 @@
 #include <QSpinBox>
 #include <QWidget>
 
-#include "databasedriver_v2.hpp"
+#include "databasedriver.hpp"
 
 namespace Ui
 {
@@ -52,7 +52,7 @@ class FilterWidget : public QWidget
 
 	public:
 
-		explicit FilterWidget(int ID, const DatabaseDriver_v2::FIELD& Field, QWidget* Parent = nullptr);
+		explicit FilterWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent = nullptr);
 		virtual ~FilterWidget(void) override;
 
 		QString getCondition(void) const;
@@ -70,7 +70,7 @@ class FilterWidget : public QWidget
 
 	public slots:
 
-		void setParameters(int ID, const DatabaseDriver_v2::FIELD& Field);
+		void setParameters(int ID, const DatabaseDriver::FIELD& Field);
 		void setValue(const QVariant& Value);
 		void setChecked(bool Checked);
 

@@ -25,7 +25,6 @@
 #include <QMainWindow>
 #include <QThread>
 
-#include "databasedriver_v2.hpp"
 #include "databasedriver.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
@@ -60,7 +59,7 @@ class MainWindow : public QMainWindow
 
 		QProgressBar* Progress;
 
-		DatabaseDriver_v2* Driver;
+		DatabaseDriver* Driver;
 		ColumnsDialog* Columns;
 		GroupDialog* Groups;
 		FilterDialog* Filter;
@@ -86,8 +85,8 @@ class MainWindow : public QMainWindow
 
 		void selectionChanged(void);
 
-		void databaseConnected(const QList<DatabaseDriver_v2::FIELD>& Fields,
-						   const QList<DatabaseDriver_v2::TABLE>& Classes,
+		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,
+						   const QList<DatabaseDriver::TABLE>& Classes,
 						   const QStringList& Headers, unsigned Common);
 
 		void databaseDisconnected(void);

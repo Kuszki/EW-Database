@@ -21,12 +21,12 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables, unsigned Common)
+FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
 	ui->setupUi(this); setFields(Fields, Tables, Common);
 
-	ui->Operator->addItems(DatabaseDriver_v2::Operators);
+	ui->Operator->addItems(DatabaseDriver::Operators);
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
 
@@ -232,7 +232,7 @@ void FilterDialog::accept(void)
 	emit onFiltersUpdate(getFilterRules(), getUsedFields()); QDialog::accept();
 }
 
-void FilterDialog::setFields(const QList<DatabaseDriver_v2::FIELD>& Fields, const QList<DatabaseDriver_v2::TABLE>& Tables, unsigned Common)
+void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
 {
 	Attributes.clear(); ui->Field->clear(); Above = Common; QStringList Used;
 
