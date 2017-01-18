@@ -218,7 +218,6 @@ void UpdateWidget::setChecked(bool Checked)
 	ui->Field->setChecked(Checked);
 }
 
-
 void UpdateWidget::setValue(const QVariant& Value)
 {
 	if (auto W = dynamic_cast<QComboBox*>(Widget))
