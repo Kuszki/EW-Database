@@ -88,8 +88,6 @@ class DatabaseDriver : public QObject
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 
-		QMap<int, FIELD> getFilterList(void) const;
-
 	protected:
 
 		QList<FIELD> loadCommon(bool Emit = false);

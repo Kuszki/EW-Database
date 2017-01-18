@@ -40,18 +40,6 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 
 DatabaseDriver::~DatabaseDriver(void) {}
 
-QMap<int, DatabaseDriver::FIELD> DatabaseDriver::getFilterList(void) const
-{
-	QMap<int, FIELD> List; int i = 0;
-
-	for (const auto& Field : Fields)
-	{
-		if ((Field.Type != INTEGER && Field.Type != MASK) || Field.Dict.size() > 1) List.insert(i, Field); ++i;
-	}
-
-	return List;
-}
-
 QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 {
 	if (!Database.isOpen()) return QList<FIELD>();
