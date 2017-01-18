@@ -31,9 +31,9 @@ ConnectDialog::ConnectDialog(QWidget *Parent)
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
-	ui->Server->setText(Settings.value("server", "").toString());
-	ui->Database->setText(Settings.value("path", "").toString());
-	ui->User->setText(Settings.value("user", "").toString());
+	ui->Server->setText(Settings.value("server").toString());
+	ui->Database->setText(Settings.value("path").toString());
+	ui->User->setText(Settings.value("user").toString());
 	Settings.endGroup();
 
 	if (!ui->Server->text().isEmpty() &&

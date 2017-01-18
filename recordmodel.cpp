@@ -364,15 +364,10 @@ bool RecordModel::setData(int Index, const QMap<int, QVariant>& Data, bool Repla
 {
 	for (const auto& Item : Objects) if (Item->getUid() == Index)
 	{
-		if (Root)
-		{
-			return setData(createIndex(Parents[Item]->getIndex(Item), 0, Item), Data, Replace);
-		}
-		else
-		{
-			return setData(createIndex(Objects.indexOf(Item), 0, Item), Data, Replace);
-		}
+		if (Root) return setData(createIndex(Parents[Item]->getIndex(Item), 0, Item), Data, Replace);
+		else return setData(createIndex(Objects.indexOf(Item), 0, Item), Data, Replace);
 	}
+
 	return false;
 }
 

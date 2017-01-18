@@ -65,12 +65,10 @@ void UpdateDialog::fieldButtonChecked(bool Enabled)
 void UpdateDialog::allButtonChecked(bool Enabled)
 {
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
-	{
 		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
 			W->setEnabled(Enabled || Active.contains(W->getIndex()));
 		}
-	}
 
 	searchBoxEdited(ui->searchEdit->text());
 }
@@ -107,9 +105,7 @@ void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 
 	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY)
 	{
-		auto Widget = new UpdateWidget(i, Fields[i], this);
-
-		ui->fieldsLayout->addWidget(Widget);
+		auto Widget = new UpdateWidget(i, Fields[i], this); ui->fieldsLayout->addWidget(Widget);
 
 		connect(Widget, &UpdateWidget::onStatusChanged, this, &UpdateDialog::fieldButtonChecked);
 	}
@@ -137,12 +133,10 @@ void UpdateDialog::setData(const QList<QMap<int, QVariant>>& Data)
 void UpdateDialog::setData(const QMap<int, QVariant>& Data)
 {
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
-	{
 		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
 			W->setValue(Data.value(W->getIndex()));
 		}
-	}
 }
 
 void UpdateDialog::setActive(const QList<int>& Indexes)
@@ -153,10 +147,8 @@ void UpdateDialog::setActive(const QList<int>& Indexes)
 void UpdateDialog::setUnchecked(void)
 {
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
-	{
 		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
 			W->setChecked(false);
 		}
-	}
 }
