@@ -132,7 +132,7 @@ void FilterWidget::operatorChanged(const QString& Name)
 	const bool IS = Name == "IS NULL" || Name == "IS NOT NULL";
 	const bool IN = Name == "IN" || Name == "NOT IN";
 
-	if (Widget) Widget->setVisible(!IS && !IN);
+	if (Widget) Widget->setVisible(!Simple || (!IS && !IN));
 	if (Simple) Simple->setVisible(IN);
 }
 
@@ -225,7 +225,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 		{
 			auto Date = new QDateTimeEdit(this); Widget = Date;
 
-			Date->setDisplayFormat("dd.MM.yyy hh:mm:ss");
+			Date->setDisplayFormat("dd.MM.yyyy hh:mm:ss");
 			Date->setCalendarPopup(true);
 		}
 		break;
