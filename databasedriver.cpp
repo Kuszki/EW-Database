@@ -88,12 +88,9 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QList<TABLE> List; int Step = 0;
 
-	if (Emit)
+	if (Emit && Query.exec("SELECT COUNT(*) FROM EW_OB_OPISY") && Query.next())
 	{
-		if (Query.exec("SELECT COUNT(*) FROM EW_OB_OPISY") && Query.next())
-		{
-			emit onSetupProgress(0, Query.value(0).toInt());
-		}
+		emit onSetupProgress(0, Query.value(0).toInt());
 	}
 
 	Query.prepare(
@@ -170,7 +167,9 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 		"ON "
 		    "EW_OB_DDSL.UIDP = EW_OB_DDSTR.UID "
 		"WHERE "
-		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table");
+		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table "
+		"ORDER BY "
+			"EW_OB_DDSL.OPIS");
 
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
@@ -187,7 +186,9 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 		"ON "
 		    "EW_OB_DDSL.UIDP = EW_OB_DDSTR.UIDSL "
 		"WHERE "
-		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table");
+		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table "
+		"ORDER BY "
+			"EW_OB_DDSL.OPIS");
 
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
@@ -612,12 +613,12 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 
 			for (int j = 0; j < Common.size(); ++j)
 			{
-				Value.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
+				Value.insert(j, Query.value(i++));
 			}
 
 			for (int j = 0; j < Table.Headers.size(); ++j)
 			{
-				Value.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
+				Value.insert(Table.Indexes[j], Query.value(i++));
 			}
 
 			if (!Value.isEmpty()) Values.append(Value);

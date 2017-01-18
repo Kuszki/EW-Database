@@ -237,7 +237,7 @@ void UpdateWidget::setValue(const QVariant& Value)
 		}
 		else
 		{
-			W->setCurrentText(Value.toString());
+			W->setCurrentIndex(W->findData(Value));
 		}
 
 	}
