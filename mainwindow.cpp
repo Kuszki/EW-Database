@@ -164,6 +164,9 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 
+	connect(Update, &UpdateDialog::accepted, this, &MainWindow::selectionChanged);
+	connect(Update, &UpdateDialog::rejected, this, &MainWindow::selectionChanged);
+
 	ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 
 	lockUi(CONNECTED);
@@ -251,11 +254,6 @@ void MainWindow::removeData(void)
 void MainWindow::updateData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
-
-	const int Count = ui->Data->selectionModel()->selectedRows().count();
-
-	ui->actionDelete->setEnabled(Count);
-	ui->actionEdit->setEnabled(Count);
 }
 
 void MainWindow::groupData(void)

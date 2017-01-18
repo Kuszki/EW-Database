@@ -33,7 +33,7 @@
       <attribute name="title">
        <string>Classes</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_2">
+      <layout class="QGridLayout" name="classScroolLayout">
        <item row="0" column="0">
         <widget class="QScrollArea" name="classScrool">
          <property name="frameShape">
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>939</width>
-            <height>433</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -97,58 +97,62 @@
       </attribute>
       <layout class="QGridLayout" name="advancedLayout">
        <item row="0" column="0">
-        <widget class="QComboBox" name="Action">
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <property name="text">
-           <string notr="true">AND</string>
-          </property>
+          <widget class="QComboBox" name="Action">
+           <item>
+            <property name="text">
+             <string notr="true">AND</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">OR</string>
+            </property>
+           </item>
+          </widget>
          </item>
          <item>
-          <property name="text">
-           <string notr="true">OR</string>
-          </property>
+          <widget class="QComboBox" name="Field"/>
          </item>
-        </widget>
+         <item>
+          <widget class="QComboBox" name="Operator">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="Value">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="placeholderText">
+            <string>Value</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="addButton">
+           <property name="text">
+            <string>Add</string>
+           </property>
+           <property name="icon">
+            <iconset theme="list-add">
+             <normaloff>.</normaloff>.</iconset>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
-       <item row="0" column="3">
-        <widget class="QLineEdit" name="Value">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="placeholderText">
-          <string>Value</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0" colspan="6">
+       <item row="1" column="0">
         <widget class="QueryEditor" name="Setup"/>
-       </item>
-       <item row="0" column="5">
-        <widget class="QToolButton" name="addButton">
-         <property name="text">
-          <string>Add</string>
-         </property>
-         <property name="icon">
-          <iconset theme="list-add">
-           <normaloff>.</normaloff>.</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QComboBox" name="Operator">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="Field"/>
        </item>
       </layout>
      </widget>
