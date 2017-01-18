@@ -208,8 +208,8 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 		{
 			auto Combo = new QComboBox(this); Widget = Combo;
 
-			Combo->addItem(tr("Yes"), true);
-			Combo->addItem(tr("No"), false);
+			Combo->addItem(tr("Yes"), 1);
+			Combo->addItem(tr("No"), 0);
 			Combo->setProperty("MASK", false);
 		}
 		break;
@@ -225,6 +225,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 		{
 			auto Date = new QDateTimeEdit(this); Widget = Date;
 
+			Date->setDisplayFormat("dd.MM.yyy hh:mm:ss");
 			Date->setCalendarPopup(true);
 		}
 		break;

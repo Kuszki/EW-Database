@@ -72,6 +72,8 @@ class UpdateDialog : public QDialog
 
 		void setFields(const QList<DatabaseDriver_v2::FIELD>& Fields);
 
+		void setPrepared(const QList<QMap<int, QVariant>> &Data, const QList<int>& Indexes);
+
 		void setData(const QList<QMap<int, QVariant>> &Data);
 		void setData(const QMap<int, QVariant>& Data);
 

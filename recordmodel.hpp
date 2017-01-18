@@ -51,7 +51,7 @@ class RecordModel : public QAbstractItemModel
 
 			QMap<int, QVariant> getFields(void) const;
 
-			void setFields(const QMap<int, QVariant>& Fields);
+			void setFields(const QMap<int, QVariant>& Fields, bool Replace = true);
 			void setField(int Role, const QVariant& Value);
 			QVariant getField(int Role) const;
 
@@ -111,6 +111,7 @@ class RecordModel : public QAbstractItemModel
 			int childrenCount(void) const;
 			bool hasChids(void) const;
 
+			int getIndex(RecordObject* Child) const;
 			int getColumn(void) const;
 			int getIndex(void) const;
 
@@ -153,7 +154,9 @@ class RecordModel : public QAbstractItemModel
 
 		virtual void sort(int Column, Qt::SortOrder Order) override;
 
-		bool setData(const QModelIndex& Index, const QMap<int, QVariant>& Data);
+		bool setData(int Index, const QMap<int, QVariant>& Data, bool Replace = true);
+
+		bool setData(const QModelIndex& Index, const QMap<int, QVariant>& Data, bool Replace = true);
 
 		QMap<int, QVariant> fullData(const QModelIndex& Index) const;
 

@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 	qRegisterMetaType<QList<QMap<int,QVariant>>>("QList<QMap<int,QVariant>>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
+	qRegisterMetaType<QList<int>>("QList<int>");
 
 	a.setApplicationName("EW-Database");
 	a.setOrganizationName("Łukasz \"Kuszki\" Dróżdż");

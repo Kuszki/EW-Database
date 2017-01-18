@@ -30,9 +30,13 @@ QMap<int, QVariant> RecordModel::RecordObject::getFields(void) const
 	return Attributes;
 }
 
-void RecordModel::RecordObject::setFields(const QMap<int, QVariant>& Fields)
+void RecordModel::RecordObject::setFields(const QMap<int, QVariant>& Fields, bool Replace)
 {
-	Attributes = Fields;
+	if (!Replace) for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i)
+	{
+		Attributes[i.key()] = i.value();
+	}
+	else Attributes = Fields;
 }
 
 void RecordModel::RecordObject::setField(int Role, const QVariant& Value)
@@ -157,6 +161,11 @@ int RecordModel::GroupObject::childrenCount(void) const
 bool RecordModel::GroupObject::hasChids(void) const
 {
 	return !Childs.isEmpty();
+}
+
+int RecordModel::GroupObject::getIndex(RecordModel::RecordObject* Child) const
+{
+	return Childs.indexOf(Child);
 }
 
 int RecordModel::GroupObject::getColumn(void) const
@@ -351,7 +360,23 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 	endResetModel();
 }
 
-bool RecordModel::setData(const QModelIndex& Index, const QMap<int, QVariant>& Data)
+bool RecordModel::setData(int Index, const QMap<int, QVariant>& Data, bool Replace)
+{
+	for (const auto& Item : Objects) if (Item->getUid() == Index)
+	{
+		if (Root)
+		{
+			return setData(createIndex(Parents[Item]->getIndex(Item), 0, Item), Data, Replace);
+		}
+		else
+		{
+			return setData(createIndex(Objects.indexOf(Item), 0, Item), Data, Replace);
+		}
+	}
+	return false;
+}
+
+bool RecordModel::setData(const QModelIndex& Index, const QMap<int, QVariant>& Data, bool Replace)
 {
 	if (!Index.isValid()) return false;
 
@@ -359,7 +384,7 @@ bool RecordModel::setData(const QModelIndex& Index, const QMap<int, QVariant>& D
 
 	if (dynamic_cast<GroupObject*>(Object)) return false;
 
-	Object->setFields(Data);
+	Object->setFields(Data, Replace);
 
 	if (Root && !Object->contain(Parents[Object]->getFields()))
 	{

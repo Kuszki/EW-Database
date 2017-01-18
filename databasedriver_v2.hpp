@@ -145,7 +145,7 @@ class DatabaseDriver_v2 : public QObject
 bool operator == (const DatabaseDriver_v2::FIELD& One, const DatabaseDriver_v2::FIELD& Two);
 bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::TABLE& Two);
 
-QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, bool Mask = false);
+QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver_v2::TYPE Type);
 
 template<class Type, class Field, template<class> class Container>
 Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);

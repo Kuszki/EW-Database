@@ -187,6 +187,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 		{
 			auto Date = new QDateTimeEdit(this); Widget = Date;
 
+			Date->setDisplayFormat("dd.MM.yyyy hh:mm:ss");
 			Date->setCalendarPopup(true);
 		}
 		break;
@@ -204,7 +205,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver_v2::FIELD& Field)
 		Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 		Widget->setEnabled(ui->Field->isChecked());
 
-		ui->horizontalLayout->addWidget(Widget);
+		ui->horizontalLayout->insertWidget(1, Widget);
 
 		connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
 	}

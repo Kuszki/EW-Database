@@ -265,7 +265,7 @@ void MainWindow::groupData(void)
 
 void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
 {
-	lockUi(DONE); Update->setData(Values); Update->setActive(Used); Update->open();
+	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
 }
 
 void MainWindow::lockUi(MainWindow::STATUS Status)

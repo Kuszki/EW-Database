@@ -60,15 +60,19 @@ QList<DatabaseDriver_v2::FIELD> DatabaseDriver_v2::loadCommon(bool Emit)
 	{
 		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
-		{ READONLY, 	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
+		{ READONLY,	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
 		{ DATE,		"EW_OBIEKTY.DTU",		tr("Creation date")		},
-		{ DATE, 		"EW_OBIEKTY.DTW",		tr("Modification date")	}
+		{ DATE,		"EW_OBIEKTY.DTW",		tr("Modification date")	},
+		{ INTEGER,	"EW_OBIEKTY.OSOU",		tr("Created by")		},
+		{ INTEGER,	"EW_OBIEKTY.OSOW",		tr("Modified by")		}
 	};
 
 	QMap<QString, QString> Dict =
 	{
 		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY ORDER BY NUMER"	},
-		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY ORDER BY OPIS"		}
+		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY ORDER BY OPIS"		},
+		{ "EW_OBIEKTY.OSOU",		"SELECT ID, NAME FROM EW_USERS ORDER BY NAME"		},
+		{ "EW_OBIEKTY.OSOW",		"SELECT ID, NAME FROM EW_USERS ORDER BY NAME"		}
 	};
 
 	if (Emit) emit onSetupProgress(0, Dict.size());
@@ -311,15 +315,16 @@ QList<int> DatabaseDriver_v2::getUsedFields(const QString& Filter) const
 
 QList<int> DatabaseDriver_v2::getCommonFields(const QStringList& Classes) const
 {
-	QSet<int> Disabled, All; qDebug() << "classes:" << Classes;
+	QSet<int> Disabled, All;
+
+	for (const auto& Class : Classes) All.unite(getItemByField(Tables, Class, &TABLE::Data).Indexes.toSet());
+	for (const auto& Class : Classes) Disabled.unite(QSet<int>(All).subtract(getItemByField(Tables, Class, &TABLE::Data).Indexes.toSet()));
+
+	All.subtract(Disabled).toList();
 
 	for (int i = 0; i < Common.size(); ++i) All.insert(i);
 
-	for (const auto& Class : Classes) All.unite(getItemByField(Tables, Class, &TABLE::Data).Indexes.toSet());
-qDebug() << "all:" << All;
-	for (const auto& Class : Classes) Disabled.unite(QSet<int>(All).subtract(getItemByField(Tables, Class, &TABLE::Data).Indexes.toSet()));
-
-	return All.subtract(Disabled).toList();
+	return All.toList();
 }
 
 bool DatabaseDriver_v2::hasAllIndexes(const DatabaseDriver_v2::TABLE& Tab, const QList<int>& Used)
@@ -415,12 +420,12 @@ void DatabaseDriver_v2::reloadData(const QString& Filter, QList<int> Used)
 
 			for (int j = 0; j < Common.size(); ++j)
 			{
-				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type == MASK));
+				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
 			}
 
 			for (int j = 0; j < Table.Headers.size(); ++j)
 			{
-				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type == MASK));
+				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
 			}
 
 			if (!Values.isEmpty()) Model->addItem(Index, Values);
@@ -443,7 +448,7 @@ void DatabaseDriver_v2::updateData(RecordModel* Model, const QModelIndexList& It
 	QMap<int, QVariant> Copy = Values;
 
 	emit onBeginProgress(tr("Updating data"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Tasks.size() * 2);
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
 	{
@@ -461,19 +466,19 @@ void DatabaseDriver_v2::updateData(RecordModel* Model, const QModelIndexList& It
 				"UID IN ('%2')")
 				 .arg(All.join(", "))
 				 .arg(Tasks.first().join("', '")));
-qDebug() << Query.lastQuery() << Query.lastError().text();
-		emit onUpdateProgress(++Step);
 	}
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 		QStringList Updates;
 
 		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
 		{
 			Updates.append(QString("%1 = '%2'").arg(Fields[Index].Name).arg(Values[Index].toString()));
 		}
+
+		if (Updates.isEmpty()) continue;
 
 		Query.exec(QString(
 			"UPDATE "
@@ -485,18 +490,52 @@ qDebug() << Query.lastQuery() << Query.lastError().text();
 				 .arg(i.key())
 				 .arg(Updates.join(", "))
 				 .arg(i.value().join("', '")));
-qDebug() << Query.lastQuery() << Query.lastError().text();
+
 		emit onUpdateProgress(++Step);
 	}
 
-	for (auto i = Copy.begin(); i != Copy.end(); ++i)
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
-		Copy[i.key()] = getDataFromDict(i.value(), Fields[i.key()].Dict);
-	}
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 
-	for (const auto& Index : Items)
-	{
-		Model->setItemData(Index, Copy);
+		QSqlQuery Query(Database); QStringList Attribs;
+
+		for (const auto& Field : Common) Attribs.append(Field.Name);
+		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
+
+		Query.prepare(QString(
+			"SELECT "
+				"EW_OBIEKTY.UID, %1 "
+			"FROM "
+				"EW_OBIEKTY "
+			"INNER JOIN "
+				"%2 EW_DATA "
+			"ON "
+				"EW_OBIEKTY.UID = EW_DATA.UIDO "
+			"WHERE "
+				"EW_OBIEKTY.STATUS = 0  AND EW_OBIEKTY.UID IN ('%3')")
+				    .arg(Attribs.join(", "))
+				    .arg(Table.Data)
+				    .arg(i.value().join("', '")));
+
+		if (Query.exec()) while (Query.next())
+		{
+			QMap<int, QVariant> Values; int i = 1;
+
+			const int Index = Query.value(0).toInt();
+
+			for (int j = 0; j < Common.size(); ++j)
+			{
+				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
+			}
+
+			for (int j = 0; j < Table.Headers.size(); ++j)
+			{
+				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
+			}
+
+			if (!Values.isEmpty()) Model->setData(Index, Values);
+		}
 	}
 
 	emit onEndProgress();
@@ -556,7 +595,7 @@ void DatabaseDriver_v2::getPreset(RecordModel* Model, const QModelIndexList& Ite
 
 	emit onBeginProgress(tr("Preparing edit data"));
 	emit onSetupProgress(0, Tasks.size());
-qDebug() << "tasks:" << Tasks;
+
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
@@ -566,7 +605,7 @@ qDebug() << "tasks:" << Tasks;
 		for (const auto& Field : Common) Attribs.append(Field.Name);
 		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
 
-		QString Exec = QString(
+		Query.prepare(QString(
 			"SELECT "
 				"%1 "
 			"FROM "
@@ -579,25 +618,24 @@ qDebug() << "tasks:" << Tasks;
 				"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.UID IN ('%3')")
 					.arg(Attribs.join(", "))
 					.arg(i.key())
-					.arg(i.value().join("', '"));
+					.arg(i.value().join("', '")));
 
-		if (Query.exec(Exec)) while (Query.next())
+		if (Query.exec()) while (Query.next())
 		{
 			QMap<int, QVariant> Value; int i = 0;
 
 			for (int j = 0; j < Common.size(); ++j)
 			{
-				Value.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type == MASK));
+				Value.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
 			}
 
 			for (int j = 0; j < Table.Headers.size(); ++j)
 			{
-				Value.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type == MASK));
+				Value.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
 			}
 
 			if (!Value.isEmpty()) Values.append(Value);
 		}
-		else qDebug() << Query.lastQuery() << Query.lastError().text();
 
 		emit onUpdateProgress(++Step);
 	}
@@ -628,11 +666,17 @@ bool operator == (const DatabaseDriver_v2::TABLE& One, const DatabaseDriver_v2::
 	);
 }
 
-QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, bool Mask)
-{
-	if (Dict.isEmpty()) return Value;
-
-	if (Mask)
+QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver_v2::TYPE Type)
+{	
+	if (Type == DatabaseDriver_v2::BOOL)
+	{
+		return Value.toBool() ? DatabaseDriver_v2::tr("Yes") : DatabaseDriver_v2::tr("No");
+	}
+	else if (Dict.isEmpty())
+	{
+		return Value;
+	}
+	else if (Type == DatabaseDriver_v2::MASK)
 	{
 		QStringList Values; const int Bits = Value.toInt();
 

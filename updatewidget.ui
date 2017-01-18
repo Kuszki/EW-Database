@@ -44,6 +44,9 @@
    </item>
    <item>
     <widget class="QToolButton" name="undoButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
       <string>Undo</string>
      </property>
@@ -70,6 +73,22 @@
     <hint type="destinationlabel">
      <x>330</x>
      <y>166</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Field</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>undoButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>84</x>
+     <y>16</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>328</x>
+     <y>14</y>
     </hint>
    </hints>
   </connection>
