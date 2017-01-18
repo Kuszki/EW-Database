@@ -83,7 +83,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 
 		if (Field.Name.isEmpty()) continue;
 
-		QSqlQuery Query(i.value(), Database);
+		QSqlQuery Query(i.value(), Database); Query.setForwardOnly(true);
 
 		if (Query.exec()) while (Query.next()) Field.Dict.insert(Query.value(0), Query.value(1).toString());
 
@@ -97,9 +97,8 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 {
 	if (!Database.isOpen()) return QList<TABLE>();
 
-	QSqlQuery Query(Database);
-	QList<TABLE> List;
-	int Step = 0;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QList<TABLE> List; int Step = 0;
 
 	if (Emit)
 	{
@@ -137,7 +136,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 {
 	if (!Database.isOpen()) return QList<FIELD>();
 
-	QSqlQuery Query(Database);
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QList<FIELD> List;
 
 	Query.prepare(
@@ -170,7 +169,7 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 {
 	if (!Database.isOpen()) return QMap<QVariant, QString>();
 
-	QSqlQuery Query(Database);
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QMap<QVariant, QString> List;
 
 	Query.prepare(
@@ -258,8 +257,8 @@ QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Inde
 {
 	if (!Database.isOpen()) return QMap<QString, QStringList>();
 
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QMap<QString, QStringList> List;
-	QSqlQuery Query(Database);
 
 	if (Common) List.insert("EW_OBIEKTY", QStringList());
 
@@ -391,7 +390,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
-		QSqlQuery Query(Database); QStringList Attribs;
+		QSqlQuery Query(Database); QStringList Attribs; Query.setForwardOnly(true);
 
 		for (const auto& Field : Common) Attribs.append(Field.Name);
 		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
@@ -444,8 +443,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true);
 	const QList<int> Used = Values.keys(); int Step = 0;
-	QSqlQuery Query(Database); QStringList All;
-	QMap<int, QVariant> Copy = Values;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QStringList All; QMap<int, QVariant> Copy = Values;
 
 	emit onBeginProgress(tr("Updating data"));
 	emit onSetupProgress(0, Tasks.size() * 2);
@@ -497,8 +496,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-
-		QSqlQuery Query(Database); QStringList Attribs;
+		QStringList Attribs;
 
 		for (const auto& Field : Common) Attribs.append(Field.Name);
 		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
@@ -547,7 +545,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(); return; }
 
 	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true);
-	QSqlQuery Query(Database); int Step = 0;
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
 
 	emit onBeginProgress(tr("Removing data"));
 	emit onSetupProgress(0, Tasks.size());
@@ -600,7 +598,7 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 
-		QSqlQuery Query(Database); QStringList Attribs;
+		QSqlQuery Query(Database); QStringList Attribs; Query.setForwardOnly(true);
 
 		for (const auto& Field : Common) Attribs.append(Field.Name);
 		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
