@@ -167,9 +167,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Update, &UpdateDialog::accepted, this, &MainWindow::selectionChanged);
 	connect(Update, &UpdateDialog::rejected, this, &MainWindow::selectionChanged);
 
-	ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
-
-	lockUi(CONNECTED);
+	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 }
 
 void MainWindow::databaseDisconnected(void)
@@ -181,9 +179,7 @@ void MainWindow::databaseDisconnected(void)
 	Filter->deleteLater();
 	Update->deleteLater();
 
-	lockUi(DISCONNECTED);
-
-	emit onDeleteRequest();
+	lockUi(DISCONNECTED); emit onDeleteRequest();
 }
 
 void MainWindow::databaseError(const QString& Error)

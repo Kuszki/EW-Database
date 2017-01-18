@@ -253,33 +253,33 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Zaawansowane</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="122"/>
+        <location filename="filterdialog.ui" line="137"/>
         <source>Value</source>
         <translation>Wartość</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="132"/>
+        <location filename="filterdialog.ui" line="144"/>
         <source>Add</source>
         <translation>Dodaj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="174"/>
-        <location filename="filterdialog.ui" line="207"/>
+        <location filename="filterdialog.ui" line="178"/>
+        <location filename="filterdialog.ui" line="211"/>
         <source>Search</source>
         <translation>Szukaj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="184"/>
+        <location filename="filterdialog.ui" line="188"/>
         <source>Copy</source>
         <translation>Kopiuj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="217"/>
+        <location filename="filterdialog.ui" line="221"/>
         <source>All</source>
         <translation>Zaznacz</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="228"/>
+        <location filename="filterdialog.ui" line="232"/>
         <source>None</source>
         <translation>Odznacz</translation>
     </message>
@@ -324,7 +324,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     </message>
     <message>
         <location filename="mainwindow.ui" line="31"/>
-        <location filename="mainwindow.cpp" line="174"/>
+        <location filename="mainwindow.cpp" line="175"/>
         <source>Press Ctrl+O or use Connect action to connect to Database</source>
         <translation>Wciśnij Ctrl+O lub użyj akcji Połącz w celu otwarcia bazy danych</translation>
     </message>
@@ -429,27 +429,27 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Edytuj</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="253"/>
+        <location filename="mainwindow.cpp" line="252"/>
         <source>Data updated</source>
         <translation>Dane zaktualizowane</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="263"/>
+        <location filename="mainwindow.cpp" line="257"/>
         <source>Data groupped</source>
         <translation>Dane pogrupowane</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="276"/>
+        <location filename="mainwindow.cpp" line="270"/>
         <source>Database connected</source>
         <translation>Baza danych otwarta</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="285"/>
+        <location filename="mainwindow.cpp" line="279"/>
         <source>Database disconnected</source>
         <translation>Baza danych odłączona</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="308"/>
+        <location filename="mainwindow.cpp" line="302"/>
         <source>Job done</source>
         <translation>Zadanie wykonane</translation>
     </message>
@@ -482,7 +482,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Odpytywanie bazy danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="167"/>
+        <location filename="mainwindow.cpp" line="170"/>
         <source>Press F5 or use Refresh action to load data</source>
         <translation>Wciśnij F5 lub użyj akcji Odśwież aby załadować dane</translation>
     </message>
@@ -495,12 +495,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Aktualizacja danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="243"/>
+        <location filename="mainwindow.cpp" line="242"/>
         <source>Data updated, to reenable filter use reload action</source>
         <translation>Dane zaktualizowane, aby ponownie aktywować filtr użyj akcji Odśwież</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="248"/>
+        <location filename="mainwindow.cpp" line="247"/>
         <source>Data removed</source>
         <translation>Dane usunięte</translation>
     </message>
