@@ -103,7 +103,7 @@ void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 {
 	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY)
+	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY && Fields[i].Dict.size() != 1)
 	{
 		auto Widget = new UpdateWidget(i, Fields[i], this); ui->fieldsLayout->addWidget(Widget);
 
