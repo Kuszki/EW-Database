@@ -170,8 +170,8 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 		{
 			auto Combo = new QComboBox(this); Widget = Combo;
 
-			Combo->addItem(tr("Yes"), true);
-			Combo->addItem(tr("No"), false);
+			Combo->addItem(tr("Yes"), 1);
+			Combo->addItem(tr("No"), 0);
 			Combo->setProperty("MASK", false);
 		}
 		break;
