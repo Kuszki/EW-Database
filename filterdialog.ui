@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>932</width>
-            <height>428</height>
+            <width>939</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -62,7 +62,7 @@
      </widget>
      <widget class="QWidget" name="simpleTab">
       <attribute name="title">
-       <string>Simple</string>
+       <string>Fields</string>
       </attribute>
       <layout class="QGridLayout" name="simpleScroolLayout">
        <item row="0" column="0">
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>932</width>
-            <height>428</height>
+            <width>939</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -184,7 +184,8 @@
         <string>Copy</string>
        </property>
        <property name="icon">
-        <iconset theme="edit-copy"/>
+        <iconset theme="edit-copy">
+         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>

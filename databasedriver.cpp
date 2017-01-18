@@ -18,7 +18,7 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-
+#include "databasedriver.hpp"
 
 const QStringList DatabaseDriver::Operators =
 {
