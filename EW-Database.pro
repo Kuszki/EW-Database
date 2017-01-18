@@ -28,7 +28,7 @@ CONFIG		+=	C++14
 SOURCES		+=	main.cpp \
 				mainwindow.cpp \
 				connectdialog.cpp \
-#				databasedriver.cpp \
+				databasedriver.cpp \
 				columnsdialog.cpp \
 				groupdialog.cpp \
 				filterdialog.cpp \
@@ -38,12 +38,11 @@ SOURCES		+=	main.cpp \
 				recordmodel.cpp \
 				aboutdialog.cpp \
 				updatedialog.cpp \
-				updatewidget.cpp \
-    databasedriver_v2.cpp
+				updatewidget.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
-#				databasedriver.hpp \
+				databasedriver.hpp \
 				columnsdialog.hpp \
 				groupdialog.hpp \
 				filterdialog.hpp \
@@ -53,8 +52,7 @@ HEADERS		+=	mainwindow.hpp \
 				recordmodel.hpp \
 				aboutdialog.hpp \
 				updatedialog.hpp \
-				updatewidget.hpp \
-    databasedriver_v2.hpp
+				updatewidget.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
