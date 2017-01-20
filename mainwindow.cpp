@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
 	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
+	connect(ui->actionJoin, &QAction::triggered, this, &MainWindow::joinActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -60,6 +61,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::updateData);
 	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
 	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
+//	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::)
 
 	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -70,6 +72,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
+	connect(this, &MainWindow::onJoinRequest, Driver, &DatabaseDriver::joinData);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -132,6 +135,11 @@ void MainWindow::editActionClicked(void)
 	lockUi(BUSY); emit onEditRequest(Model, Selected);
 }
 
+void MainWindow::joinActionClicked(void)
+{
+
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -146,6 +154,14 @@ void MainWindow::selectionChanged(void)
 void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 {
 	lockUi(BUSY); emit onReloadRequest(Where, Used);
+}
+
+void MainWindow::joinData(const QString& Point, const QString& Line)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
@@ -260,6 +276,19 @@ void MainWindow::groupData(void)
 void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
 {
 	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
+}
+
+void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines)
+{
+	lockUi(DONE); JoinDialog* Join = new JoinDialog(Points, Lines, this);
+
+	connect(Join, &JoinDialog::onCreateRequest, this, &MainWindow::joinData);
+
+	connect(Join, &JoinDialog::accepted, Join, &JoinDialog::deleteLater);
+	connect(Join, &JoinDialog::rejected, Join, &JoinDialog::deleteLater);
+
+	connect(Join, &JoinDialog::accepted, this, &MainWindow::selectionChanged);
+	connect(Join, &JoinDialog::rejected, this, &MainWindow::selectionChanged);
 }
 
 void MainWindow::lockUi(MainWindow::STATUS Status)

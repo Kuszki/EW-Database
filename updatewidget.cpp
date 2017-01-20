@@ -80,7 +80,7 @@ QVariant UpdateWidget::getValue(void) const
 	}
 	else if (auto W = dynamic_cast<QDateTimeEdit*>(Widget))
 	{
-		return W->dateTime();
+		return W->dateTime().toString("dd.MM.yyyy hh:mm:ss");
 	}
 	else return QVariant();
 }

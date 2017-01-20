@@ -38,7 +38,8 @@ SOURCES		+=	main.cpp \
 				recordmodel.cpp \
 				aboutdialog.cpp \
 				updatedialog.cpp \
-				updatewidget.cpp
+				updatewidget.cpp \
+				joindialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -52,7 +53,8 @@ HEADERS		+=	mainwindow.hpp \
 				recordmodel.hpp \
 				aboutdialog.hpp \
 				updatedialog.hpp \
-				updatewidget.hpp
+				updatewidget.hpp \
+				joindialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -62,7 +64,8 @@ FORMS		+=	mainwindow.ui \
 				filterwidget.ui \
 				aboutdialog.ui \
 				updatedialog.ui \
-				updatewidget.ui
+				updatewidget.ui \
+    joindialog.ui
 
 RESOURCES		+=	resources.qrc
 

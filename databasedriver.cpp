@@ -572,6 +572,134 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	emit onDataRemove();
 }
 
+void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
+
+	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
+
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false);
+	QList<POINT> Points; QMap<int, QSet<int>> Geometry, Insert;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	if (!Tasks.contains(Point) || !Tasks.contains(Line)) { emit onDataJoin(0); return; }
+
+	Query.prepare(QString(
+		"SELECT "
+			"EW_OBIEKTY.ID, "
+			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+		"INNER "
+			"JOIN EW_TEXT "
+		"ON "
+			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0 AND EW_OB_ELEMENTY.N = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 4 AND EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
+			    .arg(Point)
+			    .arg(Tasks[Point].join("', '")));
+
+	if (Query.exec()) while (Query.next())
+	{
+		Points.append(
+		{
+			Query.value(0).toInt(),
+			Query.value(1).toDouble(),
+			Query.value(2).toDouble()
+		});
+	}
+
+	Query.prepare(QString(
+		"SELECT "
+			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+		"WHERE "
+			"EW_OB_ELEMENTY.TYP = 1 AND EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
+			    .arg(Line)
+			    .arg(Tasks[Line].join("', '")));
+
+	if (Query.exec()) while (Query.next())
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
+		if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
+
+		Geometry[ID].insert(Query.value(1).toInt());
+	}
+
+	Query.prepare(QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, "
+			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
+			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+		"INNER "
+			"JOIN EW_POLYLINE "
+		"ON "
+			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ = 2 AND "
+			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
+			    .arg(Line)
+			    .arg(Tasks[Line].join("', '")));
+
+	if (Query.exec()) while (Query.next()) for (const auto P : Points)
+	{
+		if ((Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y) ||
+		    (Query.value(3).toDouble() == P.X && Query.value(4).toDouble() == P.Y))
+		{
+			const int ID = Query.value(0).toInt();
+
+			if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+		}
+	}
+
+	emit onBeginProgress(tr("Joining data"));
+	emit onSetupProgress(0, Insert.size());
+
+	for (auto i = Insert.constBegin(); i != Insert.constEnd(); ++i)
+	{
+		for (const auto& P : i.value())
+		{
+			Query.prepare(
+				"INSERT INTO "
+					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+				"VALUES "
+					"(:ido, :idp, 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = :ido) + 1)");
+
+			Query.bindValue(":ido", i.key());
+			Query.bindValue(":idp", P);
+
+			Query.exec();
+		}
+
+		Count += i.value().size();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onDataJoin(Count);
+}
+
 void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QMap<int, QVariant>>(), QList<int>()); return; }
@@ -629,6 +757,52 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 
 	emit onEndProgress();
 	emit onPresetReady(Values, Used);
+}
+
+void DatabaseDriver::getJoins(void)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QMap<QString, QString>(), QMap<QString, QString>()); return; }
+
+	QMap<QString, QString> Points, Lines; int Step = 0;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	emit onBeginProgress(tr("Preparing classes"));
+
+	if (Query.exec("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4)") && Query.next())
+	{
+		emit onSetupProgress(0, Query.value(0).toInt());
+	}
+
+	Query.prepare(
+		"SELECT DISTINCT "
+			"EW_OBIEKTY.RODZAJ, "
+			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_OPISY "
+		"ON "
+			"EW_OBIEKTY.KOD = EW_OB_OPISY.KOD "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4)");
+
+	if (Query.exec()) while (Query.next())
+	{
+		switch (Query.value(0).toInt())
+		{
+			case 2:
+				Lines.insert(Query.value(1).toString(), Query.value(2).toString());
+			break;
+			case 4:
+				Points.insert(Query.value(1).toString(), Query.value(2).toString());
+			break;
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onJoinsReady(Points, Lines);
 }
 
 bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two)

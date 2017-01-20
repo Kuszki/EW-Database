@@ -32,6 +32,7 @@
 #include "updatedialog.hpp"
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
+#include "joindialog.hpp"
 
 namespace Ui
 {
@@ -82,6 +83,7 @@ class MainWindow : public QMainWindow
 		void deleteActionClicked(void);
 		void refreshActionClicked(void);
 		void editActionClicked(void);
+		void joinActionClicked(void);
 
 		void selectionChanged(void);
 
@@ -97,6 +99,7 @@ class MainWindow : public QMainWindow
 		void updateColumns(const QList<int>& Columns);
 		void updateValues(const QMap<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used);
+		void joinData(const QString& Point, const QString& Line);
 
 		void loadData(RecordModel* Model);
 
@@ -108,6 +111,7 @@ class MainWindow : public QMainWindow
 		void groupData(void);
 
 		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
+		void prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines);
 
 	signals:
 
@@ -115,6 +119,7 @@ class MainWindow : public QMainWindow
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&, const QMap<int, QVariant>&);
+		void onJoinRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&);
 
 		void onGroupRequest(const QList<int>&);
 
