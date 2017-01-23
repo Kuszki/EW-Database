@@ -21,7 +21,7 @@
 #include "columnsdialog.hpp"
 #include "ui_columnsdialog.h"
 
-ColumnsDialog::ColumnsDialog(QWidget* Parent, const QStringList Headers, unsigned Common)
+ColumnsDialog::ColumnsDialog(QWidget* Parent, const QStringList Headers, int Common)
 : QDialog(Parent), ui(new Ui::ColumnsDialog)
 {
 	ui->setupUi(this); setAttributes(Headers, Common);
@@ -109,7 +109,7 @@ void ColumnsDialog::accept(void)
 	emit onColumnsUpdate(getEnabledColumnsIndexes()); QDialog::accept();
 }
 
-void ColumnsDialog::setAttributes(const QStringList Headers, unsigned Common)
+void ColumnsDialog::setAttributes(const QStringList Headers, int Common)
 {
 	while (auto I = ui->commonLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->specialLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();

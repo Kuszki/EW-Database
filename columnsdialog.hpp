@@ -42,7 +42,7 @@ class ColumnsDialog : public QDialog
 
 	public:
 
-		explicit ColumnsDialog(QWidget* Parent = nullptr, const QStringList Headers = QStringList(), unsigned Common = 0);
+		explicit ColumnsDialog(QWidget* Parent = nullptr, const QStringList Headers = QStringList(), int Common = 0);
 		virtual ~ColumnsDialog(void) override;
 
 		QList<int> getEnabledColumnsIndexes(void);
@@ -59,7 +59,7 @@ class ColumnsDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setAttributes(const QStringList Headers, unsigned Common = 0);
+		void setAttributes(const QStringList Headers, int Common = 0);
 
 	signals:
 
