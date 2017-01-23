@@ -46,15 +46,20 @@ void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 {
 	if (Button == ui->buttonBox->button(QDialogButtonBox::Reset))
 	{
-		emit onDeleteRequest(ui->Point->currentData().toString(), ui->Line->currentData().toString());
+		emit onDeleteRequest(ui->Point->currentData().toString(),
+						 ui->Line->currentData().toString());
 	}
 	else if (Button == ui->buttonBox->button(QDialogButtonBox::Apply))
 	{
-		emit onCreateRequest(ui->Point->currentData().toString(), ui->Line->currentData().toString());
+		emit onCreateRequest(ui->Point->currentData().toString(),
+						 ui->Line->currentData().toString(),
+						 ui->replaceCheck->isChecked());
 	}
+
+	if (Button != ui->buttonBox->button(QDialogButtonBox::Close)) setEnabled(false);
 }
 
 void JoinDialog::completeActions(int Count)
 {
-	QMessageBox::information(this, tr("Progress"), tr("Proceeded %n item(s)", nullptr, Count));
+	QMessageBox::information(this, tr("Progress"), tr("Proceeded %n item(s)", nullptr, Count)); setEnabled(true);
 }

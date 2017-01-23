@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 	qRegisterMetaType<QList<DatabaseDriver::TABLE>>("QList<TABLE>");
 
 	qRegisterMetaType<QList<QMap<int,QVariant>>>("QList<QMap<int,QVariant>>");
+	qRegisterMetaType<QMap<QString,QString>>("QMap<QString,QString>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<QList<int>>("QList<int>");

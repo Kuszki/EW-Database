@@ -99,7 +99,8 @@ class MainWindow : public QMainWindow
 		void updateColumns(const QList<int>& Columns);
 		void updateValues(const QMap<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used);
-		void joinData(const QString& Point, const QString& Line);
+		void connectData(const QString& Point, const QString& Line, bool Override);
+		void disconnectData(const QString& Point, const QString& Line);
 
 		void loadData(RecordModel* Model);
 
@@ -109,6 +110,7 @@ class MainWindow : public QMainWindow
 		void removeData(void);
 		void updateData(void);
 		void groupData(void);
+		void joinData(void);
 
 		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
 		void prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines);
@@ -119,7 +121,9 @@ class MainWindow : public QMainWindow
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&, const QMap<int, QVariant>&);
-		void onJoinRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&);
+		void onJoinRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
+		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&);
+		void onListRequest(RecordModel*, const QModelIndexList&);
 
 		void onGroupRequest(const QList<int>&);
 

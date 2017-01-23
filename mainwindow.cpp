@@ -61,7 +61,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::updateData);
 	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
 	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
-//	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::)
+	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::prepareJoin);
+	connect(Driver, &DatabaseDriver::onDataJoin, this, &MainWindow::joinData);
 
 	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -73,6 +74,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
 	connect(this, &MainWindow::onJoinRequest, Driver, &DatabaseDriver::joinData);
+	connect(this, &MainWindow::onSplitRequest, Driver, &DatabaseDriver::splitData);
+	connect(this, &MainWindow::onListRequest, Driver, &DatabaseDriver::getJoins);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -137,7 +140,10 @@ void MainWindow::editActionClicked(void)
 
 void MainWindow::joinActionClicked(void)
 {
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
+	lockUi(BUSY); emit onListRequest(Model, Selected);
 }
 
 void MainWindow::selectionChanged(void)
@@ -149,6 +155,7 @@ void MainWindow::selectionChanged(void)
 
 	ui->actionDelete->setEnabled(Count);
 	ui->actionEdit->setEnabled(Count);
+	ui->actionJoin->setEnabled(Count);
 }
 
 void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
@@ -156,12 +163,20 @@ void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 	lockUi(BUSY); emit onReloadRequest(Where, Used);
 }
 
-void MainWindow::joinData(const QString& Point, const QString& Line)
+void MainWindow::connectData(const QString& Point, const QString& Line, bool Override)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line);
+	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line, Override);
+}
+
+void MainWindow::disconnectData(const QString& Point, const QString& Line)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onSplitRequest(Model, Selected, Point, Line);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
@@ -195,7 +210,7 @@ void MainWindow::databaseDisconnected(void)
 	Filter->deleteLater();
 	Update->deleteLater();
 
-	lockUi(DISCONNECTED); emit onDeleteRequest();
+	lockUi(DISCONNECTED);
 }
 
 void MainWindow::databaseError(const QString& Error)
@@ -273,6 +288,11 @@ void MainWindow::groupData(void)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data groupped"));
 }
 
+void MainWindow::joinData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
+}
+
 void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
 {
 	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
@@ -280,15 +300,19 @@ void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QLi
 
 void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines)
 {
-	lockUi(DONE); JoinDialog* Join = new JoinDialog(Points, Lines, this);
+	lockUi(DONE); JoinDialog* Join = new JoinDialog(Points, Lines, this); Join->open();
 
-	connect(Join, &JoinDialog::onCreateRequest, this, &MainWindow::joinData);
+	connect(Join, &JoinDialog::onCreateRequest, this, &MainWindow::connectData);
+	connect(Join, &JoinDialog::onDeleteRequest, this, &MainWindow::disconnectData);
 
 	connect(Join, &JoinDialog::accepted, Join, &JoinDialog::deleteLater);
 	connect(Join, &JoinDialog::rejected, Join, &JoinDialog::deleteLater);
 
 	connect(Join, &JoinDialog::accepted, this, &MainWindow::selectionChanged);
 	connect(Join, &JoinDialog::rejected, this, &MainWindow::selectionChanged);
+
+	connect(Driver, &DatabaseDriver::onDataJoin, Join, &JoinDialog::completeActions);
+	connect(Driver, &DatabaseDriver::onDataSplit, Join, &JoinDialog::completeActions);
 }
 
 void MainWindow::lockUi(MainWindow::STATUS Status)
@@ -316,6 +340,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionReload->setEnabled(false);
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
+			ui->actionJoin->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -325,6 +350,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionReload->setEnabled(false);
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
+			ui->actionJoin->setEnabled(false);
 			ui->Data->setEnabled(false);
 		break;
 		case DONE:
@@ -334,8 +360,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(true);
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
-			ui->Data->setEnabled(true);
 			ui->tipLabel->setVisible(false);
+			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);
 		break;
 	}

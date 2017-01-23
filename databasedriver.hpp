@@ -99,7 +99,7 @@ class DatabaseDriver : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
-		QMap<QString, QStringList> getClassGroups(const QList<int>& Indexes, bool Common) const;
+		QMap<QString, QStringList> getClassGroups(const QList<int>& Indexes, bool Common, int Index) const;
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
@@ -116,10 +116,11 @@ class DatabaseDriver : public QObject
 		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
 		void updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
-		void joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line);
+		void joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override);
+		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
-		void getJoins(void);
+		void getJoins(RecordModel* Model, const QModelIndexList& Items);
 
 	signals:
 
@@ -138,6 +139,7 @@ class DatabaseDriver : public QObject
 		void onDataRemove(void);
 		void onDataUpdate(void);
 		void onDataJoin(int);
+		void onDataSplit(int);
 
 		void onPresetReady(const QList<QMap<int, QVariant>>&, const QList<int>&);
 		void onJoinsReady(const QMap<QString, QString>&, const QMap<QString, QString>&);

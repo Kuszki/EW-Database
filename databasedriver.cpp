@@ -242,7 +242,7 @@ QStringList DatabaseDriver::normalizeHeaders(QList<DatabaseDriver::TABLE>& Tabs,
 	return List;
 }
 
-QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Indexes, bool Common) const
+QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Indexes, bool Common, int Index) const
 {
 	if (!Database.isOpen()) return QMap<QString, QStringList>();
 
@@ -255,7 +255,7 @@ QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Inde
 	{
 		Query.prepare(QString(
 			"SELECT "
-				"EW_OB_OPISY.DANE_DOD "
+				"EW_OB_OPISY.KOD, EW_OB_OPISY.DANE_DOD "
 			"FROM "
 				"EW_OB_OPISY "
 			"INNER JOIN "
@@ -269,7 +269,7 @@ QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Inde
 
 		if (Query.exec() && Query.next())
 		{
-			const QString Table = Query.value(0).toString();
+			const QString Table = Query.value(Index).toString();
 
 			if (!List.contains(Table)) List.insert(Table, QStringList());
 
@@ -430,7 +430,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true);
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 1);
 	const QList<int> Used = Values.keys(); int Step = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QStringList All; QMap<int, QVariant> Copy = Values;
@@ -533,7 +533,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true);
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 1);
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
 
 	emit onBeginProgress(tr("Removing data"));
@@ -572,13 +572,13 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	emit onDataRemove();
 }
 
-void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line)
+void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
 	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false);
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false, 0);
 	QList<POINT> Points; QMap<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
@@ -679,16 +679,25 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	{
 		for (const auto& P : i.value())
 		{
-			Query.prepare(
+			Query.exec(QString(
 				"INSERT INTO "
-					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
 				"VALUES "
-					"(:ido, :idp, 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = :ido) + 1)");
+					"('%1', '%2', 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = '%1') + 1, 0)")
+					    .arg(i.key())
+					    .arg(P));
 
-			Query.bindValue(":ido", i.key());
-			Query.bindValue(":idp", P);
+			if (!Override) continue;
 
-			Query.exec();
+			Query.exec(QString(
+				"UPDATE "
+					"EW_OBIEKTY "
+				"SET "
+					"OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = '%1') "
+				"WHERE "
+					"ID = '%2'")
+					    .arg(i.key())
+					    .arg(P));
 		}
 
 		Count += i.value().size();
@@ -696,15 +705,123 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		emit onUpdateProgress(++Step);
 	}
 
+	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		QStringList Attribs;
+
+		for (const auto& Field : Common) Attribs.append(Field.Name);
+		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
+
+		Query.prepare(QString(
+			"SELECT "
+				"EW_OBIEKTY.UID, %1 "
+			"FROM "
+				"EW_OBIEKTY "
+			"INNER JOIN "
+				"%2 EW_DATA "
+			"ON "
+				"EW_OBIEKTY.UID = EW_DATA.UIDO "
+			"WHERE "
+				"EW_OBIEKTY.STATUS = 0  AND EW_OBIEKTY.UID IN ('%3')")
+				    .arg(Attribs.join(", "))
+				    .arg(Table.Data)
+				    .arg(i.value().join("', '")));
+
+		if (Query.exec()) while (Query.next())
+		{
+			QMap<int, QVariant> Values; int i = 1;
+
+			const int Index = Query.value(0).toInt();
+
+			for (int j = 0; j < Common.size(); ++j)
+			{
+				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
+			}
+
+			for (int j = 0; j < Table.Headers.size(); ++j)
+			{
+				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
+			}
+
+			if (!Values.isEmpty()) Model->setData(Index, Values);
+		}
+	}
+
 	emit onEndProgress();
 	emit onDataJoin(Count);
+}
+
+void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataSplit(0); return; }
+
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	QList<int> Points; QList<int> Objects; int Step = 0; int Count = 0; QStringList List;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	if (!Tasks.contains(Point) || !Tasks.contains(Line)) { emit onDataJoin(0); return; }
+
+	Query.prepare(QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.ID, EW_OBIEKTY.RODZAJ "
+		"FROM "
+			"EW_OBIEKTY "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4) AND "
+			"EW_OBIEKTY.KOD IN ('%1', '%2') AND EW_OBIEKTY.UID IN ('%3')")
+			    .arg(Point).arg(Line)
+			    .arg(Tasks.first().join("', '")));
+
+	if (Query.exec()) while (Query.next()) switch (Query.value(2).toInt())
+	{
+		case 2:
+			Objects.append(Query.value(0).toInt());
+		break;
+		case 4:
+			Points.append(Query.value(1).toInt());
+		break;
+	}
+
+	emit onBeginProgress(tr("Splitting data"));
+	emit onSetupProgress(0, Objects.size());
+
+	for (const auto& Index : Points) List.append(QString::number(Index));
+
+	for (const auto& Index : Objects)
+	{
+		Query.exec(QString(
+			"SELECT "
+				"COUNT(*) "
+			"FROM "
+				"EW_OB_ELEMENTY "
+			"WHERE "
+				"TYP = 1 AND UIDO = '%1' AND IDE IN ('%2')")
+				 .arg(Index)
+				 .arg(List.join("', '")));
+
+		if (Query.next()) Count += Query.value(0).toInt();
+
+		Query.exec(QString(
+			"DELETE FROM "
+				"EW_OB_ELEMENTY "
+			"WHERE "
+				"TYP = 1 AND UIDO = '%1' AND IDE IN ('%2')")
+				 .arg(Index)
+				 .arg(List.join("', '")));
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onDataSplit(Count);
 }
 
 void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QMap<int, QVariant>>(), QList<int>()); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false);
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false, 1);
 	const QList<int> Used = getCommonFields(Tasks.keys());
 	QList<QMap<int, QVariant>> Values; int Step = 0;
 
@@ -759,21 +876,22 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 	emit onPresetReady(Values, Used);
 }
 
-void DatabaseDriver::getJoins(void)
+void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QMap<QString, QString>(), QMap<QString, QString>()); return; }
 
-	QMap<QString, QString> Points, Lines; int Step = 0;
+	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 0);
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QMap<QString, QString> Points, Lines; int Step = 0;
 
 	emit onBeginProgress(tr("Preparing classes"));
 
-	if (Query.exec("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4)") && Query.next())
+	if (Query.exec(QString("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4) AND UID IN ('%1')").arg(Tasks.first().join("', '"))) && Query.next())
 	{
 		emit onSetupProgress(0, Query.value(0).toInt());
 	}
 
-	Query.prepare(
+	Query.prepare(QString(
 		"SELECT DISTINCT "
 			"EW_OBIEKTY.RODZAJ, "
 			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS "
@@ -784,7 +902,9 @@ void DatabaseDriver::getJoins(void)
 		"ON "
 			"EW_OBIEKTY.KOD = EW_OB_OPISY.KOD "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4)");
+			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4) AND "
+			"EW_OBIEKTY.UID IN ('%1')")
+			    .arg(Tasks.first().join("', '")));
 
 	if (Query.exec()) while (Query.next())
 	{
