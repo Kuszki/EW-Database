@@ -153,8 +153,9 @@ void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	const int From = Model ? Model->totalCount() : 0;
 
-	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, Model ? Model->totalCount() : 0).arg(Count));
+	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 
 	ui->actionDelete->setEnabled(Count > 0);
 	ui->actionEdit->setEnabled(Count > 0);
