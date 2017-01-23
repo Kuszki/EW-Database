@@ -1087,7 +1087,7 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 	emit onPresetReady(Values, Used);
 }
 
-void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
+void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items, bool All)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QMap<QString, QString>(), QMap<QString, QString>()); return; }
 
@@ -1097,12 +1097,15 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 
 	emit onBeginProgress(tr("Preparing classes"));
 
-	if (Query.exec(QString("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4) AND UID IN ('%1')").arg(Tasks.first().join("', '"))) && Query.next())
+	QString countQuery = QString("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4)");
+	if (!All) countQuery.append(QString(" AND UID IN ('%1')").arg(Tasks.first().join("', '")));
+
+	if (Query.exec(countQuery) && Query.next())
 	{
 		emit onSetupProgress(0, Query.value(0).toInt());
 	}
 
-	Query.prepare(QString(
+	QString selectQuery = QString(
 		"SELECT DISTINCT "
 			"EW_OBIEKTY.RODZAJ, "
 			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS "
@@ -1113,11 +1116,11 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 		"ON "
 			"EW_OBIEKTY.KOD = EW_OB_OPISY.KOD "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4) AND "
-			"EW_OBIEKTY.UID IN ('%1')")
-			    .arg(Tasks.first().join("', '")));
+			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4)");
 
-	if (Query.exec()) while (Query.next())
+	if (!All) selectQuery.append(QString(" AND EW_OBIEKTY.UID IN ('%1')").arg(Tasks.first().join("', '")));
+
+	if (Query.exec(selectQuery)) while (Query.next())
 	{
 		switch (Query.value(0).toInt())
 		{

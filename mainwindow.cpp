@@ -146,7 +146,7 @@ void MainWindow::joinActionClicked(void)
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onListRequest(Model, Selected);
+	lockUi(BUSY); emit onListRequest(Model, Selected, Selected.count() == Model->totalCount());
 }
 
 void MainWindow::selectionChanged(void)

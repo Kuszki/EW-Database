@@ -122,7 +122,7 @@ class DatabaseDriver : public QObject
 		void joinPoints(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
-		void getJoins(RecordModel* Model, const QModelIndexList& Items);
+		void getJoins(RecordModel* Model, const QModelIndexList& Items, bool All);
 
 	signals:
 
