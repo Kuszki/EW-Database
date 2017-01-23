@@ -116,8 +116,10 @@ class DatabaseDriver : public QObject
 		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
 		void updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
-		void joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override);
-		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line);
+		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From);
+
+		void joinLines(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override);
+		void joinPoints(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);

@@ -24,7 +24,12 @@
 JoinDialog::JoinDialog(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines, QWidget* Parent)
 : QDialog(Parent), ui(new Ui::JoinDialog)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); typeIndexChanged(ui->Type->currentIndex());
+
+	for (auto i = Points.constBegin(); i != Points.constEnd(); ++i)
+	{
+		ui->Join->addItem(i.value(), i.key());
+	}
 
 	for (auto i = Points.constBegin(); i != Points.constEnd(); ++i)
 	{
@@ -44,19 +49,40 @@ JoinDialog::~JoinDialog(void)
 
 void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 {
+	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line : ui->Point;
+
 	if (Button == ui->buttonBox->button(QDialogButtonBox::Reset))
 	{
-		emit onDeleteRequest(ui->Point->currentData().toString(),
-						 ui->Line->currentData().toString());
+		emit onDeleteRequest(ui->Join->currentData().toString(),
+						 Join->currentData().toString());
 	}
 	else if (Button == ui->buttonBox->button(QDialogButtonBox::Apply))
 	{
-		emit onCreateRequest(ui->Point->currentData().toString(),
-						 ui->Line->currentData().toString(),
-						 ui->replaceCheck->isChecked());
+		emit onCreateRequest(ui->Join->currentData().toString(),
+						 Join->currentData().toString(),
+						 ui->replaceCheck->isChecked(),
+						 ui->Type->currentIndex() == 0);
 	}
 
 	if (Button != ui->buttonBox->button(QDialogButtonBox::Close)) setEnabled(false);
+}
+
+void JoinDialog::typeIndexChanged(int Index)
+{
+	ui->Line->setVisible(Index == 0);
+	ui->Point->setVisible(Index == 1);
+}
+
+void JoinDialog::targetNameChanged(void)
+{
+	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line : ui->Point;
+
+	const bool OK = !Join->currentText().isEmpty() &&
+				 !ui->Join->currentText().isEmpty() &&
+				 ui->Join->currentText() != Join->currentText();
+
+	ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(OK);
+	ui->buttonBox->button(QDialogButtonBox::Reset)->setEnabled(OK);
 }
 
 void JoinDialog::completeActions(int Count)

@@ -72,9 +72,12 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver::reloadData);
 	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
-	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
-	connect(this, &MainWindow::onJoinRequest, Driver, &DatabaseDriver::joinData);
+
+	connect(this, &MainWindow::onJoinptlRequest, Driver, &DatabaseDriver::joinLines);
+	connect(this, &MainWindow::onJoinptpRequest, Driver, &DatabaseDriver::joinPoints);
 	connect(this, &MainWindow::onSplitRequest, Driver, &DatabaseDriver::splitData);
+
+	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
 	connect(this, &MainWindow::onListRequest, Driver, &DatabaseDriver::getJoins);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
@@ -163,12 +166,15 @@ void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 	lockUi(BUSY); emit onReloadRequest(Where, Used);
 }
 
-void MainWindow::connectData(const QString& Point, const QString& Line, bool Override)
+void MainWindow::connectData(const QString& Point, const QString& Line, bool Override, bool Type)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line, Override);
+	lockUi(BUSY); ui->tipLabel->setText(tr("Joining data"));
+
+	if (Type) emit onJoinptlRequest(Model, Selected, Point, Line, Override);
+	else emit onJoinptpRequest(Model, Selected, Point, Line, Override);
 }
 
 void MainWindow::disconnectData(const QString& Point, const QString& Line)

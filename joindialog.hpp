@@ -51,13 +51,17 @@ class JoinDialog : public QDialog
 
 		void buttonBoxClicked(QAbstractButton* Button);
 
+		void typeIndexChanged(int Index);
+
+		void targetNameChanged(void);
+
 	public slots:
 
 		void completeActions(int Count);
 
 	signals:
 
-		void onCreateRequest(const QString&, const QString&, bool);
+		void onCreateRequest(const QString&, const QString&, bool, bool);
 		void onDeleteRequest(const QString&, const QString&);
 
 };
