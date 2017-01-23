@@ -156,9 +156,9 @@ void MainWindow::selectionChanged(void)
 
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, Model ? Model->totalCount() : 0).arg(Count));
 
-	ui->actionDelete->setEnabled(Count);
-	ui->actionEdit->setEnabled(Count);
-	ui->actionJoin->setEnabled(Count);
+	ui->actionDelete->setEnabled(Count > 0);
+	ui->actionEdit->setEnabled(Count > 0);
+	ui->actionJoin->setEnabled(Count > 1);
 }
 
 void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
