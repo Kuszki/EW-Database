@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
 	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::prepareJoin);
 	connect(Driver, &DatabaseDriver::onDataJoin, this, &MainWindow::joinData);
+	connect(Driver, &DatabaseDriver::onDataSplit, this, &MainWindow::joinData);
 
 	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -146,7 +147,7 @@ void MainWindow::joinActionClicked(void)
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onListRequest(Model, Selected, Selected.count() == Model->totalCount());
+	lockUi(BUSY); emit onListRequest(Model, Selected);
 }
 
 void MainWindow::selectionChanged(void)
@@ -201,9 +202,6 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
-
-	connect(Update, &UpdateDialog::accepted, this, &MainWindow::selectionChanged);
-	connect(Update, &UpdateDialog::rejected, this, &MainWindow::selectionChanged);
 
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 }
@@ -287,7 +285,7 @@ void MainWindow::removeData(void)
 
 void MainWindow::updateData(void)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
+	lockUi(DONE); selectionChanged();
 }
 
 void MainWindow::groupData(void)
@@ -297,7 +295,7 @@ void MainWindow::groupData(void)
 
 void MainWindow::joinData(void)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
+	lockUi(DONE); selectionChanged();
 }
 
 void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
@@ -314,9 +312,6 @@ void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QS
 
 	connect(Join, &JoinDialog::accepted, Join, &JoinDialog::deleteLater);
 	connect(Join, &JoinDialog::rejected, Join, &JoinDialog::deleteLater);
-
-	connect(Join, &JoinDialog::accepted, this, &MainWindow::selectionChanged);
-	connect(Join, &JoinDialog::rejected, this, &MainWindow::selectionChanged);
 
 	connect(Driver, &DatabaseDriver::onDataJoin, Join, &JoinDialog::completeActions);
 	connect(Driver, &DatabaseDriver::onDataSplit, Join, &JoinDialog::completeActions);

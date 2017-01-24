@@ -99,7 +99,7 @@ class DatabaseDriver : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
-		QMap<QString, QStringList> getClassGroups(const QList<int>& Indexes, bool Common, int Index) const;
+		QMap<QString, QList<int>> getClassGroups(const QList<int>& Indexes, bool Common, int Index);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
@@ -122,7 +122,7 @@ class DatabaseDriver : public QObject
 		void joinPoints(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
-		void getJoins(RecordModel* Model, const QModelIndexList& Items, bool All);
+		void getJoins(RecordModel* Model, const QModelIndexList& Items);
 
 	signals:
 

@@ -242,44 +242,46 @@ QStringList DatabaseDriver::normalizeHeaders(QList<DatabaseDriver::TABLE>& Tabs,
 	return List;
 }
 
-QMap<QString, QStringList> DatabaseDriver::getClassGroups(const QList<int>& Indexes, bool Common, int Index) const
+QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Indexes, bool Common, int Index)
 {
-	if (!Database.isOpen()) return QMap<QString, QStringList>();
+	if (!Database.isOpen()) return QMap<QString, QList<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<QString, QStringList> List;
+	QMap<QString, QList<int>> List; int Step = 0;
 
-	if (Common) List.insert("EW_OBIEKTY", QStringList());
+	emit onBeginProgress(tr("Preparing queries"));
+	emit onSetupProgress(0, Indexes.count());
 
-	for (const auto& ID : Indexes)
+	if (Common) List.insert("EW_OBIEKTY", QList<int>());
+
+	Query.prepare(
+		"SELECT "
+			"EW_OBIEKTY.UID, "
+			"EW_OB_OPISY.KOD, EW_OB_OPISY.DANE_DOD "
+		"FROM "
+			"EW_OB_OPISY "
+		"INNER JOIN "
+			"EW_OBIEKTY "
+		"ON "
+			"EW_OB_OPISY.KOD = EW_OBIEKTY.KOD "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0");
+
+	if (Query.exec()) while (Query.next()) if (Indexes.contains(Query.value(0).toInt()))
 	{
-		Query.prepare(QString(
-			"SELECT "
-				"EW_OB_OPISY.KOD, EW_OB_OPISY.DANE_DOD "
-			"FROM "
-				"EW_OB_OPISY "
-			"INNER JOIN "
-				"EW_OBIEKTY "
-			"ON "
-				"EW_OB_OPISY.KOD = EW_OBIEKTY.KOD "
-			"WHERE "
-				"EW_OBIEKTY.UID = :id"));
+		const QString Table = Query.value(Index + 1).toString();
+		const int ID = Query.value(0).toInt();
 
-		Query.bindValue(":id", ID);
+		if (!List.contains(Table)) List.insert(Table, QList<int>());
 
-		if (Query.exec() && Query.next())
-		{
-			const QString Table = Query.value(Index).toString();
+		List[Table].append(ID);
 
-			if (!List.contains(Table)) List.insert(Table, QStringList());
+		if (Common) List["EW_OBIEKTY"].append(ID);
 
-			if (Common) List["EW_OBIEKTY"].append(QString::number(ID));
-
-			List[Table].append(QString::number(ID));
-		}
+		emit onUpdateProgress(++Step);
 	}
 
-	return List;
+	emit onEndProgress(); return List;
 }
 
 QList<int> DatabaseDriver::getUsedFields(const QString& Filter) const
@@ -430,20 +432,20 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 1);
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 1);
 	const QList<int> Used = Values.keys(); int Step = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QStringList All; QMap<int, QVariant> Copy = Values;
-
-	emit onBeginProgress(tr("Updating data"));
-	emit onSetupProgress(0, Tasks.size() * 2);
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
 	{
 		All.append(QString("%1 = '%2'").arg(Common[i].Name).arg(Values[i].toString()));
 	}
 
-	if (!All.isEmpty())
+	emit onBeginProgress(tr("Updating common data"));
+	emit onSetupProgress(0, Tasks.first().size());
+
+	if (!All.isEmpty()) for (const auto& Index : Tasks.first())
 	{
 		Query.exec(QString(
 			"UPDATE "
@@ -451,10 +453,16 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 			"SET "
 				"%1 "
 			"WHERE "
-				"UID IN ('%2')")
+				"UID = '%2'")
 				 .arg(All.join(", "))
-				 .arg(Tasks.first().join("', '")));
+				 .arg(Index));
+
+		emit onUpdateProgress(++Step);
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating special data"));
+	emit onSetupProgress(0, Tasks.size() - 1);
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
@@ -466,21 +474,26 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 			Updates.append(QString("%1 = '%2'").arg(Fields[Index].Name).arg(Values[Index].toString()));
 		}
 
-		if (Updates.isEmpty()) continue;
-
-		Query.exec(QString(
-			"UPDATE "
-				"%1 EW_DATA "
-			"SET "
-				"%2 "
-			"WHERE "
-				"EW_DATA.UIDO IN ('%3')")
-				 .arg(i.key())
-				 .arg(Updates.join(", "))
-				 .arg(i.value().join("', '")));
+		if (!Updates.isEmpty()) for (const auto& Index : i.value())
+		{
+			Query.exec(QString(
+				"UPDATE "
+					"%1 EW_DATA "
+				"SET "
+					"%2 "
+				"WHERE "
+					"EW_DATA.UIDO = '%3'")
+					 .arg(i.key())
+					 .arg(Updates.join(", "))
+					 .arg(Index));
+		}
 
 		emit onUpdateProgress(++Step);
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size() - 1);
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
@@ -500,12 +513,11 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 			"ON "
 				"EW_OBIEKTY.UID = EW_DATA.UIDO "
 			"WHERE "
-				"EW_OBIEKTY.STATUS = 0  AND EW_OBIEKTY.UID IN ('%3')")
+				"EW_OBIEKTY.STATUS = 0")
 				    .arg(Attribs.join(", "))
-				    .arg(Table.Data)
-				    .arg(i.value().join("', '")));
+				    .arg(Table.Data));
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
 		{
 			QMap<int, QVariant> Values; int i = 1;
 
@@ -523,6 +535,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 			if (!Values.isEmpty()) Model->setData(Index, Values);
 		}
+
+		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -533,35 +547,31 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 1);
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
 
 	emit onBeginProgress(tr("Removing data"));
 	emit onSetupProgress(0, Tasks.size());
 
-	const QStringList Main = Tasks.first();
-
-	if (!Main.isEmpty())
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
-		Query.exec(QString(
-			"DELETE FROM "
-				"EW_OBIEKTY "
-			"WHERE "
-				"UID IN ('%1')")
-				 .arg(Main.join("', '")));
+		for (const auto& Index : i.value())
+		{
+			Query.exec(QString(
+				"DELETE FROM "
+					"EW_OBIEKTY "
+				"WHERE "
+					"UID = '%1'")
+					 .arg(Index));
 
-		emit onUpdateProgress(++Step);
-	}
-
-	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
-	{
-		Query.exec(QString(
-			"DELETE FROM "
-				"%1 "
-			"WHERE "
-				"UIDO IN ('%2')")
-				 .arg(i.key())
-				 .arg(i.value().join("', '")));
+			Query.exec(QString(
+				"DELETE FROM "
+					"%1 "
+				"WHERE "
+					"UIDO = '%2'")
+					 .arg(i.key())
+					 .arg(Index));
+		}
 
 		emit onUpdateProgress(++Step);
 	}
@@ -576,64 +586,90 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataSplit(0); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 0);
-	QList<int> Points; QList<int> Objects; int Step = 0; int Count = 0; QStringList List;
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
+	QList<int> Points; QMap<int, QList<int>> Objects; int Step = 0; int Count = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	if (!Tasks.contains(Point) || !Tasks.contains(From)) { emit onDataJoin(0); return; }
 
-	Query.prepare(QString(
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, Tasks[Point].size());
+
+	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.ID "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.ID "
 		"FROM "
 			"EW_OBIEKTY "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4) AND "
-			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Point)
-			    .arg(Tasks.first().join("', '")));
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ IN (2, 4) AND "
+			"EW_OBIEKTY.KOD = :kod");
 
-	if (Query.exec()) while (Query.next()) Points.append(Query.value(0).toInt());
+	Query.bindValue(":kod", Point);
 
-	Query.prepare(QString(
+	if (Query.exec()) while (Query.next())
+	{
+		if (Tasks[Point].contains(Query.value(0).toInt()))
+		{
+			Points.append(Query.value(1).toInt());
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, Tasks[From].size());
+
+	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID "
+			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
 		"FROM "
 			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4) AND "
-			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
-			    .arg(From)
-			    .arg(Tasks.first().join("', '")));
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ IN (2, 4) AND "
+			"EW_OBIEKTY.KOD = :kod");
 
-	if (Query.exec()) while (Query.next()) Objects.append(Query.value(0).toInt());
+	Query.bindValue(":kod", From);
 
+	if (Query.exec()) while (Query.next())
+	{
+		if (Tasks[From].contains(Query.value(0).toInt()))
+		{
+			const int ID = Query.value(0).toInt();
+
+			if (!Objects.contains(ID)) Objects.insert(ID, QList<int>());
+
+			Objects[ID].append(Query.value(1).toInt());
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Splitting data"));
 	emit onSetupProgress(0, Objects.size());
 
-	for (const auto& Index : Points) List.append(QString::number(Index));
-
-	for (const auto& Index : Objects)
+	for (auto i = Objects.constBegin(); i != Objects.constEnd(); ++i)
 	{
-		Query.exec(QString(
-			"SELECT "
-				"COUNT(*) "
-			"FROM "
-				"EW_OB_ELEMENTY "
-			"WHERE "
-				"TYP = 1 AND UIDO = '%1' AND IDE IN ('%2')")
-				 .arg(Index)
-				 .arg(List.join("', '")));
+		for (const auto& Index : i.value()) if (Points.contains(Index))
+		{
+			Query.exec(QString(
+				"DELETE FROM "
+					"EW_OB_ELEMENTY "
+				"WHERE "
+					"UIDO = '%1' AND "
+					"IDE = '%2'")
+					 .arg(i.key())
+					 .arg(Index));
 
-		if (Query.next()) Count += Query.value(0).toInt();
-
-		Query.exec(QString(
-			"DELETE FROM "
-				"EW_OB_ELEMENTY "
-			"WHERE "
-				"TYP = 1 AND UIDO = '%1' AND IDE IN ('%2')")
-				 .arg(Index)
-				 .arg(List.join("', '")));
+			Count += 1;
+		}
 
 		emit onUpdateProgress(++Step);
 	}
@@ -648,11 +684,14 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 
 	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false, 0);
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
 	QList<POINT> Points; QList<int> Joined; QMap<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	if (!Tasks.contains(Point) || !Tasks.contains(Line)) { emit onDataJoin(0); return; }
+
+	emit onBeginProgress(tr("Checking used items"));
+	emit onSetupProgress(0, 0);
 
 	Query.prepare(
 		"SELECT DISTINCT "
@@ -667,9 +706,13 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 		Joined.append(Query.value(0).toInt());
 	}
 
-	Query.prepare(QString(
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, Tasks[Point].size());
+
+	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.ID, "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.ID, "
 			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
 		"FROM "
 			"EW_OBIEKTY "
@@ -682,23 +725,34 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OB_ELEMENTY.N = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Point)
-			    .arg(Tasks[Point].join("', '")));
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 4 AND "
+			"EW_OB_ELEMENTY.N = 0 AND "
+			"EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
 
-	if (Query.exec()) while (Query.next()) if (!Joined.contains(Query.value(0).toInt()))
+	Query.bindValue(":kod", Point);
+
+	if (Query.exec()) while (Query.next())
 	{
-		Points.append(
+		if (Tasks[Point].contains(Query.value(0).toInt()))
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toDouble(),
-			Query.value(2).toDouble()
-		});
+			if (!Joined.contains(Query.value(1).toInt())) Points.append(
+			{
+				Query.value(1).toInt(),
+				Query.value(2).toDouble(),
+				Query.value(3).toDouble()
+			});
+		}
+
+		emit onUpdateProgress(++Step);
 	}
 
-	Query.prepare(QString(
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, Tasks[Line].size());
+
+	Query.prepare(
 		"SELECT "
 			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
 		"FROM "
@@ -708,22 +762,32 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 		"ON "
 			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1 AND EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Line)
-			    .arg(Tasks[Line].join("', '")));
+			"EW_OB_ELEMENTY.TYP = 1 AND "
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
+
+	Query.bindValue("kod", Line);
 
 	if (Query.exec()) while (Query.next())
 	{
-		const int ID = Query.value(0).toInt();
+		if (Tasks[Line].contains(Query.value(0).toInt()))
+		{
+			const int ID = Query.value(0).toInt();
 
-		if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
-		if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
+			if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
+			if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
 
-		Geometry[ID].insert(Query.value(1).toInt());
+			Geometry[ID].insert(Query.value(1).toInt());
+		}
+
+		emit onUpdateProgress(++Step);
 	}
 
-	Query.prepare(QString(
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Generating tasklist"));
+	emit onSetupProgress(0, Tasks[Line].size());
+
+	Query.prepare(
 		"SELECT "
 			"EW_OBIEKTY.UID, "
 			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
@@ -739,23 +803,30 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ = 2 AND "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND EW_OBIEKTY.KOD = '%1' AND "
-			"EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Line)
-			    .arg(Tasks[Line].join("', '")));
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 2 AND "
+			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
 
-	if (Query.exec()) while (Query.next()) for (const auto P : Points)
+	Query.bindValue(":kod", Line);
+
+	if (Query.exec()) while (Query.next())
 	{
-		if ((Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y) ||
-		    (Query.value(3).toDouble() == P.X && Query.value(4).toDouble() == P.Y))
+		if (Tasks[Line].contains(Query.value(0).toInt())) for (const auto P : Points)
 		{
-			const int ID = Query.value(0).toInt();
+			if ((Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y) ||
+			    (Query.value(3).toDouble() == P.X && Query.value(4).toDouble() == P.Y))
+			{
+				const int ID = Query.value(0).toInt();
 
-			if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+			}
 		}
+
+		emit onUpdateProgress(++Step);
 	}
 
+	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Joining data"));
 	emit onSetupProgress(0, Insert.size());
 
@@ -768,8 +839,8 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
 				"VALUES "
 					"('%1', '%2', 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = '%1') + 1, 0)")
-					    .arg(i.key())
-					    .arg(P));
+					 .arg(i.key())
+					 .arg(P));
 
 			if (!Override) continue;
 
@@ -780,14 +851,18 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 					"OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = '%1') "
 				"WHERE "
 					"ID = '%2'")
-					    .arg(i.key())
-					    .arg(P));
+					 .arg(i.key())
+					 .arg(P));
 		}
 
 		Count += i.value().size();
 
 		emit onUpdateProgress(++Step);
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size());
 
 	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -807,12 +882,11 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 			"ON "
 				"EW_OBIEKTY.UID = EW_DATA.UIDO "
 			"WHERE "
-				"EW_OBIEKTY.STATUS = 0  AND EW_OBIEKTY.UID IN ('%3')")
+				"EW_OBIEKTY.STATUS = 0")
 				    .arg(Attribs.join(", "))
-				    .arg(Table.Data)
-				    .arg(i.value().join("', '")));
+				    .arg(Table.Data));
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
 		{
 			QMap<int, QVariant> Values; int i = 1;
 
@@ -830,6 +904,8 @@ void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items,
 
 			if (!Values.isEmpty()) Model->setData(Index, Values);
 		}
+
+		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -842,11 +918,14 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 
 	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false, 0);
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
 	QList<POINT> Points; QList<int> Joined; QMap<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	if (!Tasks.contains(Point) || !Tasks.contains(Join)) { emit onDataJoin(0); return; }
+
+	emit onBeginProgress(tr("Checking used items"));
+	emit onSetupProgress(0, 0);
 
 	Query.prepare(
 		"SELECT DISTINCT "
@@ -861,9 +940,13 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 		Joined.append(Query.value(0).toInt());
 	}
 
-	Query.prepare(QString(
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, Tasks[Point].size());
+
+	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.ID, "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.ID, "
 			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
 		"FROM "
 			"EW_OBIEKTY "
@@ -876,23 +959,34 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OB_ELEMENTY.N = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Point)
-			    .arg(Tasks[Point].join("', '")));
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 4 AND "
+			"EW_OB_ELEMENTY.N = 0 AND "
+			"EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
 
-	if (Query.exec()) while (Query.next()) if (!Joined.contains(Query.value(0).toInt()))
+	Query.bindValue(":kod", Point);
+
+	if (Query.exec()) while (Query.next())
 	{
-		Points.append(
+		if (Tasks[Point].contains(Query.value(0).toInt()))
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toDouble(),
-			Query.value(2).toDouble()
-		});
+			if (!Joined.contains(Query.value(1).toInt())) Points.append(
+			{
+				Query.value(1).toInt(),
+				Query.value(2).toDouble(),
+				Query.value(3).toDouble()
+			});
+		}
+
+		emit onUpdateProgress(++Step);
 	}
 
-	Query.prepare(QString(
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, Tasks[Join].size());
+
+	Query.prepare(
 		"SELECT "
 			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
 		"FROM "
@@ -902,24 +996,34 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 		"ON "
 			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1 AND EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.KOD = '%1' AND EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Join)
-			    .arg(Tasks[Join].join("', '")));
+			"EW_OB_ELEMENTY.TYP = 1 AND "
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
+
+	Query.bindValue(":kod", Join);
 
 	if (Query.exec()) while (Query.next())
 	{
-		const int ID = Query.value(0).toInt();
+		if (Tasks[Join].contains(Query.value(0).toInt()))
+		{
+			const int ID = Query.value(0).toInt();
 
-		if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
-		if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
+			if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
+			if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
 
-		Geometry[ID].insert(Query.value(1).toInt());
+			Geometry[ID].insert(Query.value(1).toInt());
+		}
+
+		emit onUpdateProgress(++Step);
 	}
 
-	Query.prepare(QString(
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Generating tasklist"));
+	emit onSetupProgress(0, Tasks[Join].size());
+
+	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.UID, "
 			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
 		"FROM "
 			"EW_OBIEKTY "
@@ -932,22 +1036,29 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND EW_OBIEKTY.KOD = '%1' AND "
-			"EW_OBIEKTY.UID IN ('%2')")
-			    .arg(Join)
-			    .arg(Tasks[Join].join("', '")));
+			"EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 4 AND "
+			"EW_OBIEKTY.KOD = :kod");
 
-	if (Query.exec()) while (Query.next()) for (const auto P : Points)
+	Query.bindValue(":kod", Join);
+
+	if (Query.exec()) while (Query.next())
 	{
-		if (Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y)
+		if (Tasks[Join].contains(Query.value(0).toInt())) for (const auto P : Points)
 		{
-			const int ID = Query.value(0).toInt();
+			if (Query.value(2).toDouble() == P.X && Query.value(3).toDouble() == P.Y)
+			{
+				const int ID = Query.value(1).toInt();
 
-			if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+			}
 		}
+
+		emit onUpdateProgress(++Step);
 	}
 
+	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Joining data"));
 	emit onSetupProgress(0, Insert.size());
 
@@ -960,8 +1071,8 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
 				"VALUES "
 					"('%1', '%2', 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = '%1') + 1, 0)")
-					    .arg(i.key())
-					    .arg(P));
+					 .arg(i.key())
+					 .arg(P));
 
 			if (!Override) continue;
 
@@ -972,14 +1083,18 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 					"OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = '%1') "
 				"WHERE "
 					"ID = '%2'")
-					    .arg(i.key())
-					    .arg(P));
+					 .arg(i.key())
+					 .arg(P));
 		}
 
 		Count += i.value().size();
 
 		emit onUpdateProgress(++Step);
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size());
 
 	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -999,12 +1114,11 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 			"ON "
 				"EW_OBIEKTY.UID = EW_DATA.UIDO "
 			"WHERE "
-				"EW_OBIEKTY.STATUS = 0  AND EW_OBIEKTY.UID IN ('%3')")
+				"EW_OBIEKTY.STATUS = 0")
 				    .arg(Attribs.join(", "))
-				    .arg(Table.Data)
-				    .arg(i.value().join("', '")));
+				    .arg(Table.Data));
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
 		{
 			QMap<int, QVariant> Values; int i = 1;
 
@@ -1022,6 +1136,8 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 
 			if (!Values.isEmpty()) Model->setData(Index, Values);
 		}
+
+		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -1032,7 +1148,7 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QMap<int, QVariant>>(), QList<int>()); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), false, 1);
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
 	const QList<int> Used = getCommonFields(Tasks.keys());
 	QList<QMap<int, QVariant>> Values; int Step = 0;
 
@@ -1050,7 +1166,7 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 
 		Query.prepare(QString(
 			"SELECT "
-				"%1 "
+				"EW_OBIEKTY.UID, %1 "
 			"FROM "
 				"EW_OBIEKTY "
 			"INNER JOIN "
@@ -1058,14 +1174,13 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 			"ON "
 				"EW_OBIEKTY.UID = EW_DATA.UIDO "
 			"WHERE "
-				"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.UID IN ('%3')")
+				"EW_OBIEKTY.STATUS = 0")
 					.arg(Attribs.join(", "))
-					.arg(i.key())
-					.arg(i.value().join("', '")));
+					.arg(i.key()));
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
 		{
-			QMap<int, QVariant> Value; int i = 0;
+			QMap<int, QVariant> Value; int i = 1;
 
 			for (int j = 0; j < Common.size(); ++j)
 			{
@@ -1087,27 +1202,25 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 	emit onPresetReady(Values, Used);
 }
 
-void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items, bool All)
+void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QMap<QString, QString>(), QMap<QString, QString>()); return; }
 
-	const QMap<QString, QStringList> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QMap<QString, QString> Points, Lines; int Step = 0;
 
-	emit onBeginProgress(tr("Preparing classes"));
-
-	QString countQuery = QString("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4)");
-	if (!All) countQuery.append(QString(" AND UID IN ('%1')").arg(Tasks.first().join("', '")));
-
-	if (Query.exec(countQuery) && Query.next())
+	if (Query.exec("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4)") && Query.next())
 	{
-		emit onSetupProgress(0, Query.value(0).toInt());
+		Step = Query.value(0).toInt();
 	}
 
-	QString selectQuery = QString(
+	emit onBeginProgress(tr("Preparing classes"));
+	emit onSetupProgress(0, Step); Step = 0;
+
+	Query.prepare(
 		"SELECT DISTINCT "
-			"EW_OBIEKTY.RODZAJ, "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.RODZAJ, "
 			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS "
 		"FROM "
 			"EW_OBIEKTY "
@@ -1116,19 +1229,18 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items, 
 		"ON "
 			"EW_OBIEKTY.KOD = EW_OB_OPISY.KOD "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND EW_OBIEKTY.RODZAJ IN (2, 4)");
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ IN (2, 4)");
 
-	if (!All) selectQuery.append(QString(" AND EW_OBIEKTY.UID IN ('%1')").arg(Tasks.first().join("', '")));
-
-	if (Query.exec(selectQuery)) while (Query.next())
+	if (Query.exec()) while (Query.next())
 	{
-		switch (Query.value(0).toInt())
+		if (Tasks.first().contains(Query.value(0).toInt())) switch (Query.value(1).toInt())
 		{
 			case 2:
-				Lines.insert(Query.value(1).toString(), Query.value(2).toString());
+				Lines.insert(Query.value(2).toString(), Query.value(3).toString());
 			break;
 			case 4:
-				Points.insert(Query.value(1).toString(), Query.value(2).toString());
+				Points.insert(Query.value(2).toString(), Query.value(3).toString());
 			break;
 		}
 
@@ -1162,7 +1274,7 @@ bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE&
 }
 
 QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
-{	
+{
 	if (Type == DatabaseDriver::BOOL)
 	{
 		return Value.toBool() ? DatabaseDriver::tr("Yes") : DatabaseDriver::tr("No");

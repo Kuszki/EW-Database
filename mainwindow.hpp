@@ -127,7 +127,7 @@ class MainWindow : public QMainWindow
 		void onJoinptpRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
 		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&);
 
-		void onListRequest(RecordModel*, const QModelIndexList&, bool);
+		void onListRequest(RecordModel*, const QModelIndexList&);
 
 		void onGroupRequest(const QList<int>&);
 
