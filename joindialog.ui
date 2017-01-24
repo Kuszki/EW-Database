@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>150</height>
+    <height>156</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Join items</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="insert-link"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
