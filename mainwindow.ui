@@ -84,8 +84,8 @@
     </property>
     <addaction name="actionReload"/>
     <addaction name="actionEdit"/>
-    <addaction name="actionJoin"/>
     <addaction name="actionDelete"/>
+    <addaction name="actionJoin"/>
     <addaction name="separator"/>
     <addaction name="actionView"/>
     <addaction name="actionFilter"/>
@@ -122,8 +122,8 @@
    <addaction name="separator"/>
    <addaction name="actionReload"/>
    <addaction name="actionEdit"/>
-   <addaction name="actionJoin"/>
    <addaction name="actionDelete"/>
+   <addaction name="actionJoin"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
    <addaction name="actionFilter"/>
@@ -261,7 +261,8 @@
   </action>
   <action name="actionJoin">
    <property name="icon">
-    <iconset theme="insert-link"/>
+    <iconset theme="insert-link">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Join</string>

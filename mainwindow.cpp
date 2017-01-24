@@ -125,6 +125,8 @@ void MainWindow::deleteActionClicked(void)
 						 tr("Are you sure to delete selected items?"),
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
+		ui->Data->selectionModel()->clearSelection();
+
 		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
 	}
 }
@@ -285,7 +287,7 @@ void MainWindow::removeData(void)
 
 void MainWindow::updateData(void)
 {
-	lockUi(DONE); selectionChanged();
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
 }
 
 void MainWindow::groupData(void)
@@ -295,7 +297,7 @@ void MainWindow::groupData(void)
 
 void MainWindow::joinData(void)
 {
-	lockUi(DONE); selectionChanged();
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
 }
 
 void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
@@ -365,6 +367,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->tipLabel->setVisible(false);
 			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);
+
+			selectionChanged();
 		break;
 	}
 }
