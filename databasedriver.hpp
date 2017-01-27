@@ -39,6 +39,14 @@ class DatabaseDriver : public QObject
 
 		Q_OBJECT
 
+	public: struct POINT
+	{
+		int ID;
+
+		double X;
+		double Y;
+	};
+
 	public: enum TYPE
 	{
 		READONLY	= 0,
@@ -100,10 +108,26 @@ class DatabaseDriver : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
-		QMap<QString, QList<int>> getClassGroups(const QList<int>& Indexes, bool Common, int Index);
+		QMap<QString, QList<int>> getClassGroups(const QList<int>& Indexes,
+										 bool Common, int Index);
+
+		QMap<int, QMap<int, QVariant>> loadData(const TABLE& Table,
+										const QList<int>& Filter,
+										const QString& Where,
+										bool Dict = true);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
+
+		QMap<int, QSet<int>> joinCircles(const QMap<int, QSet<int>>& Geometry,
+								   const QList<DatabaseDriver::POINT>& Points,
+								   const QList<int>& Tasks, const QString Class);
+		QMap<int, QSet<int>> joinLines(const QMap<int, QSet<int>>& Geometry,
+								 const QList<DatabaseDriver::POINT>& Points,
+								 const QList<int>& Tasks, const QString Class);
+		QMap<int, QSet<int>> joinPoints(const QMap<int, QSet<int>>& Geometry,
+								  const QList<DatabaseDriver::POINT>& Points,
+								  const QList<int>& Tasks, const QString Class);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 
@@ -115,13 +139,15 @@ class DatabaseDriver : public QObject
 		bool closeDatabase(void);
 
 		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
-		void updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values);
+		void updateData(RecordModel* Model, const QModelIndexList& Items,
+					 const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
-		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From, int Type);
+		void splitData(RecordModel* Model, const QModelIndexList& Items,
+					const QString& Point, const QString& From, int Type);
 
-		void joinCircles(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Circle, bool Override);
-		void joinLines(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override);
-		void joinPoints(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override);
+		void joinData(RecordModel* Model, const QModelIndexList& Items,
+				    const QString& Point, const QString& Join,
+				    bool Override, int Type);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);

@@ -284,6 +284,57 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 	emit onEndProgress(); return List;
 }
 
+QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QList<int>& Filter, const QString& Where, bool Dict)
+{
+	if (!Database.isOpen()) return QMap<int, QMap<int, QVariant>>();
+
+	QVariant (*GET)(QVariant, const QMap<QVariant, QString>&, TYPE);
+	GET = Dict ? getDataFromDict : [] (auto Value, const auto&, auto) { return Value; };
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QMap<int, QMap<int, QVariant>> List; QStringList Attribs;
+
+	for (const auto& Field : Common) Attribs.append(Field.Name);
+	for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
+
+	QString Exec = QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, %1 "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"%2 EW_DATA "
+		"ON "
+			"EW_OBIEKTY.UID = EW_DATA.UIDO "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0")
+				.arg(Attribs.join(", "))
+				.arg(Table.Data);
+
+	if (!Where.isEmpty()) Exec.append(QString(" AND (%1)").arg(Where));
+
+	if (Query.exec(Exec)) while (Query.next()) if (Filter.isEmpty() || Filter.contains(Query.value(0).toInt()))
+	{
+		QMap<int, QVariant> Values; int i = 1;
+
+		const int Index = Query.value(0).toInt();
+
+		for (int j = 0; j < Common.size(); ++j)
+		{
+			Values.insert(j, GET(Query.value(i++), Common[j].Dict, Common[j].Type));
+		}
+
+		for (int j = 0; j < Table.Headers.size(); ++j)
+		{
+			Values.insert(Table.Headers[j], GET(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
+		}
+
+		if (!Values.isEmpty()) List.insert(Index, Values);
+	}
+
+	return List;
+}
+
 QList<int> DatabaseDriver::getUsedFields(const QString& Filter) const
 {
 	if (Filter.isEmpty()) return QList<int>(); QList<int> Used;
@@ -381,47 +432,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
-		QSqlQuery Query(Database); QStringList Attribs; Query.setForwardOnly(true);
-
-		for (const auto& Field : Common) Attribs.append(Field.Name);
-		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
-
-		QString Exec = QString(
-			"SELECT "
-				"EW_OBIEKTY.UID, %1 "
-			"FROM "
-				"EW_OBIEKTY "
-			"INNER JOIN "
-				"%2 EW_DATA "
-			"ON "
-				"EW_OBIEKTY.UID = EW_DATA.UIDO "
-			"WHERE "
-				"EW_OBIEKTY.STATUS = 0")
-					.arg(Attribs.join(", "))
-					.arg(Table.Data);
-
-		if (!Filter.isEmpty()) Exec.append(QString(" AND (%1)").arg(Filter));
-
-		if (Query.exec(Exec)) while (Query.next())
-		{
-			QMap<int, QVariant> Values; int i = 1;
-
-			const int Index = Query.value(0).toInt();
-
-			for (int j = 0; j < Common.size(); ++j)
-			{
-				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
-			}
-
-			for (int j = 0; j < Table.Headers.size(); ++j)
-			{
-				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
-			}
-
-			if (!Values.isEmpty()) Model->addItem(Index, Values);
-		}
-
-		emit onUpdateProgress(++Step);
+		Model->addItems(loadData(Table, QList<int>(), Filter, true)); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -485,7 +496,6 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 					 .arg(i.key())
 					 .arg(Updates.join(", "))
 					 .arg(Index));
-			qDebug() << Query.lastQuery();
 		}
 
 		emit onUpdateProgress(++Step);
@@ -498,43 +508,9 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-		QStringList Attribs;
+		const auto Data = loadData(Table, i.value(), QString(), true);
 
-		for (const auto& Field : Common) Attribs.append(Field.Name);
-		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
-
-		Query.prepare(QString(
-			"SELECT "
-				"EW_OBIEKTY.UID, %1 "
-			"FROM "
-				"EW_OBIEKTY "
-			"INNER JOIN "
-				"%2 EW_DATA "
-			"ON "
-				"EW_OBIEKTY.UID = EW_DATA.UIDO "
-			"WHERE "
-				"EW_OBIEKTY.STATUS = 0")
-				    .arg(Attribs.join(", "))
-				    .arg(Table.Data));
-
-		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
-		{
-			QMap<int, QVariant> Values; int i = 1;
-
-			const int Index = Query.value(0).toInt();
-
-			for (int j = 0; j < Common.size(); ++j)
-			{
-				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
-			}
-
-			for (int j = 0; j < Table.Headers.size(); ++j)
-			{
-				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
-			}
-
-			if (!Values.isEmpty()) Model->setData(Index, Values);
-		}
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) Model->setData(i.key(), i.value());
 
 		emit onUpdateProgress(++Step);
 	}
@@ -681,486 +657,14 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 	emit onDataSplit(Count);
 }
 
-void DatabaseDriver::joinCircles(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Circle, bool Override)
+void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override, int Type)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
-
-	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
 	QList<POINT> Points; QList<int> Joined; QMap<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-	if (!Tasks.contains(Point) || !Tasks.contains(Circle)) { emit onDataJoin(0); return; }
-
-	emit onBeginProgress(tr("Checking used items"));
-	emit onSetupProgress(0, 0);
-
-	Query.prepare(
-		"SELECT DISTINCT "
-			"EW_OB_ELEMENTY.IDE "
-		"FROM "
-			"EW_OB_ELEMENTY "
-		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1");
-
-	if (Query.exec()) while (Query.next())
-	{
-		Joined.append(Query.value(0).toInt());
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Loading points"));
-	emit onSetupProgress(0, Tasks[Point].size());
-
-	Query.prepare(
-		"SELECT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.ID, "
-			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"INNER "
-			"JOIN EW_TEXT "
-		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
-		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OB_ELEMENTY.N = 0 AND "
-			"EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue(":kod", Point);
-
-	if (Query.exec()) while (Query.next())
-	{
-		if (Tasks[Point].contains(Query.value(0).toInt()))
-		{
-			if (!Joined.contains(Query.value(1).toInt())) Points.append(
-			{
-				Query.value(1).toInt(),
-				Query.value(2).toDouble(),
-				Query.value(3).toDouble()
-			});
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, Tasks[Circle].size());
-
-	Query.prepare(
-		"SELECT "
-			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue(":kod", Circle);
-
-	if (Query.exec()) while (Query.next())
-	{
-		if (Tasks[Circle].contains(Query.value(0).toInt()))
-		{
-			const int ID = Query.value(0).toInt();
-
-			if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
-			if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
-
-			Geometry[ID].insert(Query.value(1).toInt());
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, Tasks[Circle].size());
-
-	Query.prepare(
-		"SELECT "
-			"EW_OBIEKTY.UID, "
-			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
-			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y, "
-			"EW_POLYLINE.P1_FLAGS "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE "
-		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
-		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 3 AND "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue(":kod", Circle);
-
-	if (Query.exec()) while (Query.next())
-	{
-		if (Tasks[Circle].contains(Query.value(0).toInt())) for (const auto P : Points)
-		{
-			const bool Circle = (double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) == P.X &&
-							Query.value(2).toDouble() == P.Y && Query.value(4).toDouble() == P.Y;
-
-			if (Query.value(5).toInt() == 4 && Circle)
-			{
-				const int ID = Query.value(0).toInt();
-
-				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
-			}
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Joining data"));
-	emit onSetupProgress(0, Insert.size());
-
-	for (auto i = Insert.constBegin(); i != Insert.constEnd(); ++i)
-	{
-		for (const auto& P : i.value())
-		{
-			Query.exec(QString(
-				"INSERT INTO "
-					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
-				"VALUES "
-					"('%1', '%2', 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = '%1') + 1, 0)")
-					 .arg(i.key())
-					 .arg(P));
-
-			if (!Override) continue;
-
-			Query.exec(QString(
-				"UPDATE "
-					"EW_OBIEKTY "
-				"SET "
-					"OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = '%1') "
-				"WHERE "
-					"ID = '%2'")
-					 .arg(i.key())
-					 .arg(P));
-		}
-
-		Count += i.value().size();
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Updating view"));
-	emit onSetupProgress(0, Tasks.size());
-
-	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
-	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		QStringList Attribs;
-
-		for (const auto& Field : Common) Attribs.append(Field.Name);
-		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
-
-		Query.prepare(QString(
-			"SELECT "
-				"EW_OBIEKTY.UID, %1 "
-			"FROM "
-				"EW_OBIEKTY "
-			"INNER JOIN "
-				"%2 EW_DATA "
-			"ON "
-				"EW_OBIEKTY.UID = EW_DATA.UIDO "
-			"WHERE "
-				"EW_OBIEKTY.STATUS = 0")
-				    .arg(Attribs.join(", "))
-				    .arg(Table.Data));
-
-		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
-		{
-			QMap<int, QVariant> Values; int i = 1;
-
-			const int Index = Query.value(0).toInt();
-
-			for (int j = 0; j < Common.size(); ++j)
-			{
-				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
-			}
-
-			for (int j = 0; j < Table.Headers.size(); ++j)
-			{
-				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
-			}
-
-			if (!Values.isEmpty()) Model->setData(Index, Values);
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress();
-	emit onDataJoin(Count);
-}
-
-void DatabaseDriver::joinLines(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override)
-{
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
-
-	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
-
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
-	QList<POINT> Points; QList<int> Joined; QMap<int, QSet<int>> Geometry, Insert;
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-	if (!Tasks.contains(Point) || !Tasks.contains(Line)) { emit onDataJoin(0); return; }
-
-	emit onBeginProgress(tr("Checking used items"));
-	emit onSetupProgress(0, 0);
-
-	Query.prepare(
-		"SELECT DISTINCT "
-			"EW_OB_ELEMENTY.IDE "
-		"FROM "
-			"EW_OB_ELEMENTY "
-		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1");
-
-	if (Query.exec()) while (Query.next())
-	{
-		Joined.append(Query.value(0).toInt());
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Loading points"));
-	emit onSetupProgress(0, Tasks[Point].size());
-
-	Query.prepare(
-		"SELECT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.ID, "
-			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"INNER "
-			"JOIN EW_TEXT "
-		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
-		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OB_ELEMENTY.N = 0 AND "
-			"EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue(":kod", Point);
-
-	if (Query.exec()) while (Query.next())
-	{
-		if (Tasks[Point].contains(Query.value(0).toInt()))
-		{
-			if (!Joined.contains(Query.value(1).toInt())) Points.append(
-			{
-				Query.value(1).toInt(),
-				Query.value(2).toDouble(),
-				Query.value(3).toDouble()
-			});
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, Tasks[Line].size());
-
-	Query.prepare(
-		"SELECT "
-			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue("kod", Line);
-
-	if (Query.exec()) while (Query.next())
-	{
-		if (Tasks[Line].contains(Query.value(0).toInt()))
-		{
-			const int ID = Query.value(0).toInt();
-
-			if (!Geometry.contains(ID)) Geometry.insert(ID, QSet<int>());
-			if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
-
-			Geometry[ID].insert(Query.value(1).toInt());
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, Tasks[Line].size());
-
-	Query.prepare(
-		"SELECT "
-			"EW_OBIEKTY.UID, "
-			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
-			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE "
-		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
-		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 2 AND "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue(":kod", Line);
-
-	if (Query.exec()) while (Query.next())
-	{
-		if (Tasks[Line].contains(Query.value(0).toInt())) for (const auto P : Points)
-		{
-			if ((Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y) ||
-			    (Query.value(3).toDouble() == P.X && Query.value(4).toDouble() == P.Y))
-			{
-				const int ID = Query.value(0).toInt();
-
-				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
-			}
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Joining data"));
-	emit onSetupProgress(0, Insert.size());
-
-	for (auto i = Insert.constBegin(); i != Insert.constEnd(); ++i)
-	{
-		for (const auto& P : i.value())
-		{
-			Query.exec(QString(
-				"INSERT INTO "
-					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
-				"VALUES "
-					"('%1', '%2', 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = '%1') + 1, 0)")
-					 .arg(i.key())
-					 .arg(P));
-
-			if (!Override) continue;
-
-			Query.exec(QString(
-				"UPDATE "
-					"EW_OBIEKTY "
-				"SET "
-					"OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = '%1') "
-				"WHERE "
-					"ID = '%2'")
-					 .arg(i.key())
-					 .arg(P));
-		}
-
-		Count += i.value().size();
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Updating view"));
-	emit onSetupProgress(0, Tasks.size());
-
-	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
-	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		QStringList Attribs;
-
-		for (const auto& Field : Common) Attribs.append(Field.Name);
-		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
-
-		Query.prepare(QString(
-			"SELECT "
-				"EW_OBIEKTY.UID, %1 "
-			"FROM "
-				"EW_OBIEKTY "
-			"INNER JOIN "
-				"%2 EW_DATA "
-			"ON "
-				"EW_OBIEKTY.UID = EW_DATA.UIDO "
-			"WHERE "
-				"EW_OBIEKTY.STATUS = 0")
-				    .arg(Attribs.join(", "))
-				    .arg(Table.Data));
-
-		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
-		{
-			QMap<int, QVariant> Values; int i = 1;
-
-			const int Index = Query.value(0).toInt();
-
-			for (int j = 0; j < Common.size(); ++j)
-			{
-				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
-			}
-
-			for (int j = 0; j < Table.Headers.size(); ++j)
-			{
-				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
-			}
-
-			if (!Values.isEmpty()) Model->setData(Index, Values);
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress();
-	emit onDataJoin(Count);
-}
-
-void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override)
-{
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
-
-	struct POINT { int ID; double X; double Y; }; int Step = 0; int Count = 0;
-
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
-	QList<POINT> Points; QList<int> Joined; QMap<int, QSet<int>> Geometry, Insert;
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	int Step = 0; int Count = 0;
 
 	if (!Tasks.contains(Point) || !Tasks.contains(Join)) { emit onDataJoin(0); return; }
 
@@ -1261,41 +765,17 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 	emit onBeginProgress(tr("Generating tasklist"));
 	emit onSetupProgress(0, Tasks[Join].size());
 
-	Query.prepare(
-		"SELECT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.UID, "
-			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
-		"FROM "
-			"EW_OBIEKTY "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY "
-		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
-		"INNER JOIN "
-			"EW_TEXT "
-		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
-		"WHERE "
-			"EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OBIEKTY.KOD = :kod");
-
-	Query.bindValue(":kod", Join);
-
-	if (Query.exec()) while (Query.next())
+	switch (Type)
 	{
-		if (Tasks[Join].contains(Query.value(0).toInt())) for (const auto P : Points)
-		{
-			if (Query.value(2).toDouble() == P.X && Query.value(3).toDouble() == P.Y)
-			{
-				const int ID = Query.value(1).toInt();
-
-				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
-			}
-		}
-
-		emit onUpdateProgress(++Step);
+		case 0:
+			Insert = joinLines(Geometry, Points, Tasks[Join], Join);
+		break;
+		case 1:
+			Insert = joinPoints(Geometry, Points, Tasks[Join], Join);
+		break;
+		case 2:
+			Insert = joinCircles(Geometry, Points, Tasks[Join], Join);
+		break;
 	}
 
 	emit onEndProgress(); Step = 0;
@@ -1339,49 +819,158 @@ void DatabaseDriver::joinPoints(RecordModel* Model, const QModelIndexList& Items
 	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		QStringList Attribs;
+		const auto Data = loadData(Table, i.value(), QString(), true);
 
-		for (const auto& Field : Common) Attribs.append(Field.Name);
-		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) Model->setData(i.key(), i.value());
 
-		Query.prepare(QString(
-			"SELECT "
-				"EW_OBIEKTY.UID, %1 "
-			"FROM "
-				"EW_OBIEKTY "
-			"INNER JOIN "
-				"%2 EW_DATA "
-			"ON "
-				"EW_OBIEKTY.UID = EW_DATA.UIDO "
-			"WHERE "
-				"EW_OBIEKTY.STATUS = 0")
-				    .arg(Attribs.join(", "))
-				    .arg(Table.Data));
+		emit onUpdateProgress(++Step);
+	}
+}
 
-		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
+QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class)
+{
+	if (!Database.isOpen()) return QMap<int, QSet<int>>();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QMap<int, QSet<int>> Insert; int Step = 0;
+
+	Query.prepare(
+		"SELECT "
+			"EW_OBIEKTY.UID, "
+			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
+			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y, "
+			"EW_POLYLINE.P1_FLAGS "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE "
+		"ON "
+			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 3 AND "
+			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
+
+	Query.bindValue(":kod", Class);
+
+	if (Query.exec()) while (Query.next())
+	{
+		if (Query.value(5).toInt() == 4 && Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
 		{
-			QMap<int, QVariant> Values; int i = 1;
-
-			const int Index = Query.value(0).toInt();
-
-			for (int j = 0; j < Common.size(); ++j)
+			if ((double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) == P.X &&
+			    Query.value(2).toDouble() == P.Y && Query.value(4).toDouble() == P.Y)
 			{
-				Values.insert(j, getDataFromDict(Query.value(i++), Common[j].Dict, Common[j].Type));
-			}
+				const int ID = Query.value(0).toInt();
 
-			for (int j = 0; j < Table.Headers.size(); ++j)
-			{
-				Values.insert(Table.Headers[j], getDataFromDict(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
+				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
 			}
-
-			if (!Values.isEmpty()) Model->setData(Index, Values);
 		}
 
 		emit onUpdateProgress(++Step);
 	}
 
-	emit onEndProgress();
-	emit onDataJoin(Count);
+	return Insert;
+}
+
+QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class)
+{
+	if (!Database.isOpen()) return QMap<int, QSet<int>>();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QMap<int, QSet<int>> Insert; int Step = 0;
+
+	Query.prepare(
+		"SELECT "
+			"EW_OBIEKTY.UID, "
+			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
+			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE "
+		"ON "
+			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
+		"WHERE "
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 2 AND "
+			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.KOD = :kod");
+
+	Query.bindValue(":kod", Class);
+
+	if (Query.exec()) while (Query.next())
+	{
+		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
+		{
+			if ((Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y) ||
+			    (Query.value(3).toDouble() == P.X && Query.value(4).toDouble() == P.Y))
+			{
+				const int ID = Query.value(0).toInt();
+
+				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+			}
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	return Insert;
+}
+
+QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class)
+{
+	if (!Database.isOpen()) return QMap<int, QSet<int>>();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QMap<int, QSet<int>> Insert; int Step = 0;
+
+	Query.prepare(
+		"SELECT "
+			"EW_OBIEKTY.UID, EW_OBIEKTY.UID, "
+			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
+		"FROM "
+			"EW_OBIEKTY "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY "
+		"ON "
+			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+		"INNER JOIN "
+			"EW_TEXT "
+		"ON "
+			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
+		"WHERE "
+			"EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_OBIEKTY.STATUS = 0 AND "
+			"EW_OBIEKTY.RODZAJ = 4 AND "
+			"EW_OBIEKTY.KOD = :kod");
+
+	Query.bindValue(":kod", Class);
+
+	if (Query.exec()) while (Query.next())
+	{
+		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
+		{
+			if (Query.value(2).toDouble() == P.X && Query.value(3).toDouble() == P.Y)
+			{
+				const int ID = Query.value(1).toInt();
+
+				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+			}
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	return Insert;
 }
 
 void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
@@ -1398,42 +987,9 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+		const auto Data = loadData(Table, i.value(), QString(), true);
 
-		QSqlQuery Query(Database); QStringList Attribs; Query.setForwardOnly(true);
-
-		for (const auto& Field : Common) Attribs.append(Field.Name);
-		for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
-
-		Query.prepare(QString(
-			"SELECT "
-				"EW_OBIEKTY.UID, %1 "
-			"FROM "
-				"EW_OBIEKTY "
-			"INNER JOIN "
-				"%2 EW_DATA "
-			"ON "
-				"EW_OBIEKTY.UID = EW_DATA.UIDO "
-			"WHERE "
-				"EW_OBIEKTY.STATUS = 0")
-					.arg(Attribs.join(", "))
-					.arg(i.key()));
-
-		if (Query.exec()) while (Query.next()) if (i.value().contains(Query.value(0).toInt()))
-		{
-			QMap<int, QVariant> Value; int i = 1;
-
-			for (int j = 0; j < Common.size(); ++j)
-			{
-				Value.insert(j, Query.value(i++));
-			}
-
-			for (int j = 0; j < Table.Headers.size(); ++j)
-			{
-				Value.insert(Table.Indexes[j], Query.value(i++));
-			}
-
-			if (!Value.isEmpty()) Values.append(Value);
-		}
+		Values.append(Data.values());
 
 		emit onUpdateProgress(++Step);
 	}
@@ -1547,15 +1103,11 @@ QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, Da
 template<class Type, class Field, template<class> class Container>
 Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer)
 {
-	static Type Dummy = Type();
 	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
-	return Dummy;
 }
 
 template<class Type, class Field, template<class> class Container>
 const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer)
 {
-	static Type Dummy = Type();
 	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
-	return Dummy;
 }

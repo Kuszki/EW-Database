@@ -678,3 +678,22 @@ void RecordModel::addItem(int ID, const QMap<int, QVariant>& Attributes)
 	}
 
 }
+
+void RecordModel::addItems(const QMap<int, QMap<int, QVariant>>& Items)
+{
+	if (Root) for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
+	{
+		appendItem(new RecordObject(i.key(), i.value()));
+	}
+	else
+	{
+		beginInsertRows(QModelIndex(), Objects.size() + 1, Objects.size() + Items.size());
+
+		for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
+		{
+			Objects.insert(i.key(), new RecordObject(i.key(), i.value()));
+		}
+
+		endInsertRows();
+	}
+}

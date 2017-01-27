@@ -192,6 +192,8 @@ class RecordModel : public QAbstractItemModel
 
 		void addItem(int ID, const QMap<int, QVariant>& Attributes);
 
+		void addItems(const QMap<int, QMap<int, QVariant>>& Items);
+
 	signals:
 
 		void onGroupComplete(void);

@@ -125,9 +125,7 @@ class MainWindow : public QMainWindow
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&, const QMap<int, QVariant>&);
 
-		void onJoinptlRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
-		void onJoinptpRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
-		void onJoinptcRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
+		void onJoinRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool, int);
 		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, int);
 
 		void onListRequest(RecordModel*, const QModelIndexList&);

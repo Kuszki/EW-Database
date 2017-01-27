@@ -74,9 +74,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
 
-	connect(this, &MainWindow::onJoinptlRequest, Driver, &DatabaseDriver::joinLines);
-	connect(this, &MainWindow::onJoinptpRequest, Driver, &DatabaseDriver::joinPoints);
-	connect(this, &MainWindow::onJoinptcRequest, Driver, &DatabaseDriver::joinCircles);
+	connect(this, &MainWindow::onJoinRequest, Driver, &DatabaseDriver::joinData);
 	connect(this, &MainWindow::onSplitRequest, Driver, &DatabaseDriver::splitData);
 
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
@@ -176,12 +174,7 @@ void MainWindow::connectData(const QString& Point, const QString& Line, bool Ove
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); ui->tipLabel->setText(tr("Joining data"));
-
-	if (Type == 0) emit onJoinptlRequest(Model, Selected, Point, Line, Override);
-	else if (Type == 1) emit onJoinptpRequest(Model, Selected, Point, Line, Override);
-	else if (Type == 2) emit onJoinptcRequest(Model, Selected, Point, Line, Override);
-	else { lockUi(DONE); ui->tipLabel->setText(tr("Unknown operation")); }
+	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line, Override, Type);
 }
 
 void MainWindow::disconnectData(const QString& Point, const QString& Line, int Type)
