@@ -100,7 +100,7 @@ class MainWindow : public QMainWindow
 		void updateValues(const QMap<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used);
 
-		void connectData(const QString& Point, const QString& Line, bool Override, bool Type);
+		void connectData(const QString& Point, const QString& Line, bool Override, int Type);
 		void disconnectData(const QString& Point, const QString& Line);
 
 		void loadData(RecordModel* Model);
@@ -114,7 +114,9 @@ class MainWindow : public QMainWindow
 		void joinData(void);
 
 		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
-		void prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines);
+		void prepareJoin(const QMap<QString, QString>& Points,
+					  const QMap<QString, QString>& Lines,
+					  const QMap<QString, QString>& Circles);
 
 	signals:
 
@@ -125,6 +127,7 @@ class MainWindow : public QMainWindow
 
 		void onJoinptlRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
 		void onJoinptpRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
+		void onJoinptcRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
 		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&);
 
 		void onListRequest(RecordModel*, const QModelIndexList&);

@@ -76,6 +76,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onJoinptlRequest, Driver, &DatabaseDriver::joinLines);
 	connect(this, &MainWindow::onJoinptpRequest, Driver, &DatabaseDriver::joinPoints);
+	connect(this, &MainWindow::onJoinptcRequest, Driver, &DatabaseDriver::joinCircles);
 	connect(this, &MainWindow::onSplitRequest, Driver, &DatabaseDriver::splitData);
 
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
@@ -170,15 +171,16 @@ void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 	lockUi(BUSY); emit onReloadRequest(Where, Used);
 }
 
-void MainWindow::connectData(const QString& Point, const QString& Line, bool Override, bool Type)
+void MainWindow::connectData(const QString& Point, const QString& Line, bool Override, int Type)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	lockUi(BUSY); ui->tipLabel->setText(tr("Joining data"));
 
-	if (Type) emit onJoinptlRequest(Model, Selected, Point, Line, Override);
-	else emit onJoinptpRequest(Model, Selected, Point, Line, Override);
+	if (Type == 0) emit onJoinptlRequest(Model, Selected, Point, Line, Override);
+	else if (Type == 1) emit onJoinptpRequest(Model, Selected, Point, Line, Override);
+	else emit onJoinptcRequest(Model, Selected, Point, Line, Override);
 }
 
 void MainWindow::disconnectData(const QString& Point, const QString& Line)
@@ -305,9 +307,9 @@ void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QLi
 	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
 }
 
-void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines)
+void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines, const QMap<QString, QString>& Circles)
 {
-	lockUi(DONE); JoinDialog* Join = new JoinDialog(Points, Lines, this); Join->open();
+	lockUi(DONE); JoinDialog* Join = new JoinDialog(Points, Lines, Circles, this); Join->open();
 
 	connect(Join, &JoinDialog::onCreateRequest, this, &MainWindow::connectData);
 	connect(Join, &JoinDialog::onDeleteRequest, this, &MainWindow::disconnectData);

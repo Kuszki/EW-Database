@@ -119,6 +119,7 @@ class DatabaseDriver : public QObject
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
 		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From);
 
+		void joinCircles(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Circle, bool Override);
 		void joinLines(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override);
 		void joinPoints(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override);
 
@@ -145,7 +146,7 @@ class DatabaseDriver : public QObject
 		void onDataSplit(int);
 
 		void onPresetReady(const QList<QMap<int, QVariant>>&, const QList<int>&);
-		void onJoinsReady(const QMap<QString, QString>&, const QMap<QString, QString>&);
+		void onJoinsReady(const QMap<QString, QString>&, const QMap<QString, QString>&, const QMap<QString, QString>&);
 
 };
 
