@@ -21,7 +21,7 @@
 #include "joindialog.hpp"
 #include "ui_joindialog.h"
 
-JoinDialog::JoinDialog(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines, QWidget* Parent)
+JoinDialog::JoinDialog(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines, const QMap<QString, QString>& Circles, QWidget* Parent)
 : QDialog(Parent), ui(new Ui::JoinDialog)
 {
 	ui->setupUi(this); typeIndexChanged(ui->Type->currentIndex());
@@ -40,6 +40,11 @@ JoinDialog::JoinDialog(const QMap<QString, QString>& Points, const QMap<QString,
 	{
 		ui->Line->addItem(i.value(), i.key());
 	}
+
+	for (auto i = Circles.constBegin(); i != Circles.constEnd(); ++i)
+	{
+		ui->Circle->addItem(i.value(), i.key());
+	}
 }
 
 JoinDialog::~JoinDialog(void)
@@ -49,7 +54,9 @@ JoinDialog::~JoinDialog(void)
 
 void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 {
-	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line : ui->Point;
+	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line :
+				   ui->Type->currentIndex() == 1 ? ui->Point :
+				   ui->Type->currentIndex() == 2 ? ui->Circle : nullptr;
 
 	if (Button == ui->buttonBox->button(QDialogButtonBox::Reset))
 	{
@@ -61,7 +68,7 @@ void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 		emit onCreateRequest(ui->Join->currentData().toString(),
 						 Join->currentData().toString(),
 						 ui->replaceCheck->isChecked(),
-						 ui->Type->currentIndex() == 0);
+						 ui->Type->currentIndex());
 	}
 
 	if (Button != ui->buttonBox->button(QDialogButtonBox::Close)) setEnabled(false);
@@ -71,11 +78,14 @@ void JoinDialog::typeIndexChanged(int Index)
 {
 	ui->Line->setVisible(Index == 0);
 	ui->Point->setVisible(Index == 1);
+	ui->Circle->setVisible(Index == 2);
 }
 
 void JoinDialog::targetNameChanged(void)
 {
-	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line : ui->Point;
+	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line :
+				   ui->Type->currentIndex() == 1 ? ui->Point :
+				   ui->Type->currentIndex() == 2 ? ui->Circle : nullptr;
 
 	const bool OK = !Join->currentText().isEmpty() &&
 				 !ui->Join->currentText().isEmpty() &&

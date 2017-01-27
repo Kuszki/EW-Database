@@ -14,7 +14,8 @@
    <string>Join items</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="insert-link"/>
+   <iconset theme="insert-link">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
@@ -29,6 +30,11 @@
        <string>Point to point</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Point to circle</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item row="1" column="0" colspan="2">
@@ -41,6 +47,9 @@
      </item>
      <item>
       <widget class="QComboBox" name="Line"/>
+     </item>
+     <item>
+      <widget class="QComboBox" name="Circle"/>
      </item>
     </layout>
    </item>

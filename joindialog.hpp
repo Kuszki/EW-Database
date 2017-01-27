@@ -44,6 +44,7 @@ class JoinDialog : public QDialog
 
 		explicit JoinDialog(const QMap<QString, QString>& Points,
 						const QMap<QString, QString>& Lines,
+						const QMap<QString, QString>& Circles,
 						QWidget* Parent = nullptr);
 		virtual ~JoinDialog(void) override;
 
@@ -61,7 +62,7 @@ class JoinDialog : public QDialog
 
 	signals:
 
-		void onCreateRequest(const QString&, const QString&, bool, bool);
+		void onCreateRequest(const QString&, const QString&, bool, int);
 		void onDeleteRequest(const QString&, const QString&);
 
 };
