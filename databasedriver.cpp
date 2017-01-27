@@ -582,13 +582,15 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	emit onDataRemove();
 }
 
-void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From)
+void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From, int Type)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataSplit(0); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
 	QList<int> Points; QMap<int, QList<int>> Objects; int Step = 0; int Count = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	Type = Type == 0 ? 2 : Type == 1 ? 4 : Type == 2 ? 3 : 0;
 
 	if (!Tasks.contains(Point) || !Tasks.contains(From)) { emit onDataJoin(0); return; }
 
@@ -632,9 +634,10 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
 		"WHERE "
 			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ IN (2, 3, 4) AND "
+			"EW_OBIEKTY.RODZAJ = :typ AND "
 			"EW_OBIEKTY.KOD = :kod");
 
+	Query.bindValue(":typ", Type);
 	Query.bindValue(":kod", From);
 
 	if (Query.exec()) while (Query.next())
@@ -820,7 +823,7 @@ void DatabaseDriver::joinCircles(RecordModel* Model, const QModelIndexList& Item
 
 			if (Query.value(5).toInt() == 4 && Circle)
 			{
-				const int ID = Query.value(1).toInt();
+				const int ID = Query.value(0).toInt();
 
 				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
 			}

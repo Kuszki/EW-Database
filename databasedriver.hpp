@@ -117,7 +117,7 @@ class DatabaseDriver : public QObject
 		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
 		void updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
-		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From);
+		void splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From, int Type);
 
 		void joinCircles(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Circle, bool Override);
 		void joinLines(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Line, bool Override);

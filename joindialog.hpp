@@ -63,7 +63,7 @@ class JoinDialog : public QDialog
 	signals:
 
 		void onCreateRequest(const QString&, const QString&, bool, int);
-		void onDeleteRequest(const QString&, const QString&);
+		void onDeleteRequest(const QString&, const QString&, int);
 
 };
 

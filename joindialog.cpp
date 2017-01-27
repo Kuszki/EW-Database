@@ -61,7 +61,8 @@ void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 	if (Button == ui->buttonBox->button(QDialogButtonBox::Reset))
 	{
 		emit onDeleteRequest(ui->Join->currentData().toString(),
-						 Join->currentData().toString());
+						 Join->currentData().toString(),
+						 ui->Type->currentIndex());
 	}
 	else if (Button == ui->buttonBox->button(QDialogButtonBox::Apply))
 	{

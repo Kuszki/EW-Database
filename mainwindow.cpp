@@ -180,15 +180,16 @@ void MainWindow::connectData(const QString& Point, const QString& Line, bool Ove
 
 	if (Type == 0) emit onJoinptlRequest(Model, Selected, Point, Line, Override);
 	else if (Type == 1) emit onJoinptpRequest(Model, Selected, Point, Line, Override);
-	else emit onJoinptcRequest(Model, Selected, Point, Line, Override);
+	else if (Type == 2) emit onJoinptcRequest(Model, Selected, Point, Line, Override);
+	else { lockUi(DONE); ui->tipLabel->setText(tr("Unknown operation")); }
 }
 
-void MainWindow::disconnectData(const QString& Point, const QString& Line)
+void MainWindow::disconnectData(const QString& Point, const QString& Line, int Type)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onSplitRequest(Model, Selected, Point, Line);
+	lockUi(BUSY); emit onSplitRequest(Model, Selected, Point, Line, Type);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)

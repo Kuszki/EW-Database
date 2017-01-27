@@ -101,7 +101,7 @@ class MainWindow : public QMainWindow
 		void refreshData(const QString& Where, const QList<int>& Used);
 
 		void connectData(const QString& Point, const QString& Line, bool Override, int Type);
-		void disconnectData(const QString& Point, const QString& Line);
+		void disconnectData(const QString& Point, const QString& Line, int Type);
 
 		void loadData(RecordModel* Model);
 
@@ -128,7 +128,7 @@ class MainWindow : public QMainWindow
 		void onJoinptlRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
 		void onJoinptpRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
 		void onJoinptcRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool);
-		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&);
+		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, int);
 
 		void onListRequest(RecordModel*, const QModelIndexList&);
 
