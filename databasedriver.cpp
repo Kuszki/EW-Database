@@ -49,8 +49,8 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
 		{ READONLY,	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
-		{ DATE,		"EW_OBIEKTY.DTU",		tr("Creation date")		},
-		{ DATE,		"EW_OBIEKTY.DTW",		tr("Modification date")	},
+		{ DATETIME,	"EW_OBIEKTY.DTU",		tr("Creation date")		},
+		{ DATETIME,	"EW_OBIEKTY.DTW",		tr("Modification date")	},
 		{ INTEGER,	"EW_OBIEKTY.OSOU",		tr("Created by")		},
 		{ INTEGER,	"EW_OBIEKTY.OSOW",		tr("Modified by")		}
 	};
@@ -433,9 +433,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 1);
-	const QList<int> Used = Values.keys(); int Step = 0;
+	const QList<int> Used = Values.keys(); int Step = 0; QStringList All;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QStringList All; QMap<int, QVariant> Copy = Values;
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
 	{
@@ -486,6 +485,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 					 .arg(i.key())
 					 .arg(Updates.join(", "))
 					 .arg(Index));
+			qDebug() << Query.lastQuery();
 		}
 
 		emit onUpdateProgress(++Step);

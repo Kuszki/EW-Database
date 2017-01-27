@@ -91,10 +91,11 @@ QVariant FilterWidget::getValue(void) const
 		}
 		else
 		{
-			const auto Text = W->currentText();;
+			const auto Text = W->currentText();
+			const int Index = W->findText(Text);
 
-			if (W->findText(Text) == -1) return Text;
-			else return W->currentData();
+			if (Index == -1) return Text;
+			else return W->itemData(Index);
 		}
 
 	}
@@ -109,6 +110,10 @@ QVariant FilterWidget::getValue(void) const
 	else if (auto W = dynamic_cast<QDoubleSpinBox*>(Widget))
 	{
 		return W->value();
+	}
+	else if (auto W = dynamic_cast<QDateEdit*>(Widget))
+	{
+		return W->date().toString("dd.MM.yyyy");
 	}
 	else if (auto W = dynamic_cast<QDateTimeEdit*>(Widget))
 	{
@@ -223,6 +228,14 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 		break;
 		case DatabaseDriver::DATE:
 		{
+			auto Date = new QDateEdit(this); Widget = Date;
+
+			Date->setDisplayFormat("dd.MM.yyyy");
+			Date->setCalendarPopup(true);
+		}
+		break;
+		case DatabaseDriver::DATETIME:
+		{
 			auto Date = new QDateTimeEdit(this); Widget = Date;
 
 			Date->setDisplayFormat("dd.MM.yyyy hh:mm:ss");
@@ -297,6 +310,10 @@ void FilterWidget::setValue(const QVariant& Value)
 	else if (auto W = dynamic_cast<QDoubleSpinBox*>(Widget))
 	{
 		W->setValue(Value.toDouble());
+	}
+	else if (auto W = dynamic_cast<QDateEdit*>(Widget))
+	{
+		W->setDate(Value.toDate());
 	}
 	else if (auto W = dynamic_cast<QDateTimeEdit*>(Widget))
 	{

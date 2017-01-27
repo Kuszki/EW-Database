@@ -48,7 +48,8 @@ class DatabaseDriver : public QObject
 		BOOL		= 7,
 		DOUBLE	= 8,
 		DATE		= 101,
-		MASK		= 102
+		MASK		= 102,
+		DATETIME	= 1000
 	};
 
 	public: struct FIELD
