@@ -510,7 +510,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 		const auto Data = loadData(Table, i.value(), QString(), true);
 
-		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) Model->setData(i.key(), i.value());
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) Model->setData(j.key(), j.value());
 
 		emit onUpdateProgress(++Step);
 	}
@@ -821,10 +821,13 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true);
 
-		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) Model->setData(i.key(), i.value());
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) Model->setData(j.key(), j.value());
 
 		emit onUpdateProgress(++Step);
 	}
+
+	emit onEndProgress();
+	emit onDataJoin(Count);
 }
 
 QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class)
