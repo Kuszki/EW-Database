@@ -284,7 +284,7 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 	emit onEndProgress(); return List;
 }
 
-QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QList<int>& Filter, const QString& Where, bool Dict)
+QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QList<int>& Filter, const QString& Where, bool Dict, bool View)
 {
 	if (!Database.isOpen()) return QMap<int, QMap<int, QVariant>>();
 
@@ -324,9 +324,13 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TA
 			Values.insert(j, GET(Query.value(i++), Common[j].Dict, Common[j].Type));
 		}
 
-		for (int j = 0; j < Table.Headers.size(); ++j)
+		if (View) for (int j = 0; j < Table.Headers.size(); ++j)
 		{
 			Values.insert(Table.Headers[j], GET(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
+		}
+		else for (int j = 0; j < Table.Indexes.size(); ++j)
+		{
+			Values.insert(Table.Indexes[j], GET(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
 		}
 
 		if (!Values.isEmpty()) List.insert(Index, Values);
@@ -432,7 +436,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
-		Model->addItems(loadData(Table, QList<int>(), Filter, true)); emit onUpdateProgress(++Step);
+		Model->addItems(loadData(Table, QList<int>(), Filter, true, true)); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -508,7 +512,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-		const auto Data = loadData(Table, i.value(), QString(), true);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
 		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) Model->setData(j.key(), j.value());
 
@@ -819,7 +823,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		const auto Data = loadData(Table, i.value(), QString(), true);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
 		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) Model->setData(j.key(), j.value());
 
@@ -990,7 +994,7 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-		const auto Data = loadData(Table, i.value(), QString(), true);
+		const auto Data = loadData(Table, i.value(), QString(), false, false);
 
 		Values.append(Data.values());
 

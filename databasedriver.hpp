@@ -114,7 +114,7 @@ class DatabaseDriver : public QObject
 		QMap<int, QMap<int, QVariant>> loadData(const TABLE& Table,
 										const QList<int>& Filter,
 										const QString& Where,
-										bool Dict = true);
+										bool Dict, bool View);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
