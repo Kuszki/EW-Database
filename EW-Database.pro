@@ -23,7 +23,7 @@ QT			+=	core gui widgets concurrent sql
 TARGET		=	EW-Database
 TEMPLATE		=	app
 
-CONFIG		+=	C++14
+CONFIG		+=	c++14
 
 SOURCES		+=	main.cpp \
 				mainwindow.cpp \
@@ -65,7 +65,7 @@ FORMS		+=	mainwindow.ui \
 				aboutdialog.ui \
 				updatedialog.ui \
 				updatewidget.ui \
-    joindialog.ui
+				joindialog.ui
 
 RESOURCES		+=	resources.qrc
 
