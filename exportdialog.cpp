@@ -31,6 +31,12 @@ ExportDialog::ExportDialog(QWidget *Parent, const QStringList& Headers)
 
 ExportDialog::~ExportDialog(void)
 {
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Columns");
+	Settings.setValue("saved", QStringList(getEnabledColumnsNames()));
+	Settings.endGroup();
+
 	delete ui;
 }
 
@@ -105,16 +111,25 @@ void ExportDialog::accept(void)
 
 void ExportDialog::setAttributes(const QStringList& Headers)
 {
-	while (auto I = ui->itemsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
+	while (auto I = ui->itemsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater(); Count = 0;
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Columns");
+	const auto Enabled = Settings.value("saved").toStringList();
+	Settings.endGroup();
 
 	for (const auto& Field : Headers)
 	{
 		QCheckBox* Check = new QCheckBox(Field, this);
+		const bool Checked = Enabled.contains(Field);
 
+		Check->setChecked(Checked);
 		ui->itemsLayout->addWidget(Check);
+		Count += Checked;
 
 		connect(Check, &QCheckBox::toggled, this, &ExportDialog::itemCheckChanged);
 	}
 
-	Count = 0; typeIndexChanged(ui->typeCombo->currentIndex());
+	typeIndexChanged(ui->typeCombo->currentIndex());
 }
