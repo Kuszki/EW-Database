@@ -18,32 +18,34 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COLUMNSDIALOG_HPP
-#define COLUMNSDIALOG_HPP
+#ifndef EXPORTDIALOG_HPP
+#define EXPORTDIALOG_HPP
 
-#include <QSettings>
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include <QCheckBox>
 #include <QDialog>
-#include <QHash>
 
 namespace Ui
 {
-	class ColumnsDialog;
+	class ExportDialog;
 }
 
-class ColumnsDialog : public QDialog
+class ExportDialog : public QDialog
 {
 
 		Q_OBJECT
 
 	private:
 
-		Ui::ColumnsDialog* ui;
+		Ui::ExportDialog* ui;
+
+		int Count = 0;
 
 	public:
 
-		explicit ColumnsDialog(QWidget* Parent = nullptr, const QStringList& Headers = QStringList(), int Common = 0);
-		virtual ~ColumnsDialog(void) override;
+		explicit ExportDialog(QWidget* Parent = nullptr, const QStringList& Headers = QStringList());
+		virtual ~ExportDialog(void) override;
 
 		QList<int> getEnabledColumnsIndexes(void);
 		QStringList getEnabledColumnsNames(void);
@@ -55,16 +57,20 @@ class ColumnsDialog : public QDialog
 
 		void searchTextEdited(const QString& Search);
 
+		void typeIndexChanged(int Type);
+
+		void itemCheckChanged(bool Checked);
+
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setAttributes(const QStringList& Headers, int Common = 0);
+		void setAttributes(const QStringList& Headers);
 
 	signals:
 
-		void onColumnsUpdate(const QList<int>&);
+		void onExportRequest(const QList<int>&, int);
 
 };
 
-#endif // COLUMNSDIALOG_HPP
+#endif // EXPORTDIALOG_HPP

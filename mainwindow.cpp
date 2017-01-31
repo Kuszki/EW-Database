@@ -161,6 +161,7 @@ void MainWindow::selectionChanged(void)
 
 	ui->actionDelete->setEnabled(Count > 0);
 	ui->actionEdit->setEnabled(Count > 0);
+	ui->actionSave->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
@@ -191,15 +192,18 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Groups = new GroupDialog(this, Headers);
 	Filter = new FilterDialog(this, Fields, Classes, Common);
 	Update = new UpdateDialog(this, Fields);
+	Export = new ExportDialog(this, Headers);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
 	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
+	connect(Export, &ExportDialog::onExportRequest, this, &MainWindow::saveData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
+	connect(ui->actionSave, &QAction::triggered, Export, &ExportDialog::open);
 
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 }
@@ -212,6 +216,7 @@ void MainWindow::databaseDisconnected(void)
 	Groups->deleteLater();
 	Filter->deleteLater();
 	Update->deleteLater();
+	Export->deleteLater();
 
 	lockUi(DISCONNECTED);
 }
@@ -315,6 +320,44 @@ void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QS
 	connect(Driver, &DatabaseDriver::onDataSplit, Join, &JoinDialog::completeActions);
 }
 
+void MainWindow::saveData(const QList<int>& Fields, int Type)
+{
+	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"));
+
+	if (!Path.isEmpty())
+	{
+		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+		auto Selection = ui->Data->selectionModel()->selectedRows();
+
+		QList<int> Enabled;
+
+		switch (Type)
+		{
+			case 0:
+				for (int i = 0; i < Model->columnCount(); ++i)
+				{
+					Enabled.append(i);
+				}
+			break;
+			case 1:
+				Enabled = Columns->getEnabledColumnsIndexes();
+			break;
+			case 2:
+				Enabled = Fields;
+			break;
+		}
+
+		if (Model->saveToFile(Path, Enabled, Selection))
+		{
+			ui->statusBar->showMessage(tr("Data saved to file %1").arg(Path));
+		}
+		else
+		{
+			ui->statusBar->showMessage(tr("Error while saving data"));
+		}
+	}
+}
+
 void MainWindow::lockUi(MainWindow::STATUS Status)
 {
 	switch (Status)
@@ -341,6 +384,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
+			ui->actionSave->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -351,6 +395,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
+			ui->actionSave->setEnabled(false);
 			ui->Data->setEnabled(false);
 		break;
 		case DONE:

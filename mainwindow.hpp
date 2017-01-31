@@ -22,7 +22,9 @@
 #define MAINWINDOW_HPP
 
 #include <QProgressBar>
+#include <QTextStream>
 #include <QMainWindow>
+#include <QFileDialog>
 #include <QThread>
 
 #include "databasedriver.hpp"
@@ -30,6 +32,7 @@
 #include "columnsdialog.hpp"
 #include "filterdialog.hpp"
 #include "updatedialog.hpp"
+#include "exportdialog.hpp"
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
 #include "joindialog.hpp"
@@ -65,6 +68,7 @@ class MainWindow : public QMainWindow
 		GroupDialog* Groups;
 		FilterDialog* Filter;
 		UpdateDialog* Update;
+		ExportDialog* Export;
 
 		QThread Thread;
 
@@ -103,6 +107,13 @@ class MainWindow : public QMainWindow
 		void connectData(const QString& Point, const QString& Line, bool Override, int Type);
 		void disconnectData(const QString& Point, const QString& Line, int Type);
 
+		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
+		void prepareJoin(const QMap<QString, QString>& Points,
+					  const QMap<QString, QString>& Lines,
+					  const QMap<QString, QString>& Circles);
+
+		void saveData(const QList<int>& Fields, int Type);
+
 		void loadData(RecordModel* Model);
 
 		void loginAttempt(void);
@@ -112,11 +123,6 @@ class MainWindow : public QMainWindow
 		void updateData(void);
 		void groupData(void);
 		void joinData(void);
-
-		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
-		void prepareJoin(const QMap<QString, QString>& Points,
-					  const QMap<QString, QString>& Lines,
-					  const QMap<QString, QString>& Circles);
 
 	signals:
 

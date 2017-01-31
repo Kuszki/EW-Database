@@ -448,6 +448,38 @@ QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 	return List;
 }
 
+bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List) const
+{
+	for (const auto& Index : Columns) if (Header.size() <= Index) return false;
+
+	QFile File(Path); if (!File.open(QFile::WriteOnly | QFile::Text)) return false;
+
+	QTextStream Stream(&File);
+
+	for (const auto& ID : Columns)
+	{
+		Stream << Header[ID];
+
+		if (ID != Columns.last()) Stream << '\t';
+		else Stream << '\n';
+	}
+
+	for (const auto& Index : List)
+	{
+		RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+		for (const auto& ID : Columns)
+		{
+			Stream << Object->getField(ID).toString();
+
+			if (ID != Columns.last()) Stream << '\t';
+			else Stream << '\n';
+		}
+	}
+
+	return true;
+}
+
 bool RecordModel::removeItem(const QModelIndex& Index)
 {
 	if (!Index.isValid()) return false;

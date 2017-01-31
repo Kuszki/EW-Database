@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ExportDialog</class>
+ <widget class="QDialog" name="ExportDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="4">
+    <widget class="QComboBox" name="typeCombo">
+     <item>
+      <property name="text">
+       <string>All</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Visible</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Selected</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="QScrollArea" name="itemsScrool">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="itemsAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>582</width>
+        <height>226</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="itemsLayout"/>
+     </widget>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLineEdit" name="classSearch">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>250</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="placeholderText">
+      <string>Search</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QToolButton" name="selectButton">
+     <property name="text">
+      <string>+</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-add">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextOnly</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QToolButton" name="unselectButton">
+     <property name="text">
+      <string>-</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-remove">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextOnly</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ExportDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>574</x>
+     <y>287</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>578</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ExportDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>512</x>
+     <y>288</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>512</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>selectButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ExportDialog</receiver>
+   <slot>selectButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>273</x>
+     <y>285</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>280</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>unselectButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ExportDialog</receiver>
+   <slot>unselectButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>305</x>
+     <y>286</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>308</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>classSearch</sender>
+   <signal>textEdited(QString)</signal>
+   <receiver>ExportDialog</receiver>
+   <slot>searchTextEdited(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>172</x>
+     <y>289</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>206</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>typeCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>ExportDialog</receiver>
+   <slot>typeIndexChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>561</x>
+     <y>18</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>21</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>selectButtonClicked()</slot>
+  <slot>unselectButtonClicked()</slot>
+  <slot>searchTextEdited(QString)</slot>
+  <slot>typeIndexChanged(int)</slot>
+ </slots>
+</ui>
