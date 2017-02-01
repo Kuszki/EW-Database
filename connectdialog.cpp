@@ -99,10 +99,16 @@ void ConnectDialog::connected(bool OK)
 	QStringList Path = Settings.value("path").toStringList();
 
 	if (!Server.contains(ui->Server->currentText()))
+	{
 		Settings.setValue("server", Server << ui->Server->currentText());
+		ui->Server->addItem(ui->Server->currentText());
+	}
 
 	if (!Path.contains(ui->Database->currentText()))
+	{
 		Settings.setValue("path", Path << ui->Database->currentText());
+		ui->Database->addItem(ui->Database->currentText());
+	}
 
 	Settings.endGroup();
 
