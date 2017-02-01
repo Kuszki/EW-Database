@@ -30,14 +30,19 @@ ConnectDialog::ConnectDialog(QWidget *Parent)
 
 	QSettings Settings("EW-Database");
 
+	Settings.beginGroup("History");
+	ui->Server->addItems(Settings.value("server").toStringList());
+	ui->Database->addItems(Settings.value("path").toStringList());
+	Settings.endGroup();
+
 	Settings.beginGroup("Database");
-	ui->Server->setText(Settings.value("server").toString());
-	ui->Database->setText(Settings.value("path").toString());
+	ui->Server->setCurrentText(Settings.value("server").toString());
+	ui->Database->setCurrentText(Settings.value("path").toString());
 	ui->User->setText(Settings.value("user").toString());
 	Settings.endGroup();
 
-	if (!ui->Server->text().isEmpty() &&
-	    !ui->Database->text().isEmpty() &&
+	if (!ui->Server->currentText().isEmpty() &&
+	    !ui->Database->currentText().isEmpty() &&
 	    !ui->User->text().isEmpty())
 	{
 		ui->Password->setFocus();
@@ -52,8 +57,8 @@ ConnectDialog::~ConnectDialog(void)
 void ConnectDialog::edited(void)
 {
 	ui->buttonBox->button(QDialogButtonBox::Open)->setEnabled(
-				!ui->Server->text().isEmpty() &&
-				!ui->Database->text().isEmpty() &&
+				!ui->Server->currentText().isEmpty() &&
+				!ui->Database->currentText().isEmpty() &&
 				!ui->User->text().isEmpty() &&
 				!ui->Password->text().isEmpty());
 }
@@ -62,7 +67,7 @@ void ConnectDialog::accept(void)
 {
 	setEnabled(false);
 
-	emit onAccept(ui->Server->text(), ui->Database->text(),
+	emit onAccept(ui->Server->currentText(), ui->Database->currentText(),
 			    ui->User->text(), ui->Password->text());
 }
 
@@ -83,9 +88,22 @@ void ConnectDialog::connected(bool OK)
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
-	Settings.setValue("server", ui->Server->text());
-	Settings.setValue("path", ui->Database->text());
+	Settings.setValue("server", ui->Server->currentText());
+	Settings.setValue("path", ui->Database->currentText());
 	Settings.setValue("user", ui->User->text());
+	Settings.endGroup();
+
+	Settings.beginGroup("History");
+
+	QStringList Server = Settings.value("server").toStringList();
+	QStringList Path = Settings.value("path").toStringList();
+
+	if (!Server.contains(ui->Server->currentText()))
+		Settings.setValue("server", Server << ui->Server->currentText());
+
+	if (!Path.contains(ui->Database->currentText()))
+		Settings.setValue("path", Path << ui->Database->currentText());
+
 	Settings.endGroup();
 
 	ui->Password->clear(); setEnabled(true);

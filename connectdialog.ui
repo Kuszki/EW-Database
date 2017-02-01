@@ -23,9 +23,6 @@
      <property name="text">
       <string>Database</string>
      </property>
-     <property name="buddy">
-      <cstring>Database</cstring>
-     </property>
     </widget>
    </item>
    <item row="3" column="0">
@@ -86,22 +83,25 @@
      <property name="text">
       <string>Server</string>
      </property>
-     <property name="buddy">
-      <cstring>Server</cstring>
-     </property>
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QLineEdit" name="Server"/>
+    <widget class="QComboBox" name="Server">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QLineEdit" name="Database"/>
+    <widget class="QComboBox" name="Database">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
  <tabstops>
-  <tabstop>Server</tabstop>
-  <tabstop>Database</tabstop>
   <tabstop>User</tabstop>
   <tabstop>Password</tabstop>
  </tabstops>
@@ -168,38 +168,6 @@
     <hint type="destinationlabel">
      <x>521</x>
      <y>62</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Server</sender>
-   <signal>textChanged(QString)</signal>
-   <receiver>ConnectDialog</receiver>
-   <slot>edited()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>229</x>
-     <y>30</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>743</x>
-     <y>21</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Database</sender>
-   <signal>textChanged(QString)</signal>
-   <receiver>ConnectDialog</receiver>
-   <slot>edited()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>377</x>
-     <y>56</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>742</x>
-     <y>48</y>
     </hint>
    </hints>
   </connection>
