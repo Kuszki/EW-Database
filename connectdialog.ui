@@ -114,8 +114,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>257</x>
-     <y>290</y>
+     <x>266</x>
+     <y>190</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -130,8 +130,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>325</x>
-     <y>290</y>
+     <x>334</x>
+     <y>190</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -147,7 +147,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>95</y>
+     <y>86</y>
     </hint>
     <hint type="destinationlabel">
      <x>580</x>
@@ -163,11 +163,43 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>126</y>
+     <y>114</y>
     </hint>
     <hint type="destinationlabel">
      <x>521</x>
      <y>62</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Server</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>ConnectDialog</receiver>
+   <slot>edited()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>310</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>544</x>
+     <y>16</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Database</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>ConnectDialog</receiver>
+   <slot>edited()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>334</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>614</x>
+     <y>61</y>
     </hint>
    </hints>
   </connection>

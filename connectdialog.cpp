@@ -112,7 +112,5 @@ void ConnectDialog::connected(bool OK)
 
 	Settings.endGroup();
 
-	ui->Password->clear(); setEnabled(true);
-
-	QDialog::accept();
+	ui->Password->clear(); setEnabled(true); QDialog::accept();
 }
