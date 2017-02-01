@@ -83,13 +83,17 @@
      <string>Data</string>
     </property>
     <addaction name="actionReload"/>
-    <addaction name="actionEdit"/>
     <addaction name="actionDelete"/>
+    <addaction name="actionEdit"/>
+    <addaction name="actionSave"/>
     <addaction name="actionJoin"/>
     <addaction name="separator"/>
     <addaction name="actionView"/>
     <addaction name="actionFilter"/>
     <addaction name="actionGroup"/>
+    <addaction name="separator"/>
+    <addaction name="actionRestore"/>
+    <addaction name="actionHistory"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -121,9 +125,13 @@
    <addaction name="actionDisconnect"/>
    <addaction name="separator"/>
    <addaction name="actionReload"/>
-   <addaction name="actionEdit"/>
    <addaction name="actionDelete"/>
+   <addaction name="actionEdit"/>
+   <addaction name="actionSave"/>
    <addaction name="actionJoin"/>
+   <addaction name="separator"/>
+   <addaction name="actionRestore"/>
+   <addaction name="actionHistory"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
    <addaction name="actionFilter"/>
@@ -269,6 +277,42 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+J</string>
+   </property>
+  </action>
+  <action name="actionRestore">
+   <property name="icon">
+    <iconset theme="edit-undo">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Restore job</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionHistory">
+   <property name="icon">
+    <iconset theme="edit-cut">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Remove history</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset theme="document-save">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>

@@ -60,9 +60,6 @@ QStringList GroupDialog::getEnabledGroupsNames(void)
 
 void GroupDialog::searchEdited(const QString& Search)
 {
-	for (int i = 0; i < ui->Enabled->count(); ++i)
-		ui->Enabled->setRowHidden(i, !ui->Enabled->item(i)->text().contains(Search, Qt::CaseInsensitive));
-
 	for (int i = 0; i < ui->Disabled->count(); ++i)
 		ui->Disabled->setRowHidden(i, !ui->Disabled->item(i)->text().contains(Search, Qt::CaseInsensitive));
 }
