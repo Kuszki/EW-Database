@@ -106,15 +106,21 @@ class MainWindow : public QMainWindow
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
 		void updateValues(const QMap<int, QVariant>& Values);
-		void refreshData(const QString& Where, const QList<int>& Used);
+		void refreshData(const QString& Where,
+					  const QList<int>& Used);
 
 		void updateRow(int Index, const QMap<int, QVariant>& Data);
 		void removeRow(const QModelIndex& Index);
 
-		void connectData(const QString& Point, const QString& Line, bool Override, int Type);
-		void disconnectData(const QString& Point, const QString& Line, int Type);
+		void connectData(const QString& Point,
+					  const QString& Line,
+					  bool Override, int Type);
+		void disconnectData(const QString& Point,
+						const QString& Line,
+						int Type);
 
-		void prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used);
+		void prepareEdit(const QList<QMap<int, QVariant>>& Values,
+					  const QList<int>& Used);
 		void prepareJoin(const QMap<QString, QString>& Points,
 					  const QMap<QString, QString>& Lines,
 					  const QMap<QString, QString>& Circles);
@@ -138,10 +144,13 @@ class MainWindow : public QMainWindow
 		void onReloadRequest(const QString&, const QList<int>&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
-		void onUpdateRequest(RecordModel*, const QModelIndexList&, const QMap<int, QVariant>&);
+		void onUpdateRequest(RecordModel*, const QModelIndexList&,
+						 const QMap<int, QVariant>&);
 
-		void onJoinRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, bool, int);
-		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, int);
+		void onJoinRequest(RecordModel*, const QModelIndexList&,
+					    const QString&, const QString&, bool, int);
+		void onSplitRequest(RecordModel*, const QModelIndexList&,
+						const QString&, const QString&, int);
 
 		void onListRequest(RecordModel*, const QModelIndexList&);
 

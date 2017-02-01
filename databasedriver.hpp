@@ -160,7 +160,8 @@ class DatabaseDriver : public QObject
 
 		void onError(const QString&);
 
-		void onConnect(const QList<FIELD>&, const QList<TABLE>&, const QStringList&, unsigned);
+		void onConnect(const QList<FIELD>&, const QList<TABLE>&,
+					const QStringList&, unsigned);
 		void onDisconnect(void);
 		void onLogin(bool);
 
@@ -175,8 +176,11 @@ class DatabaseDriver : public QObject
 		void onDataJoin(int);
 		void onDataSplit(int);
 
-		void onPresetReady(const QList<QMap<int, QVariant>>&, const QList<int>&);
-		void onJoinsReady(const QMap<QString, QString>&, const QMap<QString, QString>&, const QMap<QString, QString>&);
+		void onPresetReady(const QList<QMap<int, QVariant>>&,
+					    const QList<int>&);
+		void onJoinsReady(const QMap<QString, QString>&,
+					   const QMap<QString, QString>&,
+					   const QMap<QString, QString>&);
 
 		void onRowUpdate(int, const QMap<int, QVariant>&);
 		void onRowRemove(const QModelIndex&);

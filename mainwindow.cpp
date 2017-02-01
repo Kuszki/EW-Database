@@ -30,11 +30,11 @@ MainWindow::MainWindow(QWidget* Parent)
 	Driver = new DatabaseDriver(nullptr);
 	About = new AboutDialog(this);
 
-	ui->statusBar->addPermanentWidget(Progress);
-
 	Progress->hide();
 	Driver->moveToThread(&Thread);
 	Thread.start();
+
+	ui->statusBar->addPermanentWidget(Progress);
 
 	QSettings Settings("EW-Database");
 
@@ -111,7 +111,7 @@ MainWindow::~MainWindow(void)
 
 void MainWindow::connectActionClicked(void)
 {
-	ConnectDialog* Dialog = new ConnectDialog(this);
+	ConnectDialog* Dialog = new ConnectDialog(this); Dialog->open();
 
 	connect(Dialog, &ConnectDialog::onAccept, this, &MainWindow::loginAttempt);
 
@@ -121,8 +121,6 @@ void MainWindow::connectActionClicked(void)
 
 	connect(Driver, &DatabaseDriver::onLogin, Dialog, &ConnectDialog::connected);
 	connect(Driver, &DatabaseDriver::onError, Dialog, &ConnectDialog::refused);
-
-	Dialog->open();
 }
 
 void MainWindow::deleteActionClicked(void)
@@ -478,6 +476,7 @@ void MainWindow::updateView(RecordModel* Model)
 	Selection->deleteLater();
 	Old->deleteLater();
 
-	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged,
+	connect(ui->Data->selectionModel(),
+		   &QItemSelectionModel::selectionChanged,
 		   this, &MainWindow::selectionChanged);
 }
