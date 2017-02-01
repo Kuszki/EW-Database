@@ -1118,3 +1118,9 @@ const Type& getItemByField(const Container<Type>& Items, const Field& Data, Fiel
 {
 	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
 }
+
+// restore KERG query
+
+//UPDATE EW_OBIEKTY O
+//SET O.OPERAT = (SELECT first 1 U.OPERAT from EW_OBIEKTY U WHERE U.ID = O.ID ORDER BY U.DTW ASCENDING)
+//WHERE O.UID = 16239

@@ -519,6 +519,11 @@ int RecordModel::totalCount(void) const
 	return Objects.count();
 }
 
+bool RecordModel::isGrouped(void) const
+{
+	return Root;
+}
+
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
 {
 	if (!Parent) Parent = new GroupObject();

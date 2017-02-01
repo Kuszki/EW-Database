@@ -172,6 +172,8 @@ class RecordModel : public QAbstractItemModel
 
 		int totalCount(void) const;
 
+		bool isGrouped(void) const;
+
 	protected:
 
 		GroupObject* createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From,
