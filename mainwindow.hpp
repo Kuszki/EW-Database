@@ -76,6 +76,8 @@ class MainWindow : public QMainWindow
 
 		void lockUi(STATUS Status);
 
+		void updateView(RecordModel* Model);
+
 	public:
 
 		explicit MainWindow(QWidget* Parent = nullptr);
@@ -104,6 +106,9 @@ class MainWindow : public QMainWindow
 		void updateValues(const QMap<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used);
 
+		void updateRow(int Index, const QMap<int, QVariant>& Data);
+		void removeRow(const QModelIndex& Index);
+
 		void connectData(const QString& Point, const QString& Line, bool Override, int Type);
 		void disconnectData(const QString& Point, const QString& Line, int Type);
 
@@ -115,14 +120,13 @@ class MainWindow : public QMainWindow
 		void saveData(const QList<int>& Fields, int Type);
 
 		void loadData(RecordModel* Model);
+		void removeData(RecordModel* Model);
+		void updateData(RecordModel* Model);
 
-		void loginAttempt(void);
-
-		void reloadData(void);
-		void removeData(void);
-		void updateData(void);
 		void groupData(void);
 		void joinData(void);
+
+		void loginAttempt(void);
 
 	signals:
 
@@ -137,8 +141,6 @@ class MainWindow : public QMainWindow
 		void onListRequest(RecordModel*, const QModelIndexList&);
 
 		void onGroupRequest(const QList<int>&);
-
-		void onDeleteRequest(void);
 
 };
 

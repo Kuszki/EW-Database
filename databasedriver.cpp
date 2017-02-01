@@ -445,7 +445,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
 
 void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(Model); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 1);
 	const QList<int> Used = Values.keys(); int Step = 0; QStringList All;
@@ -514,18 +514,18 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) Model->setData(j.key(), j.value());
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
 
 		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
-	emit onDataUpdate();
+	emit onDataUpdate(Model);
 }
 
 void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(); return; }
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(Model); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
@@ -556,10 +556,10 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 		emit onUpdateProgress(++Step);
 	}
 
-	for (const auto Item : Items) Model->removeItem(Item);
+	for (const auto Item : Items) emit onRowRemove(Item);
 
 	emit onEndProgress();
-	emit onDataRemove();
+	emit onDataRemove(Model);
 }
 
 void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From, int Type)
@@ -825,7 +825,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) Model->setData(j.key(), j.value());
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
 
 		emit onUpdateProgress(++Step);
 	}

@@ -166,13 +166,16 @@ class DatabaseDriver : public QObject
 		void onEndProgress(void);
 
 		void onDataLoad(RecordModel*);
-		void onDataRemove(void);
-		void onDataUpdate(void);
+		void onDataRemove(RecordModel*);
+		void onDataUpdate(RecordModel*);
 		void onDataJoin(int);
 		void onDataSplit(int);
 
 		void onPresetReady(const QList<QMap<int, QVariant>>&, const QList<int>&);
 		void onJoinsReady(const QMap<QString, QString>&, const QMap<QString, QString>&, const QMap<QString, QString>&);
+
+		void onRowUpdate(int, const QMap<int, QVariant>&);
+		void onRowRemove(const QModelIndex&);
 
 };
 

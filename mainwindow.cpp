@@ -65,6 +65,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataJoin, this, &MainWindow::joinData);
 	connect(Driver, &DatabaseDriver::onDataSplit, this, &MainWindow::joinData);
 
+	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
+	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
+
 	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
 	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
@@ -170,6 +173,16 @@ void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
 	lockUi(BUSY); emit onReloadRequest(Where, Used);
 }
 
+void MainWindow::updateRow(int Index, const QMap<int, QVariant>& Data)
+{
+	dynamic_cast<RecordModel*>(ui->Data->model())->setData(Index, Data);
+}
+
+void MainWindow::removeRow(const QModelIndex& Index)
+{
+	dynamic_cast<RecordModel*>(ui->Data->model())->removeItem(Index);
+}
+
 void MainWindow::connectData(const QString& Point, const QString& Line, bool Override, int Type)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
@@ -258,35 +271,22 @@ void MainWindow::updateValues(const QMap<int, QVariant>& Values)
 
 void MainWindow::loadData(RecordModel* Model)
 {
-	ui->Data->setModel(Model); updateColumns(Columns->getEnabledColumnsIndexes());
+	updateView(Model); updateColumns(Columns->getEnabledColumnsIndexes());
 
-	const auto Groupby = Groups->getEnabledGroupsIndexes(); emit onDeleteRequest();
+	const auto Groupby = Groups->getEnabledGroupsIndexes();
 
-	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged, this, &MainWindow::selectionChanged);
-	connect(this, &MainWindow::onDeleteRequest, Model, &RecordModel::deleteLater, Qt::DirectConnection);
 	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupByInt);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::groupData);
 
-	if (Groupby.isEmpty()) lockUi(DONE);
-	else updateGroups(Groupby);
+	if (Groupby.isEmpty()) lockUi(DONE); else updateGroups(Groupby);
 }
 
-void MainWindow::loginAttempt(void)
-{
-	ui->actionConnect->setEnabled(false);
-}
-
-void MainWindow::reloadData(void)
-{
-	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated, to reenable filter use reload action"));
-}
-
-void MainWindow::removeData(void)
+void MainWindow::removeData(RecordModel* Model)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data removed"));
 }
 
-void MainWindow::updateData(void)
+void MainWindow::updateData(RecordModel* Model)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
 }
@@ -299,6 +299,11 @@ void MainWindow::groupData(void)
 void MainWindow::joinData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
+}
+
+void MainWindow::loginAttempt(void)
+{
+	ui->actionConnect->setEnabled(false);
 }
 
 void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
@@ -412,4 +417,18 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			selectionChanged();
 		break;
 	}
+}
+
+void MainWindow::updateView(RecordModel* Model)
+{
+	auto Selection = ui->Data->selectionModel();
+	auto Old = ui->Data->model();
+
+	ui->Data->setModel(Model);
+
+	Selection->deleteLater();
+	Old->deleteLater();
+
+	connect(ui->Data->selectionModel(), &QItemSelectionModel::selectionChanged,
+		   this, &MainWindow::selectionChanged);
 }

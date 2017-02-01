@@ -499,6 +499,8 @@ bool RecordModel::removeItem(const QModelIndex& Index)
 		Objects.removeOne(Object);
 
 		endRemoveRows();
+
+		removeEmpty(Parent);
 	}
 	else
 	{
