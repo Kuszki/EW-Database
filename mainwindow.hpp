@@ -90,6 +90,8 @@ class MainWindow : public QMainWindow
 		void refreshActionClicked(void);
 		void editActionClicked(void);
 		void joinActionClicked(void);
+		void restoreActionClicked(void);
+		void historyActionClicked(void);
 
 		void selectionChanged(void);
 
@@ -126,6 +128,9 @@ class MainWindow : public QMainWindow
 		void groupData(void);
 		void joinData(void);
 
+		void restoreJob(int Count);
+		void removeHistory(int Count);
+
 		void loginAttempt(void);
 
 	signals:
@@ -139,6 +144,9 @@ class MainWindow : public QMainWindow
 		void onSplitRequest(RecordModel*, const QModelIndexList&, const QString&, const QString&, int);
 
 		void onListRequest(RecordModel*, const QModelIndexList&);
+
+		void onRestoreRequest(RecordModel*, const QModelIndexList&);
+		void onHistoryRequest(RecordModel*, const QModelIndexList&);
 
 		void onGroupRequest(const QList<int>&);
 

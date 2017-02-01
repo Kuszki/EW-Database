@@ -46,6 +46,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
 	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
 	connect(ui->actionJoin, &QAction::triggered, this, &MainWindow::joinActionClicked);
+	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
+	connect(ui->actionHistory, &QAction::triggered, this, &MainWindow::historyActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -64,6 +66,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::prepareJoin);
 	connect(Driver, &DatabaseDriver::onDataJoin, this, &MainWindow::joinData);
 	connect(Driver, &DatabaseDriver::onDataSplit, this, &MainWindow::joinData);
+	connect(Driver, &DatabaseDriver::onJobsRestore, this, &MainWindow::restoreJob);
+	connect(Driver, &DatabaseDriver::onHistoryRemove, this, &MainWindow::removeHistory);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -82,6 +86,9 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
 	connect(this, &MainWindow::onListRequest, Driver, &DatabaseDriver::getJoins);
+
+	connect(this, &MainWindow::onRestoreRequest, Driver, &DatabaseDriver::restoreJob);
+	connect(this, &MainWindow::onHistoryRequest, Driver, &DatabaseDriver::removeHistory);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -154,6 +161,32 @@ void MainWindow::joinActionClicked(void)
 	lockUi(BUSY); emit onListRequest(Model, Selected);
 }
 
+void MainWindow::restoreActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (QMessageBox::question(this, tr("Restore %n object(s) oryginal job name", nullptr, Selected.count()),
+						 tr("Are you sure to restore selected items first job name?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+		lockUi(BUSY); emit onRestoreRequest(Model, Selected);
+	}
+}
+
+void MainWindow::historyActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (QMessageBox::question(this, tr("Delete %n object(s) history", nullptr, Selected.count()),
+						 tr("Are you sure to delete selected items history?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+		lockUi(BUSY); emit onHistoryRequest(Model, Selected);
+	}
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -165,6 +198,8 @@ void MainWindow::selectionChanged(void)
 	ui->actionDelete->setEnabled(Count > 0);
 	ui->actionEdit->setEnabled(Count > 0);
 	ui->actionSave->setEnabled(Count > 0);
+	ui->actionRestore->setEnabled(Count > 0);
+	ui->actionHistory->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
@@ -301,6 +336,16 @@ void MainWindow::joinData(void)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
 }
 
+void MainWindow::restoreJob(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Restored %n job(s)", nullptr, Count));
+}
+
+void MainWindow::removeHistory(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n historic object(s)", nullptr, Count));
+}
+
 void MainWindow::loginAttempt(void)
 {
 	ui->actionConnect->setEnabled(false);
@@ -390,6 +435,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionDelete->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
 			ui->actionSave->setEnabled(false);
+			ui->actionRestore->setEnabled(false);
+			ui->actionHistory->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -401,6 +448,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionDelete->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
 			ui->actionSave->setEnabled(false);
+			ui->actionRestore->setEnabled(false);
+			ui->actionHistory->setEnabled(false);
 			ui->Data->setEnabled(false);
 		break;
 		case DONE:

@@ -834,6 +834,130 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	emit onDataJoin(Count);
 }
 
+void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJobsRestore(0); return; }
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; int Count = 0;
+
+	emit onBeginProgress(tr("Restoring job name"));
+	emit onSetupProgress(0, Tasks.first().size());
+
+	for (const auto& ID : Tasks.first())
+	{
+		int Now = -1; int Last = -1; emit onUpdateProgress(++Step);
+
+		Query.prepare(QString(
+			"SELECT "
+				"O.OPERAT "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.UID = '%1'")
+				    .arg(ID));
+
+		if (Query.exec() && Query.next()) Now = Query.value(0).toInt(); else continue;
+
+		Query.prepare(QString(
+			"SELECT FIRST 1 "
+				"O.OPERAT "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.STATUS = 3 AND O.ID = ("
+					"SELECT U.ID FROM EW_OBIEKTY U WHERE U.UID = '%1'"
+				") "
+			"ORDER BY O.DTR ASCENDING")
+				    .arg(ID));
+
+		if (Query.exec() && Query.next()) Last = Query.value(0).toInt(); else continue;
+
+		if (Last == Now || Last == -1 || Now == -1) continue; else ++Count;
+
+		Query.exec(QString(
+			"UPDATE "
+				"EW_OBIEKTY O "
+			"SET "
+				"O.OPERAT = '%1'"
+			"WHERE "
+				"O.UID = '%2'")
+				 .arg(Last)
+				 .arg(ID));
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size());
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onJobsRestore(Count);
+}
+
+void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& Items)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onHistoryRemove(0); return; }
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 1);
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; int Count;
+
+	emit onBeginProgress(tr("Removing history"));
+	emit onSetupProgress(0, Tasks.first().size());
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i) for (const auto& ID : i.value())
+	{
+		QList<int> Indexes;
+
+		Query.prepare(QString(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.ID = ("
+					"SELECT U.ID from EW_OBIEKTY U WHERE U.UID = '%1'"
+				") AND O.STATUS = 3")
+				    .arg(ID));
+
+		if (Query.exec()) while (Query.next()) Indexes.append(Query.value(0).toInt());
+
+		for (const auto& Index : Indexes)
+		{
+			Query.exec(QString(
+				"DELETE FROM "
+					"EW_OBIEKTY "
+				"WHERE "
+					"UID = '%1'")
+					 .arg(Index));
+
+			Query.exec(QString(
+				"DELETE FROM "
+					"%1 "
+				"WHERE "
+					"UID = '%2'")
+					 .arg(i.key())
+					 .arg(Index));
+		}
+
+		Count += Indexes.count();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onHistoryRemove(Count);
+}
+
 QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class)
 {
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
@@ -1118,9 +1242,3 @@ const Type& getItemByField(const Container<Type>& Items, const Field& Data, Fiel
 {
 	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
 }
-
-// restore KERG query
-
-//UPDATE EW_OBIEKTY O
-//SET O.OPERAT = (SELECT first 1 U.OPERAT from EW_OBIEKTY U WHERE U.ID = O.ID ORDER BY U.DTW ASCENDING)
-//WHERE O.UID = 16239

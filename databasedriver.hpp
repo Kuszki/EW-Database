@@ -149,6 +149,10 @@ class DatabaseDriver : public QObject
 				    const QString& Point, const QString& Join,
 				    bool Override, int Type);
 
+		void restoreJob(RecordModel* Model, const QModelIndexList& Items);
+
+		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
+
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
 
@@ -176,6 +180,9 @@ class DatabaseDriver : public QObject
 
 		void onRowUpdate(int, const QMap<int, QVariant>&);
 		void onRowRemove(const QModelIndex&);
+
+		void onJobsRestore(int);
+		void onHistoryRemove(int);
 
 };
 
