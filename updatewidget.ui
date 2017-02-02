@@ -44,6 +44,9 @@
    </item>
    <item>
     <widget class="QToolButton" name="nullButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
       <string>NULL</string>
      </property>
@@ -110,7 +113,7 @@
    <sender>nullButton</sender>
    <signal>toggled(bool)</signal>
    <receiver>UpdateWidget</receiver>
-   <slot>nullClicked(bool)</slot>
+   <slot>toggleWidget()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>322</x>
@@ -138,9 +141,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Field</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>UpdateWidget</receiver>
+   <slot>toggleWidget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>93</x>
+     <y>17</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>111</x>
+     <y>183</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>undoClicked()</slot>
-  <slot>nullClicked(bool)</slot>
+  <slot>toggleWidget()</slot>
  </slots>
 </ui>

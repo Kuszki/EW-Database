@@ -101,9 +101,9 @@ int UpdateWidget::getIndex(void) const
 	return Index;
 }
 
-void UpdateWidget::nullClicked(bool Toggled)
+void UpdateWidget::toggleWidget(void)
 {
-	Widget->setEnabled(!Toggled);
+	if (Widget) Widget->setEnabled(!ui->nullButton->isChecked() && ui->Field->isChecked());
 }
 
 void UpdateWidget::undoClicked(void)
@@ -123,8 +123,7 @@ void UpdateWidget::resetIndex(void)
 
 void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 {
-	ui->nullButton->setEnabled(ui->Field->isChecked()); Index = ID;
-	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name);
+	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
 
 	if (Widget) Widget->deleteLater();
 
@@ -223,11 +222,9 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 	if (Widget)
 	{
 		Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-		Widget->setEnabled(ui->Field->isChecked());
+		Widget->setEnabled(!ui->nullButton->isChecked() && ui->Field->isChecked());
 
 		ui->horizontalLayout->insertWidget(1, Widget);
-
-		connect(ui->Field, &QCheckBox::toggled, Widget, &QWidget::setEnabled);
 	}
 
 	setObjectName(Field.Name);
