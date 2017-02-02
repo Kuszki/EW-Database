@@ -36,7 +36,10 @@ UpdateWidget::~UpdateWidget(void)
 
 QString UpdateWidget::getAssigment(void) const
 {
-	return QString("%1 = '%2'").arg(objectName(), getValue().toString());
+	const QVariant Value = getValue();
+
+	if (Value.isNull()) return QString("%1 = NULL").arg(objectName());
+	else return QString("%1 = '%2'").arg(objectName(), Value.toString());
 }
 
 QVariant UpdateWidget::getValue(void) const
