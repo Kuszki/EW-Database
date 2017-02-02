@@ -177,7 +177,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 			auto Spin = new QSpinBox(this); Widget = Spin;
 
 			Spin->setSingleStep(1);
-			Spin->setRange(0, 100);
+			Spin->setRange(0, 10000);
 		}
 		break;
 		case DatabaseDriver::BOOL:
