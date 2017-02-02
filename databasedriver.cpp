@@ -1205,15 +1205,14 @@ bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE&
 
 QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
 {
-	if (Type == DatabaseDriver::BOOL)
+	if (!Value.isValid()) return QVariant();
+
+	if (Type == DatabaseDriver::BOOL && Dict.isEmpty())
 	{
 		return Value.toBool() ? DatabaseDriver::tr("Yes") : DatabaseDriver::tr("No");
 	}
-	else if (Dict.isEmpty())
-	{
-		return Value;
-	}
-	else if (Type == DatabaseDriver::MASK)
+
+	if (Type == DatabaseDriver::MASK && !Dict.isEmpty())
 	{
 		QStringList Values; const int Bits = Value.toInt();
 
@@ -1224,11 +1223,11 @@ QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, Da
 
 		return Values.join(", ");
 	}
-	else if (Dict.contains(Value))
-	{
-		return Dict[Value];
-	}
-	else return Value;
+
+	if (Dict.isEmpty()) return Value;
+
+	if (Dict.contains(Value)) return Dict[Value];
+	else return DatabaseDriver::tr("Unknown");
 }
 
 template<class Type, class Field, template<class> class Container>
