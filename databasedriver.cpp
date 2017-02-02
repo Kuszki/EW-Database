@@ -917,7 +917,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onHistoryRemove(0); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 1);
-	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; int Count;
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; int Count = 0;
 
 	emit onBeginProgress(tr("Removing history"));
 	emit onSetupProgress(0, Tasks.first().size());
