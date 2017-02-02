@@ -41,6 +41,8 @@ QString UpdateWidget::getAssigment(void) const
 
 QVariant UpdateWidget::getValue(void) const
 {
+	if (ui->nullButton->isChecked()) return QVariant();
+
 	if (auto W = dynamic_cast<QComboBox*>(Widget))
 	{
 		if (W->property("MASK").toBool())
@@ -99,6 +101,11 @@ int UpdateWidget::getIndex(void) const
 	return Index;
 }
 
+void UpdateWidget::nullClicked(bool Toggled)
+{
+	Widget->setEnabled(!Toggled);
+}
+
 void UpdateWidget::undoClicked(void)
 {
 	setValue(Default);
@@ -116,7 +123,8 @@ void UpdateWidget::resetIndex(void)
 
 void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 {
-	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
+	ui->nullButton->setEnabled(ui->Field->isChecked()); Index = ID;
+	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name);
 
 	if (Widget) Widget->deleteLater();
 
@@ -232,6 +240,8 @@ void UpdateWidget::setChecked(bool Checked)
 
 void UpdateWidget::setValue(const QVariant& Value)
 {
+	ui->nullButton->setChecked(Value.isNull());
+
 	if (auto W = dynamic_cast<QComboBox*>(Widget))
 	{
 		if (W->property("MASK").toBool())

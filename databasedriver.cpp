@@ -453,7 +453,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
 	{
-		All.append(QString("%1 = '%2'").arg(Common[i].Name).arg(Values[i].toString()));
+		if (Values[i].isNull()) All.append(QString("%1 = NULL").arg(Fields[i].Name));
+		else All.append(QString("%1 = '%2'").arg(Fields[i].Name).arg(Values[i].toString()));
 	}
 
 	emit onBeginProgress(tr("Updating common data"));
@@ -480,12 +481,12 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-		QStringList Updates;
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data); QStringList Updates;
 
 		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
 		{
-			Updates.append(QString("%1 = '%2'").arg(Fields[Index].Name).arg(Values[Index].toString()));
+			if (Values[Index].isNull()) Updates.append(QString("%1 = NULL").arg(Fields[Index].Name));
+			else Updates.append(QString("%1 = '%2'").arg(Fields[Index].Name).arg(Values[Index].toString()));
 		}
 
 		if (!Updates.isEmpty()) for (const auto& Index : i.value())

@@ -63,6 +63,8 @@ class UpdateWidget : public QWidget
 
 	private slots:
 
+		void nullClicked(bool Toggled);
+
 		void undoClicked(void);
 		void editFinished(void);
 		void resetIndex(void);

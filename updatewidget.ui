@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
+    <width>360</width>
     <height>30</height>
    </rect>
   </property>
@@ -43,6 +43,20 @@
     </widget>
    </item>
    <item>
+    <widget class="QToolButton" name="nullButton">
+     <property name="text">
+      <string>NULL</string>
+     </property>
+     <property name="icon">
+      <iconset theme="edit-delete">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QToolButton" name="undoButton">
      <property name="enabled">
       <bool>false</bool>
@@ -67,12 +81,12 @@
    <slot>undoClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>330</x>
-     <y>19</y>
+     <x>359</x>
+     <y>22</y>
     </hint>
     <hint type="destinationlabel">
      <x>330</x>
-     <y>166</y>
+     <y>29</y>
     </hint>
    </hints>
   </connection>
@@ -87,7 +101,39 @@
      <y>16</y>
     </hint>
     <hint type="destinationlabel">
-     <x>328</x>
+     <x>359</x>
+     <y>17</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>nullButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>UpdateWidget</receiver>
+   <slot>nullClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>322</x>
+     <y>7</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>329</x>
+     <y>222</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Field</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>nullButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>149</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>317</x>
      <y>14</y>
     </hint>
    </hints>
@@ -95,5 +141,6 @@
  </connections>
  <slots>
   <slot>undoClicked()</slot>
+  <slot>nullClicked(bool)</slot>
  </slots>
 </ui>
