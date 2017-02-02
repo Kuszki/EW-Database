@@ -547,6 +547,13 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 
 			Query.exec(QString(
 				"DELETE FROM "
+					"EW_ELEMENTY "
+				"WHERE "
+					"UIDO = '%1'")
+					 .arg(Index));
+
+			Query.exec(QString(
+				"DELETE FROM "
 					"%1 "
 				"WHERE "
 					"UIDO = '%2'")
@@ -939,6 +946,13 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 					"EW_OBIEKTY "
 				"WHERE "
 					"UID = '%1'")
+					 .arg(Index));
+
+			Query.exec(QString(
+				"DELETE FROM "
+					"EW_ELEMENTY "
+				"WHERE "
+					"UIDO = '%1'")
 					 .arg(Index));
 
 			Query.exec(QString(
