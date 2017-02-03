@@ -216,12 +216,12 @@ void MainWindow::removeRow(const QModelIndex& Index)
 	dynamic_cast<RecordModel*>(ui->Data->model())->removeItem(Index);
 }
 
-void MainWindow::connectData(const QString& Point, const QString& Line, bool Override, int Type)
+void MainWindow::connectData(const QString& Point, const QString& Line, bool Override, int Type, double Radius)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line, Override, Type);
+	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line, Override, Type, Radius);
 }
 
 void MainWindow::disconnectData(const QString& Point, const QString& Line, int Type)

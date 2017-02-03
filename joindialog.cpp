@@ -69,7 +69,8 @@ void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 		emit onCreateRequest(ui->Join->currentData().toString(),
 						 Join->currentData().toString(),
 						 ui->replaceCheck->isChecked(),
-						 ui->Type->currentIndex());
+						 ui->Type->currentIndex(),
+						 ui->Radius->value());
 	}
 
 	if (Button != ui->buttonBox->button(QDialogButtonBox::Close)) setEnabled(false);

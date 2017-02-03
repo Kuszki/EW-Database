@@ -112,9 +112,8 @@ class MainWindow : public QMainWindow
 		void updateRow(int Index, const QMap<int, QVariant>& Data);
 		void removeRow(const QModelIndex& Index);
 
-		void connectData(const QString& Point,
-					  const QString& Line,
-					  bool Override, int Type);
+		void connectData(const QString& Point, const QString& Line,
+					  bool Override, int Type, double Radius);
 		void disconnectData(const QString& Point,
 						const QString& Line,
 						int Type);
@@ -148,7 +147,8 @@ class MainWindow : public QMainWindow
 						 const QMap<int, QVariant>&);
 
 		void onJoinRequest(RecordModel*, const QModelIndexList&,
-					    const QString&, const QString&, bool, int);
+					    const QString&, const QString&,
+					    bool, int, double);
 		void onSplitRequest(RecordModel*, const QModelIndexList&,
 						const QString&, const QString&, int);
 

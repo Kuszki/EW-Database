@@ -674,7 +674,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 	emit onDataSplit(Count);
 }
 
-void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override, int Type)
+void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& Join, bool Override, int Type, double Radius)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
@@ -785,13 +785,13 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	switch (Type)
 	{
 		case 0:
-			Insert = joinLines(Geometry, Points, Tasks[Join], Join);
+			Insert = joinLines(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 		case 1:
-			Insert = joinPoints(Geometry, Points, Tasks[Join], Join);
+			Insert = joinPoints(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 		case 2:
-			Insert = joinCircles(Geometry, Points, Tasks[Join], Join);
+			Insert = joinCircles(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 	}
 
@@ -978,7 +978,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	emit onHistoryRemove(Count);
 }
 
-QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class)
+QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
@@ -1013,8 +1013,8 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 	{
 		if (Query.value(5).toInt() == 4 && Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
 		{
-			if ((double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) == P.X &&
-			    Query.value(2).toDouble() == P.Y && Query.value(4).toDouble() == P.Y)
+			if (qAbs((double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) - P.X) <= Radius &&
+			    qAbs(Query.value(2).toDouble() - P.Y) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius)
 			{
 				const int ID = Query.value(0).toInt();
 
@@ -1028,7 +1028,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 	return Insert;
 }
 
-QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class)
+QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
@@ -1062,8 +1062,8 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 	{
 		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
 		{
-			if ((Query.value(1).toDouble() == P.X && Query.value(2).toDouble() == P.Y) ||
-			    (Query.value(3).toDouble() == P.X && Query.value(4).toDouble() == P.Y))
+			if ((qAbs(Query.value(1).toDouble() - P.X) <= Radius && qAbs(Query.value(2).toDouble() - P.Y) <= Radius) ||
+			    (qAbs(Query.value(3).toDouble() - P.X) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius))
 			{
 				const int ID = Query.value(0).toInt();
 
@@ -1077,7 +1077,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 	return Insert;
 }
 
-QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class)
+QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
@@ -1110,7 +1110,8 @@ QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Ge
 	{
 		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
 		{
-			if (Query.value(2).toDouble() == P.X && Query.value(3).toDouble() == P.Y)
+			if (qAbs(Query.value(2).toDouble() - P.X) <= Radius &&
+			    qAbs(Query.value(3).toDouble() - P.Y) <= Radius)
 			{
 				const int ID = Query.value(1).toInt();
 

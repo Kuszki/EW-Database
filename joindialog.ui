@@ -19,29 +19,49 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
-    <widget class="QComboBox" name="Type">
+    <layout class="QHBoxLayout" name="joinLayout">
      <item>
-      <property name="text">
-       <string>Point to line</string>
-      </property>
+      <widget class="QComboBox" name="Type">
+       <item>
+        <property name="text">
+         <string>Point to line</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Point to point</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Point to circle</string>
+        </property>
+       </item>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>Point to point</string>
-      </property>
+      <widget class="QDoubleSpinBox" name="Radius">
+       <property name="prefix">
+        <string>In </string>
+       </property>
+       <property name="suffix">
+        <string> m radius</string>
+       </property>
+       <property name="maximum">
+        <double>5.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+      </widget>
      </item>
-     <item>
-      <property name="text">
-       <string>Point to circle</string>
-      </property>
-     </item>
-    </widget>
+    </layout>
    </item>
    <item row="1" column="0" colspan="2">
     <widget class="QComboBox" name="Join"/>
    </item>
    <item row="2" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="itemsLayout">
      <item>
       <widget class="QComboBox" name="Point"/>
      </item>

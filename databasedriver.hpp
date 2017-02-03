@@ -121,13 +121,16 @@ class DatabaseDriver : public QObject
 
 		QMap<int, QSet<int>> joinCircles(const QMap<int, QSet<int>>& Geometry,
 								   const QList<DatabaseDriver::POINT>& Points,
-								   const QList<int>& Tasks, const QString Class);
+								   const QList<int>& Tasks, const QString Class,
+								   double Radius = 0.0);
 		QMap<int, QSet<int>> joinLines(const QMap<int, QSet<int>>& Geometry,
 								 const QList<DatabaseDriver::POINT>& Points,
-								 const QList<int>& Tasks, const QString Class);
+								 const QList<int>& Tasks, const QString Class,
+								 double Radius = 0.0);
 		QMap<int, QSet<int>> joinPoints(const QMap<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
-								  const QList<int>& Tasks, const QString Class);
+								  const QList<int>& Tasks, const QString Class,
+								  double Radius = 0.0);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 
@@ -147,7 +150,7 @@ class DatabaseDriver : public QObject
 
 		void joinData(RecordModel* Model, const QModelIndexList& Items,
 				    const QString& Point, const QString& Join,
-				    bool Override, int Type);
+				    bool Override, int Type, double Radius);
 
 		void restoreJob(RecordModel* Model, const QModelIndexList& Items);
 
