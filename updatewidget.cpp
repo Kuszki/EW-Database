@@ -104,6 +104,14 @@ int UpdateWidget::getIndex(void) const
 	return Index;
 }
 
+void UpdateWidget::textChanged(const QString& Text)
+{
+	if (auto W = dynamic_cast<QComboBox*>(Widget))
+	{
+		emit onDataChecked(ui->nullButton->isChecked() || W->findText(Text) != -1);
+	}
+}
+
 void UpdateWidget::toggleWidget(void)
 {
 	if (Widget) Widget->setEnabled(!ui->nullButton->isChecked() && ui->Field->isChecked());
@@ -166,7 +174,11 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 				Combo->addItem(i.value(), i.key());
 			}
 
+			Combo->model()->sort(0);
+			Combo->setEditable(true);
 			Combo->setProperty("MASK", false);
+
+			connect(Combo, &QComboBox::editTextChanged, this, &UpdateWidget::textChanged);
 		}
 	}
 	else switch (Field.Type)

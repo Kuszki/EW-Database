@@ -48,6 +48,11 @@ QMap<int, QVariant> UpdateDialog::getUpdatedValues(void) const
 	return List;
 }
 
+bool UpdateDialog::isDataValid(void) const
+{
+	for (const auto& W : Status) if (W->isChecked()) return false; return true;
+}
+
 void UpdateDialog::searchBoxEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
@@ -59,7 +64,9 @@ void UpdateDialog::searchBoxEdited(const QString& Search)
 
 void UpdateDialog::fieldButtonChecked(bool Enabled)
 {
-	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Enabled ? ++Count : --Count);
+	if (Enabled) ++Count; else --Count;
+
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Count && isDataValid());
 }
 
 void UpdateDialog::allButtonChecked(bool Enabled)
@@ -94,6 +101,16 @@ void UpdateDialog::nextButtonClicked(void)
 	ui->nextButton->setEnabled(Index + 1 < Values.size());
 }
 
+void UpdateDialog::dataCheckProgress(bool OK)
+{
+	if (auto W = dynamic_cast<UpdateWidget*>(sender()))
+	{
+		if (OK) Status.remove(W); else Status.insert(W);
+	}
+
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Count && isDataValid());
+}
+
 void UpdateDialog::accept(void)
 {
 	emit onValuesUpdate(getUpdatedValues()); QDialog::accept();
@@ -101,13 +118,14 @@ void UpdateDialog::accept(void)
 
 void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 {
-	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
+	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater(); Status.clear();
 
 	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY && Fields[i].Dict.size() != 1)
 	{
 		auto Widget = new UpdateWidget(i, Fields[i], this); ui->fieldsLayout->addWidget(Widget);
 
 		connect(Widget, &UpdateWidget::onStatusChanged, this, &UpdateDialog::fieldButtonChecked);
+		connect(Widget, &UpdateWidget::onDataChecked, this, &UpdateDialog::dataCheckProgress);
 	}
 }
 

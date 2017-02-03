@@ -43,6 +43,7 @@ class UpdateDialog : public QDialog
 		Ui::UpdateDialog* ui;
 
 		QList<QMap<int, QVariant>> Values;
+		QSet<UpdateWidget*> Status;
 		QList<int> Active;
 
 		int Index = 0;
@@ -55,6 +56,8 @@ class UpdateDialog : public QDialog
 
 		QMap<int, QVariant> getUpdatedValues(void) const;
 
+		bool isDataValid(void) const;
+
 	private slots:
 
 		void searchBoxEdited(const QString& Search);
@@ -65,6 +68,8 @@ class UpdateDialog : public QDialog
 		void clearButtonClicked(void);
 		void prevButtonClicked(void);
 		void nextButtonClicked(void);
+
+		void dataCheckProgress(bool OK);
 
 	public slots:
 

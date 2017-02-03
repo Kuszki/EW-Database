@@ -194,6 +194,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 				Combo->addItem(i.value(), i.key());
 			}
 
+			Combo->model()->sort(0);
 			Combo->setEditable(true);
 			Combo->setProperty("MASK", false);
 		}

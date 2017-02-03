@@ -63,6 +63,8 @@ class UpdateWidget : public QWidget
 
 	private slots:
 
+		void textChanged(const QString& Text);
+
 		void toggleWidget(void);
 
 		void undoClicked(void);
@@ -84,6 +86,7 @@ class UpdateWidget : public QWidget
 		void onValueUpdate(const QString&, const QVariant&);
 
 		void onStatusChanged(bool);
+		void onDataChecked(bool);
 
 };
 
