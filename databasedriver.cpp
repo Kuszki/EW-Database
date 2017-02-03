@@ -983,7 +983,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QSet<int>> Insert; int Step = 0;
+	QMap<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1011,14 +1011,18 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 
 	if (Query.exec()) while (Query.next())
 	{
-		if (Query.value(5).toInt() == 4 && Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
+		if (Query.value(5).toInt() == 4 && Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
 		{
 			if (qAbs((double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) - P.X) <= Radius &&
 			    qAbs(Query.value(2).toDouble() - P.Y) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius)
 			{
 				const int ID = Query.value(0).toInt();
 
-				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+				if (!Geometry[ID].contains(P.ID))
+				{
+					Insert[ID].insert(P.ID);
+					Used.insert(P.ID);
+				}
 			}
 		}
 
@@ -1033,7 +1037,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QSet<int>> Insert; int Step = 0;
+	QMap<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1060,14 +1064,18 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 
 	if (Query.exec()) while (Query.next())
 	{
-		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
+		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
 		{
 			if ((qAbs(Query.value(1).toDouble() - P.X) <= Radius && qAbs(Query.value(2).toDouble() - P.Y) <= Radius) ||
 			    (qAbs(Query.value(3).toDouble() - P.X) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius))
 			{
 				const int ID = Query.value(0).toInt();
 
-				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+				if (!Geometry[ID].contains(P.ID))
+				{
+					Insert[ID].insert(P.ID);
+					Used.insert(P.ID);
+				}
 			}
 		}
 
@@ -1082,7 +1090,7 @@ QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Ge
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QSet<int>> Insert; int Step = 0;
+	QMap<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1108,14 +1116,18 @@ QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Ge
 
 	if (Query.exec()) while (Query.next())
 	{
-		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points)
+		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
 		{
 			if (qAbs(Query.value(2).toDouble() - P.X) <= Radius &&
 			    qAbs(Query.value(3).toDouble() - P.Y) <= Radius)
 			{
 				const int ID = Query.value(1).toInt();
 
-				if (!Geometry[ID].contains(P.ID)) Insert[ID].insert(P.ID);
+				if (!Geometry[ID].contains(P.ID))
+				{
+					Insert[ID].insert(P.ID);
+					Used.insert(P.ID);
+				}
 			}
 		}
 

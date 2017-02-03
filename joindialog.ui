@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>156</height>
+    <height>159</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,6 +41,12 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="Radius">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="prefix">
         <string>In </string>
        </property>
