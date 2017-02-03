@@ -145,6 +145,11 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 			Query.value(1).toString(),
 			loadDict(Data, Table)
 		});
+
+		if (List.last().Type == INTEGER && !List.last().Dict.isEmpty())
+		{
+			if (!List.last().Dict.contains(0)) List.last().Dict.insert(0, tr("Unknown"));
+		}
 	}
 
 	return List;
