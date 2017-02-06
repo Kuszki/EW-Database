@@ -545,6 +545,24 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 		{
 			Query.exec(QString(
 				"DELETE FROM "
+					"EW_TEXT "
+				"WHERE "
+					"ID IN ("
+						"SELECT IDE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND UIDO = '%1'"
+					")")
+					 .arg(Index));
+
+			Query.exec(QString(
+				"DELETE FROM "
+					"EW_POLYLINE "
+				"WHERE "
+					"ID IN ("
+						"SELECT IDE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND UIDO = '%1'"
+					")")
+					 .arg(Index));
+
+			Query.exec(QString(
+				"DELETE FROM "
 					"EW_OBIEKTY "
 				"WHERE "
 					"UID = '%1'")
