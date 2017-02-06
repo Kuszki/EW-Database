@@ -720,10 +720,11 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
 		"WHERE "
+			"EW_OB_ELEMENTY.TYP = 0 AND "
+			"EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_TEXT.TYP = 4 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OB_ELEMENTY.N = 0 AND "
-			"EW_TEXT.STAN_ZMIANY = 0 AND "
 			"EW_OBIEKTY.KOD = :kod");
 
 	Query.bindValue(":kod", Point);
@@ -1002,9 +1003,10 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
 		"WHERE "
+			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
+			"EW_OB_ELEMENTY.TYP = 0 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = 3 AND "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
 			"EW_OBIEKTY.KOD = :kod");
 
 	Query.bindValue(":kod", Class);
@@ -1055,9 +1057,10 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
 		"WHERE "
+			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
+			"EW_OB_ELEMENTY.TYP = 0 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = 2 AND "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
 			"EW_OBIEKTY.KOD = :kod");
 
 	Query.bindValue(":kod", Class);
@@ -1085,7 +1088,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 	return Insert;
 }
 
-QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
+QMap<int, QSet<int>> DatabaseDriver::joinPoints(const QMap<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QMap<int, QSet<int>>();
 
@@ -1094,7 +1097,7 @@ QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Ge
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.UID, "
+			"EW_OBIEKTY.UID, "
 			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
 		"FROM "
 			"EW_OBIEKTY "
@@ -1107,7 +1110,9 @@ QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Ge
 		"ON "
 			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
 		"WHERE "
+			"EW_OB_ELEMENTY.TYP = 0 AND "
 			"EW_TEXT.STAN_ZMIANY = 0 AND "
+			"EW_TEXT.TYP = 4 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = 4 AND "
 			"EW_OBIEKTY.KOD = :kod");
@@ -1118,10 +1123,10 @@ QMap<int, QSet<int> > DatabaseDriver::joinPoints(const QMap<int, QSet<int> >& Ge
 	{
 		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
 		{
-			if (qAbs(Query.value(2).toDouble() - P.X) <= Radius &&
-			    qAbs(Query.value(3).toDouble() - P.Y) <= Radius)
+			if (qAbs(Query.value(1).toDouble() - P.X) <= Radius &&
+			    qAbs(Query.value(2).toDouble() - P.Y) <= Radius)
 			{
-				const int ID = Query.value(1).toInt();
+				const int ID = Query.value(0).toInt();
 
 				if (!Geometry[ID].contains(P.ID))
 				{
