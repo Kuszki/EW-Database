@@ -644,6 +644,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 		"ON "
 			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
 		"WHERE "
+			"EW_OB_ELEMENTY.TYP = 1 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = :typ AND "
 			"EW_OBIEKTY.KOD = :kod");
@@ -677,6 +678,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 				"DELETE FROM "
 					"EW_OB_ELEMENTY "
 				"WHERE "
+					"TYP = 1 AND "
 					"UIDO = '%1' AND "
 					"IDE = '%2'")
 					 .arg(i.key())
