@@ -24,13 +24,15 @@
 FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setFields(Fields, Tables, Common);
+	ui->setupUi(this); setFields(Fields, Tables, Common); filterRulesChanged();
 
 	ui->Operator->addItems(DatabaseDriver::Operators);
+
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
+	ui->geometryLayout->setAlignment(Qt::AlignTop);
 
-	tabIndexChanged(ui->tabWidget->currentIndex());
+	ui->rightSpacer->changeSize(ui->copyButton->sizeHint().width(), 0);
 }
 
 FilterDialog::~FilterDialog(void)
@@ -40,7 +42,7 @@ FilterDialog::~FilterDialog(void)
 
 QString FilterDialog::getFilterRules(void) const
 {
-	if (ui->tabWidget->currentIndex() == 2)
+	if (ui->specialCheck->isChecked())
 	{
 		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
 		return ui->Setup->document()->toPlainText();
@@ -74,7 +76,7 @@ QString FilterDialog::getFilterRules(void) const
 
 QList<int> FilterDialog::getUsedFields(void) const
 {
-	if (ui->tabWidget->currentIndex() == 2) return QList<int>();
+	if (ui->specialCheck->isChecked()) return QList<int>();
 	else
 	{
 		QSet<int> Used;
@@ -89,6 +91,41 @@ QList<int> FilterDialog::getUsedFields(void) const
 
 		return Used.toList();
 	}
+}
+
+QMap<int, QVariant> FilterDialog::getGeometryRules(void) const
+{
+	QMap<int, QVariant> Rules;
+
+	for (int i = 0; i < ui->geometryLayout->count(); ++i)
+		if (auto W = dynamic_cast<GeometryWidget*>(ui->geometryLayout->itemAt(i)->widget()))
+		{
+			const QPair<int, QVariant> Rule = W->getCondition();
+
+			if (!Rules.contains(Rule.first))
+			{
+				Rules.insert(Rule.first, QVariant(Rule.first > 1 ? QVariant::StringList : QVariant::Double));
+
+				if (Rule.first < 2) Rules[Rule.first] = Rule.first ? DBL_MAX : DBL_MIN;
+			}
+
+			if (Rule.first == 0)
+			{
+				Rules[Rule.first] = qMax(Rules[Rule.first].toDouble(),
+									Rule.second.toDouble());
+			}
+			else if (Rule.first == 1)
+			{
+				Rules[Rule.first] = qMin(Rules[Rule.first].toDouble(),
+									Rule.second.toDouble());
+			}
+			else if (!Rules[Rule.first].toStringList().contains(Rule.second.toString()))
+			{
+				Rules[Rule.first] = Rules[Rule.first].toStringList() << Rule.second.toString();
+			}
+		}
+
+	return Rules;
 }
 
 void FilterDialog::operatorTextChanged(const QString& Operator)
@@ -124,6 +161,12 @@ void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
 			W->reset();
 		}
 
+	for (int i = 0; i < ui->geometryLayout->count(); ++i)
+		if (auto W = qobject_cast<GeometryWidget*>(ui->geometryLayout->itemAt(i)->widget()))
+		{
+			W->deleteLater();
+		}
+
 	ui->Setup->document()->clear();
 }
 
@@ -153,14 +196,22 @@ void FilterDialog::classBoxChecked(void)
 	simpleSearchEdited(ui->simpleSearch->text());
 }
 
-void FilterDialog::tabIndexChanged(int Index)
+void FilterDialog::filterRulesChanged(void)
 {
-	ui->classSearch->setVisible(Index == 0);
-	ui->simpleSearch->setVisible(Index == 1);
+	const int Index = ui->tabWidget->currentIndex();
+	const bool Special = ui->specialCheck->isChecked();
 
-	ui->copyButton->setVisible(Index == 1);
-	ui->selectButton->setVisible(Index == 0);
-	ui->unselectButton->setVisible(Index == 0);
+	ui->copyButton->setVisible(Index == 0);
+	ui->simpleSearch->setVisible(Index == 0 && !Special);
+
+	ui->classSearch->setVisible(Index == 1);
+	ui->selectButton->setVisible(Index == 1);
+	ui->unselectButton->setVisible(Index == 1);
+
+	ui->newButton->setVisible(Index == 2);
+
+	ui->simpleScrool->setVisible(!Special);
+	ui->specialWidget->setVisible(Special);
 }
 
 void FilterDialog::addButtonClicked(void)
@@ -196,6 +247,11 @@ void FilterDialog::addButtonClicked(void)
 	ui->Setup->appendPlainText(Line);
 }
 
+void FilterDialog::newButtonClicked(void)
+{
+	ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, this));
+}
+
 void FilterDialog::copyButtonClicked(void)
 {
 	QApplication::clipboard()->setText(getFilterRules());
@@ -229,12 +285,13 @@ void FilterDialog::unselectButtonClicked(void)
 
 void FilterDialog::accept(void)
 {
-	emit onFiltersUpdate(getFilterRules(), getUsedFields()); QDialog::accept();
+	emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules()); QDialog::accept();
 }
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
 {
-	Attributes.clear(); ui->Field->clear(); Above = Common; QStringList Used;
+	Classes.clear(); Points.clear(); Attributes.clear();
+	ui->Field->clear(); Above = Common; QStringList Used;
 
 	while (auto I = ui->classLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
@@ -243,10 +300,13 @@ void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const Q
 	{
 		auto Check = new QCheckBox(Tables[i].Label, this);
 
+		if (Tables[i].Point) Points.insert(Tables[i].Name, Tables[i].Label);
+		else Classes.insert(Tables[i].Name, Tables[i].Label);
+
 		Check->setToolTip(Tables[i].Name);
+		ui->classLayout->addWidget(Check);
 
 		Attributes.append(Tables[i].Indexes.toSet());
-		ui->classLayout->addWidget(Check);
 
 		connect(Check, &QCheckBox::toggled, this, &FilterDialog::classBoxChecked);
 	}

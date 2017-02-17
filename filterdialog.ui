@@ -29,6 +29,113 @@
      <property name="documentMode">
       <bool>true</bool>
      </property>
+     <widget class="QWidget" name="simpleTab">
+      <attribute name="title">
+       <string>Fields</string>
+      </attribute>
+      <layout class="QGridLayout" name="fieldsLayout">
+       <item row="0" column="0">
+        <widget class="QWidget" name="specialWidget" native="true">
+         <layout class="QGridLayout" name="specialLayout">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QComboBox" name="Action">
+              <item>
+               <property name="text">
+                <string notr="true">AND</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">OR</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="Field"/>
+            </item>
+            <item>
+             <widget class="QComboBox" name="Operator">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="Value">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="placeholderText">
+               <string>Value</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="addButton">
+              <property name="text">
+               <string>Add</string>
+              </property>
+              <property name="icon">
+               <iconset theme="list-add">
+                <normaloff>.</normaloff>.</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0">
+           <widget class="QueryEditor" name="Setup"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QScrollArea" name="simpleScrool">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="simpleAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>939</width>
+            <height>204</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="simpleLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="classTab">
       <attribute name="title">
        <string>Classes</string>
@@ -60,13 +167,13 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="simpleTab">
+     <widget class="QWidget" name="geometryTab">
       <attribute name="title">
-       <string>Fields</string>
+       <string>Geometry</string>
       </attribute>
-      <layout class="QGridLayout" name="simpleScroolLayout">
+      <layout class="QGridLayout" name="geometryScroolLayout">
        <item row="0" column="0">
-        <widget class="QScrollArea" name="simpleScrool">
+        <widget class="QScrollArea" name="geometryScrool">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
@@ -76,83 +183,18 @@
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
-         <widget class="QWidget" name="simpleAreaWidgetContents">
+         <widget class="QWidget" name="geometryAreaWidgetContents">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>100</width>
-            <height>30</height>
+            <width>939</width>
+            <height>433</height>
            </rect>
           </property>
-          <layout class="QVBoxLayout" name="simpleLayout"/>
+          <layout class="QVBoxLayout" name="geometryLayout"/>
          </widget>
         </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="advancedTab">
-      <attribute name="title">
-       <string>Advanced</string>
-      </attribute>
-      <layout class="QGridLayout" name="advancedLayout">
-       <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QComboBox" name="Action">
-           <item>
-            <property name="text">
-             <string notr="true">AND</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string notr="true">OR</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="Field"/>
-         </item>
-         <item>
-          <widget class="QComboBox" name="Operator">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="Value">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="placeholderText">
-            <string>Value</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="addButton">
-           <property name="text">
-            <string>Add</string>
-           </property>
-           <property name="icon">
-            <iconset theme="list-add">
-             <normaloff>.</normaloff>.</iconset>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="1" column="0">
-        <widget class="QueryEditor" name="Setup"/>
        </item>
       </layout>
      </widget>
@@ -238,14 +280,44 @@
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer">
+      <widget class="QToolButton" name="newButton">
+       <property name="text">
+        <string>Add</string>
+       </property>
+       <property name="icon">
+        <iconset theme="list-add"/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="leftSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>40</width>
-         <height>20</height>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="specialCheck">
+       <property name="text">
+        <string>Advanced</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="rightSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
         </size>
        </property>
       </spacer>
@@ -279,12 +351,6 @@
  </customwidgets>
  <tabstops>
   <tabstop>tabWidget</tabstop>
-  <tabstop>Action</tabstop>
-  <tabstop>Field</tabstop>
-  <tabstop>Operator</tabstop>
-  <tabstop>Value</tabstop>
-  <tabstop>addButton</tabstop>
-  <tabstop>Setup</tabstop>
   <tabstop>simpleScrool</tabstop>
  </tabstops>
  <resources/>
@@ -297,7 +363,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>989</x>
-     <y>489</y>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -313,7 +379,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>989</x>
-     <y>489</y>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -329,43 +395,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>989</x>
-     <y>489</y>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>431</x>
      <y>422</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>addButton</sender>
-   <signal>clicked()</signal>
-   <receiver>FilterDialog</receiver>
-   <slot>addButtonClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>968</x>
-     <y>22</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1060</x>
-     <y>58</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Operator</sender>
-   <signal>currentTextChanged(QString)</signal>
-   <receiver>FilterDialog</receiver>
-   <slot>operatorTextChanged(QString)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>211</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>899</x>
-     <y>106</y>
     </hint>
    </hints>
   </connection>
@@ -392,28 +426,12 @@
    <slot>classSearchEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>347</x>
-     <y>489</y>
+     <x>545</x>
+     <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>81</x>
      <y>602</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>tabWidget</sender>
-   <signal>currentChanged(int)</signal>
-   <receiver>FilterDialog</receiver>
-   <slot>tabIndexChanged(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>25</x>
-     <y>135</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1057</x>
-     <y>146</y>
     </hint>
    </hints>
   </connection>
@@ -424,8 +442,8 @@
    <slot>selectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>575</x>
-     <y>486</y>
+     <x>574</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -440,8 +458,8 @@
    <slot>unselectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>605</x>
-     <y>486</y>
+     <x>604</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>567</x>
@@ -465,6 +483,86 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>filterRulesChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>364</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>61</x>
+     <y>579</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>specialCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>filterRulesChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>676</x>
+     <y>484</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>679</x>
+     <y>574</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>addButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>addButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>964</x>
+     <y>35</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1012</x>
+     <y>56</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>newButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>newButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>632</x>
+     <y>478</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>632</x>
+     <y>552</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Operator</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>operatorTextChanged(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>389</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>449</x>
+     <y>763</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>classSearchEdited(QString)</slot>
@@ -472,9 +570,10 @@
   <slot>addButtonClicked()</slot>
   <slot>operatorTextChanged(QString)</slot>
   <slot>simpleSearchEdited(QString)</slot>
-  <slot>tabIndexChanged(int)</slot>
   <slot>selectButtonClicked()</slot>
   <slot>unselectButtonClicked()</slot>
   <slot>copyButtonClicked()</slot>
+  <slot>filterRulesChanged()</slot>
+  <slot>newButtonClicked()</slot>
  </slots>
 </ui>

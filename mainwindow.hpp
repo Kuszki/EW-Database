@@ -106,8 +106,8 @@ class MainWindow : public QMainWindow
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
 		void updateValues(const QMap<int, QVariant>& Values);
-		void refreshData(const QString& Where,
-					  const QList<int>& Used);
+		void refreshData(const QString& Where, const QList<int>& Used,
+					  const QMap<int, QVariant>& Geometry);
 
 		void updateRow(int Index, const QMap<int, QVariant>& Data);
 		void removeRow(const QModelIndex& Index);
@@ -140,7 +140,8 @@ class MainWindow : public QMainWindow
 
 	signals:
 
-		void onReloadRequest(const QString&, const QList<int>&);
+		void onReloadRequest(const QString&, const QList<int>&,
+						 const QMap<int, QVariant>&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&,

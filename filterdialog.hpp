@@ -28,7 +28,10 @@
 #include <QDialog>
 #include <QHash>
 
+#include <float.h>
+
 #include "databasedriver.hpp"
+#include "geometrywidget.hpp"
 #include "filterwidget.hpp"
 
 namespace Ui
@@ -45,6 +48,8 @@ class FilterDialog : public QDialog
 
 		Ui::FilterDialog* ui;
 
+		QMap<QString, QString> Classes;
+		QMap<QString, QString> Points;
 		QList<QSet<int>> Attributes;
 
 		unsigned Above = 0;
@@ -59,6 +64,7 @@ class FilterDialog : public QDialog
 
 		QString getFilterRules(void) const;
 		QList<int> getUsedFields(void) const;
+		QMap<int, QVariant> getGeometryRules(void) const;
 
 	private slots:
 
@@ -71,9 +77,10 @@ class FilterDialog : public QDialog
 
 		void classBoxChecked(void);
 
-		void tabIndexChanged(int Index);
+		void filterRulesChanged(void);
 
 		void addButtonClicked(void);
+		void newButtonClicked(void);
 		void copyButtonClicked(void);
 		void selectButtonClicked(void);
 		void unselectButtonClicked(void);
@@ -86,7 +93,7 @@ class FilterDialog : public QDialog
 
 	signals:
 
-		void onFiltersUpdate(const QString&, const QList<int>&);
+		void onFiltersUpdate(const QString&, const QList<int>&, const QMap<int, QVariant>&);
 
 };
 

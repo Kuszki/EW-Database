@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GeometryWidget</class>
+ <widget class="QWidget" name="GeometryWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>444</width>
+    <height>30</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QComboBox" name="typeCombo">
+     <item>
+      <property name="text">
+       <string>Length greater than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Length less than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry contains</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry does not contains</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry ends on</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry does not ends on</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Have subobject</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Do not have subobject</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Is subobject of</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Is not subobject of</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object have multiple relations</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="pointCombo"/>
+   </item>
+   <item>
+    <widget class="QComboBox" name="classCombo"/>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="sizeSpin">
+     <property name="suffix">
+      <string> m</string>
+     </property>
+     <property name="maximum">
+      <double>10000.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="removeButton">
+     <property name="text">
+      <string>Delete</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-remove">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>removeButton</sender>
+   <signal>clicked()</signal>
+   <receiver>GeometryWidget</receiver>
+   <slot>deleteLater()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>399</x>
+     <y>17</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>385</x>
+     <y>134</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>typeCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>GeometryWidget</receiver>
+   <slot>typeChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>68</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>89</x>
+     <y>161</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>typeChanged(int)</slot>
+ </slots>
+</ui>

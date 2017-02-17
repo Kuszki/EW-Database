@@ -95,7 +95,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS, EW_OB_OPISY.DANE_DOD "
+			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS, EW_OB_OPISY.DANE_DOD, EW_OB_OPISY.OPCJE "
 		"FROM "
 			"EW_OB_OPISY");
 
@@ -108,6 +108,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			Query.value(0).toString(),
 			Query.value(1).toString(),
 			Query.value(2).toString(),
+			(Query.value(3).toInt() & 356) == 356,
 			loadFields(Data)
 		});
 
@@ -344,6 +345,168 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TA
 	return List;
 }
 
+QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QVariant>> Data, const QMap<int, QVariant>& Geometry, const QString& Class)
+{
+	if (!Database.isOpen()) Data;
+
+	if (Geometry.contains(0) || Geometry.contains(1))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		Query.prepare(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"LEFT JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"O.STATUS = 0 AND O.KOD = :class "
+			"GROUP BY "
+				"O.UID "
+			"HAVING "
+				"COUNT(P.ID) = 0 OR SUM("
+					"SQRT(POWER(P.P0_X - P.P1_X, 2) + POWER(P.P0_Y - P.P1_Y, 2))"
+				") NOT BETWEEN :min AND :max");
+
+		Query.bindValue(":class", Class);
+		Query.bindValue(":min", Geometry.contains(0) ? Geometry[0].toDouble() : 0.0);
+		Query.bindValue(":max", Geometry.contains(1) ? Geometry[1].toDouble() : 10000.0);
+
+		if (Query.exec()) while (Query.next()) Data.remove(Query.value(0).toInt());
+	}
+
+	if (Geometry.contains(6) || Geometry.contains(7))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		const QString Select = QString(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.STATUS = 0 AND O.KOD = '%1' AND ("
+					"SELECT "
+						"COUNT(*) "
+					"FROM "
+						"EW_OBIEKTY B "
+					"WHERE "
+						"B.STATUS = 0 AND "
+						"B.KOD IN ('%2') AND "
+						"B.ID IN ("
+							"SELECT "
+								"G.IDE "
+							"FROM "
+								"EW_OB_ELEMENTY G "
+							"WHERE "
+								"G.UIDO = O.UID AND G.TYP = 1"
+						")"
+				") %3 0");
+
+		if (Geometry.contains(6) && Query.exec(Select.arg(Class).arg(Geometry[6].toStringList().join("', '")).arg("=")))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
+
+		if (Geometry.contains(7) && Query.exec(Select.arg(Class).arg(Geometry[7].toStringList().join("', '")).arg("<>")))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
+	}
+
+	if (Geometry.contains(8) || Geometry.contains(9))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		const QString Select = QString(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"LEFT JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.ID = E.IDE "
+			"WHERE "
+				"O.STATUS = 0 AND O.KOD = '%1' "
+			"GROUP BY "
+				"O.UID "
+			"HAVING "
+				"COUNT("
+					"IIF (E.TYP = 1 AND ("
+						"SELECT "
+							"P.STATUS "
+						"FROM "
+							"EW_OBIEKTY P "
+						"WHERE "
+							"P.UID = E.UIDO "
+					") = 0 AND (%4 = 1 OR ("
+						"SELECT "
+							"P.KOD "
+						"FROM "
+							"EW_OBIEKTY P "
+						"WHERE "
+							"P.UID = E.UIDO"
+					") IN ('%3')), 1, NULL)"
+				") %2 0");
+
+		if (Geometry.contains(8) && Query.exec(Select.arg(Class).arg("=")
+									    .arg(Geometry[8].toStringList().join("', '"))
+									    .arg(Geometry[8].toStringList().contains("*"))))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
+
+		if (Geometry.contains(9) && Query.exec(Select.arg(Class).arg("<>")
+									    .arg(Geometry[9].toStringList().join("', '"))
+									    .arg(Geometry[9].toStringList().contains("*"))))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
+	}
+
+	if (Geometry.contains(10))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		const QString Select = QString(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"LEFT JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.ID = E.IDE "
+			"WHERE "
+				"O.STATUS = 0 AND O.KOD = '%1' "
+			"GROUP BY "
+				"O.UID "
+			"HAVING "
+				"COUNT("
+					"IIF (E.TYP = 1 AND ("
+						"SELECT "
+							"P.STATUS "
+						"FROM "
+							"EW_OBIEKTY P "
+						"WHERE "
+							"P.UID = E.UIDO "
+					") = 0, 1, NULL)"
+				") < 2");
+
+		if (Query.exec(Select.arg(Class))) while (Query.next()) Data.remove(Query.value(0).toInt());
+	}
+
+	return Data;
+}
+
 QList<int> DatabaseDriver::getUsedFields(const QString& Filter) const
 {
 	if (Filter.isEmpty()) return QList<int>(); QList<int> Used;
@@ -428,7 +591,7 @@ bool DatabaseDriver::closeDatabase(void)
 	}
 }
 
-void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QMap<int, QVariant>& Geometry)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -441,7 +604,12 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used)
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
-		Model->addItems(loadData(Table, QList<int>(), Filter, true, true)); emit onUpdateProgress(++Step);
+		auto Data = loadData(Table, QList<int>(), Filter, true, true);
+
+		if (Geometry.isEmpty()) Model->addItems(Data);
+		else Model->addItems(filterData(Data, Geometry, Table.Name));
+
+		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();

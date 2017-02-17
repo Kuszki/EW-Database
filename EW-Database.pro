@@ -40,7 +40,8 @@ SOURCES		+=	main.cpp \
 				updatedialog.cpp \
 				updatewidget.cpp \
 				joindialog.cpp \
-				exportdialog.cpp
+				exportdialog.cpp \
+				geometrywidget.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -56,7 +57,8 @@ HEADERS		+=	mainwindow.hpp \
 				updatedialog.hpp \
 				updatewidget.hpp \
 				joindialog.hpp \
-				exportdialog.hpp
+				exportdialog.hpp \
+				geometrywidget.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -68,7 +70,8 @@ FORMS		+=	mainwindow.ui \
 				updatedialog.ui \
 				updatewidget.ui \
 				joindialog.ui \
-				exportdialog.ui
+				exportdialog.ui \
+				geometrywidget.ui
 
 RESOURCES		+=	resources.qrc
 

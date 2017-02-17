@@ -140,7 +140,7 @@ void MainWindow::deleteActionClicked(void)
 
 void MainWindow::refreshActionClicked(void)
 {
-	refreshData(Filter->getFilterRules(), Filter->getUsedFields());
+	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules());
 }
 
 void MainWindow::editActionClicked(void)
@@ -201,9 +201,9 @@ void MainWindow::selectionChanged(void)
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used)
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QMap<int, QVariant>& Geometry)
 {
-	lockUi(BUSY); emit onReloadRequest(Where, Used);
+	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry);
 }
 
 void MainWindow::updateRow(int Index, const QMap<int, QVariant>& Data)

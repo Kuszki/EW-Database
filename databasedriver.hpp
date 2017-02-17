@@ -76,6 +76,8 @@ class DatabaseDriver : public QObject
 		QString Label;
 		QString Data;
 
+		bool Point;
+
 		QList<FIELD> Fields;
 		QList<int> Indexes;
 		QList<int> Headers;
@@ -116,6 +118,10 @@ class DatabaseDriver : public QObject
 										const QString& Where,
 										bool Dict, bool View);
 
+		QMap<int, QMap<int, QVariant>> filterData(QMap<int, QMap<int, QVariant>> Data,
+										  const QMap<int, QVariant>& Geometry,
+										  const QString& Class);
+
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
 
@@ -141,7 +147,8 @@ class DatabaseDriver : public QObject
 
 		bool closeDatabase(void);
 
-		void reloadData(const QString& Filter, QList<int> Used = QList<int>());
+		void reloadData(const QString& Filter, QList<int> Used,
+					 const QMap<int, QVariant>& Geometry);
 		void updateData(RecordModel* Model, const QModelIndexList& Items,
 					 const QMap<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
