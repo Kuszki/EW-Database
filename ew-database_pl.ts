@@ -151,34 +151,34 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Zmodyfikowany przez</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="257"/>
+        <location filename="databasedriver.cpp" line="258"/>
         <source>Preparing queries</source>
         <translation>Formułowanie zapytań</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="401"/>
+        <location filename="databasedriver.cpp" line="564"/>
         <source>Loading database informations</source>
         <translation>Wczytywanie informacji o bazie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="437"/>
+        <location filename="databasedriver.cpp" line="600"/>
         <source>Querying database</source>
         <translation>Odpytywanie bazy danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="465"/>
+        <location filename="databasedriver.cpp" line="633"/>
         <source>Updating common data</source>
         <translation>Aktualizacja wspólnych danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="484"/>
+        <location filename="databasedriver.cpp" line="652"/>
         <source>Updating special data</source>
         <translation>Aktualizacja specjalnych danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="515"/>
-        <location filename="databasedriver.cpp" line="833"/>
-        <location filename="databasedriver.cpp" line="903"/>
+        <location filename="databasedriver.cpp" line="683"/>
+        <location filename="databasedriver.cpp" line="1022"/>
+        <location filename="databasedriver.cpp" line="1092"/>
         <source>Updating view</source>
         <translation>Aktualizacja widoku</translation>
     </message>
@@ -187,75 +187,75 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Aktualizacja danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="539"/>
+        <location filename="databasedriver.cpp" line="707"/>
         <source>Removing data</source>
         <translation>Usuwanie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="590"/>
-        <location filename="databasedriver.cpp" line="705"/>
+        <location filename="databasedriver.cpp" line="776"/>
+        <location filename="databasedriver.cpp" line="893"/>
         <source>Loading points</source>
         <translation>Wczytywanie punktów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="616"/>
-        <location filename="databasedriver.cpp" line="747"/>
+        <location filename="databasedriver.cpp" line="802"/>
+        <location filename="databasedriver.cpp" line="936"/>
         <source>Loading geometry</source>
         <translation>Wczytywanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="651"/>
+        <location filename="databasedriver.cpp" line="838"/>
         <source>Splitting data</source>
         <translation>Odłączanie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="688"/>
+        <location filename="databasedriver.cpp" line="876"/>
         <source>Checking used items</source>
         <translation>Sprawdzanie połączonych obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="782"/>
+        <location filename="databasedriver.cpp" line="971"/>
         <source>Generating tasklist</source>
         <translation>Generowanie listy zadań</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="799"/>
+        <location filename="databasedriver.cpp" line="988"/>
         <source>Joining data</source>
         <translation>Łączenie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="857"/>
+        <location filename="databasedriver.cpp" line="1046"/>
         <source>Restoring job name</source>
         <translation>Przywracanie oryginalnego operatu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="927"/>
+        <location filename="databasedriver.cpp" line="1116"/>
         <source>Removing history</source>
         <translation>Usuwanie obiektów historycznych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1148"/>
+        <location filename="databasedriver.cpp" line="1341"/>
         <source>Preparing edit data</source>
         <translation>Przygotowywanie okna edycji danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1178"/>
+        <location filename="databasedriver.cpp" line="1371"/>
         <source>Preparing classes</source>
         <translation>Ładowanie dostępnych kodów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1245"/>
+        <location filename="databasedriver.cpp" line="1438"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1245"/>
+        <location filename="databasedriver.cpp" line="1438"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="151"/>
-        <location filename="databasedriver.cpp" line="1263"/>
+        <location filename="databasedriver.cpp" line="152"/>
+        <location filename="databasedriver.cpp" line="1456"/>
         <source>Unknown</source>
         <translation>Niezdefiniowane</translation>
     </message>
@@ -291,16 +291,16 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Status obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="427"/>
-        <location filename="databasedriver.cpp" line="433"/>
-        <location filename="databasedriver.cpp" line="453"/>
-        <location filename="databasedriver.cpp" line="534"/>
-        <location filename="databasedriver.cpp" line="580"/>
-        <location filename="databasedriver.cpp" line="679"/>
-        <location filename="databasedriver.cpp" line="852"/>
-        <location filename="databasedriver.cpp" line="922"/>
-        <location filename="databasedriver.cpp" line="1142"/>
-        <location filename="databasedriver.cpp" line="1167"/>
+        <location filename="databasedriver.cpp" line="590"/>
+        <location filename="databasedriver.cpp" line="596"/>
+        <location filename="databasedriver.cpp" line="621"/>
+        <location filename="databasedriver.cpp" line="702"/>
+        <location filename="databasedriver.cpp" line="766"/>
+        <location filename="databasedriver.cpp" line="867"/>
+        <location filename="databasedriver.cpp" line="1041"/>
+        <location filename="databasedriver.cpp" line="1111"/>
+        <location filename="databasedriver.cpp" line="1335"/>
+        <location filename="databasedriver.cpp" line="1360"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -347,7 +347,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Ustawienia filtru</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="34"/>
+        <location filename="filterdialog.ui" line="141"/>
         <source>Classes</source>
         <translation>Kody</translation>
     </message>
@@ -356,43 +356,49 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Proste</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="65"/>
+        <location filename="filterdialog.ui" line="34"/>
         <source>Fields</source>
         <translation>Pola</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="96"/>
+        <location filename="filterdialog.ui" line="308"/>
         <source>Advanced</source>
         <translation>Zaawansowane</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="137"/>
+        <location filename="filterdialog.ui" line="90"/>
         <source>Value</source>
         <translation>Wartość</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="144"/>
+        <location filename="filterdialog.ui" line="97"/>
+        <location filename="filterdialog.ui" line="285"/>
         <source>Add</source>
         <translation>Dodaj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="178"/>
-        <location filename="filterdialog.ui" line="211"/>
+        <location filename="filterdialog.ui" line="172"/>
+        <source>Geometry</source>
+        <translation>Geometria</translation>
+    </message>
+    <message>
+        <location filename="filterdialog.ui" line="220"/>
+        <location filename="filterdialog.ui" line="253"/>
         <source>Search</source>
         <translation>Szukaj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="188"/>
+        <location filename="filterdialog.ui" line="230"/>
         <source>Copy</source>
         <translation>Kopiuj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="221"/>
+        <location filename="filterdialog.ui" line="263"/>
         <source>All</source>
         <translation>Zaznacz</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="232"/>
+        <location filename="filterdialog.ui" line="274"/>
         <source>None</source>
         <translation>Odznacz</translation>
     </message>
@@ -413,6 +419,80 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="filterwidget.cpp" line="218"/>
         <source>No</source>
         <translation>Nie</translation>
+    </message>
+</context>
+<context>
+    <name>GeometryWidget</name>
+    <message>
+        <location filename="geometrywidget.ui" line="30"/>
+        <source>Length greater than</source>
+        <translation>Długość większa od</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="35"/>
+        <source>Length less than</source>
+        <translation>Długość mniejsza od</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="40"/>
+        <source>Geometry contains</source>
+        <translation>Geometria zawiera</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="45"/>
+        <source>Geometry does not contains</source>
+        <translation>Geometria nie zawiera</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="50"/>
+        <source>Geometry ends on</source>
+        <translation>Geometria kończy się na</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="55"/>
+        <source>Geometry does not ends on</source>
+        <translation>Geometria nie kończy się na</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="60"/>
+        <source>Have subobject</source>
+        <translation>Posiada podobiekt</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="65"/>
+        <source>Do not have subobject</source>
+        <translation>Nie posiada podobiektu</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="70"/>
+        <source>Is subobject of</source>
+        <translation>Jest podobiektem</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="75"/>
+        <source>Is not subobject of</source>
+        <translation>Nie jest podobiektem</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="80"/>
+        <source>Object have multiple relations</source>
+        <translation>Posiada wieloktorne relacje</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="94"/>
+        <source> m</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="104"/>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.cpp" line="80"/>
+        <location filename="geometrywidget.cpp" line="81"/>
+        <source>Any object</source>
+        <translation>Dowolny obiekt</translation>
     </message>
 </context>
 <context>

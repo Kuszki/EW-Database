@@ -74,10 +74,13 @@ void GeometryWidget::setParameters(const QMap<QString, QString>& Classes, const 
 		ui->classCombo->addItem(i.value(), i.key());
 	}
 
-	ui->classCombo->model()->sort(0); ui->classCombo->setCurrentIndex(0);
-	ui->pointCombo->model()->sort(0); ui->pointCombo->setCurrentIndex(0);
+	ui->classCombo->model()->sort(0);
+	ui->pointCombo->model()->sort(0);
 
 	ui->classCombo->insertItem(0, tr("Any object"), "*");
 	ui->pointCombo->insertItem(0, tr("Any object"), "*");
+
+	ui->classCombo->setCurrentIndex(0);
+	ui->pointCombo->setCurrentIndex(0);
 }
 

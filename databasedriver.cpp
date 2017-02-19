@@ -382,6 +382,20 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 		if (Query.exec()) while (Query.next()) Data.remove(Query.value(0).toInt());
 	}
 
+	if (Geometry.contains(2) || Geometry.contains(3))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		// TODO implement this
+	}
+
+	if (Geometry.contains(4) || Geometry.contains(5))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		// TODO implement this
+	}
+
 	if (Geometry.contains(6) || Geometry.contains(7))
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
