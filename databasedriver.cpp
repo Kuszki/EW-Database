@@ -407,7 +407,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 						"E.IDE = T.ID "
 					"WHERE "
 						"B.STATUS = 0 AND E.TYP = 0 AND T.TYP = 4 AND "
-						"B.KOD IN ('%2') AND T.POS_X IN ("
+						"(%4 = 1 OR B.KOD IN ('%3')) AND T.POS_X IN ("
 							"SELECT P.P0_X FROM EW_POLYLINE P WHERE P.ID IN ("
 								"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
 						") UNION "
@@ -420,14 +420,18 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 							"SELECT P.P1_Y FROM EW_POLYLINE P WHERE P.ID IN ("
 								"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
 						"))"
-				") %3 0");
+				") %2 0");
 
-		if (Geometry.contains(2) && Query.exec(Select.arg(Class).arg(Geometry[2].toStringList().join("', '")).arg("=")))
+		if (Geometry.contains(2) && Query.exec(Select.arg(Class).arg("=")
+									    .arg(Geometry[2].toStringList().join("', '"))
+									    .arg(Geometry[2].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
 
-		if (Geometry.contains(3) && Query.exec(Select.arg(Class).arg(Geometry[3].toStringList().join("', '")).arg("<>")))
+		if (Geometry.contains(3) && Query.exec(Select.arg(Class).arg("<>")
+									    .arg(Geometry[3].toStringList().join("', '"))
+									    .arg(Geometry[3].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
@@ -458,7 +462,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 						"E.IDE = T.ID "
 					"WHERE "
 						"B.STATUS = 0 AND E.TYP = 0 AND T.TYP = 4 AND "
-						"B.KOD IN ('%2') AND T.POS_X IN ("
+						"(%4 = 1 OR B.KOD IN ('%3')) AND T.POS_X IN ("
 							"SELECT P.P0_X FROM EW_POLYLINE P "
 							"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
 							"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P0_X NOT IN ("
@@ -486,14 +490,18 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 								"SELECT P.P0_Y FROM EW_POLYLINE P "
 								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
 								"WHERE E.TYP = 0 AND E.UIDO = O.UID)"
-						")) %3 0");
+						")) %2 0");
 
-		if (Geometry.contains(4) && Query.exec(Select.arg(Class).arg(Geometry[4].toStringList().join("', '")).arg("=")))
+		if (Geometry.contains(4) && Query.exec(Select.arg(Class).arg("=")
+									    .arg(Geometry[4].toStringList().join("', '"))
+									    .arg(Geometry[4].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
 
-		if (Geometry.contains(5) && Query.exec(Select.arg(Class).arg(Geometry[5].toStringList().join("', '")).arg("<>")))
+		if (Geometry.contains(5) && Query.exec(Select.arg(Class).arg("<>")
+									    .arg(Geometry[5].toStringList().join("', '"))
+									    .arg(Geometry[5].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
@@ -515,9 +523,8 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 					"FROM "
 						"EW_OBIEKTY B "
 					"WHERE "
-						"B.STATUS = 0 AND "
-						"B.KOD IN ('%2') AND "
-						"B.ID IN ("
+						"(%4 = 1 OR B.KOD IN ('%3')) AND "
+						"B.STATUS = 0 AND B.ID IN ("
 							"SELECT "
 								"G.IDE "
 							"FROM "
@@ -525,14 +532,18 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 							"WHERE "
 								"G.UIDO = O.UID AND G.TYP = 1"
 						")"
-				") %3 0");
+				") %2 0");
 
-		if (Geometry.contains(6) && Query.exec(Select.arg(Class).arg(Geometry[6].toStringList().join("', '")).arg("=")))
+		if (Geometry.contains(6) && Query.exec(Select.arg(Class).arg("=")
+									    .arg(Geometry[6].toStringList().join("', '"))
+									    .arg(Geometry[6].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
 
-		if (Geometry.contains(7) && Query.exec(Select.arg(Class).arg(Geometry[7].toStringList().join("', '")).arg("<>")))
+		if (Geometry.contains(7) && Query.exec(Select.arg(Class).arg("<>")
+									    .arg(Geometry[7].toStringList().join("', '"))
+									    .arg(Geometry[7].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
