@@ -386,14 +386,117 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
-		// TODO implement this
+		const QString Select = QString(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.STATUS = 0 AND O.KOD = '%1' AND ("
+					"SELECT "
+						"COUNT(B.UID) "
+					"FROM "
+						"EW_OBIEKTY B "
+					"INNER JOIN "
+						"EW_OB_ELEMENTY E "
+					"ON "
+						"B.UID = E.UIDO "
+					"LEFT JOIN "
+						"EW_TEXT T "
+					"ON "
+						"E.IDE = T.ID "
+					"WHERE "
+						"B.STATUS = 0 AND E.TYP = 0 AND T.TYP = 4 AND "
+						"B.KOD IN ('%2') AND T.POS_X IN ("
+							"SELECT P.P0_X FROM EW_POLYLINE P WHERE P.ID IN ("
+								"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
+						") UNION "
+							"SELECT P.P1_X FROM EW_POLYLINE P WHERE P.ID IN ("
+								"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
+						")) AND T.POS_Y IN ("
+							"SELECT P.P0_Y FROM EW_POLYLINE P WHERE P.ID IN ("
+								"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
+						") UNION "
+							"SELECT P.P1_Y FROM EW_POLYLINE P WHERE P.ID IN ("
+								"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
+						"))"
+				") %3 0");
+
+		if (Geometry.contains(2) && Query.exec(Select.arg(Class).arg(Geometry[2].toStringList().join("', '")).arg("=")))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
+
+		if (Geometry.contains(3) && Query.exec(Select.arg(Class).arg(Geometry[3].toStringList().join("', '")).arg("<>")))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
 	}
 
 	if (Geometry.contains(4) || Geometry.contains(5))
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
-		// TODO implement this
+		const QString Select = QString(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.STATUS = 0 AND O.KOD = '%1' AND ( "
+					"SELECT "
+						"COUNT(B.UID) "
+					"FROM "
+						"EW_OBIEKTY B "
+					"INNER JOIN "
+						"EW_OB_ELEMENTY E "
+					"ON "
+						"B.UID = E.UIDO "
+					"LEFT JOIN "
+						"EW_TEXT T "
+					"ON "
+						"E.IDE = T.ID "
+					"WHERE "
+						"B.STATUS = 0 AND E.TYP = 0 AND T.TYP = 4 AND "
+						"B.KOD IN ('%2') AND T.POS_X IN ("
+							"SELECT P.P0_X FROM EW_POLYLINE P "
+							"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+							"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P0_X NOT IN ("
+								"SELECT P.P1_X FROM EW_POLYLINE P "
+								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+								"WHERE E.TYP = 0 AND E.UIDO = O.UID) "
+							"UNION "
+							"SELECT P.P1_X FROM EW_POLYLINE P "
+							"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+							"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P1_X NOT IN ("
+								"SELECT P.P0_X FROM EW_POLYLINE P "
+								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+								"WHERE E.TYP = 0 AND E.UIDO = O.UID)"
+						") AND T.POS_Y IN ("
+							"SELECT P.P0_Y FROM EW_POLYLINE P "
+							"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+							"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P0_Y NOT IN ("
+								"SELECT P.P1_Y FROM EW_POLYLINE P "
+								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+								"WHERE E.TYP = 0 AND E.UIDO = O.UID) "
+							"UNION "
+							"SELECT P.P1_Y FROM EW_POLYLINE P "
+							"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+							"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P1_Y NOT IN ("
+								"SELECT P.P0_Y FROM EW_POLYLINE P "
+								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
+								"WHERE E.TYP = 0 AND E.UIDO = O.UID)"
+						")) %3 0");
+
+		if (Geometry.contains(4) && Query.exec(Select.arg(Class).arg(Geometry[4].toStringList().join("', '")).arg("=")))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
+
+		if (Geometry.contains(5) && Query.exec(Select.arg(Class).arg(Geometry[5].toStringList().join("', '")).arg("<>")))
+		{
+			while (Query.next()) Data.remove(Query.value(0).toInt());
+		}
 	}
 
 	if (Geometry.contains(6) || Geometry.contains(7))
