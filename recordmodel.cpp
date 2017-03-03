@@ -516,6 +516,15 @@ bool RecordModel::removeItem(const QModelIndex& Index)
 	return true;
 }
 
+bool RecordModel::removeItem(int Index)
+{
+	for (const auto& Item : Objects) if (Item->getUid() == Index)
+	{
+		if (Root) return removeItem(createIndex(Parents[Item]->getIndex(Item), 0, Item));
+		else return removeItem(createIndex(Objects.indexOf(Item), 0, Item));
+	}
+}
+
 int RecordModel::totalCount(void) const
 {
 	return Objects.count();
@@ -524,6 +533,11 @@ int RecordModel::totalCount(void) const
 bool RecordModel::isGrouped(void) const
 {
 	return Root;
+}
+
+bool RecordModel::exists(int Index) const
+{
+	for (const auto& Item : Objects) if (Item->getUid() == Index) return true; return false;
 }
 
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)

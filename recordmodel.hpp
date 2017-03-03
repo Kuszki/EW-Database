@@ -174,6 +174,8 @@ class RecordModel : public QAbstractItemModel
 
 		bool isGrouped(void) const;
 
+		bool exists(int Index) const;
+
 	protected:
 
 		GroupObject* createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From,
@@ -197,6 +199,8 @@ class RecordModel : public QAbstractItemModel
 		void addItem(int ID, const QMap<int, QVariant>& Attributes);
 
 		void addItems(const QMap<int, QMap<int, QVariant>>& Items);
+
+		bool removeItem(int Index);
 
 	signals:
 
