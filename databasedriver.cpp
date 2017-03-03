@@ -1255,7 +1255,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 				"EW_OBIEKTY O "
 			"WHERE "
 				"O.ID = ("
-					"SELECT U.ID from EW_OBIEKTY U WHERE U.UID = '%1'"
+					"SELECT U.ID FROM EW_OBIEKTY U WHERE U.UID = '%1'"
 				") AND O.STATUS = 3")
 				    .arg(ID));
 
