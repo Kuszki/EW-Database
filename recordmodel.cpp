@@ -591,7 +591,7 @@ RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Obj
 	}
 
 	auto Index = createIndex(Current->getIndex(), 0, Current);
-	const int Count = Current->childrenCount() + 1;
+	const int Count = Current->childrenCount() ? Current->childrenCount() + 1 : 0;
 
 	beginInsertRows(Index, Count, Count);
 
@@ -726,7 +726,9 @@ void RecordModel::addItems(const QMap<int, QMap<int, QVariant>>& Items)
 	}
 	else
 	{
-		beginInsertRows(QModelIndex(), Objects.size() + 1, Objects.size() + Items.size());
+		const int Count = Objects.size() ? Objects.size() + 1 : 0;
+
+		beginInsertRows(QModelIndex(), Count, Count + Items.size());
 
 		for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
 		{
