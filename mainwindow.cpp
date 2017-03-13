@@ -473,8 +473,7 @@ void MainWindow::updateView(RecordModel* Model)
 
 	ui->Data->setModel(Model);
 
-	Selection->deleteLater();
-	Old->deleteLater();
+	delete Selection; Old->deleteLater();
 
 	connect(ui->Data->selectionModel(),
 		   &QItemSelectionModel::selectionChanged,

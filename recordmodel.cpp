@@ -211,13 +211,18 @@ RecordModel::RecordModel(const QStringList& Head, QObject* Parent)
 
 RecordModel::~RecordModel(void)
 {
-	for (const auto& Object : Objects) delete Object;
+	for (auto& Object : Objects) delete Object;
 }
 
 QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) const
 {
 	if (!hasIndex(Row, Col, Parent)) return QModelIndex();
-	if (!Root) return createIndex(Row, Col, Objects[Row]);
+
+	if (!Root)
+	{
+		if (Row >= Objects.size()) return QModelIndex();
+		else return createIndex(Row, Col, Objects[Row]);
+	}
 
 	GroupObject* parentObject = Parent.isValid() ? (GroupObject*) Parent.internalPointer() : Root;
 
@@ -648,7 +653,7 @@ void RecordModel::removeEmpty(RecordModel::GroupObject* Parent, bool Emit)
 			P->removeChild(Parent);
 			if (Emit) endRemoveRows();
 
-			while (P && !P->hasChids()) if (P != Root)
+			while (P && P != Root && !P->hasChids())
 			{
 				auto Delete = P; P = P->getParent();
 
