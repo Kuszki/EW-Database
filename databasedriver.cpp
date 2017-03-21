@@ -1291,8 +1291,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 		"SELECT "
 			"EW_OBIEKTY.UID, "
 			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
-			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y, "
-			"EW_POLYLINE.P1_FLAGS "
+			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
 		"FROM "
 			"EW_OBIEKTY "
 		"INNER JOIN "
@@ -1305,6 +1304,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
 		"WHERE "
 			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
+			"EW_POLYLINE.P1_FLAGS = 4 AND "
 			"EW_OB_ELEMENTY.TYP = 0 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = 3 AND "
@@ -1314,7 +1314,7 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 
 	if (Query.exec()) while (Query.next())
 	{
-		if (Query.value(5).toInt() == 4 && Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
+		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
 		{
 			if (qAbs((double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) - P.X) <= Radius &&
 			    qAbs(Query.value(2).toDouble() - P.Y) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius)

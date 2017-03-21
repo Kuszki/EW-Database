@@ -235,7 +235,7 @@ QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) cons
 
 QModelIndex RecordModel::parent(const QModelIndex& Index) const
 {
-	if (!Index.isValid()) return QModelIndex();
+	if (!Root || !Index.isValid()) return QModelIndex();
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
@@ -303,7 +303,8 @@ QVariant RecordModel::data(const QModelIndex &Index, int Role) const
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
-	return Object->getField(Index.column());
+	if (Object) return Object->getField(Index.column());
+	else return QVariant();
 }
 
 Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
@@ -323,6 +324,7 @@ bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int R
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
 	if (dynamic_cast<GroupObject*>(Object)) return false;
+	if (Root && !Parents.contains(Object)) return false;
 
 	Object->setField(Index.column(), Value);
 
