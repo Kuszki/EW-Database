@@ -704,6 +704,34 @@ bool DatabaseDriver::closeDatabase(void)
 	}
 }
 
+void DatabaseDriver::loadList(const QStringList& Filter)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
+
+	emit onBeginProgress(tr("Querying database"));
+	emit onSetupProgress(0, Tables.size());
+
+	const int Index = Headers.indexOf(tr("Object ID"));
+
+	RecordModel* Model = new RecordModel(Headers, this); int Step = 0;
+
+	for (const auto& Table : Tables)
+	{
+		auto Data = loadData(Table, QList<int>(), QString(), true, true);
+
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+			if (Filter.contains(i.value().value(Index).toString()))
+			{
+				Model->addItem(i.key(), i.value());
+			}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onDataLoad(Model);
+}
+
 void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QMap<int, QVariant>& Geometry)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }

@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	restoreState(Settings.value("state").toByteArray());
 	Settings.endGroup();
 
+	connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadActionClicked);
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
 	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
 	connect(ui->actionJoin, &QAction::triggered, this, &MainWindow::joinActionClicked);
@@ -77,6 +78,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
 	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
 
+	connect(this, &MainWindow::onLoadRequest, Driver, &DatabaseDriver::loadList);
 	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver::reloadData);
 	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
 	connect(this, &MainWindow::onUpdateRequest, Driver, &DatabaseDriver::updateData);
@@ -182,6 +184,20 @@ void MainWindow::historyActionClicked(void)
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onHistoryRequest(Model, Selected);
+	}
+}
+
+void MainWindow::loadActionClicked(void)
+{
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Select file to load list"));
+
+	QFile File(Path); if (File.open(QFile::ReadOnly | QFile::Text))
+	{
+		QTextStream Stream(&File); QStringList List;
+
+		while (!Stream.atEnd()) List << Stream.readLine();
+
+		lockUi(BUSY); emit onLoadRequest(List);
 	}
 }
 
@@ -418,6 +434,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(true);
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
+			ui->actionLoad->setEnabled(true);
 		break;
 		case DISCONNECTED:
 			ui->statusBar->showMessage(tr("Database disconnected"));
@@ -429,6 +446,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(false);
 			ui->actionFilter->setEnabled(false);
 			ui->actionReload->setEnabled(false);
+			ui->actionLoad->setEnabled(false);
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
@@ -442,6 +460,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(false);
 			ui->actionFilter->setEnabled(false);
 			ui->actionReload->setEnabled(false);
+			ui->actionLoad->setEnabled(false);
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
@@ -457,6 +476,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionGroup->setEnabled(true);
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
+			ui->actionLoad->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);

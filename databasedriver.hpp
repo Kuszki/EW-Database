@@ -147,6 +147,7 @@ class DatabaseDriver : public QObject
 
 		bool closeDatabase(void);
 
+		void loadList(const QStringList& Filter);
 		void reloadData(const QString& Filter, QList<int> Used,
 					 const QMap<int, QVariant>& Geometry);
 		void updateData(RecordModel* Model, const QModelIndexList& Items,

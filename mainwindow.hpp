@@ -25,6 +25,7 @@
 #include <QTextStream>
 #include <QMainWindow>
 #include <QFileDialog>
+#include <QTextStream>
 #include <QThread>
 
 #include "databasedriver.hpp"
@@ -92,6 +93,7 @@ class MainWindow : public QMainWindow
 		void joinActionClicked(void);
 		void restoreActionClicked(void);
 		void historyActionClicked(void);
+		void loadActionClicked(void);
 
 		void selectionChanged(void);
 
@@ -140,6 +142,7 @@ class MainWindow : public QMainWindow
 
 	signals:
 
+		void onLoadRequest(const QStringList&);
 		void onReloadRequest(const QString&, const QList<int>&,
 						 const QMap<int, QVariant>&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);
