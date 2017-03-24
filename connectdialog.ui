@@ -102,6 +102,8 @@
   </layout>
  </widget>
  <tabstops>
+  <tabstop>Server</tabstop>
+  <tabstop>Database</tabstop>
   <tabstop>User</tabstop>
   <tabstop>Password</tabstop>
  </tabstops>
