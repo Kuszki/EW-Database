@@ -201,7 +201,7 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 
 	if (Query.exec()) while (Query.next()) List.insert(Query.value(0), Query.value(1).toString());
 
-	if (List.size() > 1) return List; else return QMap<QVariant, QString>();
+	return List;
 }
 
 QList<DatabaseDriver::FIELD> DatabaseDriver::normalizeFields(QList<DatabaseDriver::TABLE>& Tabs, const QList<DatabaseDriver::FIELD>& Base) const

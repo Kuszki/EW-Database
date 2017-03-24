@@ -313,7 +313,9 @@ void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const Q
 
 	for (int i = 0; i < Fields.size(); ++i)
 	{
-		if (Fields[i].Dict.size() != 1) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
+		const bool Singleton = (Fields[i].Dict.size() == 2 && Fields[i].Dict.contains(0));
+
+		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 
 		if (!Used.contains(Fields[i].Name))
 		{
