@@ -21,7 +21,7 @@
 #include "joindialog.hpp"
 #include "ui_joindialog.h"
 
-JoinDialog::JoinDialog(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines, const QMap<QString, QString>& Circles, QWidget* Parent)
+JoinDialog::JoinDialog(const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Circles, QWidget* Parent)
 : QDialog(Parent), ui(new Ui::JoinDialog)
 {
 	ui->setupUi(this); typeIndexChanged(ui->Type->currentIndex());

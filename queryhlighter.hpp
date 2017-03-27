@@ -47,7 +47,7 @@ class QueryHighlighter : public QSyntaxHighlighter
 			QRegExp Expresion;
 		};
 
-		QMap<STYLE, KLHighlighterRule> Rules;
+		QHash<STYLE, KLHighlighterRule> Rules;
 
 		virtual void highlightBlock(const QString& Text) override;
 

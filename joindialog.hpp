@@ -42,9 +42,9 @@ class JoinDialog : public QDialog
 
 	public:
 
-		explicit JoinDialog(const QMap<QString, QString>& Points,
-						const QMap<QString, QString>& Lines,
-						const QMap<QString, QString>& Circles,
+		explicit JoinDialog(const QHash<QString, QString>& Points,
+						const QHash<QString, QString>& Lines,
+						const QHash<QString, QString>& Circles,
 						QWidget* Parent = nullptr);
 		virtual ~JoinDialog(void) override;
 

@@ -55,7 +55,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 		{ INTEGER,	"EW_OBIEKTY.OSOW",		tr("Modified by")		}
 	};
 
-	QMap<QString, QString> Dict =
+	QHash<QString, QString> Dict =
 	{
 		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY"	},
 		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY"	},
@@ -95,27 +95,67 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS, EW_OB_OPISY.DANE_DOD, EW_OB_OPISY.OPCJE "
+			"O.KOD, O.OPIS, O.DANE_DOD, O.OPCJE, "
+			"F.NAZWA, F.TYTUL, F.TYP, "
+			"D.WARTOSC, D.OPIS "
 		"FROM "
-			"EW_OB_OPISY");
+			"EW_OB_OPISY O "
+		"INNER JOIN "
+			"EW_OB_DDSTR F "
+		"ON "
+			"O.KOD = F.KOD "
+		"INNER JOIN "
+			"EW_OB_DDSTR S "
+		"ON "
+			"F.KOD = S.KOD "
+		"LEFT JOIN "
+			"EW_OB_DDSL D "
+		"ON "
+			"S.UID = D.UIDP OR S.UIDSL = D.UIDP "
+		"WHERE "
+			"S.NAZWA = F.NAZWA "
+		"ORDER BY "
+			"O.KOD, F.NAZWA, D.OPIS");
 
 	if (Query.exec()) while (Query.next())
 	{
-		const QString Data = Query.value(0).toString();
+		const QString Field = QString("EW_DATA.%1").arg(Query.value(4).toString());
+		const QString Table = Query.value(0).toString();
+		const bool Dict = !Query.value(7).isNull();
 
-		List.append(
+		if (!hasItemByField(List, Table, &TABLE::Name)) List.append(
 		{
-			Query.value(0).toString(),
+			Table,
 			Query.value(1).toString(),
 			Query.value(2).toString(),
-			(Query.value(3).toInt() & 356) == 356,
-			loadFields(Data)
+			(Query.value(3).toInt() & 356) == 356
 		});
 
-		if (Emit) emit onUpdateProgress(++Step);
+		auto& Tabref = getItemByField(List, Table, &TABLE::Name);
+
+		if (!hasItemByField(Tabref.Fields, Field, &FIELD::Name)) Tabref.Fields.append(
+		{
+			TYPE(Query.value(6).toInt()),
+			Field,
+			Query.value(5).toString()
+		});
+
+		auto& Fieldref = getItemByField(Tabref.Fields, Field, &FIELD::Name);
+
+		if (Dict) Fieldref.Dict.insert(Query.value(7), Query.value(8).toString());
+
+		if (Emit && Step != List.size()) emit onUpdateProgress(Step = List.size());
 	}
 
-	return List;
+	QtConcurrent::blockingMap(List, [] (TABLE& Table) -> void
+	{
+		for (auto& Field : Table.Fields) if (Field.Type == INTEGER && !Field.Dict.isEmpty())
+		{
+			if (!Field.Dict.contains(0)) Field.Dict.insert(0, tr("Unknown"));
+		}
+	});
+
+	if (Emit) emit onEndProgress(); return List;
 }
 
 QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) const
@@ -290,15 +330,15 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 	emit onEndProgress(); return List;
 }
 
-QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QList<int>& Filter, const QString& Where, bool Dict, bool View)
+QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QList<int>& Filter, const QString& Where, bool Dict, bool View)
 {
-	if (!Database.isOpen()) return QMap<int, QMap<int, QVariant>>();
+	if (!Database.isOpen()) return QHash<int, QHash<int, QVariant>>();
 
 	QVariant (*GET)(QVariant, const QMap<QVariant, QString>&, TYPE);
 	GET = Dict ? getDataFromDict : [] (auto Value, const auto&, auto) { return Value; };
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QMap<int, QVariant>> List; QStringList Attribs;
+	QHash<int, QHash<int, QVariant>> List; QStringList Attribs;
 
 	for (const auto& Field : Common) Attribs.append(Field.Name);
 	for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
@@ -321,7 +361,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TA
 
 	if (Query.exec(Exec)) while (Query.next()) if (Filter.isEmpty() || Filter.contains(Query.value(0).toInt()))
 	{
-		QMap<int, QVariant> Values; int i = 1;
+		QHash<int, QVariant> Values; int i = 1;
 
 		const int Index = Query.value(0).toInt();
 
@@ -345,7 +385,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TA
 	return List;
 }
 
-QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QVariant>> Data, const QMap<int, QVariant>& Geometry, const QString& Class)
+QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>> Data, const QHash<int, QVariant>& Geometry)
 {
 	if (!Database.isOpen()) Data;
 
@@ -367,7 +407,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 			"ON "
 				"E.IDE = P.ID "
 			"WHERE "
-				"O.STATUS = 0 AND O.KOD = :class "
+				"O.STATUS = 0 "
 			"GROUP BY "
 				"O.UID "
 			"HAVING "
@@ -375,120 +415,181 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 					"SQRT(POWER(P.P0_X - P.P1_X, 2) + POWER(P.P0_Y - P.P1_Y, 2))"
 				") NOT BETWEEN :min AND :max");
 
-		Query.bindValue(":class", Class);
 		Query.bindValue(":min", Geometry.contains(0) ? Geometry[0].toDouble() : 0.0);
 		Query.bindValue(":max", Geometry.contains(1) ? Geometry[1].toDouble() : 10000.0);
 
 		if (Query.exec()) while (Query.next()) Data.remove(Query.value(0).toInt());
 	}
 
-	if (Geometry.contains(2) || Geometry.contains(3))
+	if (Geometry.contains(2) || Geometry.contains(3) ||
+	    Geometry.contains(4) || Geometry.contains(5))
 	{
-		QSqlQuery Query(Database); Query.setForwardOnly(true);
+		auto Process = [] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
+		{
+			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
+			{
+				if (i.key() == j.key() ||
+				    j.value().second.type() != QVariant::PointF ||
+				    !Classes.contains(j.value().first)) continue;
 
-		const QString Select = QString(
+				if (i.value().second.type() == QVariant::PointF)
+				{
+					if (i.value().second == j.value().second)
+					{
+						Locker->lock();
+						List->insert(i.key());
+						Locker->unlock();
+					}
+				}
+				else for (const auto& Point : i.value().second.toList())
+				{
+					if (Point == j.value().second)
+					{
+						Locker->lock();
+						List->insert(i.key());
+						Locker->unlock();
+					}
+				}
+			}
+		};
+
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+		QHash<int, QPair<QString, QVariant>> ObjectsA;
+		QHash<int, QPair<QString, QVariant>> ObjectsB;
+
+		const bool FilterA = Geometry.contains(2) || Geometry.contains(3);
+		const bool FilterB = Geometry.contains(4) || Geometry.contains(5);
+
+		Query.prepare(
 			"SELECT "
-				"O.UID "
+				"O.UID, O.KOD, T.POS_X, T.POS_Y "
 			"FROM "
 				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_TEXT T "
+			"ON "
+				"E.IDE = T.ID "
 			"WHERE "
-				"O.STATUS = 0 AND O.KOD = '%1' AND ("
-					"SELECT "
-						"COUNT(B.UID) "
-					"FROM "
-						"EW_OBIEKTY B "
-					"INNER JOIN "
-						"EW_OB_ELEMENTY E "
-					"ON "
-						"B.UID = E.UIDO "
-					"LEFT JOIN "
-						"EW_TEXT T "
-					"ON "
-						"E.IDE = T.ID "
-					"WHERE "
-						"B.UID <> O.UID AND B.STATUS = 0 AND E.TYP = 0 AND T.TYP = 4 AND "
-						"(%4 = 1 OR B.KOD IN ('%3')) AND ("
-							"T.POS_X || ';' || T.POS_Y IN ("
-								"SELECT P.P0_X || ';' || P.P0_Y FROM EW_POLYLINE P WHERE P.ID IN ("
-									"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
-							") UNION "
-								"SELECT P.P1_X || ';' || P.P1_Y FROM EW_POLYLINE P WHERE P.ID IN ("
-									"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
-							")) OR T.POS_X || ';' || T.POS_Y IN ("
-								"SELECT P.POS_X || ';' || P.POS_Y FROM EW_TEXT P WHERE P.TYP = 4 AND P.ID IN ("
-									"SELECT G.IDE FROM EW_OB_ELEMENTY G WHERE G.UIDO = O.UID AND G.TYP = 0"
-							"))"
-						")"
-				") %2 0");
+				"O.STATUS = 0 AND "
+				"E.TYP = 0 AND "
+				"T.TYP = 4");
 
-		if (Geometry.contains(2) && Query.exec(Select.arg(Class).arg("=")
-									    .arg(Geometry[2].toStringList().join("', '"))
-									    .arg(Geometry[2].toStringList().contains("*"))))
+		if (Query.exec()) while (Query.next())
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			if (FilterA) ObjectsA.insert(Query.value(0).toInt(), qMakePair(
+								    Query.value(1).toString(),
+								    QPointF(Query.value(2).toDouble(),
+										  Query.value(3).toDouble())));
+
+			if (FilterB) ObjectsB.insert(Query.value(0).toInt(), qMakePair(
+								    Query.value(1).toString(),
+								    QPointF(Query.value(2).toDouble(),
+										  Query.value(3).toDouble())));
 		}
 
-		if (Geometry.contains(3) && Query.exec(Select.arg(Class).arg("<>")
-									    .arg(Geometry[3].toStringList().join("', '"))
-									    .arg(Geometry[3].toStringList().contains("*"))))
-		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
-		}
-	}
-
-	if (Geometry.contains(4) || Geometry.contains(5))
-	{
-		QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-		const QString Select = QString(
+		Query.prepare(
 			"SELECT "
-				"O.UID "
+				"O.UID, O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y "
 			"FROM "
 				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
 			"WHERE "
-				"O.STATUS = 0 AND O.KOD = '%1' AND ( "
-					"SELECT "
-						"COUNT(B.UID) "
-					"FROM "
-						"EW_OBIEKTY B "
-					"INNER JOIN "
-						"EW_OB_ELEMENTY E "
-					"ON "
-						"B.UID = E.UIDO "
-					"LEFT JOIN "
-						"EW_TEXT T "
-					"ON "
-						"E.IDE = T.ID "
-					"WHERE "
-						"B.STATUS = 0 AND E.TYP = 0 AND T.TYP = 4 AND "
-						"(%4 = 1 OR B.KOD IN ('%3')) AND T.POS_X || ';' || T.POS_Y IN ("
-							"SELECT P.P0_X || ';' || P.P0_Y FROM EW_POLYLINE P "
-								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
-								"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P0_X || ';' || P.P0_Y NOT IN ("
-									"SELECT P.P1_X || ';' || P.P1_Y FROM EW_POLYLINE P "
-									"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
-									"WHERE E.TYP = 0 AND E.UIDO = O.UID) "
-								"UNION "
-								"SELECT P.P1_X || ';' || P.P1_Y FROM EW_POLYLINE P "
-								"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
-								"WHERE E.TYP = 0 AND E.UIDO = O.UID AND P.P1_X || ';' || P.P1_Y NOT IN ("
-									"SELECT P.P0_X || ';' || P.P0_Y FROM EW_POLYLINE P "
-									"INNER JOIN EW_OB_ELEMENTY E ON P.ID = E.IDE "
-									"WHERE E.TYP = 0 AND E.UIDO = O.UID)"
-						")) %2 0");
+				"O.STATUS = 0 AND "
+				"E.TYP = 0");
 
-		if (Geometry.contains(4) && Query.exec(Select.arg(Class).arg("=")
-									    .arg(Geometry[4].toStringList().join("', '"))
-									    .arg(Geometry[4].toStringList().contains("*"))))
+		if (Query.exec()) while (Query.next())
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			const int Index = Query.value(0).toInt();
+
+			const QPointF PointA = QPointF(Query.value(1).toDouble(),
+									 Query.value(2).toDouble());
+			const QPointF PointB = QPointF(Query.value(3).toDouble(),
+									 Query.value(4).toDouble());
+
+			if (FilterA)
+			{
+				if (!ObjectsA.contains(Index))
+				{
+					ObjectsA.insert(Index, qMakePair(
+								 Query.value(1).toString(),
+								 QVariant(QVariant::List)));
+				}
+
+				auto ListA = ObjectsA[Index].second.toList();
+
+				if (!ListA.contains(PointA)) ListA.append(PointA);
+				if (!ListA.contains(PointB)) ListA.append(PointB);
+
+				ObjectsA[Index].second.setValue(ListA);
+			}
+
+			if (FilterB)
+			{
+				if (!ObjectsB.contains(Index))
+				{
+					ObjectsB.insert(Index, qMakePair(
+								 Query.value(1).toString(),
+								 QVariant(QVariant::List)));
+				}
+
+				auto ListB = ObjectsB[Index].second.toList();
+
+				if (!ListB.contains(PointA)) ListB.append(PointA);
+				else ListB.removeOne(PointA);
+				if (!ListB.contains(PointB)) ListB.append(PointB);
+				else ListB.removeOne(PointB);
+
+				ObjectsB[Index].second.setValue(ListB);
+			}
 		}
 
-		if (Geometry.contains(5) && Query.exec(Select.arg(Class).arg("<>")
-									    .arg(Geometry[5].toStringList().join("', '"))
-									    .arg(Geometry[5].toStringList().contains("*"))))
+		const QStringList Classes = Geometry[2].toStringList();
+
+		QFutureSynchronizer<void> Synchronizer;
+		QMutex LockerA, LockerB;
+		QSet<int> ListA, ListB;
+
+		if (FilterA) for (auto i = ObjectsA.constBegin(); i != ObjectsA.constEnd(); ++i)
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			Synchronizer.addFuture(QtConcurrent::run(Process, i, Classes, ObjectsA, &ListA, &LockerA));
+		}
+
+		if (FilterB) for (auto i = ObjectsB.constBegin(); i != ObjectsB.constEnd(); ++i)
+		{
+			Synchronizer.addFuture(QtConcurrent::run(Process, i, Classes, ObjectsB, &ListB, &LockerB));
+		}
+
+		Synchronizer.waitForFinished();
+
+		if (Geometry.contains(2))
+		{			
+			for (const auto& Key : Data.keys()) if (!ListA.contains(Key)) Data.remove(Key);
+		}
+
+		if (Geometry.contains(3))
+		{
+			for (const auto& Key : Data.keys()) if (ListA.contains(Key)) Data.remove(Key);
+		}
+
+		if (Geometry.contains(4))
+		{
+			for (const auto& Key : Data.keys()) if (!ListB.contains(Key)) Data.remove(Key);
+		}
+
+		if (Geometry.contains(5))
+		{
+			for (const auto& Key : Data.keys()) if (ListB.contains(Key)) Data.remove(Key);
 		}
 	}
 
@@ -502,13 +603,13 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 			"FROM "
 				"EW_OBIEKTY O "
 			"WHERE "
-				"O.STATUS = 0 AND O.KOD = '%1' AND ("
+				"O.STATUS = 0 AND ("
 					"SELECT "
 						"COUNT(*) "
 					"FROM "
 						"EW_OBIEKTY B "
 					"WHERE "
-						"(%4 = 1 OR B.KOD IN ('%3')) AND "
+						"(%3 = 1 OR B.KOD IN ('%2')) AND "
 						"B.STATUS = 0 AND B.ID IN ("
 							"SELECT "
 								"G.IDE "
@@ -517,16 +618,16 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 							"WHERE "
 								"G.UIDO = O.UID AND G.TYP = 1"
 						")"
-				") %2 0");
+				") %1 0");
 
-		if (Geometry.contains(6) && Query.exec(Select.arg(Class).arg("=")
+		if (Geometry.contains(6) && Query.exec(Select.arg("=")
 									    .arg(Geometry[6].toStringList().join("', '"))
 									    .arg(Geometry[6].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
 
-		if (Geometry.contains(7) && Query.exec(Select.arg(Class).arg("<>")
+		if (Geometry.contains(7) && Query.exec(Select.arg("<>")
 									    .arg(Geometry[7].toStringList().join("', '"))
 									    .arg(Geometry[7].toStringList().contains("*"))))
 		{
@@ -548,7 +649,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 			"ON "
 				"O.ID = E.IDE "
 			"WHERE "
-				"O.STATUS = 0 AND O.KOD = '%1' "
+				"O.STATUS = 0 "
 			"GROUP BY "
 				"O.UID "
 			"HAVING "
@@ -560,24 +661,24 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 							"EW_OBIEKTY P "
 						"WHERE "
 							"P.UID = E.UIDO "
-					") = 0 AND (%4 = 1 OR ("
+					") = 0 AND (%3 = 1 OR ("
 						"SELECT "
 							"P.KOD "
 						"FROM "
 							"EW_OBIEKTY P "
 						"WHERE "
 							"P.UID = E.UIDO"
-					") IN ('%3')), 1, NULL)"
-				") %2 0");
+					") IN ('%2')), 1, NULL)"
+				") %1 0");
 
-		if (Geometry.contains(8) && Query.exec(Select.arg(Class).arg("=")
+		if (Geometry.contains(8) && Query.exec(Select.arg("=")
 									    .arg(Geometry[8].toStringList().join("', '"))
 									    .arg(Geometry[8].toStringList().contains("*"))))
 		{
 			while (Query.next()) Data.remove(Query.value(0).toInt());
 		}
 
-		if (Geometry.contains(9) && Query.exec(Select.arg(Class).arg("<>")
+		if (Geometry.contains(9) && Query.exec(Select.arg("<>")
 									    .arg(Geometry[9].toStringList().join("', '"))
 									    .arg(Geometry[9].toStringList().contains("*"))))
 		{
@@ -599,7 +700,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 			"ON "
 				"O.ID = E.IDE "
 			"WHERE "
-				"O.STATUS = 0 AND O.KOD = '%1' "
+				"O.STATUS = 0 "
 			"GROUP BY "
 				"O.UID "
 			"HAVING "
@@ -614,7 +715,7 @@ QMap<int, QMap<int, QVariant>> DatabaseDriver::filterData(QMap<int, QMap<int, QV
 					") = 0, 1, NULL)"
 				") < 2");
 
-		if (Query.exec(Select.arg(Class))) while (Query.next()) Data.remove(Query.value(0).toInt());
+		if (Query.exec(Select)) while (Query.next()) Data.remove(Query.value(0).toInt());
 	}
 
 	return Data;
@@ -732,7 +833,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QMap<int, QVariant>& Geometry)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -742,22 +843,34 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QM
 	emit onSetupProgress(0, Tables.size());
 
 	RecordModel* Model = new RecordModel(Headers, this); int Step = 0;
+	QHash<int, QHash<int, QVariant>> List;
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
 		auto Data = loadData(Table, QList<int>(), Filter, true, true);
 
 		if (Geometry.isEmpty()) Model->addItems(Data);
-		else Model->addItems(filterData(Data, Geometry, Table.Name));
+		else for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+		{
+			List.insert(i.key(), i.value());
+		}
 
 		emit onUpdateProgress(++Step);
+	}
+
+	if (!Geometry.isEmpty())
+	{
+		emit onBeginProgress(tr("Applying geometry filters"));
+		emit onSetupProgress(0, 0);
+
+		Model->addItems(filterData(List, Geometry));
 	}
 
 	emit onEndProgress();
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QMap<int, QVariant>& Values)
+void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QHash<int, QVariant>& Values)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(Model); return; }
 
@@ -907,7 +1020,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataSplit(0); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
-	QList<int> Points; QMap<int, QList<int>> Objects; int Step = 0; int Count = 0;
+	QList<int> Points; QHash<int, QList<int>> Objects; int Step = 0; int Count = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	Type = Type == 0 ? 2 : Type == 1 ? 4 : Type == 2 ? 3 : 0;
@@ -1008,7 +1121,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
-	QList<POINT> Points; QList<int> Joined; QMap<int, QSet<int>> Geometry, Insert;
+	QList<POINT> Points; QList<int> Joined; QHash<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	int Step = 0; int Count = 0;
 
@@ -1308,12 +1421,12 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	emit onHistoryRemove(Count);
 }
 
-QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
-	if (!Database.isOpen()) return QMap<int, QSet<int>>();
+	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1363,12 +1476,12 @@ QMap<int, QSet<int>> DatabaseDriver::joinCircles(const QMap<int, QSet<int>>& Geo
 	return Insert;
 }
 
-QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
-	if (!Database.isOpen()) return QMap<int, QSet<int>>();
+	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1417,12 +1530,12 @@ QMap<int, QSet<int>> DatabaseDriver::joinLines(const QMap<int, QSet<int>>& Geome
 	return Insert;
 }
 
-QMap<int, QSet<int>> DatabaseDriver::joinPoints(const QMap<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
-	if (!Database.isOpen()) return QMap<int, QSet<int>>();
+	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1473,11 +1586,11 @@ QMap<int, QSet<int>> DatabaseDriver::joinPoints(const QMap<int, QSet<int>>& Geom
 
 void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QMap<int, QVariant>>(), QList<int>()); return; }
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QHash<int, QVariant>>(), QList<int>()); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
 	const QList<int> Used = getCommonFields(Tasks.keys());
-	QList<QMap<int, QVariant>> Values; int Step = 0;
+	QList<QHash<int, QVariant>> Values; int Step = 0;
 
 	emit onBeginProgress(tr("Preparing edit data"));
 	emit onSetupProgress(0, Tasks.size());
@@ -1498,11 +1611,11 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 
 void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QMap<QString, QString>(), QMap<QString, QString>(), QMap<QString, QString>()); return; }
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QHash<QString, QString>(), QHash<QString, QString>(), QHash<QString, QString>()); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<QString, QString> Points, Lines, Circles; int Step = 0;
+	QHash<QString, QString> Points, Lines, Circles; int Step = 0;
 
 	if (Query.exec("SELECT COUNT(*) FROM EW_OBIEKTY WHERE RODZAJ IN (2, 4)") && Query.next())
 	{
@@ -1607,4 +1720,10 @@ template<class Type, class Field, template<class> class Container>
 const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer)
 {
 	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
+}
+
+template<class Type, class Field, template<class> class Container>
+bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer)
+{
+	for (auto& Item : Items) if (Item.*Pointer == Data) return true; return false;
 }

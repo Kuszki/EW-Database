@@ -110,30 +110,29 @@ class DatabaseDriver : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
-		QMap<QString, QList<int>> getClassGroups(const QList<int>& Indexes,
+		QMap<QString, QList<int> > getClassGroups(const QList<int>& Indexes,
 										 bool Common, int Index);
 
-		QMap<int, QMap<int, QVariant>> loadData(const TABLE& Table,
-										const QList<int>& Filter,
-										const QString& Where,
-										bool Dict, bool View);
+		QHash<int, QHash<int, QVariant>> loadData(const TABLE& Table,
+										  const QList<int>& Filter,
+										  const QString& Where,
+										  bool Dict, bool View);
 
-		QMap<int, QMap<int, QVariant>> filterData(QMap<int, QMap<int, QVariant>> Data,
-										  const QMap<int, QVariant>& Geometry,
-										  const QString& Class);
+		QHash<int, QHash<int, QVariant>> filterData(QHash<int, QHash<int, QVariant>> Data,
+										    const QHash<int, QVariant>& Geometry);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
 
-		QMap<int, QSet<int>> joinCircles(const QMap<int, QSet<int>>& Geometry,
+		QHash<int, QSet<int>> joinCircles(const QHash<int, QSet<int>>& Geometry,
 								   const QList<DatabaseDriver::POINT>& Points,
 								   const QList<int>& Tasks, const QString Class,
 								   double Radius = 0.0);
-		QMap<int, QSet<int>> joinLines(const QMap<int, QSet<int>>& Geometry,
+		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
 								 const QList<DatabaseDriver::POINT>& Points,
 								 const QList<int>& Tasks, const QString Class,
 								 double Radius = 0.0);
-		QMap<int, QSet<int>> joinPoints(const QMap<int, QSet<int>>& Geometry,
+		QHash<int, QSet<int>> joinPoints(const QHash<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
 								  const QList<int>& Tasks, const QString Class,
 								  double Radius = 0.0);
@@ -149,9 +148,9 @@ class DatabaseDriver : public QObject
 
 		void loadList(const QStringList& Filter);
 		void reloadData(const QString& Filter, QList<int> Used,
-					 const QMap<int, QVariant>& Geometry);
+					 const QHash<int, QVariant>& Geometry);
 		void updateData(RecordModel* Model, const QModelIndexList& Items,
-					 const QMap<int, QVariant>& Values);
+					 const QHash<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
 		void splitData(RecordModel* Model, const QModelIndexList& Items,
 					const QString& Point, const QString& From, int Type);
@@ -187,13 +186,13 @@ class DatabaseDriver : public QObject
 		void onDataJoin(int);
 		void onDataSplit(int);
 
-		void onPresetReady(const QList<QMap<int, QVariant>>&,
+		void onPresetReady(const QList<QHash<int, QVariant>>&,
 					    const QList<int>&);
-		void onJoinsReady(const QMap<QString, QString>&,
-					   const QMap<QString, QString>&,
-					   const QMap<QString, QString>&);
+		void onJoinsReady(const QHash<QString, QString>&,
+					   const QHash<QString, QString>&,
+					   const QHash<QString, QString>&);
 
-		void onRowUpdate(int, const QMap<int, QVariant>&);
+		void onRowUpdate(int, const QHash<int, QVariant>&);
 		void onRowRemove(const QModelIndex&);
 
 		void onJobsRestore(int);
@@ -211,5 +210,8 @@ Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Poi
 
 template<class Type, class Field, template<class> class Container>
 const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
+
+template<class Type, class Field, template<class> class Container>
+bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
 
 #endif // DATABASEDRIVER_V2_HPP

@@ -20,17 +20,17 @@
 
 #include "recordmodel.hpp"
 
-RecordModel::RecordObject::RecordObject(int Uid, const QMap<int, QVariant>& Fields)
+RecordModel::RecordObject::RecordObject(int Uid, const QHash<int, QVariant>& Fields)
 : Attributes(Fields), Index(Uid) {}
 
 RecordModel::RecordObject::~RecordObject(void) {}
 
-QMap<int, QVariant> RecordModel::RecordObject::getFields(void) const
+QHash<int, QVariant> RecordModel::RecordObject::getFields(void) const
 {
 	return Attributes;
 }
 
-void RecordModel::RecordObject::setFields(const QMap<int, QVariant>& Fields, bool Replace)
+void RecordModel::RecordObject::setFields(const QHash<int, QVariant>& Fields, bool Replace)
 {
 	if (!Replace) for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i)
 	{
@@ -49,7 +49,7 @@ QVariant RecordModel::RecordObject::getField(int Role) const
 	return Attributes.value(Role);
 }
 
-bool RecordModel::RecordObject::contain(const QMap<int, QVariant>& Fields) const
+bool RecordModel::RecordObject::contain(const QHash<int, QVariant>& Fields) const
 {
 	for (auto i = Fields.constBegin(); i != Fields.constEnd(); ++i)
 	{
@@ -64,7 +64,7 @@ int RecordModel::RecordObject::getUid(void) const
 	return Index;
 }
 
-RecordModel::GroupObject::GroupObject(int Level, const QMap<int, QVariant>& Fields)
+RecordModel::GroupObject::GroupObject(int Level, const QHash<int, QVariant>& Fields)
 : RecordObject(-1, Fields), Root(nullptr), Column(Level) {}
 
 RecordModel::GroupObject::~GroupObject(void)
@@ -82,7 +82,7 @@ void RecordModel::GroupObject::addChild(RecordModel::RecordObject* Object)
 	Childs.append(Object);
 }
 
-bool RecordModel::GroupObject::removeChild(const QMap<int, QVariant>& Fields)
+bool RecordModel::GroupObject::removeChild(const QHash<int, QVariant>& Fields)
 {
 	for (auto& Child : Childs) if (Child->contain(Fields))
 	{
@@ -112,7 +112,7 @@ bool RecordModel::GroupObject::removeChild(int Index)
 	else return false;
 }
 
-RecordModel::RecordObject* RecordModel::GroupObject::takeChild(const QMap<int, QVariant>& Fields)
+RecordModel::RecordObject* RecordModel::GroupObject::takeChild(const QHash<int, QVariant>& Fields)
 {
 	for (auto& Child : Childs) if (Child->contain(Fields)) return Child; return nullptr;
 }
@@ -133,7 +133,7 @@ RecordModel::RecordObject* RecordModel::GroupObject::takeChild(int Index)
 	if (Childs.size() > Index) return Childs.takeAt(Index); else return nullptr;
 }
 
-QList<RecordModel::RecordObject*> RecordModel::GroupObject::getChilds(void)
+QVector<RecordModel::RecordObject*> RecordModel::GroupObject::getChilds(void)
 {
 	return Childs;
 }
@@ -185,7 +185,7 @@ int RecordModel::GroupObject::childIndex(RecordObject* Object) const
 
 void RecordModel::GroupObject::sortChilds(const RecordModel::SortObject& Functor, QFutureSynchronizer<void>& Synchronizer)
 {
-	static auto Sort = std::stable_sort<QList<RecordObject*>::iterator, SortObject>;
+	static auto Sort = std::stable_sort<QVector<RecordObject*>::iterator, SortObject>;
 
 	for (auto& Child : Childs) if (auto Group = dynamic_cast<GroupObject*>(Child)) Group->sortChilds(Functor, Synchronizer);
 	Synchronizer.addFuture(QtConcurrent::run(Sort, Childs.begin(), Childs.end(), Functor));
@@ -218,11 +218,7 @@ QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) cons
 {
 	if (!hasIndex(Row, Col, Parent)) return QModelIndex();
 
-	if (!Root)
-	{
-		if (Row >= Objects.size()) return QModelIndex();
-		else return createIndex(Row, Col, Objects[Row]);
-	}
+	if (!Root) return createIndex(Row, Col, Objects.value(Row));
 
 	GroupObject* parentObject = Parent.isValid() ? (GroupObject*) Parent.internalPointer() : Root;
 
@@ -367,7 +363,7 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 	endResetModel();
 }
 
-bool RecordModel::setData(int Index, const QMap<int, QVariant>& Data, bool Replace)
+bool RecordModel::setData(int Index, const QHash<int, QVariant>& Data, bool Replace)
 {
 	for (const auto& Item : Objects) if (Item->getUid() == Index)
 	{
@@ -378,7 +374,7 @@ bool RecordModel::setData(int Index, const QMap<int, QVariant>& Data, bool Repla
 	return false;
 }
 
-bool RecordModel::setData(const QModelIndex& Index, const QMap<int, QVariant>& Data, bool Replace)
+bool RecordModel::setData(const QModelIndex& Index, const QHash<int, QVariant>& Data, bool Replace)
 {
 	if (!Index.isValid()) return false;
 
@@ -410,9 +406,9 @@ bool RecordModel::setData(const QModelIndex& Index, const QMap<int, QVariant>& D
 	return true;
 }
 
-QMap<int, QVariant> RecordModel::fullData(const QModelIndex& Index) const
+QHash<int, QVariant> RecordModel::fullData(const QModelIndex& Index) const
 {
-	if (!Index.isValid()) return QMap<int, QVariant>();
+	if (!Index.isValid()) return QHash<int, QVariant>();
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
@@ -530,6 +526,8 @@ bool RecordModel::removeItem(int Index)
 		if (Root) return removeItem(createIndex(Parents[Item]->getIndex(Item), 0, Item));
 		else return removeItem(createIndex(Objects.indexOf(Item), 0, Item));
 	}
+
+	return false;
 }
 
 int RecordModel::totalCount(void) const
@@ -723,7 +721,7 @@ void RecordModel::groupByStr(const QStringList& Groupby)
 	emit onGroupComplete();
 }
 
-void RecordModel::addItem(int ID, const QMap<int, QVariant>& Attributes)
+void RecordModel::addItem(int ID, const QHash<int, QVariant>& Attributes)
 {
 	auto Object = new RecordObject(ID, Attributes);
 
@@ -739,7 +737,7 @@ void RecordModel::addItem(int ID, const QMap<int, QVariant>& Attributes)
 
 }
 
-void RecordModel::addItems(const QMap<int, QMap<int, QVariant>>& Items)
+void RecordModel::addItems(const QHash<int, QHash<int, QVariant>>& Items)
 {
 	if (Root) for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
 	{

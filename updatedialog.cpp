@@ -37,9 +37,9 @@ UpdateDialog::~UpdateDialog(void)
 	delete ui;
 }
 
-QMap<int, QVariant> UpdateDialog::getUpdatedValues(void) const
+QHash<int, QVariant> UpdateDialog::getUpdatedValues(void) const
 {
-	QMap<int, QVariant> List;
+	QHash<int, QVariant> List;
 
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
@@ -133,12 +133,12 @@ void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 	}
 }
 
-void UpdateDialog::setPrepared(const QList<QMap<int, QVariant> >& Data, const QList<int>& Indexes)
+void UpdateDialog::setPrepared(const QList<QHash<int, QVariant> >& Data, const QList<int>& Indexes)
 {
 	setData(Data); setActive(Indexes); setUnchecked();
 }
 
-void UpdateDialog::setData(const QList<QMap<int, QVariant>>& Data)
+void UpdateDialog::setData(const QList<QHash<int, QVariant> >& Data)
 {
 	Values = Data; Index = 0;
 
@@ -152,7 +152,7 @@ void UpdateDialog::setData(const QList<QMap<int, QVariant>>& Data)
 	ui->prevButton->setEnabled(false);
 }
 
-void UpdateDialog::setData(const QMap<int, QVariant>& Data)
+void UpdateDialog::setData(const QHash<int, QVariant>& Data)
 {
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 		if (auto W = dynamic_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))

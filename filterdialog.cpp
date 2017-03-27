@@ -93,9 +93,9 @@ QList<int> FilterDialog::getUsedFields(void) const
 	}
 }
 
-QMap<int, QVariant> FilterDialog::getGeometryRules(void) const
+QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
 {
-	QMap<int, QVariant> Rules;
+	QHash<int, QVariant> Rules;
 
 	for (int i = 0; i < ui->geometryLayout->count(); ++i)
 		if (auto W = dynamic_cast<GeometryWidget*>(ui->geometryLayout->itemAt(i)->widget()))

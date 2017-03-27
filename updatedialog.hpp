@@ -42,7 +42,7 @@ class UpdateDialog : public QDialog
 
 		Ui::UpdateDialog* ui;
 
-		QList<QMap<int, QVariant>> Values;
+		QList<QHash<int, QVariant>> Values;
 		QSet<UpdateWidget*> Status;
 		QList<int> Active;
 
@@ -54,7 +54,7 @@ class UpdateDialog : public QDialog
 		explicit UpdateDialog(QWidget* Parent = nullptr, const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>());
 		virtual ~UpdateDialog(void) override;
 
-		QMap<int, QVariant> getUpdatedValues(void) const;
+		QHash<int, QVariant> getUpdatedValues(void) const;
 
 		bool isDataValid(void) const;
 
@@ -77,10 +77,10 @@ class UpdateDialog : public QDialog
 
 		void setFields(const QList<DatabaseDriver::FIELD>& Fields);
 
-		void setPrepared(const QList<QMap<int, QVariant>> &Data, const QList<int>& Indexes);
+		void setPrepared(const QList<QHash<int, QVariant> >& Data, const QList<int>& Indexes);
 
-		void setData(const QList<QMap<int, QVariant>> &Data);
-		void setData(const QMap<int, QVariant>& Data);
+		void setData(const QList<QHash<int, QVariant>> &Data);
+		void setData(const QHash<int, QVariant>& Data);
 
 		void setActive(const QList<int>& Indexes);
 
@@ -88,7 +88,7 @@ class UpdateDialog : public QDialog
 
 	signals:
 
-		void onValuesUpdate(const QMap<int, QVariant>&);
+		void onValuesUpdate(const QHash<int, QVariant>&);
 
 };
 

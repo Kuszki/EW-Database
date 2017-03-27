@@ -107,11 +107,11 @@ class MainWindow : public QMainWindow
 
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
-		void updateValues(const QMap<int, QVariant>& Values);
+		void updateValues(const QHash<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used,
-					  const QMap<int, QVariant>& Geometry);
+					  const QHash<int, QVariant>& Geometry);
 
-		void updateRow(int Index, const QMap<int, QVariant>& Data);
+		void updateRow(int Index, const QHash<int, QVariant>& Data);
 		void removeRow(const QModelIndex& Index);
 
 		void connectData(const QString& Point, const QString& Line,
@@ -120,11 +120,11 @@ class MainWindow : public QMainWindow
 						const QString& Line,
 						int Type);
 
-		void prepareEdit(const QList<QMap<int, QVariant>>& Values,
+		void prepareEdit(const QList<QHash<int, QVariant> >& Values,
 					  const QList<int>& Used);
-		void prepareJoin(const QMap<QString, QString>& Points,
-					  const QMap<QString, QString>& Lines,
-					  const QMap<QString, QString>& Circles);
+		void prepareJoin(const QHash<QString, QString>& Points,
+					  const QHash<QString, QString>& Lines,
+					  const QHash<QString, QString>& Circles);
 
 		void saveData(const QList<int>& Fields, int Type);
 
@@ -144,11 +144,11 @@ class MainWindow : public QMainWindow
 
 		void onLoadRequest(const QStringList&);
 		void onReloadRequest(const QString&, const QList<int>&,
-						 const QMap<int, QVariant>&);
+						 const QHash<int, QVariant>&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&,
-						 const QMap<int, QVariant>&);
+						 const QHash<int, QVariant>&);
 
 		void onJoinRequest(RecordModel*, const QModelIndexList&,
 					    const QString&, const QString&,

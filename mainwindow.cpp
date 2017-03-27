@@ -217,12 +217,12 @@ void MainWindow::selectionChanged(void)
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QMap<int, QVariant>& Geometry)
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry)
 {
 	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry);
 }
 
-void MainWindow::updateRow(int Index, const QMap<int, QVariant>& Data)
+void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)
 {
 	dynamic_cast<RecordModel*>(ui->Data->model())->setData(Index, Data);
 }
@@ -310,7 +310,7 @@ void MainWindow::updateColumns(const QList<int>& Columns)
 	}
 }
 
-void MainWindow::updateValues(const QMap<int, QVariant>& Values)
+void MainWindow::updateValues(const QHash<int, QVariant>& Values)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
@@ -365,12 +365,12 @@ void MainWindow::loginAttempt(void)
 	ui->actionConnect->setEnabled(false);
 }
 
-void MainWindow::prepareEdit(const QList<QMap<int, QVariant>>& Values, const QList<int>& Used)
+void MainWindow::prepareEdit(const QList<QHash<int, QVariant>>& Values, const QList<int>& Used)
 {
 	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
 }
 
-void MainWindow::prepareJoin(const QMap<QString, QString>& Points, const QMap<QString, QString>& Lines, const QMap<QString, QString>& Circles)
+void MainWindow::prepareJoin(const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Circles)
 {
 	lockUi(DONE); JoinDialog* Join = new JoinDialog(Points, Lines, Circles, this); Join->open();
 

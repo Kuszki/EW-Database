@@ -46,8 +46,8 @@ class GeometryWidget : public QWidget
 
 	public:
 
-		explicit GeometryWidget(const QMap<QString, QString>& Classes,
-						    const QMap<QString, QString>& Points,
+		explicit GeometryWidget(const QHash<QString, QString>& Classes,
+						    const QHash<QString, QString>& Points,
 						    QWidget* Parent = nullptr);
 		virtual ~GeometryWidget(void) override;
 
@@ -60,7 +60,7 @@ class GeometryWidget : public QWidget
 
 	public slots:
 
-		void setParameters(const QMap<QString, QString>& Classes, const QMap<QString, QString>& Points);
+		void setParameters(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points);
 
 	signals:
 

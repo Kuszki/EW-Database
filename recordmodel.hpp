@@ -40,22 +40,22 @@ class RecordModel : public QAbstractItemModel
 
 		protected:
 
-			QMap<int, QVariant> Attributes;
+			QHash<int, QVariant> Attributes;
 
 			const int Index;
 
 		public:
 
-			RecordObject(int Uid, const QMap<int, QVariant>& Fields);
+			RecordObject(int Uid, const QHash<int, QVariant>& Fields);
 			virtual ~RecordObject(void);
 
-			QMap<int, QVariant> getFields(void) const;
+			QHash<int, QVariant> getFields(void) const;
 
-			void setFields(const QMap<int, QVariant>& Fields, bool Replace = true);
+			void setFields(const QHash<int, QVariant>& Fields, bool Replace = true);
 			void setField(int Role, const QVariant& Value);
 			QVariant getField(int Role) const;
 
-			bool contain(const QMap<int, QVariant>& Fields) const;
+			bool contain(const QHash<int, QVariant>& Fields) const;
 
 			int getUid(void) const;
 
@@ -81,27 +81,27 @@ class RecordModel : public QAbstractItemModel
 
 		protected:
 
-			QList<RecordObject*> Childs;
+			QVector<RecordObject*> Childs;
 
 			GroupObject* Root;
 			const int Column;
 
 		public:
 
-			GroupObject(int Level = -1, const QMap<int, QVariant>& Fields = QMap<int, QVariant>());
+			GroupObject(int Level = -1, const QHash<int, QVariant>& Fields = QHash<int, QVariant>());
 			virtual ~GroupObject(void) override;
 
 			void addChild(RecordObject* Object);
 
-			bool removeChild(const QMap<int, QVariant>& Fields);
+			bool removeChild(const QHash<int, QVariant>& Fields);
 			bool removeChild(RecordObject* Object);
 			bool removeChild(int Index);
 
-			RecordObject* takeChild(const QMap<int, QVariant>& Fields);
+			RecordObject* takeChild(const QHash<int, QVariant>& Fields);
 			RecordObject* takeChild(RecordObject* Object);
 			RecordObject* takeChild(int Index);
 
-			QList<RecordObject*> getChilds(void);
+			QVector<RecordObject*> getChilds(void);
 
 			GroupObject* getParent(void) const;
 			RecordObject* getChild(int Index);
@@ -154,11 +154,11 @@ class RecordModel : public QAbstractItemModel
 
 		virtual void sort(int Column, Qt::SortOrder Order) override;
 
-		bool setData(int Index, const QMap<int, QVariant>& Data, bool Replace = true);
+		bool setData(int Index, const QHash<int, QVariant>& Data, bool Replace = true);
 
-		bool setData(const QModelIndex& Index, const QMap<int, QVariant>& Data, bool Replace = true);
+		bool setData(const QModelIndex& Index, const QHash<int, QVariant>& Data, bool Replace = true);
 
-		QMap<int, QVariant> fullData(const QModelIndex& Index) const;
+		QHash<int, QVariant> fullData(const QModelIndex& Index) const;
 
 		QVariant fieldData(const QModelIndex& Index, int Col) const;
 
@@ -196,9 +196,9 @@ class RecordModel : public QAbstractItemModel
 
 		void groupByStr(const QStringList& Groupby);
 
-		void addItem(int ID, const QMap<int, QVariant>& Attributes);
+		void addItem(int ID, const QHash<int, QVariant>& Attributes);
 
-		void addItems(const QMap<int, QMap<int, QVariant>>& Items);
+		void addItems(const QHash<int, QHash<int, QVariant>>& Items);
 
 		bool removeItem(int Index);
 

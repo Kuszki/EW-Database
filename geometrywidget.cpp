@@ -25,7 +25,7 @@ const QVector<int> GeometryWidget::Numbers = { 0, 1 };
 const QVector<int> GeometryWidget::Points = { 2, 3, 4, 5, 6, 7 };
 const QVector<int> GeometryWidget::Classes = { 8, 9 };
 
-GeometryWidget::GeometryWidget(const QMap<QString, QString>& Classes, const QMap<QString, QString>& Points, QWidget* Parent)
+GeometryWidget::GeometryWidget(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::GeometryWidget)
 {
 	ui->setupUi(this); setParameters(Classes, Points); typeChanged(ui->typeCombo->currentIndex());
@@ -59,7 +59,7 @@ void GeometryWidget::editFinished(void)
 	emit onValueUpdate(getCondition());
 }
 
-void GeometryWidget::setParameters(const QMap<QString, QString>& Classes, const QMap<QString, QString>& Points)
+void GeometryWidget::setParameters(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points)
 {
 	ui->classCombo->clear(); ui->pointCombo->clear();
 
