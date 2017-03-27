@@ -86,6 +86,7 @@
     <addaction name="actionDelete"/>
     <addaction name="actionEdit"/>
     <addaction name="actionSave"/>
+    <addaction name="actionLoad"/>
     <addaction name="actionJoin"/>
     <addaction name="separator"/>
     <addaction name="actionView"/>
@@ -128,6 +129,7 @@
    <addaction name="actionDelete"/>
    <addaction name="actionEdit"/>
    <addaction name="actionSave"/>
+   <addaction name="actionLoad"/>
    <addaction name="actionJoin"/>
    <addaction name="separator"/>
    <addaction name="actionRestore"/>
@@ -313,6 +315,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionLoad">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
+   <property name="text">
+    <string>Load</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
  </widget>
