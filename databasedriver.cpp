@@ -512,10 +512,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		{
 			const int Index = Query.value(0).toInt();
 
-			const QPointF PointA = QPointF(Query.value(1).toDouble(),
-									 Query.value(2).toDouble());
-			const QPointF PointB = QPointF(Query.value(3).toDouble(),
-									 Query.value(4).toDouble());
+			const QPointF PointA = QPointF(Query.value(2).toDouble(),
+									 Query.value(3).toDouble());
+			const QPointF PointB = QPointF(Query.value(4).toDouble(),
+									 Query.value(5).toDouble());
 
 			if (FilterA)
 			{
@@ -554,20 +554,28 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			}
 		}
 
-		const QStringList Classes = Geometry[2].toStringList();
-
 		QFutureSynchronizer<void> Synchronizer;
 		QMutex LockerA, LockerB;
 		QSet<int> ListA, ListB;
 
-		if (FilterA) for (auto i = ObjectsA.constBegin(); i != ObjectsA.constEnd(); ++i)
+		if (Geometry.contains(2)) for (auto i = ObjectsA.constBegin(); i != ObjectsA.constEnd(); ++i)
 		{
-			Synchronizer.addFuture(QtConcurrent::run(Process, i, Classes, ObjectsA, &ListA, &LockerA));
+			Synchronizer.addFuture(QtConcurrent::run(Process, i, Geometry[2].toStringList(), ObjectsA, &ListA, &LockerA));
 		}
 
-		if (FilterB) for (auto i = ObjectsB.constBegin(); i != ObjectsB.constEnd(); ++i)
+		if (Geometry.contains(3)) for (auto i = ObjectsA.constBegin(); i != ObjectsA.constEnd(); ++i)
 		{
-			Synchronizer.addFuture(QtConcurrent::run(Process, i, Classes, ObjectsB, &ListB, &LockerB));
+			Synchronizer.addFuture(QtConcurrent::run(Process, i, Geometry[3].toStringList(), ObjectsA, &ListA, &LockerA));
+		}
+
+		if (Geometry.contains(4)) for (auto i = ObjectsB.constBegin(); i != ObjectsB.constEnd(); ++i)
+		{
+			Synchronizer.addFuture(QtConcurrent::run(Process, i, Geometry[4].toStringList(), ObjectsB, &ListB, &LockerB));
+		}
+
+		if (Geometry.contains(5)) for (auto i = ObjectsB.constBegin(); i != ObjectsB.constEnd(); ++i)
+		{
+			Synchronizer.addFuture(QtConcurrent::run(Process, i, Geometry[5].toStringList(), ObjectsB, &ListB, &LockerB));
 		}
 
 		Synchronizer.waitForFinished();
