@@ -159,12 +159,16 @@ class DatabaseDriver : public QObject
 				    const QString& Point, const QString& Join,
 				    bool Override, int Type, double Radius);
 
+		void refactorData(RecordModel* Model, const QModelIndexList& Items,
+					   const QString& Class, int Line, int Point, int Text);
+
 		void restoreJob(RecordModel* Model, const QModelIndexList& Items);
 
 		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
+		void getClass(RecordModel* Model, const QModelIndexList& Items);
 
 	signals:
 
@@ -185,12 +189,17 @@ class DatabaseDriver : public QObject
 		void onDataUpdate(RecordModel*);
 		void onDataJoin(int);
 		void onDataSplit(int);
+		void onDataRefactor(void);
 
 		void onPresetReady(const QList<QHash<int, QVariant>>&,
 					    const QList<int>&);
 		void onJoinsReady(const QHash<QString, QString>&,
 					   const QHash<QString, QString>&,
 					   const QHash<QString, QString>&);
+		void onClassReady(const QHash<QString, QString>&,
+					   const QHash<QString, QHash<int, QString>>&,
+					   const QHash<QString, QHash<int, QString>>&,
+					   const QHash<QString, QHash<int, QString>>&);
 
 		void onRowUpdate(int, const QHash<int, QVariant>&);
 		void onRowRemove(const QModelIndex&);

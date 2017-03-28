@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionJoin, &QAction::triggered, this, &MainWindow::joinActionClicked);
 	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
 	connect(ui->actionHistory, &QAction::triggered, this, &MainWindow::historyActionClicked);
+	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -69,6 +70,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataSplit, this, &MainWindow::joinData);
 	connect(Driver, &DatabaseDriver::onJobsRestore, this, &MainWindow::restoreJob);
 	connect(Driver, &DatabaseDriver::onHistoryRemove, this, &MainWindow::removeHistory);
+	connect(Driver, &DatabaseDriver::onDataRefactor, this, &MainWindow::refactorData);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -91,6 +93,9 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onRestoreRequest, Driver, &DatabaseDriver::restoreJob);
 	connect(this, &MainWindow::onHistoryRequest, Driver, &DatabaseDriver::removeHistory);
+
+	connect(this, &MainWindow::onClassRequest, Driver, &DatabaseDriver::getClass);
+	connect(this, &MainWindow::onRefactorRequest, Driver, &DatabaseDriver::refactorData);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -201,6 +206,14 @@ void MainWindow::loadActionClicked(void)
 	}
 }
 
+void MainWindow::classActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onClassRequest(Model, Selected);
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -246,6 +259,14 @@ void MainWindow::disconnectData(const QString& Point, const QString& Line, int T
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	lockUi(BUSY); emit onSplitRequest(Model, Selected, Point, Line, Type);
+}
+
+void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
@@ -360,6 +381,11 @@ void MainWindow::removeHistory(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n historic object(s)", nullptr, Count));
 }
 
+void MainWindow::refactorData(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Class changed"));
+}
+
 void MainWindow::loginAttempt(void)
 {
 	ui->actionConnect->setEnabled(false);
@@ -382,6 +408,16 @@ void MainWindow::prepareJoin(const QHash<QString, QString>& Points, const QHash<
 
 	connect(Driver, &DatabaseDriver::onDataJoin, Join, &JoinDialog::completeActions);
 	connect(Driver, &DatabaseDriver::onDataSplit, Join, &JoinDialog::completeActions);
+}
+
+void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHash<QString, QHash<int, QString>>& Lines, const QHash<QString, QHash<int, QString>>& Points, const QHash<QString, QHash<int, QString>>& Texts)
+{
+	lockUi(DONE); ClassDialog* Class = new ClassDialog(Classes, Lines, Points, Texts, this); Class->open();
+
+	connect(Class, &ClassDialog::onChangeRequest, this, &MainWindow::changeClass);
+
+	connect(Class, &ClassDialog::accepted, Class, &ClassDialog::deleteLater);
+	connect(Class, &ClassDialog::rejected, Class, &ClassDialog::deleteLater);
 }
 
 void MainWindow::saveData(const QList<int>& Fields, int Type)

@@ -1298,6 +1298,11 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	emit onDataJoin(Count);
 }
 
+void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text)
+{
+	emit onDataRefactor();
+}
+
 void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJobsRestore(0); return; }
@@ -1667,6 +1672,187 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 
 	emit onEndProgress();
 	emit onJoinsReady(Points, Lines, Circles);
+}
+
+void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onClassReady(QHash<QString, QString>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>()); return; }
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
+	QHash<QString, int> Types; QHash<QString, QString> Classes;
+	QHash<QString, QHash<int, QString>> Lines, Points, Texts;
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
+
+	emit onBeginProgress(tr("Preparing classes"));
+	emit onSetupProgress(0, 0); Step = 0;
+
+	if (Query.exec("SELECT D.KOD, D.OPCJE FROM EW_OB_OPISY D")) while (Query.next())
+	{
+		Types.insert(Query.value(0).toString(), Query.value(1).toInt());
+	}
+
+	const int Type = Types[Tasks.firstKey()]; bool Continue = true;
+
+	for (auto i = Tasks.constBegin(); Continue && i != Tasks.constEnd(); ++i)
+	{
+		for (auto j = Tasks.constBegin(); Continue && j != Tasks.constEnd(); ++j)
+		{
+			Continue = Types[i.key()] == Types[j.key()];
+		}
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Selecting layers data"));
+	emit onSetupProgress(0, Types.size());
+
+	if (Continue) for (const auto& Table : Tables) if (Types[Table.Name] == Type)
+	{
+		Classes.insert(Table.Name, Table.Label);
+
+		QHash<int, QString> L, P, T;
+
+		{
+			Query.prepare(
+				"SELECT "
+					"L.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_LINIOWA L "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"L.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = :class AND "
+					"L.NAZWA LIKE (O.KOD || '%')");
+
+			Query.bindValue(":class", Table.Name);
+
+			if (Query.exec()) while (Query.next())
+			{
+				L.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		if (L.isEmpty())
+		{
+			Query.prepare(
+				"SELECT "
+					"L.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_LINIOWA L "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"L.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = :class AND "
+					"L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')");
+
+			Query.bindValue(":class", Table.Name);
+
+			if (Query.exec()) while (Query.next())
+			{
+				L.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		{
+			Query.prepare(
+				"SELECT "
+					"T.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_TEXTOWA T "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"L.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = :class AND "
+					"T.NAZWA LIKE (O.KOD || '_%')");
+
+			Query.bindValue(":class", Table.Name);
+
+			if (Query.exec()) while (Query.next())
+			{
+				P.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		{
+			Query.prepare(
+				"SELECT "
+					"T.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_TEXTOWA T "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"L.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = :class AND "
+					"T.NAZWA = O.KOD");
+
+			Query.bindValue(":class", Table.Name);
+
+			if (Query.exec()) while (Query.next())
+			{
+				T.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		if (T.isEmpty())
+		{
+			Query.prepare(
+				"SELECT "
+					"T.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_TEXTOWA T "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"L.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = :class AND "
+					"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')");
+
+			Query.bindValue(":class", Table.Name);
+
+			if (Query.exec()) while (Query.next())
+			{
+				T.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		Lines.insert(Table.Name, L);
+		Points.insert(Table.Name, P);
+		Texts.insert(Table.Name, T);
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onClassReady(Classes, Lines, Points, Texts);
 }
 
 bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two)

@@ -36,6 +36,7 @@
 #include "exportdialog.hpp"
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
+#include "classdialog.hpp"
 #include "joindialog.hpp"
 
 namespace Ui
@@ -94,6 +95,7 @@ class MainWindow : public QMainWindow
 		void restoreActionClicked(void);
 		void historyActionClicked(void);
 		void loadActionClicked(void);
+		void classActionClicked(void);
 
 		void selectionChanged(void);
 
@@ -119,12 +121,18 @@ class MainWindow : public QMainWindow
 		void disconnectData(const QString& Point,
 						const QString& Line,
 						int Type);
+		void changeClass(const QString& Class,
+					  int Line, int Point, int Text);
 
-		void prepareEdit(const QList<QHash<int, QVariant> >& Values,
+		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
 					  const QList<int>& Used);
 		void prepareJoin(const QHash<QString, QString>& Points,
 					  const QHash<QString, QString>& Lines,
 					  const QHash<QString, QString>& Circles);
+		void prepareClass(const QHash<QString, QString>& Classes,
+					   const QHash<QString, QHash<int, QString>>& Lines,
+					   const QHash<QString, QHash<int, QString>>& Points,
+					   const QHash<QString, QHash<int, QString>>& Texts);
 
 		void saveData(const QList<int>& Fields, int Type);
 
@@ -137,6 +145,8 @@ class MainWindow : public QMainWindow
 
 		void restoreJob(int Count);
 		void removeHistory(int Count);
+
+		void refactorData(void);
 
 		void loginAttempt(void);
 
@@ -155,6 +165,11 @@ class MainWindow : public QMainWindow
 					    bool, int, double);
 		void onSplitRequest(RecordModel*, const QModelIndexList&,
 						const QString&, const QString&, int);
+
+		void onRefactorRequest(RecordModel*, const QModelIndexList&,
+						   const QString, int, int, int);
+
+		void onClassRequest(RecordModel*, const QModelIndexList&);
 
 		void onListRequest(RecordModel*, const QModelIndexList&);
 
