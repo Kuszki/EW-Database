@@ -71,6 +71,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onJobsRestore, this, &MainWindow::restoreJob);
 	connect(Driver, &DatabaseDriver::onHistoryRemove, this, &MainWindow::removeHistory);
 	connect(Driver, &DatabaseDriver::onDataRefactor, this, &MainWindow::refactorData);
+	connect(Driver, &DatabaseDriver::onClassReady, this, &MainWindow::prepareClass);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -227,6 +228,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionSave->setEnabled(Count > 0);
 	ui->actionRestore->setEnabled(Count > 0);
 	ui->actionHistory->setEnabled(Count > 0);
+	ui->actionRefactor->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
@@ -489,6 +491,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionSave->setEnabled(false);
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
+			ui->actionRefactor->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -504,6 +507,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
 			ui->Data->setEnabled(false);
+			ui->actionRefactor->setEnabled(false);
 		break;
 		case DONE:
 			ui->statusBar->showMessage(tr("Job done"));

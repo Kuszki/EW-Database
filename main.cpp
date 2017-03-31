@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
 	qRegisterMetaType<QList<DatabaseDriver::FIELD>>("QList<FIELD>");
 	qRegisterMetaType<QList<DatabaseDriver::TABLE>>("QList<TABLE>");
 
+	qRegisterMetaType<QHash<QString,QHash<int,QString>>>("QHash<QString,QHash<int,QString>>");
 	qRegisterMetaType<QList<QHash<int,QVariant>>>("QList<QHash<int,QVariant>>");
 	qRegisterMetaType<QList<QMap<int,QVariant>>>("QList<QMap<int,QVariant>>");
 	qRegisterMetaType<QHash<QString,QString>>("QHash<QString,QString>");

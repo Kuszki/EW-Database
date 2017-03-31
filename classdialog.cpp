@@ -45,6 +45,7 @@ void ClassDialog::accept(void)
 void ClassDialog::classIndexChanged(int Index)
 {
 	const QString Class = ui->Class->itemData(Index).toString();
+	const QString Label = ui->Class->itemText(Index);
 
 	const auto& Texts = textLayers[Class];
 	const auto& Lines = lineLayers[Class];
@@ -66,4 +67,13 @@ void ClassDialog::classIndexChanged(int Index)
 	{
 		ui->Line->addItem(i.value(), i.key());
 	}
+
+	ui->Text->setCurrentText(Label);
+	ui->Point->setCurrentText(Label);
+	ui->Line->setCurrentText(Label);
+
+	ui->advancedCheck->setChecked(
+		(Texts.size() && !Texts.values().contains(Label)) ||
+		(Lines.size() && !Lines.values().contains(Label)) ||
+		(Points.size() && !Points.values().contains(Label)));
 }

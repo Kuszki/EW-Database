@@ -581,7 +581,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		Synchronizer.waitForFinished();
 
 		if (Geometry.contains(2))
-		{			
+		{
 			for (const auto& Key : Data.keys()) if (!ListA.contains(Key)) Data.remove(Key);
 		}
 
@@ -1713,9 +1713,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 		QHash<int, QString> L, P, T;
 
 		{
-			Query.prepare(
+			Query.prepare(QString(
 				"SELECT "
-					"L.ID, G.NAZWA_L "
+					"L.ID, L.DLUGA_NAZWA "
 				"FROM "
 					"EW_WARSTWA_LINIOWA L "
 				"INNER JOIN "
@@ -1727,10 +1727,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 				"ON "
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
-					"O.KOD = :class AND "
-					"L.NAZWA LIKE (O.KOD || '%')");
-
-			Query.bindValue(":class", Table.Name);
+					"O.KOD = '%1' AND "
+					"L.NAZWA LIKE (O.KOD || '%')")
+					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
 			{
@@ -1740,9 +1739,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 
 		if (L.isEmpty())
 		{
-			Query.prepare(
+			Query.prepare(QString(
 				"SELECT "
-					"L.ID, G.NAZWA_L "
+					"L.ID, L.DLUGA_NAZWA "
 				"FROM "
 					"EW_WARSTWA_LINIOWA L "
 				"INNER JOIN "
@@ -1754,10 +1753,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 				"ON "
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
-					"O.KOD = :class AND "
-					"L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')");
-
-			Query.bindValue(":class", Table.Name);
+					"O.KOD = '%1' AND "
+					"L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')")
+					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
 			{
@@ -1766,24 +1764,23 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 		}
 
 		{
-			Query.prepare(
+			Query.prepare(QString(
 				"SELECT "
-					"T.ID, G.NAZWA_L "
+					"T.ID, T.DLUGA_NAZWA "
 				"FROM "
 					"EW_WARSTWA_TEXTOWA T "
 				"INNER JOIN "
 					"EW_GRUPY_WARSTW G "
 				"ON "
-					"L.ID_GRUPY = G.ID "
+					"T.ID_GRUPY = G.ID "
 				"INNER JOIN "
 					"EW_OB_KODY_OPISY O "
 				"ON "
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
-					"O.KOD = :class AND "
-					"T.NAZWA LIKE (O.KOD || '_%')");
-
-			Query.bindValue(":class", Table.Name);
+					"O.KOD = '%1' AND "
+					"T.NAZWA LIKE (O.KOD || '_%')")
+					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
 			{
@@ -1792,24 +1789,23 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 		}
 
 		{
-			Query.prepare(
+			Query.prepare(QString(
 				"SELECT "
-					"T.ID, G.NAZWA_L "
+					"T.ID, T.DLUGA_NAZWA "
 				"FROM "
 					"EW_WARSTWA_TEXTOWA T "
 				"INNER JOIN "
 					"EW_GRUPY_WARSTW G "
 				"ON "
-					"L.ID_GRUPY = G.ID "
+					"T.ID_GRUPY = G.ID "
 				"INNER JOIN "
 					"EW_OB_KODY_OPISY O "
 				"ON "
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
-					"O.KOD = :class AND "
-					"T.NAZWA = O.KOD");
-
-			Query.bindValue(":class", Table.Name);
+					"O.KOD = '%1' AND "
+					"T.NAZWA = O.KOD")
+					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
 			{
@@ -1819,24 +1815,23 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 
 		if (T.isEmpty())
 		{
-			Query.prepare(
+			Query.prepare(QString(
 				"SELECT "
-					"T.ID, G.NAZWA_L "
+					"T.ID, T.DLUGA_NAZWA "
 				"FROM "
 					"EW_WARSTWA_TEXTOWA T "
 				"INNER JOIN "
 					"EW_GRUPY_WARSTW G "
 				"ON "
-					"L.ID_GRUPY = G.ID "
+					"T.ID_GRUPY = G.ID "
 				"INNER JOIN "
 					"EW_OB_KODY_OPISY O "
 				"ON "
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
-					"O.KOD = :class AND "
-					"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')");
-
-			Query.bindValue(":class", Table.Name);
+					"O.KOD = '%1' AND "
+					"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')")
+					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
 			{

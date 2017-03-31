@@ -88,6 +88,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionLoad"/>
     <addaction name="actionJoin"/>
+    <addaction name="actionRefactor"/>
     <addaction name="separator"/>
     <addaction name="actionView"/>
     <addaction name="actionFilter"/>
@@ -131,6 +132,7 @@
    <addaction name="actionSave"/>
    <addaction name="actionLoad"/>
    <addaction name="actionJoin"/>
+   <addaction name="actionRefactor"/>
    <addaction name="separator"/>
    <addaction name="actionRestore"/>
    <addaction name="actionHistory"/>
@@ -319,13 +321,25 @@
   </action>
   <action name="actionLoad">
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Load</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionRefactor">
+   <property name="icon">
+    <iconset theme="insert-text"/>
+   </property>
+   <property name="text">
+    <string>Refactorize</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
  </widget>
