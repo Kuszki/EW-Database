@@ -68,6 +68,10 @@ void ClassDialog::classIndexChanged(int Index)
 		ui->Line->addItem(i.value(), i.key());
 	}
 
+	ui->Text->model()->sort(0);
+	ui->Point->model()->sort(0);
+	ui->Line->model()->sort(0);
+
 	ui->Text->setCurrentText(Label);
 	ui->Point->setCurrentText(Label);
 	ui->Line->setCurrentText(Label);

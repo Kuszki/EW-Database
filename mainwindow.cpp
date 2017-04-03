@@ -414,7 +414,9 @@ void MainWindow::prepareJoin(const QHash<QString, QString>& Points, const QHash<
 
 void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHash<QString, QHash<int, QString>>& Lines, const QHash<QString, QHash<int, QString>>& Points, const QHash<QString, QHash<int, QString>>& Texts)
 {
-	lockUi(DONE); ClassDialog* Class = new ClassDialog(Classes, Lines, Points, Texts, this); Class->open();
+	lockUi(DONE); if (Classes.isEmpty()) { QMessageBox::critical(this, tr("Set object class"), tr("Selected objects have different types")); return; }
+
+	ClassDialog* Class = new ClassDialog(Classes, Lines, Points, Texts, this); Class->open();
 
 	connect(Class, &ClassDialog::onChangeRequest, this, &MainWindow::changeClass);
 

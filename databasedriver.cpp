@@ -1300,6 +1300,156 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text)
 {
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(); return; }
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
+	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); int Step = 0;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	emit onBeginProgress(tr("Updating class"));
+	emit onSetupProgress(0, Tasks.size());
+
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		const auto& Tab = getItemByField(Tables, i.key(), &TABLE::Data);
+		QStringList Fields;
+
+		for (const auto& Field : Table.Fields)
+		{
+			if (hasItemByField(Tab.Fields, Field.Name, &FIELD::Name))
+			{
+				const auto& B = getItemByField(Tab.Fields, Field.Name, &FIELD::Name);
+
+				if (Field == B) Fields.append(Field.Name);
+			}
+		}
+
+		for (const auto& Item : i.value())
+		{
+			Query.exec(QString(
+				"INSERT INTO "
+					"%1 (UIDO, %2) "
+				"SELECT "
+					"UIDO, %2 "
+				"FROM "
+					"%3 "
+				"WHERE "
+					"UIDO = '%4'")
+					 .arg(Table.Data)
+					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+					 .arg(i.key())
+					 .arg(Item));
+
+			Query.exec(QString(
+				"DELETE FROM "
+					"%1 "
+				"WHERE "
+					"UIDO = '%2'")
+					 .arg(i.key())
+					 .arg(Item));
+
+			Query.exec(QString(
+				"UPDATE "
+					"EW_POLYLINE "
+				"SET "
+					"TYP_LINII = ("
+						"SELECT "
+							"TYP_LINII "
+						"FROM "
+							"EW_WARSTWA_LINIOWA "
+						"WHERE "
+							"ID = '%1'"
+					"), "
+					"ID_WARSTWY = '%1' "
+				"WHERE "
+					"ID IN ("
+						"SELECT "
+							"IDE "
+						"FROM "
+							"EW_OB_ELEMENTY "
+						"WHERE "
+							"TYP = 0 AND "
+							"UIDO = '%2'"
+					")")
+					 .arg(Line)
+					 .arg(Item));
+
+			Query.exec(QString(
+				"UPDATE "
+					"EW_TEXT "
+				"SET "
+					"TEXT = ("
+						"SELECT "
+							"NAZWA "
+						"FROM "
+							"EW_WARSTWA_TEXTOWA "
+						"WHERE "
+							"ID = '%1'"
+					"), "
+					"ID_WARSTWY = '%1' "
+				"WHERE "
+					"TYP = 4 AND "
+					"ID IN ("
+						"SELECT "
+							"IDE "
+						"FROM "
+							"EW_OB_ELEMENTY "
+						"WHERE "
+							"TYP = 0 AND "
+							"UIDO = '%2'"
+					")")
+					 .arg(Point)
+					 .arg(Item));
+
+			Query.exec(QString(
+				"UPDATE "
+					"EW_TEXT "
+				"SET "
+					"ID_WARSTWY = '%1' "
+				"WHERE "
+					"TYP = 6 AND "
+					"ID IN ("
+						"SELECT "
+							"IDE "
+						"FROM "
+							"EW_OB_ELEMENTY "
+						"WHERE "
+							"TYP = 0 AND "
+							"UIDO = '%2'"
+					")")
+					 .arg(Text)
+					 .arg(Item));
+
+			Query.exec(QString(
+				"UPDATE "
+					"EW_OBIEKTY "
+				"SET "
+					"KOD = '%1' "
+				"WHERE "
+					"UID = '%2'")
+					 .arg(Class)
+					 .arg(Item));
+
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size());
+
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, Class, &TABLE::Name);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
 	emit onDataRefactor();
 }
 
@@ -1715,7 +1865,7 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 		{
 			Query.prepare(QString(
 				"SELECT "
-					"L.ID, L.DLUGA_NAZWA "
+					"L.ID, G.NAZWA_L "
 				"FROM "
 					"EW_WARSTWA_LINIOWA L "
 				"INNER JOIN "
@@ -1766,7 +1916,7 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 		{
 			Query.prepare(QString(
 				"SELECT "
-					"T.ID, T.DLUGA_NAZWA "
+					"T.ID, G.NAZWA_L "
 				"FROM "
 					"EW_WARSTWA_TEXTOWA T "
 				"INNER JOIN "
@@ -1791,7 +1941,7 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 		{
 			Query.prepare(QString(
 				"SELECT "
-					"T.ID, T.DLUGA_NAZWA "
+					"T.ID, G.NAZWA_L "
 				"FROM "
 					"EW_WARSTWA_TEXTOWA T "
 				"INNER JOIN "
