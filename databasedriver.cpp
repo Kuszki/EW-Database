@@ -1326,7 +1326,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 		for (const auto& Item : i.value())
 		{
-			Query.exec(QString(
+			if (Tab.Name != Class) Query.exec(QString(
 				"INSERT INTO "
 					"%1 (UIDO, %2) "
 				"SELECT "
@@ -1340,7 +1340,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 					 .arg(i.key())
 					 .arg(Item));
 
-			Query.exec(QString(
+			if (Tab.Name != Class) Query.exec(QString(
 				"DELETE FROM "
 					"%1 "
 				"WHERE "
@@ -1420,7 +1420,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 					 .arg(Text)
 					 .arg(Item));
 
-			Query.exec(QString(
+			if (Tab.Name != Class) Query.exec(QString(
 				"UPDATE "
 					"EW_OBIEKTY "
 				"SET "
