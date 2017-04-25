@@ -1584,6 +1584,183 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	emit onHistoryRemove(Count);
 }
 
+void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(); return; }
+
+	struct POINT
+	{
+		int ID;
+
+		double WX, WY;
+		double DX, DY;
+		double A;
+
+		unsigned J;
+	};
+
+	struct LINE
+	{
+		double X1, Y1;
+		double X2, Y2;
+	};
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
+	QMap<int, POINT> Points; QList<LINE> Lines;
+	const QList<int> Tasks = Model->getUids(Items);
+
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, Tasks.size());
+
+	Query.prepare(
+		"SELECT "
+			"E.UIDO, T.UID, T.TYP, T.POS_X, T.POS_Y, T.JUSTYFIKACJA "
+		"FROM "
+			"EW_TEXT T "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"T.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"E.UIDO = O.UID "
+		"WHERE "
+			"O.STATUS = 0 AND O.RODZAJ = 4 AND "
+			"E.TYP = 0 AND "
+			"T.STAN_ZMIANY = 0 "
+		"ORDER BY "
+			"T.TYP DESC");
+
+	if (Query.exec()) while (Query.next()) if (Tasks.contains(Query.value(0).toInt()))
+	{
+		const int ID = Query.value(0).toInt();
+		const int T = Query.value(2).toInt();
+
+		if (!Points.contains(ID)) Points.insert(ID, POINT());
+
+		POINT& Ref = Points[ID];
+
+		switch (T)
+		{
+			case 4:
+
+				Ref.WX = Query.value(3).toDouble();
+				Ref.WY = Query.value(4).toDouble();
+
+			break;
+
+			case 6:
+
+				Ref.ID = Query.value(1).toInt();
+				Ref.DX = Query.value(3).toDouble();
+				Ref.DX = Query.value(4).toDouble();
+				Ref.J = Query.value(5).toUInt();
+
+			break;
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading lines"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"P.P0_X, P.P0_Y, P.P1_X, P.P1_Y "
+		"FROM "
+			"EW_POLYLINE P "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"P.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"E.UIDO = O.UID "
+		"WHERE "
+			"O.STATUS = 0 AND O.RODZAJ = 2 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0");
+
+	if (Query.exec()) while (Query.next())
+	{
+		Lines.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble(),
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble()
+		});
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Performing edit"));
+	emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Points, [&Lines, Move, Justify, Rotate] (POINT& Point) -> void
+	{
+		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; }
+
+		if (Justify) for (const auto& Line : Lines)
+			if ((Point.WX == Line.X1 && Point.WY == Line.Y1) || (Point.WX == Line.X2 && Point.WY == Line.Y2))
+			{
+				if (Justify && !Rotate)
+				{
+					if (Point.J == 1) Point.J = 4;
+				}
+				else if (Justify && Rotate)
+				{
+					Point.A = qAtan((Line.Y1 - Line.Y2) / (Line.X1 - Line.X2)) - M_PI / 2.0;
+
+					if (Line.Y1 < Line.Y2)
+					{
+						if (Point.WX == Line.X1 && Point.WY == Line.Y1) Point.J = 4; else Point.J = 6;
+					}
+					else
+					{
+						if (Point.WX == Line.X2 && Point.WY == Line.Y2) Point.J = 4; else Point.J = 6;
+					}
+
+					while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
+					while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
+				}
+
+				return;
+			}
+	});
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Saving changes"));
+	emit onSetupProgress(0, Points.size());
+
+	for (const auto& Point : Points)
+	{
+		Query.exec(QString(
+			"UPDATE "
+				"EW_TEXT "
+			"SET "
+				"POS_X = '%2', "
+				"POS_Y = '%3', "
+				"KAT = '%4', "
+				"JUSTYFIKACJA = '%5' "
+			"WHERE "
+				"UID = '%1'")
+				 .arg(Point.ID)
+				 .arg(Point.DX, 0, 'f', -1)
+				 .arg(Point.DY, 0, 'f', -1)
+				 .arg(Point.A, 0, 'f', -1)
+				 .arg(Point.J));
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onTextEdit();
+}
+
 QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();

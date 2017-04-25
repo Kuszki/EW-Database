@@ -38,6 +38,7 @@
 #include "aboutdialog.hpp"
 #include "classdialog.hpp"
 #include "joindialog.hpp"
+#include "textdialog.hpp"
 
 namespace Ui
 {
@@ -71,6 +72,7 @@ class MainWindow : public QMainWindow
 		FilterDialog* Filter;
 		UpdateDialog* Update;
 		ExportDialog* Export;
+		TextDialog* Text;
 
 		QThread Thread;
 
@@ -123,6 +125,7 @@ class MainWindow : public QMainWindow
 						int Type);
 		void changeClass(const QString& Class,
 					  int Line, int Point, int Text);
+		void editText(bool Move, bool Justify, bool Rotate);
 
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
 					  const QList<int>& Used);
@@ -142,6 +145,7 @@ class MainWindow : public QMainWindow
 
 		void groupData(void);
 		void joinData(void);
+		void textEdit(void);
 
 		void restoreJob(int Count);
 		void removeHistory(int Count);
@@ -175,6 +179,9 @@ class MainWindow : public QMainWindow
 
 		void onRestoreRequest(RecordModel*, const QModelIndexList&);
 		void onHistoryRequest(RecordModel*, const QModelIndexList&);
+
+		void onTextRequest(RecordModel*, const QModelIndexList&,
+					    bool, bool, bool);
 
 		void onGroupRequest(const QList<int>&);
 

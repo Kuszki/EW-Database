@@ -166,6 +166,9 @@ class DatabaseDriver : public QObject
 
 		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
 
+		void editText(RecordModel* Model, const QModelIndexList& Items,
+				    bool Move, bool Justify, bool Rotate);
+
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
 		void getClass(RecordModel* Model, const QModelIndexList& Items);
@@ -206,6 +209,8 @@ class DatabaseDriver : public QObject
 
 		void onJobsRestore(int);
 		void onHistoryRemove(int);
+
+		void onTextEdit(void);
 
 };
 

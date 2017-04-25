@@ -72,6 +72,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onHistoryRemove, this, &MainWindow::removeHistory);
 	connect(Driver, &DatabaseDriver::onDataRefactor, this, &MainWindow::refactorData);
 	connect(Driver, &DatabaseDriver::onClassReady, this, &MainWindow::prepareClass);
+	connect(Driver, &DatabaseDriver::onTextEdit, this, &MainWindow::textEdit);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -97,6 +98,8 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onClassRequest, Driver, &DatabaseDriver::getClass);
 	connect(this, &MainWindow::onRefactorRequest, Driver, &DatabaseDriver::refactorData);
+
+	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -229,6 +232,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionRestore->setEnabled(Count > 0);
 	ui->actionHistory->setEnabled(Count > 0);
 	ui->actionRefactor->setEnabled(Count > 0);
+	ui->actionText->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
@@ -271,6 +275,14 @@ void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text
 	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text);
 }
 
+void MainWindow::editText(bool Move, bool Justify, bool Rotate)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onTextRequest(Model, Selected, Move, Justify, Rotate);
+}
+
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
 	Columns = new ColumnsDialog(this, Headers, Common);
@@ -278,17 +290,20 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Filter = new FilterDialog(this, Fields, Classes, Common);
 	Update = new UpdateDialog(this, Fields);
 	Export = new ExportDialog(this, Headers);
+	Text = new TextDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
 	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
 	connect(Export, &ExportDialog::onExportRequest, this, &MainWindow::saveData);
+	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 	connect(ui->actionSave, &QAction::triggered, Export, &ExportDialog::open);
+	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 }
@@ -302,6 +317,7 @@ void MainWindow::databaseDisconnected(void)
 	Filter->deleteLater();
 	Update->deleteLater();
 	Export->deleteLater();
+	Text->deleteLater();
 
 	lockUi(DISCONNECTED);
 }
@@ -371,6 +387,11 @@ void MainWindow::groupData(void)
 void MainWindow::joinData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
+}
+
+void MainWindow::textEdit(void)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Text edited"));
 }
 
 void MainWindow::restoreJob(int Count)

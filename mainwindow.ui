@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -96,6 +96,7 @@
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionHistory"/>
+    <addaction name="actionText"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -333,13 +334,22 @@
   </action>
   <action name="actionRefactor">
    <property name="icon">
-    <iconset theme="insert-text"/>
+    <iconset theme="insert-text">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Refactorize</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionText">
+   <property name="text">
+    <string>Edit text</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
  </widget>
