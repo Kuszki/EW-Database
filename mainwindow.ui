@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -137,6 +137,7 @@
    <addaction name="separator"/>
    <addaction name="actionRestore"/>
    <addaction name="actionHistory"/>
+   <addaction name="actionText"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
    <addaction name="actionFilter"/>
@@ -345,6 +346,9 @@
    </property>
   </action>
   <action name="actionText">
+   <property name="icon">
+    <iconset theme="tools-check-spelling"/>
+   </property>
    <property name="text">
     <string>Edit text</string>
    </property>
