@@ -1016,7 +1016,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="textdialog.ui" line="23"/>
         <source>Rotate text to line</source>
-        <translation>Obróć tekst zgodnie kierunkiem osi</translation>
+        <translation>Obróć tekst zgodnie z kierunkiem osi</translation>
     </message>
     <message>
         <location filename="textdialog.ui" line="30"/>

@@ -515,6 +515,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
+			ui->actionText->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -529,8 +530,9 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionSave->setEnabled(false);
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
-			ui->Data->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
+			ui->actionText->setEnabled(false);
+			ui->Data->setEnabled(false);
 		break;
 		case DONE:
 			ui->statusBar->showMessage(tr("Job done"));
