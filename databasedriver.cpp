@@ -1597,6 +1597,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		double A;
 
 		unsigned J;
+
+		bool Changed = false;
 	};
 
 	struct LINE
@@ -1606,7 +1608,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
-	QMap<int, POINT> Points; QList<LINE> Lines;
+	QMap<int, POINT> Points, Objects; QList<LINE> Lines;
 	const QList<int> Tasks = Model->getUids(Items);
 
 	emit onBeginProgress(tr("Loading points"));
@@ -1632,14 +1634,14 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		"ORDER BY "
 			"T.TYP DESC");
 
-	if (Query.exec()) while (Query.next()) if (Tasks.contains(Query.value(0).toInt()))
+	if (Query.exec()) while (Query.next())
 	{
 		const int ID = Query.value(0).toInt();
 		const int T = Query.value(2).toInt();
 
-		if (!Points.contains(ID)) Points.insert(ID, POINT());
+		if (!Objects.contains(ID)) Objects.insert(ID, POINT());
 
-		POINT& Ref = Points[ID];
+		POINT& Ref = Objects[ID];
 
 		switch (T)
 		{
@@ -1700,16 +1702,24 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	emit onBeginProgress(tr("Performing edit"));
 	emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Points, [&Lines, Move, Justify, Rotate] (POINT& Point) -> void
+	for (auto i = Objects.constBegin(); i != Objects.constEnd(); ++i)
 	{
-		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; }
+		if (Tasks.contains(i.key())) Points.insert(i.key(), i.value());
+	}
+
+	QtConcurrent::blockingMap(Points, [&Lines, &Objects, Move, Justify, Rotate] (POINT& Point) -> void
+	{
+		for (const auto& Object : Objects)
+			if (Object.ID != Point.ID && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
+
+		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.Changed = true; }
 
 		if (Justify) for (const auto& Line : Lines)
 			if ((Point.WX == Line.X1 && Point.WY == Line.Y1) || (Point.WX == Line.X2 && Point.WY == Line.Y2))
 			{
 				if (Justify && !Rotate)
 				{
-					if (Point.J == 1) Point.J = 4;
+					if (Point.J == 1) { Point.J = 4; Point.Changed = true; }
 				}
 				else if (Justify && Rotate)
 				{
@@ -1728,7 +1738,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 					while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
 				}
 
-				return;
+				Point.Changed = Point.Changed || Rotate; return;
 			}
 	});
 
@@ -1738,7 +1748,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	for (const auto& Point : Points)
 	{
-		Query.exec(QString(
+		if (Point.Changed) Query.exec(QString(
 			"UPDATE "
 				"EW_TEXT "
 			"SET "
