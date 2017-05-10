@@ -45,7 +45,8 @@ void TextDialog::accept(void)
 {
 	emit onEditRequest(ui->Move->isChecked(),
 				    ui->Justify->isChecked(),
-				    ui->Rotate->isChecked());
+				    ui->Rotate->isChecked(),
+				    ui->Length->value());
 
 	QDialog::accept();
 }

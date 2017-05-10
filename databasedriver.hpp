@@ -167,7 +167,7 @@ class DatabaseDriver : public QObject
 		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
 
 		void editText(RecordModel* Model, const QModelIndexList& Items,
-				    bool Move, bool Justify, bool Rotate);
+				    bool Move, bool Justify, bool Rotate, double Length);
 
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);

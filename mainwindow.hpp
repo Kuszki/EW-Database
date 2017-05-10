@@ -125,7 +125,7 @@ class MainWindow : public QMainWindow
 						int Type);
 		void changeClass(const QString& Class,
 					  int Line, int Point, int Text);
-		void editText(bool Move, bool Justify, bool Rotate);
+		void editText(bool Move, bool Justify, bool Rotate, double Length);
 
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
 					  const QList<int>& Used);
@@ -181,7 +181,7 @@ class MainWindow : public QMainWindow
 		void onHistoryRequest(RecordModel*, const QModelIndexList&);
 
 		void onTextRequest(RecordModel*, const QModelIndexList&,
-					    bool, bool, bool);
+					    bool, bool, bool, double);
 
 		void onGroupRequest(const QList<int>&);
 

@@ -1584,7 +1584,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	emit onHistoryRemove(Count);
 }
 
-void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate)
+void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate, double Length)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(); return; }
 
@@ -1707,8 +1707,16 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		if (Tasks.contains(i.key())) Points.insert(i.key(), i.value());
 	}
 
-	QtConcurrent::blockingMap(Points, [&Lines, &Objects, Move, Justify, Rotate] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Points, [&Lines, &Objects, Move, Justify, Rotate, Length] (POINT& Point) -> void
 	{
+		static const auto isLengthOK = [] (const LINE l, double len) -> bool
+		{
+			const double dx = l.X1 - l.X2;
+			const double dy = l.Y1 - l.Y2;
+
+			return qSqrt(dx * dx + dy * dy) >= len;
+		};
+
 		for (const auto& Object : Objects)
 			if (Object.ID != Point.ID && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
 
@@ -1719,9 +1727,9 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			{
 				if (Justify && !Rotate)
 				{
-					if (Point.J == 1) { Point.J = 4; Point.Changed = true; }
+					if (Point.J == 1) { Point.J = 4; Point.Changed = true; return; }
 				}
-				else if (Justify && Rotate)
+				else if (Justify && Rotate && isLengthOK(Line, Length))
 				{
 					Point.A = qAtan((Line.Y1 - Line.Y2) / (Line.X1 - Line.X2)) - M_PI / 2.0;
 
@@ -1736,9 +1744,9 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 					while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
 					while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
-				}
 
-				Point.Changed = Point.Changed || Rotate; return;
+					Point.Changed = true; return;
+				}
 			}
 	});
 
