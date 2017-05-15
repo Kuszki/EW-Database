@@ -26,13 +26,9 @@
 int main(int argc, char *argv[])
 {
 	QCoreApplication a(argc, argv);
+	QFile File(argv[1]); QUdpSocket Socket;
 
-	QFile File(argv[1]);
-	QUdpSocket Socket;
-
-	File.open(QFile::ReadOnly | QFile::Text);
-
-	while (!File.atEnd())
+	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
 		const QString Line = File.readLine();
 

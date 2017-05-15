@@ -284,12 +284,12 @@ void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text
 	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text);
 }
 
-void MainWindow::editText(bool Move, bool Justify, bool Rotate, double Length)
+void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onTextRequest(Model, Selected, Move, Justify, Rotate, Length);
+	lockUi(BUSY); emit onTextRequest(Model, Selected, Move, Justify, Rotate, Sort, Length);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)

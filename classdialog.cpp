@@ -47,11 +47,9 @@ void ClassDialog::classIndexChanged(int Index)
 	const QString Class = ui->Class->itemData(Index).toString();
 	const QString Label = ui->Class->itemText(Index);
 
-	const auto& Texts = textLayers[Class];
-	const auto& Lines = lineLayers[Class];
-	const auto& Points = pointLayers[Class];
-
-	ui->Line->clear(); ui->Text->clear();
+	const auto& Texts = textLayers[Class]; ui->Text->clear();
+	const auto& Lines = lineLayers[Class]; ui->Line->clear();
+	const auto& Points = pointLayers[Class]; ui->Point->clear();
 
 	for (auto i = Texts.constBegin(); i != Texts.constEnd(); ++i)
 	{
@@ -68,13 +66,9 @@ void ClassDialog::classIndexChanged(int Index)
 		ui->Line->addItem(i.value(), i.key());
 	}
 
-	ui->Text->model()->sort(0);
-	ui->Point->model()->sort(0);
-	ui->Line->model()->sort(0);
-
-	ui->Text->setCurrentText(Label);
-	ui->Point->setCurrentText(Label);
-	ui->Line->setCurrentText(Label);
+	ui->Text->setCurrentText(Label); ui->Text->setEnabled(ui->Text->count());
+	ui->Point->setCurrentText(Label); ui->Point->setEnabled(ui->Point->count());
+	ui->Line->setCurrentText(Label); ui->Line->setEnabled(ui->Line->count());
 
 	ui->advancedCheck->setChecked(
 		(Texts.size() && !Texts.values().contains(Label)) ||

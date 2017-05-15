@@ -1584,7 +1584,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	emit onHistoryRemove(Count);
 }
 
-void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate, double Length)
+void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate, bool Sort, double Length)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(); return; }
 
@@ -1605,6 +1605,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	{
 		double X1, Y1;
 		double X2, Y2;
+
+		double Length;
 	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
@@ -1707,16 +1709,21 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		if (Tasks.contains(i.key())) Points.insert(i.key(), i.value());
 	}
 
+	QtConcurrent::blockingMap(Lines, [] (LINE& Line) -> void
+	{
+		const double dx = Line.X1 - Line.X2;
+		const double dy = Line.Y1 - Line.Y2;
+
+		Line.Length = qSqrt(dx * dx + dy * dy);
+	});
+
+	if (Sort) qSort(Lines.begin(), Lines.end(), [] (const LINE& A, const LINE& B) -> bool
+	{
+		return A.Length > B.Length;
+	});
+
 	QtConcurrent::blockingMap(Points, [&Lines, &Objects, Move, Justify, Rotate, Length] (POINT& Point) -> void
 	{
-		static const auto isLengthOK = [] (const LINE l, double len) -> bool
-		{
-			const double dx = l.X1 - l.X2;
-			const double dy = l.Y1 - l.Y2;
-
-			return qSqrt(dx * dx + dy * dy) >= len;
-		};
-
 		for (const auto& Object : Objects)
 			if (Object.ID != Point.ID && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
 
@@ -1729,7 +1736,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 				{
 					if (Point.J == 1) { Point.J = 4; Point.Changed = true; return; }
 				}
-				else if (Justify && Rotate && isLengthOK(Line, Length))
+				else if (Justify && Rotate && (Line.Length >= Length))
 				{
 					Point.A = qAtan((Line.Y1 - Line.Y2) / (Line.X1 - Line.X2)) - M_PI / 2.0;
 
@@ -2073,7 +2080,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
 					"O.KOD = '%1' AND "
-					"L.NAZWA LIKE (O.KOD || '%')")
+					"L.NAZWA LIKE (O.KOD || '%') "
+				"ORDER BY "
+					"G.NAZWA_L")
 					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
@@ -2099,7 +2108,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
 					"O.KOD = '%1' AND "
-					"L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')")
+					"L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
+				"ORDER BY "
+					"L.DLUGA_NAZWA")
 					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
@@ -2124,7 +2135,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
 					"O.KOD = '%1' AND "
-					"T.NAZWA LIKE (O.KOD || '_%')")
+					"T.NAZWA LIKE (O.KOD || '_%') "
+				"ORDER BY "
+					"G.NAZWA_L")
 					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
@@ -2149,7 +2162,9 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
 					"O.KOD = '%1' AND "
-					"T.NAZWA = O.KOD")
+					"T.NAZWA = O.KOD "
+				"ORDER BY "
+					"G.NAZWA_L")
 					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
@@ -2175,7 +2190,39 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
 					"O.KOD = '%1' AND "
-					"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%')")
+					"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
+				"ORDER BY "
+					"T.DLUGA_NAZWA")
+					    .arg(Table.Name));
+
+			if (Query.exec()) while (Query.next())
+			{
+				T.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		if (T.isEmpty() || T.size() != T.values().toSet().size())
+		{
+			T.clear();
+
+			Query.prepare(QString(
+				"SELECT "
+					"T.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_TEXTOWA T "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"T.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = '%1' AND "
+					"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
+				"ORDER BY "
+					"G.NAZWA_L")
 					    .arg(Table.Name));
 
 			if (Query.exec()) while (Query.next())
