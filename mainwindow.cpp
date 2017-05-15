@@ -26,6 +26,9 @@ MainWindow::MainWindow(QWidget* Parent)
 {
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
+	Socket = new QUdpSocket(this);
+
+	Selector = new QComboBox(this);
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
 	About = new AboutDialog(this);
@@ -34,7 +37,11 @@ MainWindow::MainWindow(QWidget* Parent)
 	Driver->moveToThread(&Thread);
 	Thread.start();
 
+	Selector->addItems(QStringList() << tr("No selection") << tr("Single selection") << tr("Add to selection") << tr("Remove from selection"));
+	Selector->setLayoutDirection(Qt::LeftToRight);
+	Socket->bind(QHostAddress::LocalHost, 6666);
 	ui->statusBar->addPermanentWidget(Progress);
+	ui->supportTool->insertWidget(ui->actionAbout, Selector);
 
 	QSettings Settings("EW-Database");
 
@@ -100,6 +107,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onRefactorRequest, Driver, &DatabaseDriver::refactorData);
 
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
+
+	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -412,6 +421,38 @@ void MainWindow::refactorData(void)
 void MainWindow::loginAttempt(void)
 {
 	ui->actionConnect->setEnabled(false);
+}
+
+void MainWindow::readDatagram(void)
+{
+	static const QVector<QItemSelectionModel::SelectionFlag> Actions =
+	{
+		QItemSelectionModel::ClearAndSelect,
+		QItemSelectionModel::Select,
+		QItemSelectionModel::Deselect
+	};
+
+	QByteArray Data;
+
+	Data.resize(Socket->pendingDatagramSize());
+	Socket->readDatagram(Data.data(), Data.size());
+
+	if (int Action = Selector->currentIndex())
+	{
+		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+		auto Selection = ui->Data->selectionModel();
+
+		if (Model && Selection)
+		{
+			QModelIndex Index = Model->find(2, Data);
+
+			if (Index.isValid())
+			{
+				Selection->select(Index, Actions[Action - 1] | QItemSelectionModel::Rows);
+				ui->Data->scrollTo(Index, QAbstractItemView::PositionAtCenter);
+			}
+		}
+	}
 }
 
 void MainWindow::prepareEdit(const QList<QHash<int, QVariant>>& Values, const QList<int>& Used)

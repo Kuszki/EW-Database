@@ -176,6 +176,8 @@ class RecordModel : public QAbstractItemModel
 
 		bool exists(int Index) const;
 
+		QModelIndex find(int Index, QVariant Data) const;
+
 	protected:
 
 		GroupObject* createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From,

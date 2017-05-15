@@ -26,6 +26,7 @@
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QTextStream>
+#include <QUdpSocket>
 #include <QThread>
 
 #include "databasedriver.hpp"
@@ -62,9 +63,12 @@ class MainWindow : public QMainWindow
 
 		Ui::MainWindow* ui;
 
+		QUdpSocket* Socket;
+
 		AboutDialog* About;
 
 		QProgressBar* Progress;
+		QComboBox* Selector;
 
 		DatabaseDriver* Driver;
 		ColumnsDialog* Columns;
@@ -153,6 +157,8 @@ class MainWindow : public QMainWindow
 		void refactorData(void);
 
 		void loginAttempt(void);
+
+		void readDatagram(void);
 
 	signals:
 

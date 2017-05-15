@@ -545,6 +545,30 @@ bool RecordModel::exists(int Index) const
 	for (const auto& Item : Objects) if (Item->getUid() == Index) return true; return false;
 }
 
+QModelIndex RecordModel::find(int Index, QVariant Data) const
+{
+	if (Objects.isEmpty() || Header.size() <= Index) return QModelIndex();
+
+	QMutex Synchronizer; QModelIndex Item; bool Found(false);
+
+	QtConcurrent::blockingMap(Objects, [this, &Synchronizer, &Found, &Item, Index, Data] (RecordObject* Object)
+	{
+		if (!Found && Object->getField(Index) == Data)
+		{
+			Synchronizer.lock();
+
+			Item = Root ? createIndex(Parents[Object]->getIndex(Object), 0, Object) :
+					    createIndex(Objects.indexOf(Object), 0, Object);
+
+			Found = true;
+
+			Synchronizer.unlock();
+		}
+	});
+
+	return Item;
+}
+
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
 {
 	if (!Parent) Parent = new GroupObject();
