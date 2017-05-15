@@ -234,7 +234,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="databasedriver.cpp" line="1038"/>
         <location filename="databasedriver.cpp" line="1155"/>
-        <location filename="databasedriver.cpp" line="1612"/>
+        <location filename="databasedriver.cpp" line="1614"/>
         <source>Loading points</source>
         <translation>Wczytywanie punktów</translation>
     </message>
@@ -280,50 +280,50 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Usuwanie obiektów historycznych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1667"/>
+        <location filename="databasedriver.cpp" line="1669"/>
         <source>Loading lines</source>
         <translation>Wczytywanie linii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1700"/>
+        <location filename="databasedriver.cpp" line="1702"/>
         <source>Performing edit</source>
         <translation>Redakcja opisów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1736"/>
+        <location filename="databasedriver.cpp" line="1754"/>
         <source>Saving changes</source>
         <translation>Zapizywanie zmian</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1935"/>
+        <location filename="databasedriver.cpp" line="1953"/>
         <source>Preparing edit data</source>
         <translation>Przygotowywanie okna edycji danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1965"/>
-        <location filename="databasedriver.cpp" line="2014"/>
+        <location filename="databasedriver.cpp" line="1983"/>
+        <location filename="databasedriver.cpp" line="2032"/>
         <source>Preparing classes</source>
         <translation>Ładowanie dostępnych kodów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2033"/>
+        <location filename="databasedriver.cpp" line="2051"/>
         <source>Selecting layers data</source>
         <translation>Wczytywanie danych o warstwach</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2208"/>
+        <location filename="databasedriver.cpp" line="2226"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2208"/>
+        <location filename="databasedriver.cpp" line="2226"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="154"/>
         <location filename="databasedriver.cpp" line="192"/>
-        <location filename="databasedriver.cpp" line="2226"/>
+        <location filename="databasedriver.cpp" line="2244"/>
         <source>Unknown</source>
         <translation>Niezdefiniowane</translation>
     </message>
@@ -371,9 +371,9 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="1458"/>
         <location filename="databasedriver.cpp" line="1528"/>
         <location filename="databasedriver.cpp" line="1589"/>
-        <location filename="databasedriver.cpp" line="1929"/>
-        <location filename="databasedriver.cpp" line="1954"/>
-        <location filename="databasedriver.cpp" line="2006"/>
+        <location filename="databasedriver.cpp" line="1947"/>
+        <location filename="databasedriver.cpp" line="1972"/>
+        <location filename="databasedriver.cpp" line="2024"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -918,7 +918,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Baza danych odłączona</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="536"/>
+        <location filename="mainwindow.cpp" line="538"/>
         <source>Job done</source>
         <translation>Zadanie wykonane</translation>
     </message>
@@ -1014,17 +1014,27 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Redakcja opisów</translation>
     </message>
     <message>
-        <location filename="textdialog.ui" line="23"/>
+        <location filename="textdialog.ui" line="34"/>
+        <source>Minimum line length </source>
+        <translation>Minimalna długość osi </translation>
+    </message>
+    <message>
+        <location filename="textdialog.ui" line="37"/>
+        <source> m</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="textdialog.ui" line="67"/>
         <source>Rotate text to line</source>
         <translation>Obróć tekst zgodnie z kierunkiem osi</translation>
     </message>
     <message>
-        <location filename="textdialog.ui" line="30"/>
+        <location filename="textdialog.ui" line="74"/>
         <source>Move text to insert point</source>
         <translation>Przesuń tekst w miejsce wstawienia obiektu</translation>
     </message>
     <message>
-        <location filename="textdialog.ui" line="37"/>
+        <location filename="textdialog.ui" line="60"/>
         <source>Set text aligment</source>
         <translation>Modyfikuj wyrównanie tekstu</translation>
     </message>
