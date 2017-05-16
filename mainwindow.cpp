@@ -384,6 +384,9 @@ void MainWindow::updateGroups(const QList<int>& Columns)
 {
 	if (!dynamic_cast<RecordModel*>(ui->Data->model())) return;
 
+	if (!Columns.size()) ui->Data->setTreePosition(-1);
+	else ui->Data->setTreePosition(Columns.first());
+
 	lockUi(BUSY); emit onGroupRequest(Columns);
 }
 
