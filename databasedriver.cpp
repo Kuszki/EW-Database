@@ -1307,7 +1307,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	emit onBeginProgress(tr("Updating class"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Items.size());
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -1430,9 +1430,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 					 .arg(Class)
 					 .arg(Item));
 
+			emit onUpdateProgress(++Step);
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress(); Step = 0;
