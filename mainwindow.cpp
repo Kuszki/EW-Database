@@ -37,11 +37,17 @@ MainWindow::MainWindow(QWidget* Parent)
 	Driver->moveToThread(&Thread);
 	Thread.start();
 
-	Selector->addItems(QStringList() << tr("No selection") << tr("Single selection") << tr("Add to selection") << tr("Remove from selection"));
+	Selector->addItems(QStringList()
+				    << tr("No selection") << tr("Single selection")
+				    << tr("Add to selection") << tr("Remove from selection")
+				    << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
+
 	Socket->bind(QHostAddress::LocalHost, 6666);
+
+	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
+	ui->supportTool->insertSeparator(ui->actionUnhide);
 	ui->statusBar->addPermanentWidget(Progress);
-	ui->supportTool->insertWidget(ui->actionAbout, Selector);
 
 	QSettings Settings("EW-Database");
 
@@ -62,6 +68,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::connectActionClicked);
 	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
+
+	connect(ui->actionHide, &QAction::triggered, this, &MainWindow::hideActionClicked);
+	connect(ui->actionUnhide, &QAction::triggered, this, &MainWindow::unhideActionClicked);
 
 	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
 	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
@@ -127,6 +136,14 @@ MainWindow::~MainWindow(void)
 
 	delete Driver;
 	delete ui;
+}
+
+void MainWindow::unhideAll(QTreeView* View, QModelIndex Index)
+{
+	if (Index.isValid()) for (int i = 0; i < Index.model()->rowCount(Index); ++i)
+	{
+		View->setRowHidden(i, Index, false); unhideAll(View, Index.child(i, 0));
+	}
 }
 
 void MainWindow::connectActionClicked(void)
@@ -227,6 +244,27 @@ void MainWindow::classActionClicked(void)
 	lockUi(BUSY); emit onClassRequest(Model, Selected);
 }
 
+void MainWindow::hideActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+
+	for (const auto Item : Selected)
+	{
+		ui->Data->setRowHidden(Item.row(), Item.parent(), true);
+	}
+
+	ui->Data->selectionModel()->clearSelection();
+}
+
+void MainWindow::unhideActionClicked(void)
+{
+	if (ui->Data->model()) for (int i = 0; i < ui->Data->model()->rowCount(); ++i)
+	{
+		ui->Data->setRowHidden(i, QModelIndex(), false);
+		unhideAll(ui->Data, ui->Data->model()->index(i, 0));
+	}
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -242,6 +280,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionHistory->setEnabled(Count > 0);
 	ui->actionRefactor->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
+	ui->actionHide->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
@@ -444,11 +483,19 @@ void MainWindow::readDatagram(void)
 
 		if (Model && Selection)
 		{
-			QModelIndex Index = Model->find(2, Data);
+			const QModelIndex Index = Model->find(2, Data);
 
 			if (Index.isValid())
 			{
-				Selection->select(Index, Actions[Action - 1] | QItemSelectionModel::Rows);
+				if (Action < 4)
+				{
+					Selection->select(Index, Actions[Action - 1] | QItemSelectionModel::Rows);
+				}
+				else
+				{
+					ui->Data->setRowHidden(Index.row(), Index.parent(), Action == 5);
+				}
+
 				ui->Data->scrollTo(Index, QAbstractItemView::PositionAtCenter);
 			}
 		}
@@ -537,6 +584,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
 			ui->actionLoad->setEnabled(true);
+			ui->actionUnhide->setEnabled(true);
 		break;
 		case DISCONNECTED:
 			ui->statusBar->showMessage(tr("Database disconnected"));
@@ -557,6 +605,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionHistory->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
 			ui->actionText->setEnabled(false);
+			ui->actionHide->setEnabled(false);
+			ui->actionUnhide->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -573,6 +623,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionHistory->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
 			ui->actionText->setEnabled(false);
+			ui->actionHide->setEnabled(false);
+			ui->actionUnhide->setEnabled(false);
 			ui->Data->setEnabled(false);
 		break;
 		case DONE:
@@ -583,6 +635,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionFilter->setEnabled(true);
 			ui->actionReload->setEnabled(true);
 			ui->actionLoad->setEnabled(true);
+			ui->actionUnhide->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);

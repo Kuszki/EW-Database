@@ -23,7 +23,7 @@ QT		-=	gui
 
 CONFIG	+=	c++11
 
-TARGET	=	test
+TARGET	=	EW-Selector
 CONFIG	-=	app_bundle
 
 TEMPLATE	=	app

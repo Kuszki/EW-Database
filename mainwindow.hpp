@@ -27,6 +27,7 @@
 #include <QFileDialog>
 #include <QTextStream>
 #include <QUdpSocket>
+#include <QTreeView>
 #include <QThread>
 
 #include "databasedriver.hpp"
@@ -91,6 +92,8 @@ class MainWindow : public QMainWindow
 		explicit MainWindow(QWidget* Parent = nullptr);
 		virtual ~MainWindow(void) override;
 
+		static void unhideAll(QTreeView* View, QModelIndex Index);
+
 	private slots:
 
 		void connectActionClicked(void);
@@ -102,6 +105,8 @@ class MainWindow : public QMainWindow
 		void historyActionClicked(void);
 		void loadActionClicked(void);
 		void classActionClicked(void);
+		void hideActionClicked(void);
+		void unhideActionClicked(void);
 
 		void selectionChanged(void);
 
