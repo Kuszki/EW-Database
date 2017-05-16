@@ -94,6 +94,9 @@
     <addaction name="actionFilter"/>
     <addaction name="actionGroup"/>
     <addaction name="separator"/>
+    <addaction name="actionHide"/>
+    <addaction name="actionUnhide"/>
+    <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionHistory"/>
     <addaction name="actionText"/>
@@ -163,7 +166,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionAbout"/>
+   <addaction name="actionUnhide"/>
+   <addaction name="actionHide"/>
   </widget>
   <action name="actionConnect">
    <property name="icon">
@@ -347,13 +351,36 @@
   </action>
   <action name="actionText">
    <property name="icon">
-    <iconset theme="tools-check-spelling"/>
+    <iconset theme="tools-check-spelling">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Edit text</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionHide">
+   <property name="icon">
+    <iconset theme="document-new"/>
+   </property>
+   <property name="text">
+    <string>Hide</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="actionUnhide">
+   <property name="icon">
+    <iconset theme="document-revert"/>
+   </property>
+   <property name="text">
+    <string>Unhide</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
    </property>
   </action>
  </widget>
