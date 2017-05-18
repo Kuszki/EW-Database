@@ -24,7 +24,11 @@
 ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QString, QHash<int, QString>>& Lines, const QHash<QString, QHash<int, QString>>& Points, const QHash<QString, QHash<int, QString>>& Texts, QWidget* Parent)
 : QDialog(Parent), lineLayers(Lines), pointLayers(Points), textLayers(Texts), ui(new Ui::ClassDialog)
 {
-	ui->setupUi(this); for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i) ui->Class->addItem(i.value(), i.key());
+	ui->setupUi(this);
+
+	for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i) ui->Class->addItem(i.value(), i.key());
+
+	ui->Class->model()->sort(0);
 }
 
 ClassDialog::~ClassDialog(void)
@@ -66,12 +70,21 @@ void ClassDialog::classIndexChanged(int Index)
 		ui->Line->addItem(i.value(), i.key());
 	}
 
-	ui->Text->setCurrentText(Label); ui->Text->setEnabled(ui->Text->count());
-	ui->Point->setCurrentText(Label); ui->Point->setEnabled(ui->Point->count());
-	ui->Line->setCurrentText(Label); ui->Line->setEnabled(ui->Line->count());
+	ui->Text->model()->sort(0);
+	ui->Point->model()->sort(0);
+	ui->Line->model()->sort(0);
+
+	ui->Text->setCurrentText(Label);
+	ui->Point->setCurrentText(Label);
+	ui->Line->setCurrentText(Label);
+
+	ui->Text->setEnabled(ui->Text->count());
+	ui->Point->setEnabled(ui->Point->count());
+	ui->Line->setEnabled(ui->Line->count());
 
 	ui->advancedCheck->setChecked(
 		(Texts.size() && !Texts.values().contains(Label)) ||
 		(Lines.size() && !Lines.values().contains(Label)) ||
 		(Points.size() && !Points.values().contains(Label)));
+
 }
