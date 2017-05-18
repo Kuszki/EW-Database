@@ -435,14 +435,14 @@ void MainWindow::groupData(void)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data groupped"));
 }
 
-void MainWindow::joinData(void)
+void MainWindow::joinData(int Count)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Data joined"));
+	lockUi(DONE); ui->statusBar->showMessage(tr("Joined %n object(s)", nullptr, Count));
 }
 
-void MainWindow::textEdit(void)
+void MainWindow::textEdit(int Count)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Text edited"));
+	lockUi(DONE); ui->statusBar->showMessage(tr("Edited %n text(s)", nullptr, Count));
 }
 
 void MainWindow::restoreJob(int Count)

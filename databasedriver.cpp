@@ -1585,7 +1585,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 
 void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate, bool Sort, double Length)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(); return; }
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(0); return; }
 
 	struct POINT
 	{
@@ -1609,7 +1609,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
-	QMap<int, POINT> Points, Objects; QList<LINE> Lines;
+	QMap<int, POINT> Points, Objects; QList<LINE> Lines; int Rejected = 0;
 	const QList<int> Tasks = Model->getUids(Items);
 
 	emit onBeginProgress(tr("Loading points"));
@@ -1777,12 +1777,13 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 				 .arg(Point.DY, 0, 'f', -1)
 				 .arg(Point.A, 0, 'f', -1)
 				 .arg(Point.J));
+		else Rejected += 1;
 
 		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
-	emit onTextEdit();
+	emit onTextEdit(Points.size() - Rejected);
 }
 
 QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)

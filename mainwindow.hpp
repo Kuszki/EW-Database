@@ -153,8 +153,8 @@ class MainWindow : public QMainWindow
 		void updateData(RecordModel* Model);
 
 		void groupData(void);
-		void joinData(void);
-		void textEdit(void);
+		void joinData(int Count);
+		void textEdit(int Count);
 
 		void restoreJob(int Count);
 		void removeHistory(int Count);

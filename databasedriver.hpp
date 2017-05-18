@@ -210,7 +210,7 @@ class DatabaseDriver : public QObject
 		void onJobsRestore(int);
 		void onHistoryRemove(int);
 
-		void onTextEdit(void);
+		void onTextEdit(int);
 
 };
 
