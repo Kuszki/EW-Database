@@ -41,6 +41,7 @@ class GeometryWidget : public QWidget
 		static const QVector<int> Numbers;
 		static const QVector<int> Points;
 		static const QVector<int> Classes;
+		static const QVector<int> Lines;
 
 		Ui::GeometryWidget* ui;
 

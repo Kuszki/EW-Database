@@ -24,6 +24,7 @@
 const QVector<int> GeometryWidget::Numbers = { 0, 1 };
 const QVector<int> GeometryWidget::Points = { 2, 3, 4, 5, 6, 7 };
 const QVector<int> GeometryWidget::Classes = { 8, 9 };
+const QVector<int> GeometryWidget::Lines = { 10, 11 };
 
 GeometryWidget::GeometryWidget(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::GeometryWidget)
@@ -41,6 +42,7 @@ QPair<int, QVariant> GeometryWidget::getCondition(void) const
 	const int Index = ui->typeCombo->currentIndex();
 
 	if (Numbers.contains(Index)) return qMakePair(Index, ui->sizeSpin->value());
+	if (Lines.contains(Index)) return qMakePair(Index, ui->lineCombo->currentData());
 	if (Points.contains(Index)) return qMakePair(Index, ui->pointCombo->currentData());
 	if (Classes.contains(Index)) return qMakePair(Index, ui->classCombo->currentData());
 
@@ -52,6 +54,7 @@ void GeometryWidget::typeChanged(int Index)
 	ui->sizeSpin->setVisible(Numbers.contains(Index));
 	ui->pointCombo->setVisible(Points.contains(Index));
 	ui->classCombo->setVisible(Classes.contains(Index));
+	ui->lineCombo->setVisible(Lines.contains(Index));
 }
 
 void GeometryWidget::editFinished(void)
@@ -61,7 +64,7 @@ void GeometryWidget::editFinished(void)
 
 void GeometryWidget::setParameters(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points)
 {
-	ui->classCombo->clear(); ui->pointCombo->clear();
+	ui->classCombo->clear(); ui->pointCombo->clear(); ui->lineCombo->clear();
 
 	for (auto i = Points.constBegin(); i != Points.constEnd(); ++i)
 	{
@@ -72,15 +75,19 @@ void GeometryWidget::setParameters(const QHash<QString, QString>& Classes, const
 	for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i)
 	{
 		ui->classCombo->addItem(i.value(), i.key());
+		ui->lineCombo->addItem(i.value(), i.key());
 	}
 
 	ui->classCombo->model()->sort(0);
 	ui->pointCombo->model()->sort(0);
+	ui->lineCombo->model()->sort(0);
 
 	ui->classCombo->insertItem(0, tr("Any object"), "*");
 	ui->pointCombo->insertItem(0, tr("Any object"), "*");
+	ui->lineCombo->insertItem(0, tr("Any object"), "*");
 
 	ui->classCombo->setCurrentIndex(0);
 	ui->pointCombo->setCurrentIndex(0);
+	ui->lineCombo->setCurrentIndex(0);
 }
 

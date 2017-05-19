@@ -694,7 +694,112 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		}
 	}
 
-	if (Geometry.contains(10))
+	if (Geometry.contains(10) || Geometry.contains(11))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		QList<QPair<int, int>> CountA, CountB;
+		QHash<QString, QList<QPointF>> Lines;
+		QHash<int, QPointF> Points;
+
+		Query.prepare(
+			"SELECT "
+				"O.UID "
+			"FROM "
+				"EW_OBIEKTY O "
+			"WHERE "
+				"O.STATUS = 0");
+
+		if (Query.exec()) while (Query.next())
+		{
+			if (Geometry.contains(10)) CountA.append(qMakePair(Query.value(0).toInt(), 0));
+			if (Geometry.contains(11)) CountB.append(qMakePair(Query.value(0).toInt(), 0));
+		}
+
+		Query.prepare(
+			"SELECT "
+				"O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"E.TYP = 0");
+
+		if (Query.exec()) while (Query.next())
+		{
+			const QString Class = Query.value(0).toString();
+
+			if ((Geometry.contains(10) && Geometry[10].toStringList().contains(Class)) ||
+			    (Geometry.contains(11) && Geometry[11].toStringList().contains(Class)))
+			{
+				if (!Lines.contains(Class)) Lines.insert(Class, QList<QPointF>());
+
+				Lines[Class].append(QPointF(Query.value(1).toDouble(), Query.value(2).toDouble()));
+				Lines[Class].append(QPointF(Query.value(3).toDouble(), Query.value(4).toDouble()));
+			}
+		}
+
+		Query.prepare(
+			"SELECT "
+				"O.UID, T.POS_X, T.POS_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_TEXT T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"E.TYP = 0 AND "
+				"T.TYP = 4");
+
+		if (Query.exec()) while (Query.next())
+		{
+			Points.insert(Query.value(0).toInt(),
+					    QPointF(Query.value(1).toDouble(),
+							  Query.value(2).toDouble()));
+		}
+
+		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
+		{
+			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i) if (Geometry[10].toStringList().contains(i.key()))
+			{
+				for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+			}
+		});
+
+		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
+		{
+			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i) if (Geometry[11].toStringList().contains(i.key()))
+			{
+				for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+			}
+		});
+
+		if (Geometry.contains(10)) for (const auto& Point : CountA)
+		{
+			if (Point.second == 0) Data.remove(Point.first);
+		}
+
+		if (Geometry.contains(11)) for (const auto& Point : CountB)
+		{
+			if (Point.second != 0) Data.remove(Point.first);
+		}
+	}
+
+	if (Geometry.contains(12))
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 

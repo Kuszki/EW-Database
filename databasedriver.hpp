@@ -18,8 +18,8 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef DATABASEDRIVER_V2_HPP
-#define DATABASEDRIVER_V2_HPP
+#ifndef DATABASEDRIVER_HPP
+#define DATABASEDRIVER_HPP
 
 #include <QSharedDataPointer>
 #include <QSqlDatabase>
@@ -228,4 +228,4 @@ const Type& getItemByField(const Container<Type>& Items, const Field& Data, Fiel
 template<class Type, class Field, template<class> class Container>
 bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
 
-#endif // DATABASEDRIVER_V2_HPP
+#endif // DATABASEDRIVER_HPP
