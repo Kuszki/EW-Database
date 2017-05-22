@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget* Parent)
 {
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
+	Marker = new QUdpSocket(this);
 	Socket = new QUdpSocket(this);
 
 	Selector = new QComboBox(this);
@@ -43,6 +44,7 @@ MainWindow::MainWindow(QWidget* Parent)
 				    << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
 
+	Marker->bind(QHostAddress::LocalHost, 7777);
 	Socket->bind(QHostAddress::LocalHost, 6666);
 
 	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
@@ -117,6 +119,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
 
+	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
 	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
@@ -340,6 +343,8 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Export = new ExportDialog(this, Headers);
 	Text = new TextDialog(this);
 
+	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
+
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
@@ -503,6 +508,31 @@ void MainWindow::readDatagram(void)
 			}
 		}
 	}
+}
+
+void MainWindow::readRequest(void)
+{
+	if (!ui->Data->model()) return; QUdpSocket Sender; QByteArray Array;
+
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	Array.resize(Marker->pendingDatagramSize());
+	Marker->readDatagram(Array.data(), Array.size());
+
+	if (Model) for (const auto& Index : Selected)
+	{
+		QString Data = QString()
+			.append("11 13\n")
+			.append(Codes.value(Model->fieldData(Index, 1).toString()))
+			.append(";")
+			.append(Model->fieldData(Index, 2).toString())
+			.append("\n");
+
+		Sender.writeDatagram(Data.toUtf8(), QHostAddress::LocalHost, 8888);
+	}
+
+	Sender.writeDatagram("\n\n", QHostAddress::LocalHost, 8888);
 }
 
 void MainWindow::prepareEdit(const QList<QHash<int, QVariant>>& Values, const QList<int>& Used)

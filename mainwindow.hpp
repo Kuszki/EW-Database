@@ -64,6 +64,7 @@ class MainWindow : public QMainWindow
 
 		Ui::MainWindow* ui;
 
+		QUdpSocket* Marker;
 		QUdpSocket* Socket;
 
 		AboutDialog* About;
@@ -80,6 +81,8 @@ class MainWindow : public QMainWindow
 		TextDialog* Text;
 
 		QThread Thread;
+
+		QMap<QString, QString> Codes;
 
 	private:
 
@@ -164,6 +167,7 @@ class MainWindow : public QMainWindow
 		void loginAttempt(void);
 
 		void readDatagram(void);
+		void readRequest(void);
 
 	signals:
 
