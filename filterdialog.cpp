@@ -177,14 +177,16 @@ void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
 
 void FilterDialog::linitBoxChecked(bool Checked)
 {
-	if (Checked)
+	if (!Checked) Limiter.clear();
+	else
 	{
 		Limiter = QFileDialog::getOpenFileName(this, tr("Select objects list"), QString(),
 									    tr("Text files (*.txt);;All files (*.*)"));
 
 		if (Limiter.isEmpty()) ui->limitCheck->setChecked(false);
 	}
-	else Limiter.clear();
+
+	ui->limitCheck->setToolTip(Limiter);
 }
 
 void FilterDialog::classBoxChecked(void)
