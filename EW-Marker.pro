@@ -21,7 +21,7 @@
 QT		+=	core network
 QT		-=	gui
 
-CONFIG	+=	c++11 console
+CONFIG	+=	c++11
 
 TARGET	=	EW-Marker
 CONFIG	-=	app_bundle
