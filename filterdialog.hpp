@@ -22,6 +22,7 @@
 #define FILTERDIALOG_HPP
 
 #include <QAbstractButton>
+#include <QFileDialog>
 #include <QPushButton>
 #include <QClipboard>
 #include <QCheckBox>
@@ -53,6 +54,7 @@ class FilterDialog : public QDialog
 		QList<QSet<int>> Attributes;
 
 		unsigned Above = 0;
+		QString Limiter;
 
 	public:
 
@@ -62,7 +64,9 @@ class FilterDialog : public QDialog
 						  unsigned Common = 0);
 		virtual ~FilterDialog(void) override;
 
+		QString getLimiterFile(void) const;
 		QString getFilterRules(void) const;
+
 		QList<int> getUsedFields(void) const;
 		QHash<int, QVariant> getGeometryRules(void) const;
 
@@ -74,6 +78,8 @@ class FilterDialog : public QDialog
 		void simpleSearchEdited(const QString& Search);
 
 		void buttonBoxClicked(QAbstractButton* Button);
+
+		void linitBoxChecked(bool Checked);
 
 		void classBoxChecked(void);
 
@@ -93,7 +99,7 @@ class FilterDialog : public QDialog
 
 	signals:
 
-		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&);
+		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&, const QString&);
 
 };
 

@@ -40,6 +40,11 @@ FilterDialog::~FilterDialog(void)
 	delete ui;
 }
 
+QString FilterDialog::getLimiterFile(void) const
+{
+	return Limiter;
+}
+
 QString FilterDialog::getFilterRules(void) const
 {
 	if (ui->specialCheck->isChecked())
@@ -170,6 +175,18 @@ void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
 	ui->Setup->document()->clear();
 }
 
+void FilterDialog::linitBoxChecked(bool Checked)
+{
+	if (Checked)
+	{
+		Limiter = QFileDialog::getOpenFileName(this, tr("Select objects list"), QString(),
+									    tr("Text files (*.txt);;All files (*.*)"));
+
+		if (Limiter.isEmpty()) ui->limitCheck->setChecked(false);
+	}
+	else Limiter.clear();
+}
+
 void FilterDialog::classBoxChecked(void)
 {
 	QSet<int> Disabled, All;
@@ -209,6 +226,7 @@ void FilterDialog::filterRulesChanged(void)
 	ui->unselectButton->setVisible(Index == 1);
 
 	ui->newButton->setVisible(Index == 2);
+	ui->limitCheck->setVisible(Index == 2);
 
 	ui->simpleScrool->setVisible(!Special);
 	ui->specialWidget->setVisible(Special);
@@ -285,7 +303,7 @@ void FilterDialog::unselectButtonClicked(void)
 
 void FilterDialog::accept(void)
 {
-	emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules()); QDialog::accept();
+	emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter); QDialog::accept();
 }
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)

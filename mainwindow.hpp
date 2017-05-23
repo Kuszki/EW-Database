@@ -125,7 +125,8 @@ class MainWindow : public QMainWindow
 		void updateColumns(const QList<int>& Columns);
 		void updateValues(const QHash<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used,
-					  const QHash<int, QVariant>& Geometry);
+					  const QHash<int, QVariant>& Geometry,
+					  const QString& Limiter);
 
 		void updateRow(int Index, const QHash<int, QVariant>& Data);
 		void removeRow(const QModelIndex& Index);
@@ -149,7 +150,7 @@ class MainWindow : public QMainWindow
 					   const QHash<QString, QHash<int, QString>>& Points,
 					   const QHash<QString, QHash<int, QString>>& Texts);
 
-		void saveData(const QList<int>& Fields, int Type);
+		void saveData(const QList<int>& Fields, int Type, bool Header);
 
 		void loadData(RecordModel* Model);
 		void removeData(RecordModel* Model);
@@ -173,7 +174,8 @@ class MainWindow : public QMainWindow
 
 		void onLoadRequest(const QStringList&);
 		void onReloadRequest(const QString&, const QList<int>&,
-						 const QHash<int, QVariant>&);
+						 const QHash<int, QVariant>&,
+						 const QString&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&,

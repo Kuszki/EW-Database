@@ -18,7 +18,7 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="4">
+   <item row="0" column="0" colspan="5">
     <widget class="QComboBox" name="typeCombo">
      <item>
       <property name="text">
@@ -37,7 +37,17 @@
      </item>
     </widget>
    </item>
-   <item row="1" column="0" colspan="4">
+   <item row="2" column="4">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="5">
     <widget class="QScrollArea" name="itemsScrool">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -54,7 +64,7 @@
         <x>0</x>
         <y>0</y>
         <width>582</width>
-        <height>214</height>
+        <height>225</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="itemsLayout"/>
@@ -83,17 +93,6 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QToolButton" name="selectButton">
-     <property name="text">
-      <string>All</string>
-     </property>
-     <property name="icon">
-      <iconset theme="list-add">
-       <normaloff>.</normaloff>.</iconset>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="2">
     <widget class="QToolButton" name="unselectButton">
      <property name="text">
@@ -105,13 +104,21 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="3">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="2" column="1">
+    <widget class="QToolButton" name="selectButton">
+     <property name="text">
+      <string>All</string>
      </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     <property name="icon">
+      <iconset theme="list-add">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="3">
+    <widget class="QCheckBox" name="headerCheck">
+     <property name="text">
+      <string>Add header</string>
      </property>
     </widget>
    </item>

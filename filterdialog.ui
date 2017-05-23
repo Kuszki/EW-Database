@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
+    <width>1101</width>
     <height>500</height>
    </rect>
   </property>
@@ -126,7 +126,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>939</width>
+            <width>1040</width>
             <height>204</height>
            </rect>
           </property>
@@ -157,7 +157,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>939</width>
+            <width>1040</width>
             <height>433</height>
            </rect>
           </property>
@@ -188,7 +188,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>939</width>
+            <width>1040</width>
             <height>433</height>
            </rect>
           </property>
@@ -285,7 +285,15 @@
         <string>Add</string>
        </property>
        <property name="icon">
-        <iconset theme="list-add"/>
+        <iconset theme="list-add">
+         <normaloff>.</normaloff>.</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="limitCheck">
+       <property name="text">
+        <string>Limit objects list</string>
        </property>
       </widget>
      </item>
@@ -506,8 +514,8 @@
    <slot>filterRulesChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>676</x>
-     <y>484</y>
+     <x>826</x>
+     <y>487</y>
     </hint>
     <hint type="destinationlabel">
      <x>679</x>
@@ -522,8 +530,8 @@
    <slot>addButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>964</x>
-     <y>35</y>
+     <x>1081</x>
+     <y>41</y>
     </hint>
     <hint type="destinationlabel">
      <x>1012</x>
@@ -563,6 +571,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>limitCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>linitBoxChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>698</x>
+     <y>485</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>700</x>
+     <y>603</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>classSearchEdited(QString)</slot>
@@ -575,5 +599,6 @@
   <slot>copyButtonClicked()</slot>
   <slot>filterRulesChanged()</slot>
   <slot>newButtonClicked()</slot>
+  <slot>linitBoxChecked(bool)</slot>
  </slots>
 </ui>

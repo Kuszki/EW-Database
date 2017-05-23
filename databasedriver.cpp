@@ -385,9 +385,16 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	return List;
 }
 
-QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>> Data, const QHash<int, QVariant>& Geometry)
+QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>> Data, const QHash<int, QVariant>& Geometry, const QString& Limiter)
 {
 	if (!Database.isOpen()) Data;
+
+	QFile File(Limiter); QTextStream Stream(&File); QSet<QString> Limit;
+
+	if (!Limiter.isEmpty() && File.open(QFile::ReadOnly | QFile::Text))
+	{
+		while (!Stream.atEnd()) Limit.insert(Stream.readLine());
+	}
 
 	if (Geometry.contains(0) || Geometry.contains(1))
 	{
@@ -493,7 +500,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.UID, O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y "
+				"O.UID, O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y, O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -508,7 +515,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"O.STATUS = 0 AND "
 				"E.TYP = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(6).toString()))
 		{
 			const int Index = Query.value(0).toInt();
 
@@ -718,7 +725,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y "
+				"O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y, O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -733,12 +740,12 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"O.STATUS = 0 AND "
 				"E.TYP = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(5).toString()))
 		{
 			const QString Class = Query.value(0).toString();
 
-			if ((Geometry.contains(10) && Geometry[10].toStringList().contains(Class)) ||
-			    (Geometry.contains(11) && Geometry[11].toStringList().contains(Class)))
+			if ((Geometry.contains(10) && (Geometry[10].toStringList().contains("*") || Geometry[10].toStringList().contains(Class))) ||
+			    (Geometry.contains(11) && (Geometry[11].toStringList().contains("*") || Geometry[11].toStringList().contains(Class))))
 			{
 				if (!Lines.contains(Class)) Lines.insert(Class, QList<QPointF>());
 
@@ -774,17 +781,23 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
 		{
-			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i) if (Geometry[10].toStringList().contains(i.key()))
+			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
-				for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+				if (Geometry[10].toStringList().contains("*") || Geometry[10].toStringList().contains(i.key()))
+				{
+					for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+				}
 			}
 		});
 
 		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
 		{
-			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i) if (Geometry[11].toStringList().contains(i.key()))
+			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
-				for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+				if (Geometry[11].toStringList().contains("*") || Geometry[11].toStringList().contains(i.key()))
+				{
+					for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+				}
 			}
 		});
 
@@ -946,7 +959,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QString& Limiter)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -976,7 +989,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		emit onBeginProgress(tr("Applying geometry filters"));
 		emit onSetupProgress(0, 0);
 
-		Model->addItems(filterData(List, Geometry));
+		Model->addItems(filterData(List, Geometry, Limiter));
 	}
 
 	emit onEndProgress();

@@ -119,7 +119,8 @@ class DatabaseDriver : public QObject
 										  bool Dict, bool View);
 
 		QHash<int, QHash<int, QVariant>> filterData(QHash<int, QHash<int, QVariant>> Data,
-										    const QHash<int, QVariant>& Geometry);
+										    const QHash<int, QVariant>& Geometry,
+										    const QString& Limiter);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
@@ -148,7 +149,8 @@ class DatabaseDriver : public QObject
 
 		void loadList(const QStringList& Filter);
 		void reloadData(const QString& Filter, QList<int> Used,
-					 const QHash<int, QVariant>& Geometry);
+					 const QHash<int, QVariant>& Geometry,
+					 const QString& Limiter);
 		void updateData(RecordModel* Model, const QModelIndexList& Items,
 					 const QHash<int, QVariant>& Values);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);

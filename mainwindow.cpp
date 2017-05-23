@@ -180,7 +180,7 @@ void MainWindow::deleteActionClicked(void)
 
 void MainWindow::refreshActionClicked(void)
 {
-	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules());
+	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules(), Filter->getLimiterFile());
 }
 
 void MainWindow::editActionClicked(void)
@@ -287,9 +287,9 @@ void MainWindow::selectionChanged(void)
 	ui->actionJoin->setEnabled(Count > 1);
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry)
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter)
 {
-	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry);
+	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter);
 }
 
 void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)
@@ -566,7 +566,7 @@ void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHas
 	connect(Class, &ClassDialog::rejected, Class, &ClassDialog::deleteLater);
 }
 
-void MainWindow::saveData(const QList<int>& Fields, int Type)
+void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 {
 	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"));
 
@@ -593,7 +593,7 @@ void MainWindow::saveData(const QList<int>& Fields, int Type)
 			break;
 		}
 
-		if (Model->saveToFile(Path, Enabled, Selection))
+		if (Model->saveToFile(Path, Enabled, Selection, Header))
 		{
 			ui->statusBar->showMessage(tr("Data saved to file %1").arg(Path));
 		}

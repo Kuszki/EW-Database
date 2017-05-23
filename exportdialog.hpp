@@ -70,7 +70,7 @@ class ExportDialog : public QDialog
 
 	signals:
 
-		void onExportRequest(const QList<int>&, int);
+		void onExportRequest(const QList<int>&, int, bool);
 
 };
 

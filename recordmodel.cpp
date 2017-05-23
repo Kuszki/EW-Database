@@ -451,7 +451,7 @@ QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 	return List;
 }
 
-bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List) const
+bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const
 {
 	for (const auto& Index : Columns) if (Header.size() <= Index) return false;
 
@@ -459,7 +459,7 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 
 	QTextStream Stream(&File);
 
-	for (const auto& ID : Columns)
+	if (Names) for (const auto& ID : Columns)
 	{
 		Stream << Header[ID];
 
