@@ -612,41 +612,70 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
-		const QString Select = QString(
+		QHash<int, int> CountA, CountB;
+
+		Query.prepare(
 			"SELECT "
 				"O.UID "
 			"FROM "
 				"EW_OBIEKTY O "
 			"WHERE "
-				"O.STATUS = 0 AND ("
-					"SELECT "
-						"COUNT(*) "
-					"FROM "
-						"EW_OBIEKTY B "
-					"WHERE "
-						"(%3 = 1 OR B.KOD IN ('%2')) AND "
-						"B.STATUS = 0 AND B.ID IN ("
-							"SELECT "
-								"G.IDE "
-							"FROM "
-								"EW_OB_ELEMENTY G "
-							"WHERE "
-								"G.UIDO = O.UID AND G.TYP = 1"
-						")"
-				") %1 0");
+				"O.STATUS = 0");
 
-		if (Geometry.contains(6) && Query.exec(Select.arg("=")
-									    .arg(Geometry[6].toStringList().join("', '"))
-									    .arg(Geometry[6].toStringList().contains("*"))))
+		if (Query.exec()) while (Query.next())
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			if (Geometry.contains(6)) CountA.insert(Query.value(0).toInt(), 0);
+			if (Geometry.contains(7)) CountB.insert(Query.value(0).toInt(), 0);
 		}
 
-		if (Geometry.contains(7) && Query.exec(Select.arg("<>")
-									    .arg(Geometry[7].toStringList().join("', '"))
-									    .arg(Geometry[7].toStringList().contains("*"))))
+		const QString Select = QString(
+			"SELECT "
+				"E.UIDO, O.NUMER "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.ID = E.IDE "
+			"WHERE "
+				"E.TYP = 1 AND "
+				"O.STATUS = 0 AND ("
+					"%1 = 1 OR "
+					"O.KOD IN ('%2')"
+				")");
+
+		if (Geometry.contains(6) && Query.exec(Select
+			.arg(Geometry[6].toStringList().contains("*"))
+			.arg(Geometry[6].toStringList().join("', '"))))
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			{
+				const int ID = Query.value(0).toInt();
+
+				if (CountA.contains(ID)) ++CountA[ID];
+			}
+		}
+
+		if (Geometry.contains(7) && Query.exec(Select
+			.arg(Geometry[7].toStringList().contains("*"))
+			.arg(Geometry[7].toStringList().join("', '"))))
+		{
+			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			{
+				const int ID = Query.value(0).toInt();
+
+				if (CountB.contains(ID)) ++CountB[ID];
+			}
+		}
+
+		if (Geometry.contains(6)) for (auto i = CountA.constBegin(); i != CountA.constEnd(); ++i)
+		{
+			if (i.value() == 0) Data.remove(i.key());
+		}
+
+		if (Geometry.contains(7)) for (auto i = CountB.constBegin(); i != CountB.constEnd(); ++i)
+		{
+			if (i.value() != 0) Data.remove(i.key());
 		}
 	}
 
@@ -654,50 +683,78 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
-		const QString Select = QString(
+		QHash<int, int> CountA, CountB;
+
+		Query.prepare(
 			"SELECT "
 				"O.UID "
 			"FROM "
 				"EW_OBIEKTY O "
-			"LEFT JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.ID = E.IDE "
 			"WHERE "
-				"O.STATUS = 0 "
-			"GROUP BY "
-				"O.UID "
-			"HAVING "
-				"COUNT("
-					"IIF (E.TYP = 1 AND ("
-						"SELECT "
-							"P.STATUS "
-						"FROM "
-							"EW_OBIEKTY P "
-						"WHERE "
-							"P.UID = E.UIDO "
-					") = 0 AND (%3 = 1 OR ("
-						"SELECT "
-							"P.KOD "
-						"FROM "
-							"EW_OBIEKTY P "
-						"WHERE "
-							"P.UID = E.UIDO"
-					") IN ('%2')), 1, NULL)"
-				") %1 0");
+				"O.STATUS = 0");
 
-		if (Geometry.contains(8) && Query.exec(Select.arg("=")
-									    .arg(Geometry[8].toStringList().join("', '"))
-									    .arg(Geometry[8].toStringList().contains("*"))))
+		if (Query.exec()) while (Query.next())
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			if (Geometry.contains(8)) CountA.insert(Query.value(0).toInt(), 0);
+			if (Geometry.contains(9)) CountB.insert(Query.value(0).toInt(), 0);
 		}
 
-		if (Geometry.contains(9) && Query.exec(Select.arg("<>")
-									    .arg(Geometry[9].toStringList().join("', '"))
-									    .arg(Geometry[9].toStringList().contains("*"))))
+		const QString Select = QString(
+			"SELECT "
+				"(SELECT FIRST 1 "
+					"B.UID "
+				"FROM "
+					"EW_OBIEKTY B "
+				"WHERE "
+					"B.STATUS = 0 AND "
+					"B.ID = E.IDE"
+				"), "
+				"O.NUMER "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"WHERE "
+				"E.TYP = 1 AND "
+				"O.STATUS = 0 AND ("
+					"%1 = 1 OR "
+					"O.KOD IN ('%2')"
+				")");
+
+		if (Geometry.contains(8) && Query.exec(Select
+			.arg(Geometry[8].toStringList().contains("*"))
+			.arg(Geometry[8].toStringList().join("', '"))))
 		{
-			while (Query.next()) Data.remove(Query.value(0).toInt());
+			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			{
+				const int ID = Query.value(0).toInt();
+
+				if (CountA.contains(ID)) ++CountA[ID];
+			}
+		}
+
+		if (Geometry.contains(9) && Query.exec(Select
+			.arg(Geometry[9].toStringList().contains("*"))
+			.arg(Geometry[9].toStringList().join("', '"))))
+		{
+			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			{
+				const int ID = Query.value(0).toInt();
+
+				if (CountB.contains(ID)) ++CountB[ID];
+			}
+		}
+
+		if (Geometry.contains(8)) for (auto i = CountA.constBegin(); i != CountA.constEnd(); ++i)
+		{
+			if (i.value() == 0) Data.remove(i.key());
+		}
+
+		if (Geometry.contains(9)) for (auto i = CountB.constBegin(); i != CountB.constEnd(); ++i)
+		{
+			if (i.value() != 0) Data.remove(i.key());
 		}
 	}
 
