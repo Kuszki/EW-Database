@@ -111,7 +111,7 @@ class DatabaseDriver : public QObject
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
 		QMap<QString, QList<int> > getClassGroups(const QList<int>& Indexes,
-										 bool Common, int Index);
+										  bool Common, int Index);
 
 		QHash<int, QHash<int, QVariant>> loadData(const TABLE& Table,
 										  const QList<int>& Filter,
@@ -126,17 +126,17 @@ class DatabaseDriver : public QObject
 		QList<int> getCommonFields(const QStringList& Classes) const;
 
 		QHash<int, QSet<int>> joinCircles(const QHash<int, QSet<int>>& Geometry,
-								   const QList<DatabaseDriver::POINT>& Points,
-								   const QList<int>& Tasks, const QString Class,
-								   double Radius = 0.0);
+								    const QList<DatabaseDriver::POINT>& Points,
+								    const QList<int>& Tasks, const QString Class,
+								    double Radius = 0.0);
 		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
-								 const QList<DatabaseDriver::POINT>& Points,
-								 const QList<int>& Tasks, const QString Class,
-								 double Radius = 0.0);
-		QHash<int, QSet<int>> joinPoints(const QHash<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
 								  const QList<int>& Tasks, const QString Class,
 								  double Radius = 0.0);
+		QHash<int, QSet<int>> joinPoints(const QHash<int, QSet<int>>& Geometry,
+								   const QList<DatabaseDriver::POINT>& Points,
+								   const QList<int>& Tasks, const QString Class,
+								   double Radius = 0.0);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 

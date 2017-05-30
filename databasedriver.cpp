@@ -1142,7 +1142,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
 
 	emit onBeginProgress(tr("Removing data"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Items.size());
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -1187,9 +1187,9 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 					"UIDO = '%2'")
 					 .arg(i.key())
 					 .arg(Index));
-		}
 
-		emit onUpdateProgress(++Step);
+			emit onUpdateProgress(++Step);
+		}
 	}
 
 	for (const auto Item : Items) emit onRowRemove(Item);
