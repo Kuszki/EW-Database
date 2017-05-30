@@ -1792,7 +1792,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT "
-			"E.UIDO, T.UID, T.TYP, T.POS_X, T.POS_Y, T.JUSTYFIKACJA "
+			"O.UID, T.UID, T.TYP, T.POS_X, T.POS_Y, T.JUSTYFIKACJA "
 		"FROM "
 			"EW_TEXT T "
 		"INNER JOIN "
@@ -1874,14 +1874,52 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		});
 	}
 
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Performing edit"));
-	emit onSetupProgress(0, 0);
-
 	for (auto i = Objects.constBegin(); i != Objects.constEnd(); ++i)
 	{
 		if (Tasks.contains(i.key())) Points.insert(i.key(), i.value());
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading circles"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, P.UID, "
+			"(P.P0_X + P.P1_X) / 2.0, "
+			"(P.P0_Y + P.P1_Y) / 2.0 "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS = 4 AND "
+			"E.TYP = 0 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 3");
+
+	if (Query.exec()) while (Query.next())
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (!Objects.contains(ID)) Objects.insert(ID,
+		{
+			Query.value(1).toInt(),
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble()
+		});
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Performing edit"));
+	emit onSetupProgress(0, 0);
 
 	QtConcurrent::blockingMap(Lines, [] (LINE& Line) -> void
 	{
