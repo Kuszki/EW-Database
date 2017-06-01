@@ -34,7 +34,7 @@
        </item>
        <item>
         <property name="text">
-         <string>Point to circle</string>
+         <string>Point to surface</string>
         </property>
        </item>
       </widget>

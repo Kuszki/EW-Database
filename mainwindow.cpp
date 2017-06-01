@@ -233,7 +233,7 @@ void MainWindow::loadActionClicked(void)
 	{
 		QTextStream Stream(&File); QStringList List;
 
-		while (!Stream.atEnd()) List << Stream.readLine();
+		while (!Stream.atEnd()) List << Stream.readLine().trimmed();
 
 		lockUi(BUSY); emit onLoadRequest(List);
 	}

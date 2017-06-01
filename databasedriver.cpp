@@ -393,7 +393,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 	if (!Limiter.isEmpty() && File.open(QFile::ReadOnly | QFile::Text))
 	{
-		while (!Stream.atEnd()) Limit.insert(Stream.readLine());
+		while (!Stream.atEnd()) Limit.insert(Stream.readLine().trimmed());
 	}
 
 	if (Geometry.contains(0) || Geometry.contains(1))
@@ -1417,7 +1417,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 			Insert = joinPoints(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 		case 2:
-			Insert = joinCircles(Geometry, Points, Tasks[Join], Join, Radius);
+			Insert = joinSurfaces(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 	}
 
@@ -1999,16 +1999,27 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	emit onTextEdit(Points.size() - Rejected);
 }
 
-QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
+	struct PART
+	{
+		int ID; double X, Y, R;
+
+		bool operator== (const PART& P)
+		{
+			return X == P.X && Y == P.Y && R == P.R;
+		}
+	};
+
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QMutex Locker; QMap<int, QList<PART>> Parts;
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, "
+			"EW_OBIEKTY.UID, EW_POLYLINE.P1_FLAGS, "
 			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
 			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
 		"FROM "
@@ -2023,7 +2034,6 @@ QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& G
 			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
 		"WHERE "
 			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
-			"EW_POLYLINE.P1_FLAGS = 4 AND "
 			"EW_OB_ELEMENTY.TYP = 0 AND "
 			"EW_OBIEKTY.STATUS = 0 AND "
 			"EW_OBIEKTY.RODZAJ = 3 AND "
@@ -2033,26 +2043,73 @@ QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& G
 
 	if (Query.exec()) while (Query.next())
 	{
-		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
-		{
-			const double x = (Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0;
-			const double y = (Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0;
-			const double r = qAbs(Query.value(1).toDouble() - x);
+		const int ID = Query.value(0).toInt();
 
-			if (r >= qSqrt(qPow(P.X - x, 2) + qPow(P.Y - y, 2)))
+		if (Tasks.contains(ID))
+		{			
+			if (!Parts.contains(ID)) Parts.insert(ID, QList<PART>());
+
+			if (Query.value(1).toInt() == 4)
 			{
-				const int ID = Query.value(0).toInt();
+				const double x = (Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0;
+				const double y = (Query.value(3).toDouble() + Query.value(5).toDouble()) / 2.0;
+				const double r = qAbs(Query.value(2).toDouble() - x);
 
-				if (!Geometry[ID].contains(P.ID))
-				{
-					Insert[ID].insert(P.ID);
-					Used.insert(P.ID);
-				}
+				const PART Part = { ID, x, y, r };
+
+				if (!Parts[ID].contains(Part)) Parts[ID].append(Part);
+			}
+			else
+			{
+				const PART Part1 = { ID, Query.value(2).toDouble(), Query.value(3).toDouble(), 0.0 };
+				const PART Part2 = { ID, Query.value(4).toDouble(), Query.value(5).toDouble(), 0.0 };
+
+				if (!Parts[ID].contains(Part1)) Parts[ID].append(Part1);
+				if (!Parts[ID].contains(Part2)) Parts[ID].append(Part2);
 			}
 		}
 
 		emit onUpdateProgress(++Step);
 	}
+
+	QtConcurrent::blockingMap(Parts, [&Insert, &Used, &Geometry, &Points, &Locker] (QList<PART>& List) -> void
+	{
+		const int ID = List.first().ID; QPolygonF Polygon;
+
+		for (const auto& G : List) if (G.R == 0.0)
+		{
+			Polygon.append(QPointF(G.X, G.Y));
+		}
+
+		for (const auto& P : Points) if (!Used.contains(P.ID))
+		{
+			for (const auto& G : List) if ((G.R != 0.0) && (G.R >= qSqrt(qPow(P.X - G.X, 2) + qPow(P.Y - G.Y, 2))))
+			{
+				Locker.lock();
+
+				if (!Used.contains(P.ID) && !Geometry[G.ID].contains(P.ID))
+				{
+					Insert[G.ID].insert(P.ID);
+					Used.insert(P.ID);
+				}
+
+				Locker.unlock();
+			}
+
+			if (Polygon.containsPoint(QPointF(P.X, P.Y), Qt::WindingFill))
+			{
+				Locker.lock();
+
+				if (!Used.contains(P.ID) && !Geometry[ID].contains(P.ID))
+				{
+					Insert[ID].insert(P.ID);
+					Used.insert(P.ID);
+				}
+
+				Locker.unlock();
+			}
+		}
+	});
 
 	return Insert;
 }

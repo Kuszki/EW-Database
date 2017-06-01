@@ -26,6 +26,7 @@
 #include <QSqlRecord>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QPolygonF>
 #include <QVariant>
 #include <QObject>
 #include <QHash>
@@ -125,10 +126,10 @@ class DatabaseDriver : public QObject
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
 
-		QHash<int, QSet<int>> joinCircles(const QHash<int, QSet<int>>& Geometry,
-								    const QList<DatabaseDriver::POINT>& Points,
-								    const QList<int>& Tasks, const QString Class,
-								    double Radius = 0.0);
+		QHash<int, QSet<int>> joinSurfaces(const QHash<int, QSet<int>>& Geometry,
+									const QList<DatabaseDriver::POINT>& Points,
+									const QList<int>& Tasks, const QString Class,
+									double Radius = 0.0);
 		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
 								  const QList<int>& Tasks, const QString Class,

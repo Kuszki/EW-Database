@@ -29,6 +29,7 @@ ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QSt
 	for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i) ui->Class->addItem(i.value(), i.key());
 
 	ui->Class->model()->sort(0);
+	ui->Class->setCurrentIndex(0);
 }
 
 ClassDialog::~ClassDialog(void)

@@ -46,10 +46,10 @@ JoinDialog::JoinDialog(const QHash<QString, QString>& Points, const QHash<QStrin
 		ui->Circle->addItem(i.value(), i.key());
 	}
 
-	ui->Join->model()->sort(0);
-	ui->Point->model()->sort(0);
-	ui->Line->model()->sort(0);
-	ui->Circle->model()->sort(0);
+	ui->Join->model()->sort(0); ui->Join->setCurrentIndex(0);
+	ui->Point->model()->sort(0); ui->Point->setCurrentIndex(0);
+	ui->Line->model()->sort(0); ui->Line->setCurrentIndex(0);
+	ui->Circle->model()->sort(0); ui->Circle->setCurrentIndex(0);
 }
 
 JoinDialog::~JoinDialog(void)
