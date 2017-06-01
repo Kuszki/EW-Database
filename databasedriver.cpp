@@ -167,11 +167,11 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_DDSTR.NAZWA, EW_OB_DDSTR.TYTUL, EW_OB_DDSTR.TYP "
+			"D.NAZWA, D.TYTUL, D.TYP "
 		"FROM "
-			"EW_OB_DDSTR "
+			"EW_OB_DDSTR D "
 		"WHERE "
-			"EW_OB_DDSTR.KOD = :table");
+			"D.KOD = :table");
 
 	Query.bindValue(":table", Table);
 
@@ -205,17 +205,17 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_DDSL.WARTOSC, EW_OB_DDSL.OPIS "
+			"L.WARTOSC, L.OPIS "
 		"FROM "
-		    "EW_OB_DDSL "
+			"EW_OB_DDSL L "
 		"INNER JOIN "
-		    "EW_OB_DDSTR "
+			"EW_OB_DDSTR R "
 		"ON "
-		    "EW_OB_DDSL.UIDP = EW_OB_DDSTR.UID "
+			"L.UIDP = R.UID "
 		"WHERE "
-		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table "
+			"R.NAZWA = :field AND R.KOD = :table "
 		"ORDER BY "
-			"EW_OB_DDSL.OPIS");
+			"L.OPIS");
 
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
@@ -224,17 +224,17 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_DDSL.WARTOSC, EW_OB_DDSL.OPIS "
+			"L.WARTOSC, L.OPIS "
 		"FROM "
-		    "EW_OB_DDSL "
+			"EW_OB_DDSL L "
 		"INNER JOIN "
-		    "EW_OB_DDSTR "
+			"EW_OB_DDSTR R "
 		"ON "
-		    "EW_OB_DDSL.UIDP = EW_OB_DDSTR.UIDSL "
+			"L.UIDP = R.UIDSL "
 		"WHERE "
-		    "EW_OB_DDSTR.NAZWA = :field AND EW_OB_DDSTR.KOD = :table "
+			"R.NAZWA = :field AND R.KOD = :table "
 		"ORDER BY "
-			"EW_OB_DDSL.OPIS");
+			"L.OPIS");
 
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
@@ -302,16 +302,15 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, "
-			"EW_OB_OPISY.KOD, EW_OB_OPISY.DANE_DOD "
+			"O.UID, D.KOD, D.DANE_DOD "
 		"FROM "
-			"EW_OB_OPISY "
+			"EW_OB_OPISY D "
 		"INNER JOIN "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"ON "
-			"EW_OB_OPISY.KOD = EW_OBIEKTY.KOD "
+			"D.KOD = O.KOD "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0");
+			"O.STATUS = 0");
 
 	if (Query.exec()) while (Query.next()) if (Indexes.contains(Query.value(0).toInt()))
 	{
@@ -1215,13 +1214,13 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.ID "
+			"O.UID, O.ID "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Point);
 
@@ -1241,18 +1240,18 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
+			"E.UIDO, E.IDE "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+			"O.UID = E.UIDO "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = :typ AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"E.TYP = 1 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = :typ AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":typ", Type);
 	Query.bindValue(":kod", From);
@@ -1315,11 +1314,11 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT DISTINCT "
-			"EW_OB_ELEMENTY.IDE "
+			"E.IDE "
 		"FROM "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1");
+			"E.TYP = 1");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -1332,25 +1331,25 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.ID, "
-			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
+			"O.UID, O.ID, "
+			"T.POS_X, T.POS_Y "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+			"O.UID = E.UIDO "
 		"INNER "
-			"JOIN EW_TEXT "
+			"JOIN EW_TEXT T "
 		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
+			"E.IDE = T.ID "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 0 AND "
-			"EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_TEXT.TYP = 4 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"E.TYP = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
+			"T.TYP = 4 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Point);
 
@@ -1375,17 +1374,17 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT "
-			"EW_OB_ELEMENTY.UIDO, EW_OB_ELEMENTY.IDE "
+			"E.UIDO, E.IDE "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+			"O.UID = E.UIDO "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 1 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"E.TYP = 1 AND "
+			"O.STATUS = 0 AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Join);
 
@@ -2019,25 +2018,25 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, EW_POLYLINE.P1_FLAGS, "
-			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
-			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
+			"O.UID, P.P1_FLAGS, "
+			"P.P0_X, P.P0_Y, "
+			"P.P1_X, P.P1_Y "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+			"O.UID = E.UIDO "
 		"INNER JOIN "
-			"EW_POLYLINE "
+			"EW_POLYLINE P "
 		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
+			"E.IDE = P.ID "
 		"WHERE "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
-			"EW_OB_ELEMENTY.TYP = 0 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 3 AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"P.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 3 AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Class);
 
@@ -2046,7 +2045,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		const int ID = Query.value(0).toInt();
 
 		if (Tasks.contains(ID))
-		{			
+		{
 			if (!Parts.contains(ID)) Parts.insert(ID, QList<PART>());
 
 			if (Query.value(1).toInt() == 4)
@@ -2123,25 +2122,25 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, "
-			"EW_POLYLINE.P0_X, EW_POLYLINE.P0_Y, "
-			"EW_POLYLINE.P1_X, EW_POLYLINE.P1_Y "
+			"E.UID, "
+			"P.P0_X, P.P0_Y, "
+			"P.P1_X, P.P1_Y "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+			"O.UID = E.UIDO "
 		"INNER JOIN "
-			"EW_POLYLINE "
+			"EW_POLYLINE P "
 		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_POLYLINE.ID "
+			"E.IDE = P.ID "
 		"WHERE "
-			"EW_POLYLINE.STAN_ZMIANY = 0 AND "
-			"EW_OB_ELEMENTY.TYP = 0 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 2 AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"P.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Class);
 
@@ -2177,25 +2176,25 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 
 	Query.prepare(
 		"SELECT "
-			"EW_OBIEKTY.UID, "
-			"EW_TEXT.POS_X, EW_TEXT.POS_Y "
+			"O.UID, "
+			"T.POS_X, T.POS_Y "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_ELEMENTY "
+			"EW_OB_ELEMENTY E "
 		"ON "
-			"EW_OBIEKTY.UID = EW_OB_ELEMENTY.UIDO "
+			"O.UID = E.UIDO "
 		"INNER JOIN "
-			"EW_TEXT "
+			"EW_TEXT T "
 		"ON "
-			"EW_OB_ELEMENTY.IDE = EW_TEXT.ID "
+			"E.IDE = T.ID "
 		"WHERE "
-			"EW_OB_ELEMENTY.TYP = 0 AND "
-			"EW_TEXT.STAN_ZMIANY = 0 AND "
-			"EW_TEXT.TYP = 4 AND "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ = 4 AND "
-			"EW_OBIEKTY.KOD = :kod");
+			"E.TYP = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
+			"T.TYP = 4 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
+			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Class);
 
@@ -2265,17 +2264,17 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 
 	Query.prepare(
 		"SELECT DISTINCT "
-			"EW_OBIEKTY.UID, EW_OBIEKTY.RODZAJ, "
-			"EW_OB_OPISY.KOD, EW_OB_OPISY.OPIS "
+			"O.UID, O.RODZAJ, "
+			"D.KOD, D.OPIS "
 		"FROM "
-			"EW_OBIEKTY "
+			"EW_OBIEKTY O "
 		"INNER JOIN "
-			"EW_OB_OPISY "
+			"EW_OB_OPISY D "
 		"ON "
-			"EW_OBIEKTY.KOD = EW_OB_OPISY.KOD "
+			"O.KOD = D.KOD "
 		"WHERE "
-			"EW_OBIEKTY.STATUS = 0 AND "
-			"EW_OBIEKTY.RODZAJ IN (2, 3, 4)");
+			"O.STATUS = 0 AND "
+			"O.RODZAJ IN (2, 3, 4)");
 
 	if (Query.exec()) while (Query.next())
 	{
