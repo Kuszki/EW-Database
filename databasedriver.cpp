@@ -2035,8 +2035,11 @@ QHash<int, QSet<int>> DatabaseDriver::joinCircles(const QHash<int, QSet<int>>& G
 	{
 		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
 		{
-			if (qAbs((double(Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0) - P.X) <= Radius &&
-			    qAbs(Query.value(2).toDouble() - P.Y) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius)
+			const double x = (Query.value(1).toDouble() + Query.value(3).toDouble()) / 2.0;
+			const double y = (Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0;
+			const double r = qAbs(Query.value(1).toDouble() - x);
+
+			if (r >= qSqrt(qPow(P.X - x, 2) + qPow(P.Y - y, 2)))
 			{
 				const int ID = Query.value(0).toInt();
 
