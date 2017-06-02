@@ -1086,7 +1086,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating special data"));
-	emit onSetupProgress(0, Tasks.size() - 1);
+	emit onSetupProgress(0, Tasks.first().size());
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
@@ -1110,9 +1110,9 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 					 .arg(i.key())
 					 .arg(Updates.join(", "))
 					 .arg(Index));
-		}
 
-		emit onUpdateProgress(++Step);
+			emit onUpdateProgress(++Step);
+		}
 	}
 
 	emit onEndProgress(); Step = 0;
