@@ -26,8 +26,6 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 {
 	ui->setupUi(this); setFields(Fields, Tables, Common); filterRulesChanged();
 
-	ui->Operator->addItems(DatabaseDriver::Operators);
-
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
 	ui->geometryLayout->setAlignment(Qt::AlignTop);
@@ -47,55 +45,49 @@ QString FilterDialog::getLimiterFile(void) const
 
 QString FilterDialog::getFilterRules(void) const
 {
-	if (ui->specialCheck->isChecked())
+	QStringList Rules, Classes; QString Values, Class;
+
+	for (int i = 0; i < ui->classLayout->count(); ++i)
 	{
-		if (ui->Setup->document()->toPlainText().isEmpty()) return QString();
-		return ui->Setup->document()->toPlainText();
+		if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+		{
+			if (W->isChecked()) Classes.append(W->toolTip());
+		}
 	}
-	else
+
+	for (int i = 0; i < ui->simpleLayout->count(); ++i)
 	{
-		QStringList Rules, Classes;
-
-		for (int i = 0; i < ui->classLayout->count(); ++i)
+		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 		{
-			if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
-			{
-				if (W->isChecked()) Classes.append(W->toolTip());
-			}
+			if (W->isChecked()) Rules.append(W->getCondition());
 		}
-
-		for (int i = 0; i < ui->simpleLayout->count(); ++i)
-		{
-			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
-			{
-				if (W->isChecked()) Rules.append(W->getCondition());
-			}
-		}
-
-		if (!Classes.isEmpty()) Rules.insert(0, QString("EW_OBIEKTY.KOD IN ('%1')").arg(Classes.join("', '")));
-
-		if (Rules.isEmpty()) return QString();
-		else return Rules.join(" AND ");
 	}
+
+	Values = Rules.join(QString(" %1 ").arg(ui->operatorBox->currentText()));
+	Class = Classes.join("', '");
+
+	if (!Classes.isEmpty())
+	{
+		if (Rules.isEmpty()) return QString("EW_OBIEKTY.KOD IN ('%1')").arg(Class);
+		else return QString("EW_OBIEKTY.KOD IN ('%1') AND (%2)").arg(Class, Values);
+	}
+	else if (!Rules.isEmpty()) return Values;
+	else return QString();
 }
 
 QList<int> FilterDialog::getUsedFields(void) const
 {
-	if (ui->specialCheck->isChecked()) return QList<int>();
-	else
+	QSet<int> Used;
+
+	for (int i = 0; i < ui->simpleLayout->count(); ++i)
 	{
-		QSet<int> Used;
-
-		for (int i = 0; i < ui->simpleLayout->count(); ++i)
+		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 		{
-			if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
-			{
-				if (W->isChecked()) Used.insert(W->getIndex());
-			}
+			if (W->isChecked()) Used.insert(W->getIndex());
 		}
-
-		return Used.toList();
 	}
+
+	return Used.toList();
 }
 
 QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
@@ -133,9 +125,9 @@ QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
 	return Rules;
 }
 
-void FilterDialog::operatorTextChanged(const QString& Operator)
+QHash<QString, QVariant> FilterDialog::getFieldsRules(void) const
 {
-	ui->Value->setVisible(Operator != "IS NULL" && Operator != "IS NOT NULL");
+
 }
 
 void FilterDialog::classSearchEdited(const QString& Search)
@@ -171,8 +163,6 @@ void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
 		{
 			W->deleteLater();
 		}
-
-	ui->Setup->document()->clear();
 }
 
 void FilterDialog::linitBoxChecked(bool Checked)
@@ -218,53 +208,17 @@ void FilterDialog::classBoxChecked(void)
 void FilterDialog::filterRulesChanged(void)
 {
 	const int Index = ui->tabWidget->currentIndex();
-	const bool Special = ui->specialCheck->isChecked();
 
-	ui->copyButton->setVisible(Index == 0);
-	ui->simpleSearch->setVisible(Index == 0 && !Special);
+	ui->classSearch->setVisible(Index == 0);
+	ui->selectButton->setVisible(Index == 0);
+	ui->unselectButton->setVisible(Index == 0);
 
-	ui->classSearch->setVisible(Index == 1);
-	ui->selectButton->setVisible(Index == 1);
-	ui->unselectButton->setVisible(Index == 1);
+	ui->copyButton->setVisible(Index == 1);
+	ui->simpleSearch->setVisible(Index == 1);
+	ui->operatorBox->setVisible(Index == 1);
 
 	ui->newButton->setVisible(Index == 2);
 	ui->limitCheck->setVisible(Index == 2);
-
-	ui->simpleScrool->setVisible(!Special);
-	ui->specialWidget->setVisible(Special);
-}
-
-void FilterDialog::addButtonClicked(void)
-{
-	QString Line;
-
-	if (!ui->Setup->document()->toPlainText().trimmed().isEmpty()) Line.append(ui->Action->currentText()).append(' ');
-
-	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL")
-	{
-		Line.append(QString("%1 %2")
-				.arg(ui->Field->currentData(Qt::UserRole).toString())
-				.arg(ui->Operator->currentText()));
-	}
-	else if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
-	{
-		Line.append(QString("%1 %2 ('%3')")
-				.arg(ui->Field->currentData(Qt::UserRole).toString())
-				.arg(ui->Operator->currentText())
-				.arg(ui->Value->text().
-					  split(QRegExp("\\s*,\\s*"),
-						   QString::SkipEmptyParts)
-					  .join("', '")));
-	}
-	else
-	{
-		Line.append(QString("%1 %2 '%3'")
-				.arg(ui->Field->currentData(Qt::UserRole).toString())
-				.arg(ui->Operator->currentText())
-				.arg(ui->Value->text()));
-	}
-
-	ui->Setup->appendPlainText(Line);
 }
 
 void FilterDialog::newButtonClicked(void)
@@ -310,8 +264,7 @@ void FilterDialog::accept(void)
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
 {
-	Classes.clear(); Points.clear(); Attributes.clear();
-	ui->Field->clear(); Above = Common; QStringList Used;
+	Classes.clear(); Points.clear(); Attributes.clear(); Above = Common;
 
 	while (auto I = ui->classLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
@@ -336,15 +289,5 @@ void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const Q
 		const bool Singleton = (Fields[i].Dict.size() == 2 && Fields[i].Dict.contains(0));
 
 		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
-
-		if (!Used.contains(Fields[i].Name))
-		{
-			const int Count = ui->Field->count();
-
-			ui->Field->addItem(Fields[i].Label);
-			ui->Field->setItemData(Count, Fields[i].Name);
-
-			Used.append(Fields[i].Name);
-		}
 	}
 }

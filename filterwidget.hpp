@@ -44,7 +44,9 @@ class FilterWidget : public QWidget
 
 	private:
 
-		QLineEdit* Simple = nullptr;
+		QVariant::Type Datatype;
+
+		QWidget* Simple = nullptr;
 		QWidget* Widget = nullptr;
 		Ui::FilterWidget* ui;
 
@@ -54,6 +56,8 @@ class FilterWidget : public QWidget
 
 		explicit FilterWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent = nullptr);
 		virtual ~FilterWidget(void) override;
+
+		QPair<QString, QVariant> getBindings(void) const;
 
 		QString getCondition(void) const;
 		QVariant getValue(void) const;

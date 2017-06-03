@@ -69,10 +69,9 @@ class FilterDialog : public QDialog
 
 		QList<int> getUsedFields(void) const;
 		QHash<int, QVariant> getGeometryRules(void) const;
+		QHash<QString, QVariant> getFieldsRules(void) const;
 
 	private slots:
-
-		void operatorTextChanged(const QString& Operator);
 
 		void classSearchEdited(const QString& Search);
 		void simpleSearchEdited(const QString& Search);
@@ -85,7 +84,6 @@ class FilterDialog : public QDialog
 
 		void filterRulesChanged(void);
 
-		void addButtonClicked(void);
 		void newButtonClicked(void);
 		void copyButtonClicked(void);
 		void selectButtonClicked(void);
