@@ -73,7 +73,7 @@ QVariant UpdateWidget::getValue(void) const
 	}
 	else if (auto W = dynamic_cast<QLineEdit*>(Widget))
 	{
-		return W->text();
+		return W->text().trimmed().replace("'", "''");
 	}
 	else if (auto W = dynamic_cast<QSpinBox*>(Widget))
 	{
