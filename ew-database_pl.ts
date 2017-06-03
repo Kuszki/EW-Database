@@ -234,7 +234,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="databasedriver.cpp" line="1212"/>
         <location filename="databasedriver.cpp" line="1329"/>
-        <location filename="databasedriver.cpp" line="1789"/>
+        <location filename="databasedriver.cpp" line="1807"/>
         <source>Loading points</source>
         <translation>Wczytywanie punktów</translation>
     </message>
@@ -280,55 +280,55 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Usuwanie obiektów historycznych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1844"/>
+        <location filename="databasedriver.cpp" line="1862"/>
         <source>Loading lines</source>
         <translation>Wczytywanie linii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1882"/>
+        <location filename="databasedriver.cpp" line="1900"/>
         <source>Loading circles</source>
         <translation>Wczytywanie okręgów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1920"/>
+        <location filename="databasedriver.cpp" line="1938"/>
         <source>Performing edit</source>
         <translation>Redakcja opisów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1972"/>
+        <location filename="databasedriver.cpp" line="1990"/>
         <source>Saving changes</source>
         <translation>Zapizywanie zmian</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2232"/>
+        <location filename="databasedriver.cpp" line="2250"/>
         <source>Preparing edit data</source>
         <translation>Przygotowywanie okna edycji danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2262"/>
-        <location filename="databasedriver.cpp" line="2311"/>
+        <location filename="databasedriver.cpp" line="2280"/>
+        <location filename="databasedriver.cpp" line="2329"/>
         <source>Preparing classes</source>
         <translation>Ładowanie dostępnych kodów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2330"/>
+        <location filename="databasedriver.cpp" line="2348"/>
         <source>Selecting layers data</source>
         <translation>Wczytywanie danych o warstwach</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2545"/>
+        <location filename="databasedriver.cpp" line="2563"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2545"/>
+        <location filename="databasedriver.cpp" line="2563"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="154"/>
         <location filename="databasedriver.cpp" line="192"/>
-        <location filename="databasedriver.cpp" line="2563"/>
+        <location filename="databasedriver.cpp" line="2581"/>
         <source>Unknown</source>
         <translation>Niezdefiniowane</translation>
     </message>
@@ -375,10 +375,10 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="1477"/>
         <location filename="databasedriver.cpp" line="1631"/>
         <location filename="databasedriver.cpp" line="1701"/>
-        <location filename="databasedriver.cpp" line="1762"/>
-        <location filename="databasedriver.cpp" line="2226"/>
-        <location filename="databasedriver.cpp" line="2251"/>
-        <location filename="databasedriver.cpp" line="2303"/>
+        <location filename="databasedriver.cpp" line="1780"/>
+        <location filename="databasedriver.cpp" line="2244"/>
+        <location filename="databasedriver.cpp" line="2269"/>
+        <location filename="databasedriver.cpp" line="2321"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -430,7 +430,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Ustawienia filtru</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="141"/>
+        <location filename="filterdialog.ui" line="34"/>
         <source>Classes</source>
         <translation>Kody</translation>
     </message>
@@ -439,64 +439,61 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Proste</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="34"/>
+        <location filename="filterdialog.ui" line="65"/>
         <source>Fields</source>
         <translation>Pola</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="296"/>
+        <location filename="filterdialog.ui" line="220"/>
         <source>Limit objects list</source>
         <translation>Ogranicz listę obiektów</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="316"/>
         <source>Advanced</source>
-        <translation>Zaawansowane</translation>
+        <translation type="vanished">Zaawansowane</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="90"/>
         <source>Value</source>
-        <translation>Wartość</translation>
+        <translation type="vanished">Wartość</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="97"/>
-        <location filename="filterdialog.ui" line="285"/>
+        <location filename="filterdialog.ui" line="209"/>
         <source>Add</source>
         <translation>Dodaj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="172"/>
+        <location filename="filterdialog.ui" line="96"/>
         <source>Geometry</source>
         <translation>Geometria</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="220"/>
-        <location filename="filterdialog.ui" line="253"/>
+        <location filename="filterdialog.ui" line="144"/>
+        <location filename="filterdialog.ui" line="177"/>
         <source>Search</source>
         <translation>Szukaj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="230"/>
+        <location filename="filterdialog.ui" line="154"/>
         <source>Copy</source>
         <translation>Kopiuj</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="263"/>
+        <location filename="filterdialog.ui" line="187"/>
         <source>All</source>
         <translation>Zaznacz</translation>
     </message>
     <message>
-        <location filename="filterdialog.ui" line="274"/>
+        <location filename="filterdialog.ui" line="198"/>
         <source>None</source>
         <translation>Odznacz</translation>
     </message>
     <message>
-        <location filename="filterdialog.cpp" line="183"/>
+        <location filename="filterdialog.cpp" line="173"/>
         <source>Select objects list</source>
         <translation>Wybierz listę obiektów</translation>
     </message>
     <message>
-        <location filename="filterdialog.cpp" line="184"/>
+        <location filename="filterdialog.cpp" line="174"/>
         <source>Text files (*.txt);;All files (*.*)</source>
         <translation>Pliki tekstowe (*.txt);;Wszystkie pliki (*.*)</translation>
     </message>
@@ -504,17 +501,17 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
 <context>
     <name>FilterWidget</name>
     <message>
-        <location filename="filterwidget.cpp" line="167"/>
+        <location filename="filterwidget.cpp" line="218"/>
         <source>Select values</source>
         <translation>Zaznacz wartości</translation>
     </message>
     <message>
-        <location filename="filterwidget.cpp" line="217"/>
+        <location filename="filterwidget.cpp" line="290"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="filterwidget.cpp" line="218"/>
+        <location filename="filterwidget.cpp" line="291"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>

@@ -57,7 +57,7 @@ class FilterWidget : public QWidget
 		explicit FilterWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent = nullptr);
 		virtual ~FilterWidget(void) override;
 
-		QPair<QString, QVariant> getBindings(void) const;
+		QPair<QString, QVariant> getBinding(void) const;
 
 		QString getCondition(void) const;
 		QVariant getValue(void) const;

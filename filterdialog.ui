@@ -238,12 +238,12 @@
       <widget class="QComboBox" name="operatorBox">
        <item>
         <property name="text">
-         <string>AND</string>
+         <string notr="true">AND</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>OR</string>
+         <string notr="true">OR</string>
         </property>
        </item>
       </widget>
