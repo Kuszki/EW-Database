@@ -2022,12 +2022,52 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 	struct PART
 	{
-		int ID; double X, Y, R;
+		int ID; double X1, Y1, R, X2, Y2;
 
 		bool operator== (const PART& P)
 		{
-			return X == P.X && Y == P.Y && R == P.R;
+			return
+				X1 == P.X1 && Y1 == P.Y1 &&
+				X2 == P.X2 && Y2 == P.Y2 &&
+				R == P.R;
 		}
+	};
+
+	const auto SORT = [] (const QList<PART>& List) -> QPolygonF
+	{
+		QPolygonF Polygon; QSet<int> Used; bool Continue = true;
+
+		if (!List.isEmpty()) while (Continue)
+		{
+			const int LastSize = Polygon.size();
+
+			for (int i = 0; i < List.size(); ++i) if (List[i].R == 0.0)
+			{
+				if (Polygon.isEmpty())
+				{
+					Polygon.append(
+					{
+						List.first().X1, List.first().Y1
+					});
+
+					Used.insert(i);
+				}
+				else if (!Used.contains(i))
+				{
+					QPointF A = { List[i].X1, List[i].Y1 };
+					QPointF B = { List[i].X2, List[i].Y2 };
+
+					if (Polygon.last() == A) Polygon.append(B);
+					else if (Polygon.last() == B) Polygon.append(A);
+
+					if (LastSize != Polygon.size()) Used.insert(i);
+				}
+			}
+
+			Continue = LastSize != Polygon.size();
+		}
+
+		return Polygon;
 	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
@@ -2054,7 +2094,9 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 			"E.TYP = 0 AND "
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 3 AND "
-			"O.KOD = :kod");
+			"O.KOD = :kod "
+		"ORDER BY "
+			"O.UID, E.N");
 
 	Query.bindValue(":kod", Class);
 
@@ -2072,35 +2114,32 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 				const double y = (Query.value(3).toDouble() + Query.value(5).toDouble()) / 2.0;
 				const double r = qAbs(Query.value(2).toDouble() - x);
 
-				const PART Part = { ID, x, y, r };
-
-				if (!Parts[ID].contains(Part)) Parts[ID].append(Part);
+				Parts[ID].append({ ID, x, y, r, 0.0, 0.0 });
 			}
 			else
 			{
-				const PART Part1 = { ID, Query.value(2).toDouble(), Query.value(3).toDouble(), 0.0 };
-				const PART Part2 = { ID, Query.value(4).toDouble(), Query.value(5).toDouble(), 0.0 };
-
-				if (!Parts[ID].contains(Part1)) Parts[ID].append(Part1);
-				if (!Parts[ID].contains(Part2)) Parts[ID].append(Part2);
+				Parts[ID].append(
+				{
+					ID,
+					Query.value(2).toDouble(),
+					Query.value(3).toDouble(),
+					0.0,
+					Query.value(4).toDouble(),
+					Query.value(5).toDouble()
+				});
 			}
 		}
 
 		emit onUpdateProgress(++Step);
 	}
 
-	QtConcurrent::blockingMap(Parts, [&Insert, &Used, &Geometry, &Points, &Locker] (QList<PART>& List) -> void
+	QtConcurrent::blockingMap(Parts, [&Insert, &Used, &Geometry, &Points, &Locker, SORT] (QList<PART>& List) -> void
 	{
-		const int ID = List.first().ID; QPolygonF Polygon;
-
-		for (const auto& G : List) if (G.R == 0.0)
-		{
-			Polygon.append(QPointF(G.X, G.Y));
-		}
+		const int ID = List.first().ID; QPolygonF Polygon = SORT(List);
 
 		for (const auto& P : Points) if (!Used.contains(P.ID))
 		{
-			for (const auto& G : List) if ((G.R != 0.0) && (G.R >= qSqrt(qPow(P.X - G.X, 2) + qPow(P.Y - G.Y, 2))))
+			for (const auto& G : List) if ((G.R != 0.0) && (G.R >= qSqrt(qPow(P.X - G.X1, 2) + qPow(P.Y - G.Y1, 2))))
 			{
 				Locker.lock();
 
@@ -2140,7 +2179,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 
 	Query.prepare(
 		"SELECT "
-			"E.UID, "
+			"O.UID, "
 			"P.P0_X, P.P0_Y, "
 			"P.P1_X, P.P1_Y "
 		"FROM "
