@@ -136,7 +136,7 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 {
 	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
 
-	if (Widget) Widget->deleteLater();
+	if (Widget) Widget->deleteLater(); Widget = nullptr;
 
 	if (!Field.Dict.isEmpty()) switch (Field.Type)
 	{

@@ -193,8 +193,8 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
 	ui->Operator->clear(); QStringList Operators = DatabaseDriver::Operators;
 
-	if (Simple) Simple->deleteLater();
-	if (Widget) Widget->deleteLater();
+	if (Simple) Simple->deleteLater(); Simple = nullptr;
+	if (Widget) Widget->deleteLater(); Widget = nullptr;
 
 	if (!Field.Dict.isEmpty() || Field.Type == DatabaseDriver::BOOL)
 	{

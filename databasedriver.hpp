@@ -27,9 +27,12 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QPolygonF>
+#include <QSettings>
 #include <QVariant>
 #include <QObject>
 #include <QHash>
+
+#include <QtConcurrent>
 
 #include <QDebug>
 
