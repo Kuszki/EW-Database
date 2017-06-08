@@ -1318,7 +1318,15 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		"FROM "
 			"EW_OB_ELEMENTY E "
 		"WHERE "
-			"E.TYP = 1");
+			"E.TYP = 1 AND "
+			"UIDO IN ("
+				"SELECT "
+					"O.UID "
+				"FROM "
+					"EW_OBIEKTY O "
+				"WHERE "
+					"O.STATUS = 0"
+			")");
 
 	if (Query.exec()) while (Query.next())
 	{
