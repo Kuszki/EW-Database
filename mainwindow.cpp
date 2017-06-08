@@ -47,8 +47,6 @@ MainWindow::MainWindow(QWidget* Parent)
 	Marker->bind(QHostAddress::LocalHost, 7777);
 	Socket->bind(QHostAddress::LocalHost, 6666);
 
-	Progress->setFormat("%v/%m (%p%)");
-
 	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
 	ui->supportTool->insertSeparator(ui->actionUnhide);
 	ui->statusBar->addPermanentWidget(Progress);

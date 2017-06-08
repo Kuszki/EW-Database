@@ -2036,11 +2036,13 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 				}
 				else if (!Used.contains(i))
 				{
-					QPointF A = { List[i].X1, List[i].Y1 };
-					QPointF B = { List[i].X2, List[i].Y2 };
+					const QPointF A = { List[i].X1, List[i].Y1 };
+					const QPointF B = { List[i].X2, List[i].Y2 };
 
 					if (Polygon.last() == A) Polygon.append(B);
 					else if (Polygon.last() == B) Polygon.append(A);
+					else if (Polygon.first() == A) Polygon.insert(0, B);
+					else if (Polygon.first() == B) Polygon.insert(0, A);
 
 					if (LastSize != Polygon.size()) Used.insert(i);
 				}
@@ -2117,7 +2119,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 	QtConcurrent::blockingMap(Parts, [&Insert, &Used, &Geometry, &Points, &Locker, SORT] (QList<PART>& List) -> void
 	{
-		const int ID = List.first().ID; QPolygonF Polygon = SORT(List);
+		const int ID = List.first().ID; const QPolygonF Polygon = SORT(List);
 
 		for (const auto& P : Points) if (!Used.contains(P.ID))
 		{
@@ -2134,7 +2136,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 				Locker.unlock();
 			}
 
-			if (Polygon.containsPoint(QPointF(P.X, P.Y), Qt::WindingFill))
+			if (Polygon.containsPoint(QPointF(P.X, P.Y), Qt::OddEvenFill))
 			{
 				Locker.lock();
 

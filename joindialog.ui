@@ -133,7 +133,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>150</y>
+     <y>149</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -149,7 +149,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>150</y>
+     <y>149</y>
     </hint>
     <hint type="destinationlabel">
      <x>288</x>
@@ -164,8 +164,8 @@
    <slot>typeIndexChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>349</x>
-     <y>17</y>
+     <x>274</x>
+     <y>27</y>
     </hint>
     <hint type="destinationlabel">
      <x>589</x>
@@ -180,8 +180,8 @@
    <slot>targetNameChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>301</x>
-     <y>18</y>
+     <x>274</x>
+     <y>28</y>
     </hint>
     <hint type="destinationlabel">
      <x>171</x>
@@ -212,8 +212,8 @@
    <slot>targetNameChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>137</x>
-     <y>76</y>
+     <x>132</x>
+     <y>90</y>
     </hint>
     <hint type="destinationlabel">
      <x>153</x>
@@ -228,12 +228,28 @@
    <slot>targetNameChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>68</x>
-     <y>110</y>
+     <x>207</x>
+     <y>90</y>
     </hint>
     <hint type="destinationlabel">
      <x>183</x>
      <y>484</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Circle</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>JoinDialog</receiver>
+   <slot>targetNameChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>329</x>
+     <y>85</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>335</x>
+     <y>350</y>
     </hint>
    </hints>
   </connection>
