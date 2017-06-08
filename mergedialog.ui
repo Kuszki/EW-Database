@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Merge objects</string>
   </property>
+  <property name="windowIcon">
+   <iconset theme="object-flip-horizontal"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="4">
     <widget class="QScrollArea" name="scrollArea">
@@ -31,7 +34,7 @@
         <x>0</x>
         <y>0</y>
         <width>779</width>
-        <height>448</height>
+        <height>439</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
@@ -55,7 +58,8 @@
      </property>
      <property name="icon">
       <iconset theme="list-add">
-       <normaloff>.</normaloff>.</iconset>
+       <normaloff/>
+      </iconset>
      </property>
      <property name="checkable">
       <bool>true</bool>
