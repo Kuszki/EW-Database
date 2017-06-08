@@ -43,7 +43,8 @@ SOURCES		+=	main.cpp \
 				exportdialog.cpp \
 				geometrywidget.cpp \
 				classdialog.cpp \
-				textdialog.cpp
+				textdialog.cpp \
+				mergedialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -62,7 +63,8 @@ HEADERS		+=	mainwindow.hpp \
 				exportdialog.hpp \
 				geometrywidget.hpp \
 				classdialog.hpp \
-				textdialog.hpp
+				textdialog.hpp \
+				mergedialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -77,7 +79,8 @@ FORMS		+=	mainwindow.ui \
 				exportdialog.ui \
 				geometrywidget.ui \
 				classdialog.ui \
-				textdialog.ui
+				textdialog.ui \
+				mergedialog.ui
 
 RESOURCES		+=	resources.qrc
 

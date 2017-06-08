@@ -1480,6 +1480,105 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	emit onDataJoin(Count);
 }
 
+void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items, const QList<int>& Values, const QStringList& Points)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataMerge(0); return; }
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	QSqlQuery Query(Database); Query.setForwardOnly(true); QList<QPointF> Cuts; int Step = 0;
+	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QHash<int, QSet<int>> Merges;
+
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, 0);
+
+	if (!Points.isEmpty())
+	{
+		Query.prepare(QString(
+			"SELECT "
+				"T.POS_X, T.POS_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_TEXT T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.TYP = 4 AND "
+				"E.TYP = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
+				"T.TYP = 4 AND "
+				"O.KOD IN ('%1')")
+				    .arg(Points.join("', '")));
+
+		if (Query.exec()) while (Query.next()) Cuts.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, "
+			"P.P0_X, P.P0_Y, "
+			"P.P1_X, P.P1_Y, "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.TYP = 2 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0");
+
+	if (Query.exec()) while (Query.next())
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (Tasks.first().contains(ID))
+		{
+			const QPointF PointA(Query.value(1).toDouble(), Query.value(2).toDouble());
+			const QPointF PointB(Query.value(3).toDouble(), Query.value(4).toDouble());
+
+			if (!Geometry.contains(ID)) Geometry.insert(ID, QList<QPointF>());
+
+			if (!Geometry[ID].contains(PointA)) Geometry[ID].append(PointA);
+			else Geometry[ID].removeOne(PointA);
+			if (!Geometry[ID].contains(PointB)) Geometry[ID].append(PointB);
+			else Geometry[ID].removeOne(PointB);
+		}
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Merging objects"));
+	emit onSetupProgress(0, Tasks.first().size());
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+
+		auto Data = loadData(Table, i.value(), QString(), false, false);
+
+		emit onUpdateProgress(++Step);
+	}
+}
+
 void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(); return; }
@@ -2268,6 +2367,17 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 	}
 
 	return Insert;
+}
+
+void DatabaseDriver::getCommon(RecordModel* Model, const QModelIndexList& Items)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onCommonReady(QList<int>()); return; }
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
+	const QList<int> Used = getCommonFields(Tasks.keys());
+
+	emit onEndProgress();
+	emit onCommonReady(Used);
 }
 
 void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)

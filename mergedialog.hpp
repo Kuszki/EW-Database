@@ -18,69 +18,56 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef UPDATEDIALOG_HPP
-#define UPDATEDIALOG_HPP
+#ifndef MERGEDIALOG_HPP
+#define MERGEDIALOG_HPP
 
+#include <QStandardItemModel>
 #include <QAbstractButton>
 #include <QPushButton>
+#include <QCheckBox>
 #include <QDialog>
 #include <QHash>
 
-#include "updatewidget.hpp"
+#include "databasedriver.hpp"
 
 namespace Ui
 {
-	class UpdateDialog;
+	class MergeDialog;
 }
 
-class UpdateDialog : public QDialog
+class MergeDialog : public QDialog
 {
 
 		Q_OBJECT
 
 	private:
 
-		Ui::UpdateDialog* ui;
+		Ui::MergeDialog* ui;
 
-		QList<QHash<int, QVariant>> Values;
-		QSet<UpdateWidget*> Status;
 		QList<int> Active;
-
-		int Index = 0;
-		int Count = 0;
 
 	public:
 
-		explicit UpdateDialog(QWidget* Parent = nullptr, const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>());
-		virtual ~UpdateDialog(void) override;
+		explicit MergeDialog(QWidget* Parent = 0,
+						 const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>(),
+						 const QList<DatabaseDriver::TABLE>& Tables = QList<DatabaseDriver::TABLE>());
+		virtual ~MergeDialog(void) override;
 
-		QHash<int, QVariant> getUpdatedValues(void) const;
-
-		bool isDataValid(void) const;
+		QList<int> getSelectedFields(void) const;
+		QStringList getFilterClasses(void) const;
 
 	private slots:
 
 		void searchBoxEdited(const QString& Search);
 
-		void fieldButtonChecked(bool Enabled);
 		void allButtonChecked(bool Enabled);
-
-		void clearButtonClicked(void);
-		void prevButtonClicked(void);
-		void nextButtonClicked(void);
-
-		void dataCheckProgress(bool OK);
 
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver::FIELD>& Fields);
-
-		void setPrepared(const QList<QHash<int, QVariant>>& Data, const QList<int>& Indexes);
-
-		void setData(const QList<QHash<int, QVariant>> &Data);
-		void setData(const QHash<int, QVariant>& Data);
+		void setFields(const QList<DatabaseDriver::FIELD>& Fields,
+					const QList<DatabaseDriver::TABLE>& Tables);
 
 		void setActive(const QList<int>& Indexes);
 
@@ -88,8 +75,9 @@ class UpdateDialog : public QDialog
 
 	signals:
 
-		void onValuesUpdate(const QHash<int, QVariant>&);
+		void onFieldsUpdate(const QList<int>&, const QStringList&);
+
 
 };
 
-#endif // UPDATEDIALOG_HPP
+#endif // MERGEDIALOG_HPP

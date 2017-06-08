@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1366</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -67,8 +67,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
-     <height>25</height>
+     <width>1366</width>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -88,6 +88,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionLoad"/>
     <addaction name="actionJoin"/>
+    <addaction name="actionMerge"/>
     <addaction name="actionRefactor"/>
     <addaction name="separator"/>
     <addaction name="actionView"/>
@@ -118,6 +119,9 @@
    <property name="movable">
     <bool>false</bool>
    </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextOnly</enum>
+   </property>
    <property name="floatable">
     <bool>false</bool>
    </property>
@@ -136,6 +140,7 @@
    <addaction name="actionSave"/>
    <addaction name="actionLoad"/>
    <addaction name="actionJoin"/>
+   <addaction name="actionMerge"/>
    <addaction name="actionRefactor"/>
    <addaction name="separator"/>
    <addaction name="actionRestore"/>
@@ -156,6 +161,9 @@
    </property>
    <property name="movable">
     <bool>false</bool>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextOnly</enum>
    </property>
    <property name="floatable">
     <bool>false</bool>
@@ -363,7 +371,8 @@
   </action>
   <action name="actionHide">
    <property name="icon">
-    <iconset theme="document-new"/>
+    <iconset theme="document-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Hide</string>
@@ -374,13 +383,22 @@
   </action>
   <action name="actionUnhide">
    <property name="icon">
-    <iconset theme="document-revert"/>
+    <iconset theme="document-revert">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Unhide</string>
    </property>
    <property name="shortcut">
     <string>F3</string>
+   </property>
+  </action>
+  <action name="actionMerge">
+   <property name="text">
+    <string>Merge</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
  </widget>

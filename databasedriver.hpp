@@ -165,6 +165,9 @@ class DatabaseDriver : public QObject
 				    const QString& Point, const QString& Join,
 				    bool Override, int Type, double Radius);
 
+		void mergeData(RecordModel* Model, const QModelIndexList& Items,
+					const QList<int>& Values, const QStringList& Points);
+
 		void refactorData(RecordModel* Model, const QModelIndexList& Items,
 					   const QString& Class, int Line, int Point, int Text);
 
@@ -175,6 +178,7 @@ class DatabaseDriver : public QObject
 		void editText(RecordModel* Model, const QModelIndexList& Items,
 				    bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 
+		void getCommon(RecordModel* Model, const QModelIndexList& Items);
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
 		void getClass(RecordModel* Model, const QModelIndexList& Items);
@@ -200,6 +204,7 @@ class DatabaseDriver : public QObject
 		void onDataSplit(int);
 		void onDataRefactor(void);
 
+		void onCommonReady(const QList<int>&);
 		void onPresetReady(const QList<QHash<int, QVariant>>&,
 					    const QList<int>&);
 		void onJoinsReady(const QHash<QString, QString>&,
@@ -215,6 +220,8 @@ class DatabaseDriver : public QObject
 
 		void onJobsRestore(int);
 		void onHistoryRemove(int);
+
+		void onDataMerge(int);
 
 		void onTextEdit(int);
 

@@ -39,6 +39,7 @@
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
 #include "classdialog.hpp"
+#include "mergedialog.hpp"
 #include "joindialog.hpp"
 #include "textdialog.hpp"
 
@@ -78,6 +79,7 @@ class MainWindow : public QMainWindow
 		FilterDialog* Filter;
 		UpdateDialog* Update;
 		ExportDialog* Export;
+		MergeDialog* Merge;
 		TextDialog* Text;
 
 		QThread Thread;
@@ -107,6 +109,7 @@ class MainWindow : public QMainWindow
 		void restoreActionClicked(void);
 		void historyActionClicked(void);
 		void loadActionClicked(void);
+		void mergeActionClicked(void);
 		void classActionClicked(void);
 		void hideActionClicked(void);
 		void unhideActionClicked(void);
@@ -136,10 +139,12 @@ class MainWindow : public QMainWindow
 		void disconnectData(const QString& Point,
 						const QString& Line,
 						int Type);
+		void mergeData(const QList<int>& Fields, const QStringList& Points);
 		void changeClass(const QString& Class,
 					  int Line, int Point, int Text);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 
+		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
 					  const QList<int>& Used);
 		void prepareJoin(const QHash<QString, QString>& Points,
@@ -163,6 +168,8 @@ class MainWindow : public QMainWindow
 		void restoreJob(int Count);
 		void removeHistory(int Count);
 
+		void dataMerged(int Count);
+
 		void refactorData(void);
 
 		void loginAttempt(void);
@@ -176,6 +183,8 @@ class MainWindow : public QMainWindow
 		void onReloadRequest(const QString&, const QList<int>&,
 						 const QHash<int, QVariant>&,
 						 const QString&);
+
+		void onCommonRequest(RecordModel*, const QModelIndexList&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&,
@@ -186,6 +195,9 @@ class MainWindow : public QMainWindow
 					    bool, int, double);
 		void onSplitRequest(RecordModel*, const QModelIndexList&,
 						const QString&, const QString&, int);
+
+		void onMergeRequest(RecordModel*, const QModelIndexList&,
+						const QList<int>&, const QStringList&);
 
 		void onRefactorRequest(RecordModel*, const QModelIndexList&,
 						   const QString, int, int, int);

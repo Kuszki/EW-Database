@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
 	connect(ui->actionHistory, &QAction::triggered, this, &MainWindow::historyActionClicked);
 	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
+	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -82,6 +83,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
 	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::updateData);
 	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
+	connect(Driver, &DatabaseDriver::onCommonReady, this, &MainWindow::prepareMerge);
 	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
 	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::prepareJoin);
 	connect(Driver, &DatabaseDriver::onDataJoin, this, &MainWindow::joinData);
@@ -91,6 +93,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataRefactor, this, &MainWindow::refactorData);
 	connect(Driver, &DatabaseDriver::onClassReady, this, &MainWindow::prepareClass);
 	connect(Driver, &DatabaseDriver::onTextEdit, this, &MainWindow::textEdit);
+	connect(Driver, &DatabaseDriver::onDataMerge, this, &MainWindow::dataMerged);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -108,6 +111,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onJoinRequest, Driver, &DatabaseDriver::joinData);
 	connect(this, &MainWindow::onSplitRequest, Driver, &DatabaseDriver::splitData);
 
+	connect(this, &MainWindow::onCommonRequest, Driver, &DatabaseDriver::getCommon);
 	connect(this, &MainWindow::onEditRequest, Driver, &DatabaseDriver::getPreset);
 	connect(this, &MainWindow::onListRequest, Driver, &DatabaseDriver::getJoins);
 
@@ -118,6 +122,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onRefactorRequest, Driver, &DatabaseDriver::refactorData);
 
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
+
+	connect(this, &MainWindow::onMergeRequest, Driver, &DatabaseDriver::mergeData);
 
 	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
 	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
@@ -239,6 +245,14 @@ void MainWindow::loadActionClicked(void)
 	}
 }
 
+void MainWindow::mergeActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onCommonRequest(Model, Selected);
+}
+
 void MainWindow::classActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
@@ -318,6 +332,14 @@ void MainWindow::disconnectData(const QString& Point, const QString& Line, int T
 	lockUi(BUSY); emit onSplitRequest(Model, Selected, Point, Line, Type);
 }
 
+void MainWindow::mergeData(const QList<int>& Fields, const QStringList& Points)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onMergeRequest(Model, Selected, Fields, Points);
+}
+
 void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
@@ -336,20 +358,22 @@ void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, doubl
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
+	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
+
 	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);
 	Filter = new FilterDialog(this, Fields, Classes, Common);
 	Update = new UpdateDialog(this, Fields);
 	Export = new ExportDialog(this, Headers);
+	Merge = new MergeDialog(this, Fields, Classes);
 	Text = new TextDialog(this);
-
-	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
 	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
 	connect(Export, &ExportDialog::onExportRequest, this, &MainWindow::saveData);
+	connect(Merge, &MergeDialog::onFieldsUpdate, this, &MainWindow::mergeData);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
@@ -460,6 +484,11 @@ void MainWindow::removeHistory(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n historic object(s)", nullptr, Count));
 }
 
+void MainWindow::dataMerged(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Merged %n object(s)", nullptr, Count));
+}
+
 void MainWindow::refactorData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Class changed"));
@@ -533,6 +562,11 @@ void MainWindow::readRequest(void)
 	}
 
 	Sender.writeDatagram("\n\n", QHostAddress::LocalHost, 8888);
+}
+
+void MainWindow::prepareMerge(const QList<int>& Used)
+{
+	lockUi(DONE); Merge->setActive(Used); Merge->open();
 }
 
 void MainWindow::prepareEdit(const QList<QHash<int, QVariant>>& Values, const QList<int>& Used)

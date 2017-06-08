@@ -80,7 +80,7 @@ void UpdateDialog::allButtonChecked(bool Enabled)
 	searchBoxEdited(ui->searchEdit->text());
 }
 
-void UpdateDialog::clearButtonClicked()
+void UpdateDialog::clearButtonClicked(void)
 {
 	setData(Values[Index]);
 }
