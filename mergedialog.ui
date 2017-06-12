@@ -14,10 +14,35 @@
    <string>Merge objects</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="object-flip-horizontal"/>
+   <iconset theme="object-flip-horizontal">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="4">
+   <item row="1" column="1">
+    <widget class="QToolButton" name="allButton">
+     <property name="text">
+      <string>Show all</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-add">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLineEdit" name="searchEdit">
+     <property name="placeholderText">
+      <string>Search</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="5">
     <widget class="QScrollArea" name="scrollArea">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -34,39 +59,17 @@
         <x>0</x>
         <y>0</y>
         <width>779</width>
-        <height>439</height>
+        <height>448</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
      </widget>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLineEdit" name="searchEdit">
-     <property name="placeholderText">
-      <string>Search</string>
-     </property>
-     <property name="clearButtonEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
-    <widget class="QToolButton" name="allButton">
-     <property name="text">
-      <string>Show all</string>
-     </property>
-     <property name="icon">
-      <iconset theme="list-add">
-       <normaloff/>
-      </iconset>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="3">
+    <widget class="QComboBox" name="filterBox"/>
+   </item>
+   <item row="1" column="4">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -77,10 +80,89 @@
     </widget>
    </item>
    <item row="1" column="2">
-    <widget class="QComboBox" name="filterBox"/>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>MergeDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>550</x>
+     <y>470</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>548</x>
+     <y>581</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>MergeDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>710</x>
+     <y>474</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>708</x>
+     <y>596</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>allButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MergeDialog</receiver>
+   <slot>allButtonChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>356</x>
+     <y>467</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>355</x>
+     <y>597</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>searchEdit</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>MergeDialog</receiver>
+   <slot>searchBoxEdited(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>260</x>
+     <y>477</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>256</x>
+     <y>581</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>allButtonChecked(bool)</slot>
+  <slot>searchBoxEdited(QString)</slot>
+ </slots>
 </ui>

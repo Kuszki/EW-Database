@@ -98,7 +98,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
 
-	connect(Driver, &DatabaseDriver::onBeginProgress, Progress, &QProgressBar::show);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
 	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
 	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
@@ -295,6 +295,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionSave->setEnabled(Count > 0);
 	ui->actionRestore->setEnabled(Count > 0);
 	ui->actionHistory->setEnabled(Count > 0);
+	ui->actionMerge->setEnabled(Count > 0);
 	ui->actionRefactor->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
@@ -670,6 +671,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionSave->setEnabled(false);
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
+			ui->actionMerge->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);
@@ -688,6 +690,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionSave->setEnabled(false);
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
+			ui->actionMerge->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);

@@ -47,7 +47,17 @@ QList<int> MergeDialog::getSelectedFields(void) const
 
 QStringList MergeDialog::getFilterClasses(void) const
 {
+	auto M = dynamic_cast<QStandardItemModel*>(ui->filterBox->model());
 
+	QStringList Checked;
+
+	for (int i = 1; i < M->rowCount(); ++i)
+		if (M->item(i)->checkState() == Qt::Checked)
+		{
+			Checked << M->item(i)->data().toString();
+		}
+
+	return Checked;
 }
 
 void MergeDialog::searchBoxEdited(const QString& Search)
@@ -79,7 +89,7 @@ void MergeDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QL
 {
 	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	for (int i = 0; i < Fields.size(); ++i)
+	for (int i = 0; i < Fields.size(); ++i) if (Fields[i].Type != DatabaseDriver::READONLY)
 	{
 		auto Widget = new QCheckBox(this);
 
@@ -90,11 +100,10 @@ void MergeDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QL
 		ui->fieldsLayout->addWidget(Widget);
 	}
 
-	auto Model = new QStandardItemModel(Tables.size(), 1, this);
+	auto Model = new QStandardItemModel(0, 1, this); int j = 0;
 	auto Item = new QStandardItem(tr("Skip merge on points"));
-	auto Oldmodel = ui->filterBox->model(); int j = 0;
 
-	for (const auto& Table : Tables)
+	for (const auto& Table : Tables) if (Table.Point)
 	{
 		auto Item = new QStandardItem(Table.Label);
 
@@ -102,7 +111,7 @@ void MergeDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QL
 		Item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
 		Item->setCheckState(Qt::Unchecked);
 
-		Model->setItem(j++, Item);
+		Model->insertRow(j++, Item);
 	}
 
 	Model->sort(0);
@@ -110,8 +119,6 @@ void MergeDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QL
 	Model->insertRow(0, Item);
 
 	ui->filterBox->setModel(Model);
-
-	Oldmodel->deleteLater();
 }
 
 void MergeDialog::setActive(const QList<int>& Indexes)

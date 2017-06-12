@@ -1485,8 +1485,9 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataMerge(0); return; }
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
-	QSqlQuery Query(Database); Query.setForwardOnly(true); QList<QPointF> Cuts; int Step = 0;
-	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QHash<int, QSet<int>> Merges;
+	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QList<int> Counts; QList<QPointF> Ends;
+	QHash<int, QSet<int>> Merges; QList<QPointF> Cuts; int Step = 0; QSet<int> Merged;
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	emit onBeginProgress(tr("Loading points"));
 	emit onSetupProgress(0, 0);
@@ -1508,10 +1509,39 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 				"E.IDE = T.ID "
 			"WHERE "
 				"O.STATUS = 0 AND "
-				"O.TYP = 4 AND "
+				"O.RODZAJ = 4 AND "
 				"E.TYP = 0 AND "
 				"T.STAN_ZMIANY = 0 AND "
 				"T.TYP = 4 AND "
+				"O.KOD IN ('%1')")
+				    .arg(Points.join("', '")));
+
+		if (Query.exec()) while (Query.next()) Cuts.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+
+		Query.prepare(QString(
+			"SELECT "
+				"(P.P0_X + P.P1_X) / 2.0, "
+				"(P.P0_Y + P.P1_Y) / 2.0 "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"P.STAN_ZMIANY = 0 AND "
+				"P.P1_FLAGS = 4 AND "
+				"E.TYP = 0 AND "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 3 AND "
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
@@ -1530,7 +1560,7 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 		"SELECT "
 			"O.UID, "
 			"P.P0_X, P.P0_Y, "
-			"P.P1_X, P.P1_Y, "
+			"P.P1_X, P.P1_Y "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -1543,9 +1573,11 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 			"E.IDE = P.ID "
 		"WHERE "
 			"O.STATUS = 0 AND "
-			"O.TYP = 2 AND "
+			"O.RODZAJ = 2 AND "
 			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0");
+			"P.STAN_ZMIANY = 0 "
+		"ORDER BY "
+			"O.UID, E.N ASC");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -1569,14 +1601,196 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	emit onBeginProgress(tr("Merging objects"));
 	emit onSetupProgress(0, Tasks.first().size());
 
-	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	for (const auto& Item : Geometry) for (const auto& Point : Item)
 	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		const int Index = Ends.indexOf(Point);
 
-		auto Data = loadData(Table, i.value(), QString(), false, false);
+		if (Index == -1)
+		{
+			Ends.append(Point);
+			Counts.append(1);
+		}
+		else if (++Counts[Index] == 3)
+		{
+			Cuts.append(Point);
+		}
+	}
+
+	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
+	{
+		const auto& Table = getItemByField(Tables, k.key(), &TABLE::Name);
+
+		auto Data = loadData(Table, k.value(), QString(), false, false);
+
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) if (!Used.contains(i.key()) && Geometry[i.key()].size() == 2)
+		{
+			QPointF& P1 = Geometry[i.key()].first();
+			QPointF& P2 = Geometry[i.key()].last();
+			QSet<int> Parts; bool Continue = true;
+			const auto D1 = Data[i.key()];
+
+			Used.insert(i.key()); while (Continue)
+			{
+				const int oldSize = Parts.size();
+
+				for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) if (!Used.contains(j.key()) && Geometry[j.key()].size() == 2)
+				{
+					const QPointF& L1 = Geometry[j.key()].first();
+					const QPointF& L2 = Geometry[j.key()].last();
+					const auto& D2 = Data[j.key()];
+
+					int T(0); if (P1 == L1 && !Cuts.contains(P1)) T = 1;
+					else if (P1 == L2 && !Cuts.contains(P1)) T = 2;
+					else if (P2 == L1 && !Cuts.contains(P2)) T = 3;
+					else if (P2 == L2 && !Cuts.contains(P2)) T = 4;
+
+					if (T) for (const auto& Field : Values) if (D1[Field] != D2[Field]) T = 0;
+
+					switch (T)
+					{
+						case 1: P1 = L2; break;
+						case 2: P1 = L1; break;
+						case 3: P2 = L2; break;
+						case 4: P2 = L1; break;
+					}
+
+					if (T)
+					{
+						Parts.insert(j.key());
+						Used.insert(j.key());
+					}
+				}
+
+				Continue = oldSize != Parts.size();
+			}
+
+			if (!Parts.isEmpty()) { Parts.insert(i.key()); Merges.insert(i.key(), Parts); }
+		}
 
 		emit onUpdateProgress(++Step);
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating database"));
+	emit onSetupProgress(0, Merges.size());
+
+	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
+	{
+		const auto& Table = getItemByField(Tables, k.key(), &TABLE::Name);
+
+		for (const auto& Index : k.value()) if (Merges.contains(Index))
+		{
+			struct PART { int ID, Type; double X1, Y1, X2, Y2; bool Text; };
+
+			QList<PART> Parts, Sorted, Labels; QSet<int> Taken; bool Continue = true; int n = 0;
+
+			for (const auto& Part : Merges[Index])
+			{
+				Query.prepare(QString(
+					"SELECT "
+						"E.IDE, E.TYP, "
+						"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
+						"ROUND(P.P1_X, 3), ROUND(P.P1_Y, 3), "
+						"IIF(P.P0_X IS NULL OR P.P0_Y IS NULL, 1, 0) "
+					"FROM "
+						"EW_OB_ELEMENTY E "
+					"LEFT JOIN "
+						"EW_POLYLINE P "
+					"ON "
+						"E.IDE = P.ID AND "
+						"E.TYP = 0 AND "
+						"P.STAN_ZMIANY = 0 "
+					"WHERE "
+						"E.UIDO = %1 "
+					"ORDER BY "
+						"E.UIDO, E.N ASC")
+						    .arg(Part));
+
+				if (Query.exec()) while (Query.next()) Parts.append(
+				{
+					Query.value(0).toInt(),
+					Query.value(1).toInt(),
+					Query.value(2).toDouble(),
+					Query.value(3).toDouble(),
+					Query.value(4).toDouble(),
+					Query.value(5).toDouble(),
+					Query.value(6).toBool()
+				});
+
+				Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(Part));
+
+				if (Part == Index) continue; else Merged.insert(Part);
+
+				Query.exec(QString("DELETE FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
+				Query.exec(QString("DELETE FROM %1 WHERE UIDO = %2").arg(Table.Data, Part));
+			}
+
+			for (int i = 0; i < Parts.size(); ++i)
+			{
+				if (Parts[i].Type || Parts[i].Text) Labels.append(Parts.takeAt(i--));
+			}
+
+			QPointF P1(Parts.first().X1, Parts.first().Y1);
+			QPointF P2(Parts.first().X2, Parts.first().Y2);
+
+			Sorted.append(Parts.first());
+			Taken.insert(Parts.first().ID);
+
+			while (Continue)
+			{
+				const int oldSize = Sorted.size();
+
+				for (const auto& L : Parts) if (!Taken.contains(L.ID))
+				{
+					QPointF L1(L.X1, L.Y1), L2(L.X2, L.Y2);
+
+					int T(0); if (P1 == L1) T = 1;
+					else if (P1 == L2) T = 2;
+					else if (P2 == L1) T = 3;
+					else if (P2 == L2) T = 4;
+
+					switch (T)
+					{
+						case 1: P1 = L2; Sorted.push_front(L); break;
+						case 2: P1 = L1; Sorted.push_front(L); break;
+						case 3: P2 = L2; Sorted.push_back(L); break;
+						case 4: P2 = L1; Sorted.push_back(L); break;
+					}
+
+					if (T) Taken.insert(L.ID);
+				}
+
+				Continue = oldSize != Sorted.size();
+			}
+
+			for (const auto& Part: Sorted) Query.exec(QString(
+				"INSERT INTO "
+					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+				"VALUES "
+					"(%1, %2, %3, %4)")
+				.arg(Index)
+				.arg(Part.ID)
+				.arg(Part.Type)
+				.arg(n++));
+
+			for (const auto& Part: Labels) Query.exec(QString(
+				"INSERT INTO "
+					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+				"VALUES "
+					"(%1, %2, %3, %4)")
+				.arg(Index)
+				.arg(Part.ID)
+				.arg(Part.Type)
+				.arg(n++));
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	for (const auto& Item : Merged) emit onRowRemove(Model->index(Item));
+
+	emit onEndProgress();
+	emit onDataMerge(Merged.size() + Merges.size());
 }
 
 void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text)

@@ -451,6 +451,15 @@ QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 	return List;
 }
 
+int RecordModel::getUid(const QModelIndex& Index) const
+{
+	RecordObject* Object = (RecordObject*) Index.internalPointer();
+
+	if (dynamic_cast<GroupObject*>(Object)) return -1;
+
+	return Object->getUid();
+}
+
 bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const
 {
 	for (const auto& Index : Columns) if (Header.size() <= Index) return false;
@@ -543,6 +552,17 @@ bool RecordModel::isGrouped(void) const
 bool RecordModel::exists(int Index) const
 {
 	for (const auto& Item : Objects) if (Item->getUid() == Index) return true; return false;
+}
+
+QModelIndex RecordModel::index(int Index) const
+{
+	for (const auto& Item : Objects) if (Item->getUid() == Index)
+	{
+		if (Root) return createIndex(Parents[Item]->getIndex(Item), 0, Item);
+		else return createIndex(Objects.indexOf(Item), 0, Item);
+	}
+
+	return QModelIndex();
 }
 
 QModelIndex RecordModel::find(int Index, QVariant Data) const

@@ -166,6 +166,8 @@ class RecordModel : public QAbstractItemModel
 
 		QList<int> getUids(const QModelIndexList& Selection) const;
 
+		int getUid(const QModelIndex& Index) const;
+
 		bool saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const;
 
 		bool removeItem(const QModelIndex& Index);
@@ -175,6 +177,8 @@ class RecordModel : public QAbstractItemModel
 		bool isGrouped(void) const;
 
 		bool exists(int Index) const;
+
+		QModelIndex index(int Index) const;
 
 		QModelIndex find(int Index, QVariant Data) const;
 
