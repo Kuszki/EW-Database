@@ -21,8 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset theme="media-floppy">
-    <normaloff/>
-   </iconset>
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -69,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>23</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -84,24 +83,16 @@
      <string>Data</string>
     </property>
     <addaction name="actionReload"/>
+    <addaction name="actionFilter"/>
+    <addaction name="separator"/>
     <addaction name="actionDelete"/>
     <addaction name="actionEdit"/>
     <addaction name="actionSave"/>
     <addaction name="actionLoad"/>
-    <addaction name="actionJoin"/>
     <addaction name="actionRefactor"/>
     <addaction name="separator"/>
-    <addaction name="actionView"/>
-    <addaction name="actionFilter"/>
-    <addaction name="actionGroup"/>
-    <addaction name="separator"/>
-    <addaction name="actionHide"/>
-    <addaction name="actionUnhide"/>
-    <addaction name="separator"/>
-    <addaction name="actionMerge"/>
     <addaction name="actionRestore"/>
     <addaction name="actionHistory"/>
-    <addaction name="actionText"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -109,9 +100,30 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuGeometry">
+    <property name="title">
+     <string>Geometry</string>
+    </property>
+    <addaction name="actionJoin"/>
+    <addaction name="actionMerge"/>
+    <addaction name="actionSplit"/>
+    <addaction name="actionText"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>List</string>
+    </property>
+    <addaction name="actionView"/>
+    <addaction name="actionGroup"/>
+    <addaction name="separator"/>
+    <addaction name="actionHide"/>
+    <addaction name="actionUnhide"/>
+   </widget>
    <addaction name="menuDatabase"/>
    <addaction name="menuData"/>
+   <addaction name="menuGeometry"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QToolBar" name="mainTool">
    <property name="windowTitle">
@@ -141,6 +153,7 @@
    <addaction name="actionRefactor"/>
    <addaction name="separator"/>
    <addaction name="actionMerge"/>
+   <addaction name="actionSplit"/>
    <addaction name="actionRestore"/>
    <addaction name="actionHistory"/>
    <addaction name="actionText"/>
@@ -175,8 +188,7 @@
   <action name="actionConnect">
    <property name="icon">
     <iconset theme="network-wired">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Connect</string>
@@ -188,8 +200,7 @@
   <action name="actionDisconnect">
    <property name="icon">
     <iconset theme="network-offline">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Disconnect</string>
@@ -201,8 +212,7 @@
   <action name="actionView">
    <property name="icon">
     <iconset theme="preferences-system">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>View</string>
@@ -214,8 +224,7 @@
   <action name="actionGroup">
    <property name="icon">
     <iconset theme="format-indent-more">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Group</string>
@@ -227,8 +236,7 @@
   <action name="actionFilter">
    <property name="icon">
     <iconset theme="system-search">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Filter</string>
@@ -240,8 +248,7 @@
   <action name="actionAbout">
    <property name="icon">
     <iconset theme="help-about">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>About</string>
@@ -253,8 +260,7 @@
   <action name="actionReload">
    <property name="icon">
     <iconset theme="reload">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Reload</string>
@@ -266,8 +272,7 @@
   <action name="actionDelete">
    <property name="icon">
     <iconset theme="edit-delete">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Delete</string>
@@ -279,8 +284,7 @@
   <action name="actionEdit">
    <property name="icon">
     <iconset theme="edit-find-replace">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Edit</string>
@@ -292,8 +296,7 @@
   <action name="actionJoin">
    <property name="icon">
     <iconset theme="insert-link">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Join</string>
@@ -305,8 +308,7 @@
   <action name="actionRestore">
    <property name="icon">
     <iconset theme="edit-undo">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Restore job</string>
@@ -318,8 +320,7 @@
   <action name="actionHistory">
    <property name="icon">
     <iconset theme="document-open-recent">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Remove history</string>
@@ -331,8 +332,7 @@
   <action name="actionSave">
    <property name="icon">
     <iconset theme="document-save">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -344,8 +344,7 @@
   <action name="actionLoad">
    <property name="icon">
     <iconset theme="document-open">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Load</string>
@@ -357,8 +356,7 @@
   <action name="actionRefactor">
    <property name="icon">
     <iconset theme="insert-text">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Refactorize</string>
@@ -370,8 +368,7 @@
   <action name="actionText">
    <property name="icon">
     <iconset theme="tools-check-spelling">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Edit text</string>
@@ -383,8 +380,7 @@
   <action name="actionHide">
    <property name="icon">
     <iconset theme="document-new">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Hide</string>
@@ -396,8 +392,7 @@
   <action name="actionUnhide">
    <property name="icon">
     <iconset theme="document-revert">
-     <normaloff/>
-    </iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Unhide</string>
@@ -408,13 +403,25 @@
   </action>
   <action name="actionMerge">
    <property name="icon">
-    <iconset theme="object-flip-horizontal"/>
+    <iconset theme="insert-object">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Merge</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionSplit">
+   <property name="icon">
+    <iconset theme="edit-cut"/>
+   </property>
+   <property name="text">
+    <string>Split</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
    </property>
   </action>
  </widget>

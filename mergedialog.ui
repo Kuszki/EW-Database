@@ -14,8 +14,7 @@
    <string>Merge objects</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="object-flip-horizontal">
-    <normaloff>.</normaloff>.</iconset>
+   <iconset theme="insert-object"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="1">
@@ -59,7 +58,7 @@
         <x>0</x>
         <y>0</y>
         <width>779</width>
-        <height>448</height>
+        <height>443</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
