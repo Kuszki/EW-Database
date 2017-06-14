@@ -168,6 +168,9 @@ class DatabaseDriver : public QObject
 		void mergeData(RecordModel* Model, const QModelIndexList& Items,
 					const QList<int>& Values, const QStringList& Points);
 
+		void cutData(RecordModel* Model, const QModelIndexList& Items,
+				   const QStringList& Points, bool Endings);
+
 		void refactorData(RecordModel* Model, const QModelIndexList& Items,
 					   const QString& Class, int Line, int Point, int Text);
 
@@ -222,6 +225,7 @@ class DatabaseDriver : public QObject
 		void onHistoryRemove(int);
 
 		void onDataMerge(int);
+		void onDataCut(int);
 
 		void onTextEdit(int);
 

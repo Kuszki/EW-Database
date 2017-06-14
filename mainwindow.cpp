@@ -94,6 +94,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onClassReady, this, &MainWindow::prepareClass);
 	connect(Driver, &DatabaseDriver::onTextEdit, this, &MainWindow::textEdit);
 	connect(Driver, &DatabaseDriver::onDataMerge, this, &MainWindow::dataMerged);
+	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -124,6 +125,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
 
 	connect(this, &MainWindow::onMergeRequest, Driver, &DatabaseDriver::mergeData);
+	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
 
 	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
 	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
@@ -296,6 +298,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionRestore->setEnabled(Count > 0);
 	ui->actionHistory->setEnabled(Count > 0);
 	ui->actionMerge->setEnabled(Count > 0);
+	ui->actionSplit->setEnabled(Count > 0);
 	ui->actionRefactor->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
@@ -341,6 +344,14 @@ void MainWindow::mergeData(const QList<int>& Fields, const QStringList& Points)
 	lockUi(BUSY); emit onMergeRequest(Model, Selected, Fields, Points);
 }
 
+void MainWindow::cutData(const QStringList& Points, bool Endings)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onCutRequest(Model, Selected, Points, Endings);
+}
+
 void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
@@ -367,6 +378,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Update = new UpdateDialog(this, Fields);
 	Export = new ExportDialog(this, Headers);
 	Merge = new MergeDialog(this, Fields, Classes);
+	Cut = new CutDialog(this, Classes);
 	Text = new TextDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
@@ -375,6 +387,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
 	connect(Export, &ExportDialog::onExportRequest, this, &MainWindow::saveData);
 	connect(Merge, &MergeDialog::onFieldsUpdate, this, &MainWindow::mergeData);
+	connect(Cut, &CutDialog::onClassesUpdate, this, &MainWindow::cutData);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
@@ -488,6 +501,11 @@ void MainWindow::removeHistory(int Count)
 void MainWindow::dataMerged(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Merged %n object(s)", nullptr, Count));
+}
+
+void MainWindow::dataCutted(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Splitted %n object(s)", nullptr, Count));
 }
 
 void MainWindow::refactorData(void)
@@ -672,6 +690,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
 			ui->actionMerge->setEnabled(false);
+			ui->actionSplit->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);
@@ -691,6 +710,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRestore->setEnabled(false);
 			ui->actionHistory->setEnabled(false);
 			ui->actionMerge->setEnabled(false);
+			ui->actionSplit->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);

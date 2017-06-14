@@ -1793,6 +1793,422 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	emit onDataMerge(Merged.size() + Merges.size());
 }
 
+void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, const QStringList& Points, bool Endings)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataCut(0); return; }
+
+	struct L_PART { int ID, N; double X1, Y1, X2, Y2; };
+	struct P_PART { int ID, LID; double X, Y, L = NAN; };
+
+	struct PARTS { QList<L_PART> Lines; QList<P_PART> Labels; QList<P_PART> Objects; };
+
+	const auto getPairs = [] (PARTS& P) -> void
+	{
+		static const auto length = [] (double x1, double y1, double x2, double y2)
+		{
+			const double dx = x1 - x2;
+			const double dy = y1 - y2;
+
+			return qSqrt(dx * dx + dy * dy);
+		};
+
+		static const auto find = [] (const QList<L_PART>& Lines, P_PART& P)
+		{
+			for (const auto& L : Lines)
+			{
+				const double l = length(L.X1, L.Y1, L.X2, L.Y2);
+				const double a = length(P.X, P.Y, L.X1, L.Y1);
+				const double b = length(P.X, P.Y, L.X2, L.Y2);
+
+				if ((a * a < l * l + b * b) &&
+				    (b * b < a * a + l * l))
+				{
+					const double p = 0.5 * (l + a + b);
+					const double h = 2.0 * qSqrt(p * (p - a) * (p - b) * (p - l)) / l;
+
+					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
+				}
+			}
+		};
+
+		for (auto& Part : P.Labels) find(P.Lines, Part);
+		for (auto& Part : P.Objects) find(P.Lines, Part);
+	};
+
+	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	QHash<int, PARTS> Parts; QList<QPointF> Cuts; QHash<int, QSet<int>> Queue; int Step = 0;
+	QSqlQuery Query(Database); Query.setForwardOnly(true); QMutex Locker;
+
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, 0);
+
+	if (!Points.isEmpty())
+	{
+		Query.prepare(QString(
+			"SELECT "
+				"T.POS_X, T.POS_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_TEXT T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 4 AND "
+				"E.TYP = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
+				"T.TYP = 4 AND "
+				"O.KOD IN ('%1')")
+				    .arg(Points.join("', '")));
+
+		if (Query.exec()) while (Query.next()) Cuts.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+
+		Query.prepare(QString(
+			"SELECT "
+				"(P.P0_X + P.P1_X) / 2.0, "
+				"(P.P0_Y + P.P1_Y) / 2.0 "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"P.STAN_ZMIANY = 0 AND "
+				"P.P1_FLAGS = 4 AND "
+				"E.TYP = 0 AND "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 3 AND "
+				"O.KOD IN ('%1')")
+				    .arg(Points.join("', '")));
+
+		if (Query.exec()) while (Query.next()) Cuts.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+	}
+
+	if (Endings)
+	{
+		QHash<int, QList<QPointF>> Geometry;
+
+		Query.prepare(
+			"SELECT "
+				"O.UID, "
+				"P.P0_X, P.P0_Y, "
+				"P.P1_X, P.P1_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 2 AND "
+				"E.TYP = 0 AND "
+				"P.STAN_ZMIANY = 0 "
+			"ORDER BY "
+				"O.UID, E.N ASC");
+
+		if (Query.exec()) while (Query.next())
+		{
+			const int ID = Query.value(0).toInt();
+
+			if (Tasks.first().contains(ID))
+			{
+				const QPointF PointA(Query.value(1).toDouble(), Query.value(2).toDouble());
+				const QPointF PointB(Query.value(3).toDouble(), Query.value(4).toDouble());
+
+				if (!Geometry.contains(ID)) Geometry.insert(ID, QList<QPointF>());
+
+				if (!Geometry[ID].contains(PointA)) Geometry[ID].append(PointA);
+				else Geometry[ID].removeOne(PointA);
+				if (!Geometry[ID].contains(PointB)) Geometry[ID].append(PointB);
+				else Geometry[ID].removeOne(PointB);
+			}
+		}
+
+		for (const auto& Line : Geometry) if (Line.size() == 2)
+		{
+			Cuts.append(Line.first()); Cuts.append(Line.last());
+		}
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, "
+			"E.IDE, E.N, "
+			"P.P0_X, P.P0_Y, "
+			"P.P1_X, P.P1_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0 "
+		"ORDER BY "
+			"O.UID, E.N ASC");
+
+	if (Query.exec()) while (Query.next()) if (Tasks.first().contains(Query.value(0).toInt()))
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (!Parts.contains(ID)) Parts.insert(ID, PARTS());
+
+		Parts[ID].Lines.append(
+		{
+			Query.value(1).toInt(),
+			Query.value(2).toInt(),
+			Query.value(3).toDouble(),
+			Query.value(4).toDouble(),
+			Query.value(5).toDouble(),
+			Query.value(6).toDouble(),
+		});
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Generating tasklist"));
+	emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Cuts, [&Parts, &Queue, &Locker] (const QPointF& Point) -> void
+	{
+		for (auto i = Parts.constBegin(); i != Parts.constEnd(); ++i) for (int j = 1; j < i.value().Lines.size(); ++j)
+		{
+			QPointF A(i.value().Lines[j - 1].X1, i.value().Lines[j - 1].Y1);
+			QPointF B(i.value().Lines[j - 1].X2, i.value().Lines[j - 1].Y2);
+			QPointF C(i.value().Lines[j].X1, i.value().Lines[j].Y1);
+			QPointF D(i.value().Lines[j].X2, i.value().Lines[j].Y2);
+
+			if ((Point == A && Point == C) || (Point == B && Point == C) ||
+			    (Point == A && Point == D) || (Point == B && Point == D))
+			{
+				Locker.lock();
+
+				if (Queue.contains(i.key())) Queue[i.key()].insert(j);
+				else Queue.insert(i.key(), QSet<int>() << j);
+
+				Locker.unlock();
+			};
+		}
+	});
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, E.IDE, "
+			"IIF(P.ODN_X IS NULL, P.POS_X, P.POS_X + P.ODN_X), "
+			"IIF(P.ODN_Y IS NULL, P.POS_Y, P.POS_Y + P.ODN_Y) "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT T "
+		"ON "
+			"E.IDE = T.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"E.TYP = 0 AND "
+			"T.STAN_ZMIANY = 0 ");
+
+	if (Query.exec()) while (Query.next()) if (Queue.contains(Query.value(0).toInt()))
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (Parts.contains(ID)) Parts[ID].Labels.append(
+		{
+			Query.value(1).toInt(), 0,
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble()
+		});
+	}
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, E.IDE, ("
+			"SELECT "
+				"TE.POS_X "
+			"FROM "
+				"EW_OB_ELEMENTY EL "
+			"INNER JOIN "
+				"EW_TEXT TE "
+			"ON "
+				"EL.IDE = TE.ID "
+			"WHERE "
+				"EL.TYP = 0 AND "
+				"TE.TYP = 4 AND "
+				"TE.STAN_ZMIANY = 0 AND "
+				"EL.UIDO = ("
+					"SELECT FIRST 1 "
+						"OB.UID "
+					"FROM "
+						"EW_OBIEKTY OB "
+					"WHERE "
+						"OB.ID = E.IDE AND "
+						"OB.STATUS = 0)"
+			"), ("
+			"SELECT "
+				"TE.POS_Y "
+			"FROM "
+				"EW_OB_ELEMENTY EL "
+			"INNER JOIN "
+				"EW_TEXT TE "
+			"ON "
+				"EL.IDE = TE.ID "
+			"WHERE "
+				"EL.TYP = 0 AND "
+				"TE.TYP = 4 AND "
+				"TE.STAN_ZMIANY = 0 AND "
+				"EL.UIDO = ("
+					"SELECT FIRST 1 "
+						"OB.UID "
+					"FROM "
+						"EW_OBIEKTY OB "
+					"WHERE "
+						"OB.ID = E.IDE AND "
+						"OB.STATUS = 0)"
+			") "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"E.TYP = 1");
+
+	if (Query.exec()) while (Query.next()) if (Queue.contains(Query.value(0).toInt()))
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (Parts.contains(ID)) Parts[ID].Objects.append(
+		{
+			Query.value(1).toInt(), 0,
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble()
+		});
+	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Preparing geometry"));
+	emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Parts, getPairs);
+
+	for (auto t = Tasks.constBegin() + 1; t != Tasks.constEnd(); ++t)
+	{
+		const auto& Table = getItemByField(Tables, t.key(), &TABLE::Name);
+
+		QStringList Names; for (const auto& Field : Table.Fields) Names.append(Field.Name);
+
+		const QString dataInsert = QString("INSERT INTO %1 (UIDO, %2) "
+									"SELECT %3, %2 FROM %1 WHERE UIDO = %4")
+							  .arg(Table.Data).arg(Names.join(", "));
+
+		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
+									  "SELECT %1, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UIDO = %2");
+
+		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i)
+		{
+			Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1 AND N >= %2")
+					 .arg(i.key()).arg(*i.value().begin()));
+
+			int on = *i.value().begin();
+
+			for (auto j = i.value().constBegin(); j != i.value().constEnd(); ++j)
+			{
+				int Index(0), n(0); const int Stop = (j + 1) == i.value().constEnd() ? Parts[i.key()].Lines.size() : *(j + 1);
+
+				Query.prepare("SELECT GEN_ID(EW_OBIEKTY_UID_GEN, 1) FROM RDB$DATABASE");
+
+				if (Query.exec() && Query.next()) Index = Query.value(0).toInt();
+
+				Query.exec(objectInsert.arg(Index).arg(i.key()));
+				Query.exec(dataInsert.arg(Index).arg(i.key()));
+
+
+				for (int p = *j; p < Stop; ++p)
+				{
+					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+								    "VALUES (%1, %2, 0, %3)")
+							 .arg(Index).arg(Parts[i.key()].Lines[p].ID).arg(n++));
+				}
+
+				for (int p = *j; p < Stop; ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
+				{
+					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+								    "VALUES (%1, %2, 0, %3)")
+							 .arg(Index).arg(T.ID).arg(n++));
+				}
+
+				for (int p = *j; p < Stop; ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
+				{
+					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+								    "VALUES (%1, %2, 0, %3)")
+							 .arg(Index).arg(T.ID).arg(n++));
+				}
+			}
+
+			for (int p = 0; p < *i.value().begin(); ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
+			{
+				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+							    "VALUES (%1, %2, 0, %3)")
+						 .arg(i.key()).arg(T.ID).arg(on++));
+			}
+
+			for (int p = 0; p < *i.value().begin(); ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
+			{
+				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+							    "VALUES (%1, %2, 1, %3)")
+						 .arg(i.key()).arg(T.ID).arg(on++));
+			}
+		}
+	}
+
+	emit onEndProgress();
+	emit onDataCut(Queue.size());
+}
+
 void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(); return; }

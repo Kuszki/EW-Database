@@ -42,6 +42,7 @@
 #include "mergedialog.hpp"
 #include "joindialog.hpp"
 #include "textdialog.hpp"
+#include "cutdialog.hpp"
 
 namespace Ui
 {
@@ -81,6 +82,7 @@ class MainWindow : public QMainWindow
 		ExportDialog* Export;
 		MergeDialog* Merge;
 		TextDialog* Text;
+		CutDialog* Cut;
 
 		QThread Thread;
 
@@ -140,6 +142,7 @@ class MainWindow : public QMainWindow
 						const QString& Line,
 						int Type);
 		void mergeData(const QList<int>& Fields, const QStringList& Points);
+		void cutData(const QStringList& Points, bool Endings);
 		void changeClass(const QString& Class,
 					  int Line, int Point, int Text);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
@@ -169,6 +172,7 @@ class MainWindow : public QMainWindow
 		void removeHistory(int Count);
 
 		void dataMerged(int Count);
+		void dataCutted(int Count);
 
 		void refactorData(void);
 
@@ -198,6 +202,8 @@ class MainWindow : public QMainWindow
 
 		void onMergeRequest(RecordModel*, const QModelIndexList&,
 						const QList<int>&, const QStringList&);
+		void onCutRequest(RecordModel*, const QModelIndexList&,
+					   const QStringList&, bool);
 
 		void onRefactorRequest(RecordModel*, const QModelIndexList&,
 						   const QString, int, int, int);
