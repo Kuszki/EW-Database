@@ -1820,11 +1820,10 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				const double a = length(P.X, P.Y, L.X1, L.Y1);
 				const double b = length(P.X, P.Y, L.X2, L.Y2);
 
-				if ((a * a < l * l + b * b) &&
-				    (b * b < a * a + l * l))
+				if ((a * a <= l * l + b * b) &&
+				    (b * b <= a * a + l * l))
 				{
-					const double p = 0.5 * (l + a + b);
-					const double h = 2.0 * qSqrt(p * (p - a) * (p - b) * (p - l)) / l;
+					const double h = (a + b) / l;
 
 					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
 				}
@@ -2031,8 +2030,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	Query.prepare(
 		"SELECT "
 			"O.UID, E.IDE, "
-			"IIF(P.ODN_X IS NULL, P.POS_X, P.POS_X + P.ODN_X), "
-			"IIF(P.ODN_Y IS NULL, P.POS_Y, P.POS_Y + P.ODN_Y) "
+			"IIF(T.ODN_X IS NULL, T.POS_X, T.POS_X + T.ODN_X), "
+			"IIF(T.ODN_Y IS NULL, T.POS_Y, T.POS_Y + T.ODN_Y) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -2047,7 +2046,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 2 AND "
 			"E.TYP = 0 AND "
-			"T.STAN_ZMIANY = 0 ");
+			"T.STAN_ZMIANY = 0");
 
 	if (Query.exec()) while (Query.next()) if (Queue.contains(Query.value(0).toInt()))
 	{
@@ -2130,8 +2129,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	}
 
 	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Preparing geometry"));
-	emit onSetupProgress(0, 0);
+	emit onBeginProgress(tr("Inserting objects"));
+	emit onSetupProgress(0, Queue.size());
 
 	QtConcurrent::blockingMap(Parts, getPairs);
 
@@ -2139,25 +2138,25 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	{
 		const auto& Table = getItemByField(Tables, t.key(), &TABLE::Name);
 
-		QStringList Names; for (const auto& Field : Table.Fields) Names.append(Field.Name);
+		QStringList Names; for (const auto& Field : Table.Fields) Names.append(QString(Field.Name).remove("EW_DATA."));
 
 		const QString dataInsert = QString("INSERT INTO %1 (UIDO, %2) "
 									"SELECT %3, %2 FROM %1 WHERE UIDO = %4")
 							  .arg(Table.Data).arg(Names.join(", "));
 
 		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
-									  "SELECT %1, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UIDO = %2");
+									  "SELECT %1, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %2");
 
 		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i)
 		{
+			QList<int> Jobs = i.value().values(); qSort(Jobs); int on = Jobs.first();
+
 			Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1 AND N >= %2")
-					 .arg(i.key()).arg(*i.value().begin()));
+					 .arg(i.key()).arg(on));
 
-			int on = *i.value().begin();
-
-			for (auto j = i.value().constBegin(); j != i.value().constEnd(); ++j)
+			for (auto j = Jobs.constBegin(); j != Jobs.constEnd(); ++j)
 			{
-				int Index(0), n(0); const int Stop = (j + 1) == i.value().constEnd() ? Parts[i.key()].Lines.size() : *(j + 1);
+				int Index(0), n(0); const int Stop = (j + 1) == Jobs.constEnd() ? Parts[i.key()].Lines.size() : *(j + 1);
 
 				Query.prepare("SELECT GEN_ID(EW_OBIEKTY_UID_GEN, 1) FROM RDB$DATABASE");
 
@@ -2166,42 +2165,43 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				Query.exec(objectInsert.arg(Index).arg(i.key()));
 				Query.exec(dataInsert.arg(Index).arg(i.key()));
 
-
 				for (int p = *j; p < Stop; ++p)
 				{
-					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 								    "VALUES (%1, %2, 0, %3)")
 							 .arg(Index).arg(Parts[i.key()].Lines[p].ID).arg(n++));
 				}
 
 				for (int p = *j; p < Stop; ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
 				{
-					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 								    "VALUES (%1, %2, 0, %3)")
 							 .arg(Index).arg(T.ID).arg(n++));
 				}
 
 				for (int p = *j; p < Stop; ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
 				{
-					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
-								    "VALUES (%1, %2, 0, %3)")
+					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+								    "VALUES (%1, %2, 1, %3)")
 							 .arg(Index).arg(T.ID).arg(n++));
 				}
 			}
 
-			for (int p = 0; p < *i.value().begin(); ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
+			for (int p = 0; p < Jobs.first(); ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
 			{
-				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 							    "VALUES (%1, %2, 0, %3)")
 						 .arg(i.key()).arg(T.ID).arg(on++));
 			}
 
-			for (int p = 0; p < *i.value().begin(); ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
+			for (int p = 0; p < Jobs.first(); ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
 			{
-				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N)"
+				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 							    "VALUES (%1, %2, 1, %3)")
 						 .arg(i.key()).arg(T.ID).arg(on++));
 			}
+
+			emit onUpdateProgress(++Step);
 		}
 	}
 

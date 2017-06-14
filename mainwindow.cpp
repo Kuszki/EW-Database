@@ -394,6 +394,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 	connect(ui->actionSave, &QAction::triggered, Export, &ExportDialog::open);
+	connect(ui->actionSplit, &QAction::triggered, Cut, &CutDialog::show);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
