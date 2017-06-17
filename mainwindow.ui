@@ -105,8 +105,10 @@
      <string>Geometry</string>
     </property>
     <addaction name="actionJoin"/>
+    <addaction name="separator"/>
     <addaction name="actionMerge"/>
     <addaction name="actionSplit"/>
+    <addaction name="separator"/>
     <addaction name="actionText"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -122,8 +124,8 @@
    <addaction name="menuDatabase"/>
    <addaction name="menuData"/>
    <addaction name="menuGeometry"/>
-   <addaction name="menuHelp"/>
    <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainTool">
    <property name="windowTitle">
@@ -415,7 +417,8 @@
   </action>
   <action name="actionSplit">
    <property name="icon">
-    <iconset theme="edit-cut"/>
+    <iconset theme="edit-cut">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Split</string>
