@@ -133,12 +133,12 @@ void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
 	}
 }
 
-void UpdateDialog::setPrepared(const QList<QHash<int, QVariant> >& Data, const QList<int>& Indexes)
+void UpdateDialog::setPrepared(const QList<QHash<int, QVariant>>& Data, const QList<int>& Indexes)
 {
 	setData(Data); setActive(Indexes); setUnchecked();
 }
 
-void UpdateDialog::setData(const QList<QHash<int, QVariant> >& Data)
+void UpdateDialog::setData(const QList<QHash<int, QVariant>>& Data)
 {
 	Values = Data; Index = 0;
 

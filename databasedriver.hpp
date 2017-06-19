@@ -114,7 +114,7 @@ class DatabaseDriver : public QObject
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
-		QMap<QString, QList<int> > getClassGroups(const QList<int>& Indexes,
+		QMap<QString, QList<int>> getClassGroups(const QList<int>& Indexes,
 										  bool Common, int Index);
 
 		QHash<int, QHash<int, QVariant>> loadData(const TABLE& Table,
