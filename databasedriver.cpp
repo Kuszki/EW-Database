@@ -2147,7 +2147,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
 									  "SELECT %1, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %2");
 
-		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i)
+		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i) if (t.value().contains(i.key()))
 		{
 			QList<int> Jobs = i.value().values(); qSort(Jobs); int on = Jobs.first();
 
