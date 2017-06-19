@@ -409,6 +409,8 @@ void MainWindow::databaseDisconnected(void)
 	Filter->deleteLater();
 	Update->deleteLater();
 	Export->deleteLater();
+	Merge->deleteLater();
+	Cut->deleteLater();
 	Text->deleteLater();
 
 	lockUi(DISCONNECTED);

@@ -174,8 +174,8 @@ void FilterWidget::operatorChanged(const QString& Name)
 	const bool IS = Name == "IS NULL" || Name == "IS NOT NULL";
 	const bool IN = Name == "IN" || Name == "NOT IN";
 
-	if (Widget) Widget->setVisible(!Simple || (!IS && !IN));
-	if (Simple) Simple->setVisible(IN);
+	if (Widget) Widget->setVisible(!IS && (!IN || !Simple));
+	if (Simple) Simple->setVisible(!IS && IN);
 }
 
 void FilterWidget::editFinished(void)
