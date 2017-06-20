@@ -103,7 +103,7 @@ QVariant FilterWidget::getValue(void) const
 			for (int i = 1; i < M->rowCount(); ++i)
 				if (M->item(i)->checkState() == Qt::Checked)
 				{
-					Checked << M->item(i)->data().toInt();
+					Checked << M->item(i)->data();
 				}
 
 			return Checked;
