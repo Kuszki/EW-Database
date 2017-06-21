@@ -1820,8 +1820,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				const double a = length(P.X, P.Y, L.X1, L.Y1);
 				const double b = length(P.X, P.Y, L.X2, L.Y2);
 
-				if ((1.2 * a * a <= l * l + b * b) &&
-				    (1.2 * b * b <= a * a + l * l))
+				if ((a * a <= l * l + b * b) &&
+				    (b * b <= a * a + l * l))
 				{
 					const double h = (a + b) / l;
 
