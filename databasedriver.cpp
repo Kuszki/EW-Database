@@ -128,7 +128,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			Table,
 			Query.value(1).toString(),
 			Query.value(2).toString(),
-			(Query.value(3).toInt() & 356) == 356
+			(Query.value(3).toInt() & 0x100)
 		});
 
 		auto& Tabref = getItemByField(List, Table, &TABLE::Name);
