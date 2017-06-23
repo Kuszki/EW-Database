@@ -24,7 +24,7 @@
 UpdateWidget::UpdateWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::UpdateWidget)
 {
-	ui->setupUi(this); setParameters(ID, Field);
+	ui->setupUi(this); setParameters(ID, Field); toggleWidget();
 
 	connect(ui->Field, &QCheckBox::toggled, this, &UpdateWidget::onStatusChanged);
 }

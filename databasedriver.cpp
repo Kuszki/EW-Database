@@ -1820,8 +1820,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				const double a = length(P.X, P.Y, L.X1, L.Y1);
 				const double b = length(P.X, P.Y, L.X2, L.Y2);
 
-				if ((a * a <= l * l + b * b) &&
-				    (b * b <= a * a + l * l))
+				if ((1.1 * a * a <= l * l + b * b) &&
+				    (1.1 * b * b <= a * a + l * l))
 				{
 					const double h = (a + b) / l;
 
@@ -2144,8 +2144,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 									"SELECT %3, %2 FROM %1 WHERE UIDO = %4")
 							  .arg(Table.Data).arg(Names.join(", "));
 
-		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
-									  "SELECT %1, ID, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %2");
+		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, NUMER, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
+									  "SELECT %1, 'OB_ID_' || %1, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %2");
 
 		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i) if (t.value().contains(i.key()))
 		{
@@ -3196,6 +3196,35 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 					"G.ID = O.ID_WARSTWY "
 				"WHERE "
 					"O.KOD = '%1' AND "
+					"T.NAZWA = O.KOD AND "
+					"G.NAZWA NOT LIKE '%_E'"
+				"ORDER BY "
+					"G.NAZWA_L")
+					    .arg(Table.Name));
+
+			if (Query.exec()) while (Query.next())
+			{
+				P.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		if (P.isEmpty())
+		{
+			Query.prepare(QString(
+				"SELECT "
+					"T.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_TEXTOWA T "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"T.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = '%1' AND "
 					"T.NAZWA LIKE (O.KOD || '_%') "
 				"ORDER BY "
 					"G.NAZWA_L")
@@ -3207,6 +3236,35 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 			}
 		}
 
+		{
+			Query.prepare(QString(
+				"SELECT "
+					"T.ID, G.NAZWA_L "
+				"FROM "
+					"EW_WARSTWA_TEXTOWA T "
+				"INNER JOIN "
+					"EW_GRUPY_WARSTW G "
+				"ON "
+					"T.ID_GRUPY = G.ID "
+				"INNER JOIN "
+					"EW_OB_KODY_OPISY O "
+				"ON "
+					"G.ID = O.ID_WARSTWY "
+				"WHERE "
+					"O.KOD = '%1' AND "
+					"T.NAZWA = O.KOD AND "
+					"G.NAZWA LIKE '%_E'"
+				"ORDER BY "
+					"G.NAZWA_L")
+					    .arg(Table.Name));
+
+			if (Query.exec()) while (Query.next())
+			{
+				T.insert(Query.value(0).toInt(), Query.value(1).toString());
+			}
+		}
+
+		if (T.isEmpty())
 		{
 			Query.prepare(QString(
 				"SELECT "
