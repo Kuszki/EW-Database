@@ -45,7 +45,9 @@ SOURCES		+=	main.cpp \
 				classdialog.cpp \
 				textdialog.cpp \
 				mergedialog.cpp \
-				cutdialog.cpp
+				cutdialog.cpp \
+				batchdialog.cpp \
+				batchwidget.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -66,7 +68,9 @@ HEADERS		+=	mainwindow.hpp \
 				classdialog.hpp \
 				textdialog.hpp \
 				mergedialog.hpp \
-				cutdialog.hpp
+				cutdialog.hpp \
+				batchdialog.hpp \
+				batchwidget.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -83,7 +87,9 @@ FORMS		+=	mainwindow.ui \
 				classdialog.ui \
 				textdialog.ui \
 				mergedialog.ui \
-				cutdialog.ui
+				cutdialog.ui \
+				batchdialog.ui \
+				batchwidget.ui
 
 RESOURCES		+=	resources.qrc
 
