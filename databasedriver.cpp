@@ -1820,8 +1820,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				const double a = length(P.X, P.Y, L.X1, L.Y1);
 				const double b = length(P.X, P.Y, L.X2, L.Y2);
 
-				if ((1.1 * a * a <= l * l + b * b) &&
-				    (1.1 * b * b <= a * a + l * l))
+				if ((0.9 * a * a <= l * l + b * b) &&
+				    (0.9 * b * b <= a * a + l * l))
 				{
 					const double h = (a + b) / l;
 
@@ -1953,7 +1953,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	}
 
 	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Loading geometry"));
+	emit onBeginProgress(tr("Loading lines"));
 	emit onSetupProgress(0, 0);
 
 	Query.prepare(
@@ -2776,12 +2776,14 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 					const QPointF A = { List[i].X1, List[i].Y1 };
 					const QPointF B = { List[i].X2, List[i].Y2 };
 
+					const int ThisSize = Polygon.size();
+
 					if (Polygon.last() == A) Polygon.append(B);
 					else if (Polygon.last() == B) Polygon.append(A);
 					else if (Polygon.first() == A) Polygon.insert(0, B);
 					else if (Polygon.first() == B) Polygon.insert(0, A);
 
-					if (LastSize != Polygon.size()) Used.insert(i);
+					if (ThisSize != Polygon.size()) Used.insert(i);
 				}
 			}
 
