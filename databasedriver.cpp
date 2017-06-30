@@ -1496,7 +1496,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	{
 		Query.prepare(QString(
 			"SELECT "
-				"T.POS_X, T.POS_Y "
+				"ROUND(T.POS_X, 3), "
+				"ROUND(T.POS_Y, 3), "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1524,8 +1525,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 		Query.prepare(QString(
 			"SELECT "
-				"(P.P0_X + P.P1_X) / 2.0, "
-				"(P.P0_Y + P.P1_Y) / 2.0 "
+				"ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
+				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1559,8 +1560,10 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	Query.prepare(
 		"SELECT "
 			"O.UID, "
-			"P.P0_X, P.P0_Y, "
-			"P.P1_X, P.P1_Y "
+			"ROUND(P.P0_X, 3), "
+			"ROUND(P.P0_Y, 3), "
+			"ROUND(P.P1_X, 3), "
+			"ROUND(P.P1_Y, 3) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -1689,8 +1692,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 				Query.prepare(QString(
 					"SELECT "
 						"E.IDE, E.TYP, "
-						"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
-						"ROUND(P.P1_X, 3), ROUND(P.P1_Y, 3), "
+						"ROUND(P.P0_X, 2), ROUND(P.P0_Y, 2), "
+						"ROUND(P.P1_X, 2), ROUND(P.P1_Y, 2), "
 						"IIF(P.P0_X IS NULL OR P.P0_Y IS NULL, 1, 0) "
 					"FROM "
 						"EW_OB_ELEMENTY E "
@@ -1845,7 +1848,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	{
 		Query.prepare(QString(
 			"SELECT "
-				"T.POS_X, T.POS_Y "
+				"ROUND(T.POS_X, 3), "
+				"ROUND(T.POS_Y, 3) "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1873,8 +1877,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 
 		Query.prepare(QString(
 			"SELECT "
-				"(P.P0_X + P.P1_X) / 2.0, "
-				"(P.P0_Y + P.P1_Y) / 2.0 "
+				"ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
+				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1908,8 +1912,10 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 		Query.prepare(
 			"SELECT "
 				"O.UID, "
-				"P.P0_X, P.P0_Y, "
-				"P.P1_X, P.P1_Y "
+				"ROUND(P.P0_X, 3), "
+				"ROUND(P.P0_Y, 3), "
+				"ROUND(P.P1_X, 3), "
+				"ROUND(P.P1_Y, 3) "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1960,8 +1966,10 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 		"SELECT "
 			"O.UID, "
 			"E.IDE, E.N, "
-			"P.P0_X, P.P0_Y, "
-			"P.P1_X, P.P1_Y "
+			"ROUND(P.P0_X, 3), "
+			"ROUND(P.P0_Y, 3), "
+			"ROUND(P.P1_X, 3), "
+			"ROUND(P.P1_Y, 3) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
