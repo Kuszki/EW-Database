@@ -43,6 +43,8 @@ class CutDialog : public QDialog
 
 		Ui::CutDialog* ui;
 
+		int Count = 0;
+
 	public:
 
 		explicit CutDialog(QWidget* Parent = nullptr,
@@ -55,6 +57,8 @@ class CutDialog : public QDialog
 	private slots:
 
 		void searchBoxEdited(const QString& Search);
+
+		void fieldButtonChecked(bool Enabled);
 
 	public slots:
 

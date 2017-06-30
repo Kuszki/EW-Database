@@ -121,8 +121,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>endingsCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>CutDialog</receiver>
+   <slot>fieldButtonChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>328</x>
+     <y>481</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>333</x>
+     <y>591</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>searchBoxEdited(QString)</slot>
+  <slot>fieldButtonChecked(bool)</slot>
  </slots>
 </ui>

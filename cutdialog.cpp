@@ -27,6 +27,7 @@ CutDialog::CutDialog(QWidget* Parent, const QList<DatabaseDriver::TABLE>& Tables
 	ui->setupUi(this); setFields(Tables);
 
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
 CutDialog::~CutDialog(void)
@@ -59,6 +60,13 @@ void CutDialog::searchBoxEdited(const QString& Search)
 		}
 }
 
+void CutDialog::fieldButtonChecked(bool Enabled)
+{
+	if (Enabled) ++Count; else --Count;
+
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Count);
+}
+
 void CutDialog::accept(void)
 {
 	emit onClassesUpdate(getSelectedClasses(), isEndingsChecked()); QDialog::accept();
@@ -76,6 +84,8 @@ void CutDialog::setFields(const QList<DatabaseDriver::TABLE>& Tables)
 		Widget->setText(Tables[i].Label);
 
 		ui->fieldsLayout->addWidget(Widget);
+
+		connect(Widget, &QCheckBox::toggled, this, fieldButtonChecked);
 	}
 }
 
