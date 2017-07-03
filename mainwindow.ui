@@ -90,6 +90,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionLoad"/>
     <addaction name="actionRefactor"/>
+    <addaction name="actionBatch"/>
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionHistory"/>
@@ -151,6 +152,7 @@
    <addaction name="actionEdit"/>
    <addaction name="actionSave"/>
    <addaction name="actionLoad"/>
+   <addaction name="actionBatch"/>
    <addaction name="actionJoin"/>
    <addaction name="actionRefactor"/>
    <addaction name="separator"/>
@@ -425,6 +427,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="actionBatch">
+   <property name="icon">
+    <iconset theme="system-run"/>
+   </property>
+   <property name="text">
+    <string>Batch edit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
    </property>
   </action>
  </widget>

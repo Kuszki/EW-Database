@@ -85,7 +85,7 @@ void CutDialog::setFields(const QList<DatabaseDriver::TABLE>& Tables)
 
 		ui->fieldsLayout->addWidget(Widget);
 
-		connect(Widget, &QCheckBox::toggled, this, fieldButtonChecked);
+		connect(Widget, &QCheckBox::toggled, this, &CutDialog::fieldButtonChecked);
 	}
 }
 
