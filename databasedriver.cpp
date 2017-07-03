@@ -3487,11 +3487,13 @@ QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, Da
 
 QVariant getDataByDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
 {
-	if (!Value.isValid()) return QVariant();
+	if (!Value.isValid() || Value.toString() == "NULL") return QVariant();
 
 	if (Type == DatabaseDriver::BOOL && Dict.isEmpty())
 	{
-		return Value.toBool();
+		if (Value.toString() == DatabaseDriver::tr("Yes")) return true;
+		else if (Value.toString() == DatabaseDriver::tr("No")) return false;
+		else return Value.toBool();
 	}
 
 	if (Type == DatabaseDriver::MASK && !Dict.isEmpty())
