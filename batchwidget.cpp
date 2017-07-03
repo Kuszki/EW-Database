@@ -47,11 +47,16 @@ int BatchWidget::getIndex(void) const
 	return Index;
 }
 
+void BatchWidget::headerChecked(bool Checked)
+{
+	if (Checked) ui->Field->setCurrentText(ui->Column->toolTip());
+}
+
 void BatchWidget::setData(int ID, const QString& Tip, const QStringList& Fields)
 {
 	ui->Field->clear(); Index = ID;
 
 	ui->Column->setToolTip(Tip);
-	ui->Column->setText(QString::number(ID));
+	ui->Column->setText(QString::number(ID + 1));
 	ui->Field->addItems(Fields);
 }

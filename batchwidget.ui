@@ -7,10 +7,22 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>40</height>
+    <height>25</height>
    </rect>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QLabel" name="Column">
      <property name="sizePolicy">
@@ -19,22 +31,22 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>50</width>
-       <height>0</height>
-      </size>
-     </property>
      <property name="text">
       <string/>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QComboBox" name="Function"/>
+    <widget class="QComboBox" name="Field"/>
    </item>
    <item>
-    <widget class="QComboBox" name="Field">
+    <widget class="QComboBox" name="Function">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <item>
       <property name="text">
        <string>Ignore</string>

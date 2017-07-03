@@ -56,9 +56,11 @@ class BatchWidget : public QWidget
 		FUNCTION getFunction(void) const;
 
 		int getField(void) const;
-		int getIndex(void) const;
+		int getIndex(void) const;	
 
 	public slots:
+
+		void headerChecked(bool Checked);
 
 		void setData(int ID, const QString& Tip,
 				   const QStringList& Fields);

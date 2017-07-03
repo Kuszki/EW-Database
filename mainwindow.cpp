@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
 	connect(ui->actionHistory, &QAction::triggered, this, &MainWindow::historyActionClicked);
 	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
+	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
@@ -95,6 +96,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onTextEdit, this, &MainWindow::textEdit);
 	connect(Driver, &DatabaseDriver::onDataMerge, this, &MainWindow::dataMerged);
 	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
+	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -126,6 +128,8 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onMergeRequest, Driver, &DatabaseDriver::mergeData);
 	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
+
+	connect(this, &MainWindow::onBatchRequest, Driver, &DatabaseDriver::execBatch);
 
 	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
 	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
@@ -284,6 +288,51 @@ void MainWindow::unhideActionClicked(void)
 	}
 }
 
+void MainWindow::batchActionClicked(void)
+{
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(), tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+
+	if (!Path.isEmpty())
+	{
+		QFile File(Path); File.open(QFile::ReadOnly | QFile::Text);
+
+		if (File.isOpen())
+		{
+			QList<QStringList> Values; QRegExp Separator; int Count = 0;
+
+			const QString Extension = QFileInfo(Path).suffix();
+
+			if (Extension == "csv") Separator = QRegExp("\\s*,\\s*");
+			else Separator = QRegExp("\\s+");
+
+			while (!File.atEnd())
+			{
+				const QString Line = File.readLine().trimmed(); if (Line.isEmpty()) continue;
+				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
+
+				if (!Count) Count = Data.size();
+				if (Data.size() == Count) Values.append(Data);
+
+			}
+
+			if (Count && !Values.isEmpty())
+			{
+				auto Dialog = new BatchDialog(allHeaders, Values, this); Dialog->open();
+
+				connect(Dialog, &BatchDialog::accepted, Dialog, &BatchDialog::deleteLater);
+				connect(Dialog, &BatchDialog::rejected, Dialog, &BatchDialog::deleteLater);
+
+				connect(Dialog, &BatchDialog::onBatchRequest, this, &MainWindow::execBatch);
+			}
+			else ui->statusBar->showMessage(tr("Loaded data is invalid"));
+		}
+		else
+		{
+			ui->statusBar->showMessage(tr("Error with opening file: ") + File.errorString());
+		}
+	}
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -300,6 +349,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionMerge->setEnabled(Count > 0);
 	ui->actionSplit->setEnabled(Count > 0);
 	ui->actionRefactor->setEnabled(Count > 0);
+	ui->actionBatch->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
@@ -370,7 +420,7 @@ void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, doubl
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
-	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
+	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
 
 	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);
@@ -451,7 +501,7 @@ void MainWindow::updateValues(const QHash<int, QVariant>& Values)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
 
-	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values);
+	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values, true);
 }
 
 void MainWindow::loadData(RecordModel* Model)
@@ -489,6 +539,11 @@ void MainWindow::joinData(int Count)
 void MainWindow::textEdit(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Edited %n text(s)", nullptr, Count));
+}
+
+void MainWindow::batchExec(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Executed %n updates(s)", nullptr, Count));
 }
 
 void MainWindow::restoreJob(int Count)
@@ -660,6 +715,14 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 	}
 }
 
+void MainWindow::execBatch(const QList<QPair<int, BatchWidget::FUNCTION> >& Roles, const QList<QStringList>& Data)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel();
+
+	lockUi(BUSY); emit onBatchRequest(Model, Selection->selectedRows(), Roles, Data);
+}
+
 void MainWindow::lockUi(MainWindow::STATUS Status)
 {
 	switch (Status)
@@ -695,6 +758,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionMerge->setEnabled(false);
 			ui->actionSplit->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
+			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
@@ -715,6 +779,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionMerge->setEnabled(false);
 			ui->actionSplit->setEnabled(false);
 			ui->actionRefactor->setEnabled(false);
+			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);

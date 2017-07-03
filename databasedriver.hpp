@@ -37,6 +37,7 @@
 #include <QDebug>
 
 #include "recordmodel.hpp"
+#include "batchwidget.hpp"
 
 class DatabaseDriver : public QObject
 {
@@ -156,8 +157,13 @@ class DatabaseDriver : public QObject
 					 const QHash<int, QVariant>& Geometry,
 					 const QString& Limiter);
 		void updateData(RecordModel* Model, const QModelIndexList& Items,
-					 const QHash<int, QVariant>& Values);
+					 const QHash<int, QVariant>& Values, bool Emit = true);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
+
+		void execBatch(RecordModel* Model, const QModelIndexList& Items,
+					const QList<QPair<int, BatchWidget::FUNCTION>>& Functions,
+					const QList<QStringList>& Values);
+
 		void splitData(RecordModel* Model, const QModelIndexList& Items,
 					const QString& Point, const QString& From, int Type);
 
@@ -207,6 +213,8 @@ class DatabaseDriver : public QObject
 		void onDataSplit(int);
 		void onDataRefactor(void);
 
+		void onBatchExec(int);
+
 		void onCommonReady(const QList<int>&);
 		void onPresetReady(const QList<QHash<int, QVariant>>&,
 					    const QList<int>&);
@@ -235,6 +243,7 @@ bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD&
 bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE& Two);
 
 QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
+QVariant getDataByDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
 
 template<class Type, class Field, template<class> class Container>
 Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);

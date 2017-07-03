@@ -37,27 +37,30 @@ class BatchDialog : public QDialog
 
 	private:
 
+		QList<QStringList> Values;
+
 		Ui::BatchDialog* ui;
 
 	public:
 
 		explicit BatchDialog(const QStringList& Fields,
-						 const QStringList& First,
+						 const QList<QStringList>& Data,
 						 QWidget* Parent = nullptr);
 		virtual ~BatchDialog(void) override;
 
-		QMap<int, BatchWidget::FUNCTION> getFunctions(void) const;
+		QList<QPair<int, BatchWidget::FUNCTION> > getFunctions(void) const;
 
 	public slots:
 
 		virtual void accept(void) override;
 
 		void setParameters(const QStringList& Fields,
-					    const QStringList& First);
+					    const QList<QStringList>& Data);
 
 	signals:
 
-		void onBatchRequest(const QMap<int, BatchWidget::FUNCTION>&);
+		void onBatchRequest(const QList<QPair<int, BatchWidget::FUNCTION>>&,
+						const QList<QStringList>&);
 
 };
 

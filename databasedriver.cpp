@@ -1052,7 +1052,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QHash<int, QVariant>& Values)
+void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QHash<int, QVariant>& Values, bool Emit)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(Model); return; }
 
@@ -1129,6 +1129,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 		emit onUpdateProgress(++Step);
 	}
 
+	if (!Emit) return;
+
 	emit onEndProgress();
 	emit onDataUpdate(Model);
 }
@@ -1195,6 +1197,69 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 
 	emit onEndProgress();
 	emit onDataRemove(Model);
+}
+
+void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items, const QList<QPair<int, BatchWidget::FUNCTION> >& Functions, const QList<QStringList>& Values)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onBatchExec(0); return; } int Changes(0);
+
+	emit onBeginProgress(tr("Executing batch"));
+	emit onSetupProgress(0, 0);
+
+	for (const auto& Rules : Values)
+	{
+		QModelIndexList Filtered; QHash<int, QVariant> Updates;
+
+		for (const auto& Index : Items)
+		{
+			const auto& Data = Model->fullData(Index); bool OK = true; int Col = 0;
+
+			for (const auto& F : Functions) if (OK)
+			{
+				if (F.second == BatchWidget::WHERE) OK = Data[F.first].toString() == Rules[Col]; ++Col;
+			}
+
+			if (OK) Filtered.append(Index);
+		}
+
+		if (Filtered.size()) for (const auto& Table : Tables)
+		{
+			int Col(0); for (const auto& F : Functions)
+			{
+				if (F.second == BatchWidget::UPDATE)
+				{
+					const int Column = Table.Headers.indexOf(F.first);
+
+					if (Column != -1 && !Updates.contains(Table.Indexes[Column]))
+					{
+						const int Ufid = Table.Indexes[Column];
+
+						if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Rules[Col]);
+						else if (Ufid < Common.size())
+						{
+							if (Common[Ufid].Type != READONLY) Updates.insert(Ufid, getDataByDict(Rules[Col], Common[Ufid].Dict, Common[Ufid].Type));
+						}
+						else
+						{
+							if (Fields[Ufid].Type != READONLY) Updates.insert(Ufid, getDataByDict(Rules[Col], Fields[Ufid].Dict, Fields[Ufid].Type));
+						}
+					}
+				}
+
+				Col += 1;
+			}
+		}
+
+		if (Filtered.size() && Updates.size())
+		{
+			updateData(Model, Filtered, Updates, false);
+
+			Changes += Filtered.size();
+		}
+	}
+
+	emit onEndProgress();
+	emit onBatchExec(Changes);
 }
 
 void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items, const QString& Point, const QString& From, int Type)
@@ -3418,6 +3483,37 @@ QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, Da
 
 	if (Dict.contains(Value)) return Dict[Value];
 	else return DatabaseDriver::tr("Unknown");
+}
+
+QVariant getDataByDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
+{
+	if (!Value.isValid()) return QVariant();
+
+	if (Type == DatabaseDriver::BOOL && Dict.isEmpty())
+	{
+		return Value.toBool();
+	}
+
+	if (Type == DatabaseDriver::MASK && !Dict.isEmpty())
+	{
+		QString List = Value.toString(); int Mask = 0;
+
+		for (auto i = Dict.constBegin(); i != Dict.constEnd(); ++i)
+		{
+			if (List.contains(i.value())) Mask |= (1 << i.key().toInt());
+		}
+
+		return Mask;
+	}
+
+	if (Dict.isEmpty()) return Value;
+
+	for (auto i = Dict.constBegin(); i != Dict.constEnd(); ++i)
+	{
+		if (i.value() == Value) return i.key();
+	}
+
+	return 0;
 }
 
 template<class Type, class Field, template<class> class Container>

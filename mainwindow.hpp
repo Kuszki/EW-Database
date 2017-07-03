@@ -40,6 +40,7 @@
 #include "aboutdialog.hpp"
 #include "classdialog.hpp"
 #include "mergedialog.hpp"
+#include "batchdialog.hpp"
 #include "joindialog.hpp"
 #include "textdialog.hpp"
 #include "cutdialog.hpp"
@@ -87,6 +88,7 @@ class MainWindow : public QMainWindow
 		QThread Thread;
 
 		QMap<QString, QString> Codes;
+		QStringList allHeaders;
 
 	private:
 
@@ -115,6 +117,7 @@ class MainWindow : public QMainWindow
 		void classActionClicked(void);
 		void hideActionClicked(void);
 		void unhideActionClicked(void);
+		void batchActionClicked(void);
 
 		void selectionChanged(void);
 
@@ -160,6 +163,9 @@ class MainWindow : public QMainWindow
 
 		void saveData(const QList<int>& Fields, int Type, bool Header);
 
+		void execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles,
+					const QList<QStringList>& Data);
+
 		void loadData(RecordModel* Model);
 		void removeData(RecordModel* Model);
 		void updateData(RecordModel* Model);
@@ -167,6 +173,8 @@ class MainWindow : public QMainWindow
 		void groupData(void);
 		void joinData(int Count);
 		void textEdit(int Count);
+
+		void batchExec(int Count);
 
 		void restoreJob(int Count);
 		void removeHistory(int Count);
@@ -192,7 +200,10 @@ class MainWindow : public QMainWindow
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&,
-						 const QHash<int, QVariant>&);
+						 const QHash<int, QVariant>&, bool);
+		void onBatchRequest(RecordModel*, const QModelIndexList&,
+						const QList<QPair<int, BatchWidget::FUNCTION>>&,
+						const QList<QStringList>&);
 
 		void onJoinRequest(RecordModel*, const QModelIndexList&,
 					    const QString&, const QString&,

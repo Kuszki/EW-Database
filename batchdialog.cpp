@@ -1,10 +1,30 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                                                         *
+ *  Firebird database editor                                               *
+ *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
+ *                                                                         *
+ *  This program is free software: you can redistribute it and/or modify   *
+ *  it under the terms of the GNU General Public License as published by   *
+ *  the  Free Software Foundation, either  version 3 of the  License, or   *
+ *  (at your option) any later version.                                    *
+ *                                                                         *
+ *  This  program  is  distributed  in the hope  that it will be useful,   *
+ *  but WITHOUT ANY  WARRANTY;  without  even  the  implied  warranty of   *
+ *  MERCHANTABILITY  or  FITNESS  FOR  A  PARTICULAR  PURPOSE.  See  the   *
+ *  GNU General Public License for more details.                           *
+ *                                                                         *
+ *  You should have  received a copy  of the  GNU General Public License   *
+ *  along with this program. If not, see http://www.gnu.org/licenses/.     *
+ *                                                                         *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #include "batchdialog.hpp"
 #include "ui_batchdialog.h"
 
-BatchDialog::BatchDialog(const QStringList& Fields, const QStringList& First, QWidget* Parent)
+BatchDialog::BatchDialog(const QStringList& Fields, const QList<QStringList>& Data, QWidget* Parent)
 : QDialog(Parent), ui(new Ui::BatchDialog)
 {
-	ui->setupUi(this); setParameters(Fields, First);
+	ui->setupUi(this); setParameters(Fields, Data);
 
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
 }
@@ -14,28 +34,36 @@ BatchDialog::~BatchDialog(void)
 	delete ui;
 }
 
-QMap<int, BatchWidget::FUNCTION> BatchDialog::getFunctions(void) const
+QList<QPair<int, BatchWidget::FUNCTION>> BatchDialog::getFunctions(void) const
 {
-	QList<BatchWidget::FUNCTION> List;
+	QList<QPair<int, BatchWidget::FUNCTION>> List;
 
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 		if (auto W = qobject_cast<BatchWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
-			List.insert(W->getField(), W->getFunction());
+			List.append(qMakePair(W->getField(), W->getFunction()));
+
+	return List;
 }
 
 void BatchDialog::accept(void)
 {
-	emit onBatchRequest(getFunctions()); QDialog::accept();
+	QList<QStringList> Data = Values; if (ui->headerCheck->isChecked()) Data.removeFirst();
+
+	emit onBatchRequest(getFunctions(), Data); QDialog::accept();
 }
 
-void BatchDialog::setParameters(const QStringList& Fields, const QStringList& First)
+void BatchDialog::setParameters(const QStringList& Fields, const QList<QStringList>& Data)
 {
 	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 
-	for (int i = 0; i < First.size(); ++i)
+	for (int i = 0; i < Data.first().size(); ++i)
 	{
-		auto Widget = new BatchWidget(i, First[i], Fields, this);
+		auto Widget = new BatchWidget(i, Data.first()[i], Fields, this);
+
+		connect(ui->headerCheck, &QCheckBox::toggled, Widget, &BatchWidget::headerChecked);
 
 		ui->fieldsLayout->addWidget(Widget);
 	}
+
+	Values = Data;
 }
