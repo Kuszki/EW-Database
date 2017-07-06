@@ -1888,10 +1888,13 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				const double a = length(P.X, P.Y, L.X1, L.Y1);
 				const double b = length(P.X, P.Y, L.X2, L.Y2);
 
-				if ((0.9 * a * a <= l * l + b * b) &&
-				    (0.9 * b * b <= a * a + l * l))
+				if ((a * a <= l * l + b * b) &&
+				    (b * b <= a * a + l * l))
 				{
-					const double h = (a + b) / l;
+					const double A = P.X - L.X1; const double B = P.Y - L.Y1;
+					const double C = L.X2 - L.X1; const double D = L.Y2 - L.Y1;
+
+					const double h = qAbs(A * D - C * B) / qSqrt(C * C + D * D);
 
 					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
 				}
