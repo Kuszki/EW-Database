@@ -413,7 +413,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"ON "
 				"E.IDE = P.ID "
 			"WHERE "
-				"O.STATUS = 0 "
+				"O.STATUS = 0 AND "
+				"P.STAN_ZMIANY = 0 AND "
+				"E.TYP = 0 "
 			"GROUP BY "
 				"O.UID "
 			"HAVING "
@@ -468,7 +470,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.UID, O.KOD, T.POS_X, T.POS_Y "
+				"O.UID, O.KOD, T.POS_X, T.POS_Y, O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -481,10 +483,11 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.IDE = T.ID "
 			"WHERE "
 				"O.STATUS = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(4).toString()))
 		{
 			if (FilterA) ObjectsA.insert(Query.value(0).toInt(), qMakePair(
 								    Query.value(1).toString(),
@@ -512,6 +515,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.IDE = P.ID "
 			"WHERE "
 				"O.STATUS = 0 AND "
+				"P.STAN_ZMIANY = 0 AND "
 				"E.TYP = 0");
 
 		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(6).toString()))
@@ -794,6 +798,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.IDE = P.ID "
 			"WHERE "
 				"O.STATUS = 0 AND "
+				"P.STAN_ZMIANY = 0 AND "
 				"E.TYP = 0");
 
 		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(5).toString()))
@@ -825,6 +830,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.IDE = T.ID "
 			"WHERE "
 				"O.STATUS = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
