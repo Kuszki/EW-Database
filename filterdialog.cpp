@@ -127,7 +127,22 @@ QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
 
 QHash<QString, QVariant> FilterDialog::getFieldsRules(void) const
 {
+	QHash<QString, QVariant> Rules;
 
+	for (int i = 0; i < ui->simpleLayout->count(); ++i)
+	{
+		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
+		{
+			if (W->isChecked())
+			{
+				const auto Rule = W->getBinding();
+
+				Rules.insert(Rule.first, Rule.second);
+			}
+		}
+	}
+
+	return Rules;
 }
 
 void FilterDialog::classSearchEdited(const QString& Search)
