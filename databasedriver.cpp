@@ -436,9 +436,8 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		{
 			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
-				if (i.key() == j.key() ||
-				    j.value().second.type() != QVariant::PointF ||
-				    !Classes.contains(j.value().first)) continue;
+				if (i.key() == j.key() || j.value().second.type() != QVariant::PointF ||
+				    (!Classes.contains("*") && Classes.contains(j.value().first))) continue;
 
 				if (i.value().second.type() == QVariant::PointF)
 				{
@@ -472,7 +471,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"SELECT "
 				"O.UID, O.KOD, "
 				"ROUND(T.POS_X, 3), "
-				"ROUND(T.POS_Y, 3) "
+				"ROUND(T.POS_Y, 3), "
 				"O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
