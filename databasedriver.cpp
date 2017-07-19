@@ -470,7 +470,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.UID, O.KOD, T.POS_X, T.POS_Y, O.NUMER "
+				"O.UID, O.KOD, "
+				"ROUND(T.POS_X, 3), "
+				"ROUND(T.POS_Y, 3) "
+				"O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -502,7 +505,12 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.UID, O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y, O.NUMER "
+				"O.UID, O.KOD, "
+				"ROUND(P.P0_X, 3), "
+				"ROUND(P.P0_Y, 3), "
+				"ROUND(P.P1_X, 3), "
+				"ROUND(P.P1_Y, 3), "
+				"O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -785,7 +793,12 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.KOD, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y, O.NUMER "
+				"O.KOD, "
+				"ROUND(P.P0_X, 3), "
+				"ROUND(P.P0_Y, 3), "
+				"ROUND(P.P1_X, 3), "
+				"ROUND(P.P1_Y, 3), "
+				"O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -817,7 +830,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		Query.prepare(
 			"SELECT "
-				"O.UID, T.POS_X, T.POS_Y "
+				"O.UID, ROUND(T.POS_X, 3), ROUND(T.POS_Y, 3), O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -834,7 +847,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(4).toString()))
 		{
 			Points.insert(Query.value(0).toInt(),
 					    QPointF(Query.value(1).toDouble(),

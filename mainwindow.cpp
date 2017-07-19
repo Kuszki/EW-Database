@@ -463,6 +463,7 @@ void MainWindow::databaseDisconnected(void)
 	Cut->deleteLater();
 	Text->deleteLater();
 
+	updateView(nullptr);
 	lockUi(DISCONNECTED);
 }
 
