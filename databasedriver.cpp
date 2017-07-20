@@ -437,7 +437,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
 				if (i.key() == j.key() || j.value().second.type() != QVariant::PointF ||
-				    (!Classes.contains("*") && Classes.contains(j.value().first))) continue;
+				    (!Classes.contains("*") && !Classes.contains(j.value().first))) continue;
 
 				if (i.value().second.type() == QVariant::PointF)
 				{
@@ -505,10 +505,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		Query.prepare(
 			"SELECT "
 				"O.UID, O.KOD, "
-				"ROUND(P.P0_X, 3), "
-				"ROUND(P.P0_Y, 3), "
-				"ROUND(P.P1_X, 3), "
-				"ROUND(P.P1_Y, 3), "
+				"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
+				"IIF(P.PN_X IS NULL, ROUND(P.P1_X, 3), ROUND(P.PN_X, 3)), "
+				"IIF(P.PN_Y IS NULL, ROUND(P.P1_Y, 3), ROUND(P.PN_Y, 3)), "
 				"O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
@@ -523,6 +522,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"WHERE "
 				"O.STATUS = 0 AND "
 				"P.STAN_ZMIANY = 0 AND "
+				"P.P1_FLAGS IN (0, 2) AND "
 				"E.TYP = 0");
 
 		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(6).toString()))
@@ -793,10 +793,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		Query.prepare(
 			"SELECT "
 				"O.KOD, "
-				"ROUND(P.P0_X, 3), "
-				"ROUND(P.P0_Y, 3), "
-				"ROUND(P.P1_X, 3), "
-				"ROUND(P.P1_Y, 3), "
+				"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
+				"IIF(P.PN_X IS NULL, ROUND(P.P1_X, 3), ROUND(P.PN_X, 3)), "
+				"IIF(P.PN_Y IS NULL, ROUND(P.P1_Y, 3), ROUND(P.PN_Y, 3)), "
 				"O.NUMER "
 			"FROM "
 				"EW_OBIEKTY O "
@@ -811,6 +810,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"WHERE "
 				"O.STATUS = 0 AND "
 				"P.STAN_ZMIANY = 0 AND "
+				"P.P1_FLAGS IN (0, 2) AND "
 				"E.TYP = 0");
 
 		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(5).toString()))
@@ -2895,7 +2895,8 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		"SELECT "
 			"O.UID, P.P1_FLAGS, "
 			"P.P0_X, P.P0_Y, "
-			"P.P1_X, P.P1_Y "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -2998,7 +2999,8 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 		"SELECT "
 			"O.UID, "
 			"P.P0_X, P.P0_Y, "
-			"P.P1_X, P.P1_Y "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
