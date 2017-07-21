@@ -347,14 +347,16 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 			"EW_OBIEKTY.UID, %1 "
 		"FROM "
 			"EW_OBIEKTY "
-		"INNER JOIN "
+		"LEFT JOIN "
 			"%2 EW_DATA "
 		"ON "
 			"EW_OBIEKTY.UID = EW_DATA.UIDO "
 		"WHERE "
+			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.STATUS = 0")
 				.arg(Attribs.join(", "))
-				.arg(Table.Data);
+				.arg(Table.Data)
+				.arg(Table.Name);
 
 	if (!Where.isEmpty()) Exec.append(QString(" AND (%1)").arg(Where));
 
@@ -1108,26 +1110,27 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data); QStringList Updates;
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+
+		QStringList Names, Updates;
 
 		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
 		{
-			if (Values[Index].isNull()) Updates.append(QString("%1 = NULL").arg(Fields[Index].Name));
-			else Updates.append(QString("%1 = '%2'").arg(Fields[Index].Name).arg(Values[Index].toString()));
+			Names.append(QString(Fields[Index].Name).remove("EW_DATA."));
+
+			if (Values[Index].isNull()) Updates.append("NULL");
+			else Updates.append(QString("'%1'").arg(Values[Index].toString()));
 		}
 
 		if (!Updates.isEmpty()) for (const auto& Index : i.value())
 		{
 			Query.exec(QString(
-				"UPDATE "
-					"%1 EW_DATA "
-				"SET "
-					"%2 "
-				"WHERE "
-					"EW_DATA.UIDO = '%3'")
-					 .arg(i.key())
-					 .arg(Updates.join(", "))
-					 .arg(Index));
+				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
+				"VALUES (%3, %4) MATCHING (UIDO)")
+					 .arg(Table.Data)
+					 .arg(Names.join(", "))
+					 .arg(Index)
+					 .arg(Updates.join(", ")));
 
 			emit onUpdateProgress(++Step);
 		}
@@ -3198,7 +3201,7 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 	emit onBeginProgress(tr("Preparing classes"));
 	emit onSetupProgress(0, 0); Step = 0;
 
-	if (Query.exec("SELECT D.KOD, D.OPCJE FROM EW_OB_OPISY D")) while (Query.next())
+	if (Query.exec("SELECT D.KOD, BIN_AND(D.OPCJE, 266) FROM EW_OB_OPISY D")) while (Query.next())
 	{
 		Types.insert(Query.value(0).toString(), Query.value(1).toInt());
 	}
