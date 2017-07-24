@@ -390,6 +390,18 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 {
 	if (!Database.isOpen()) Data;
 
+	struct OBJECT
+	{
+		int ID;
+
+		QString Number;
+		QString Class;
+
+		QVariant Geometry;
+
+		bool Filter = true;
+	};
+
 	QFile File(Limiter); QTextStream Stream(&File); QSet<QString> Limit;
 
 	if (!Limiter.isEmpty() && File.open(QFile::ReadOnly | QFile::Text))
@@ -438,21 +450,21 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		{
 			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
-				if (i.key() == j.key() || j.value().second.type() != QVariant::PointF ||
-				    (!Classes.contains("*") && !Classes.contains(j.value().first))) continue;
+				if (i.key() == j.key() || j.value().Geometry.type() != QVariant::PointF ||
+				    (!Classes.contains("*") && !Classes.contains(j.value().Class))) continue;
 
-				if (i.value().second.type() == QVariant::PointF)
+				if (i.value().Geometry.type() == QVariant::PointF && i.value().Filter)
 				{
-					if (i.value().second == j.value().second)
+					if (i.value().Geometry.toPointF() == j.value().Geometry.toPointF())
 					{
 						Locker->lock();
 						List->insert(i.key());
 						Locker->unlock();
 					}
 				}
-				else for (const auto& Point : i.value().second.toList())
+				else for (const auto& Point : i.value().Geometry.toList())
 				{
-					if (Point == j.value().second)
+					if (Point.toPointF() == j.value().Geometry.toPointF())
 					{
 						Locker->lock();
 						List->insert(i.key());
@@ -463,8 +475,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		};
 
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
-		QHash<int, QPair<QString, QVariant>> ObjectsA;
-		QHash<int, QPair<QString, QVariant>> ObjectsB;
+		QHash<int, OBJECT> ObjectsA, ObjectsB;
 
 		const bool FilterA = Geometry.contains(2) || Geometry.contains(3);
 		const bool FilterB = Geometry.contains(4) || Geometry.contains(5);
@@ -491,17 +502,19 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(4).toString()))
+		if (Query.exec()) while (Query.next())
 		{
-			if (FilterA) ObjectsA.insert(Query.value(0).toInt(), qMakePair(
-								    Query.value(1).toString(),
-								    QPointF(Query.value(2).toDouble(),
-										  Query.value(3).toDouble())));
+			const OBJECT Object =
+			{
+				Query.value(0).toInt(),
+				Query.value(4).toString(),
+				Query.value(1).toString(),
+				QPointF(Query.value(2).toDouble(), Query.value(3).toDouble()),
+				Limit.isEmpty() || Limit.contains(Query.value(4).toString())
+			};
 
-			if (FilterB) ObjectsB.insert(Query.value(0).toInt(), qMakePair(
-								    Query.value(1).toString(),
-								    QPointF(Query.value(2).toDouble(),
-										  Query.value(3).toDouble())));
+			if (FilterA) ObjectsA.insert(Query.value(0).toInt(), Object);
+			if (FilterB) ObjectsB.insert(Query.value(0).toInt(), Object);
 		}
 
 		Query.prepare(
@@ -527,7 +540,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"P.P1_FLAGS IN (0, 2) AND "
 				"E.TYP = 0");
 
-		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(6).toString()))
+		if (Query.exec()) while (Query.next())
 		{
 			const int Index = Query.value(0).toInt();
 
@@ -538,44 +551,44 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 			if (FilterA)
 			{
-				if (!ObjectsA.contains(Index))
+				if (!ObjectsA.contains(Index)) ObjectsA.insert(Index,
 				{
-					ObjectsA.insert(Index, qMakePair(
-								 Query.value(1).toString(),
-								 QVariant(QVariant::List)));
-				}
+					Query.value(0).toInt(),
+					Query.value(6).toString(),
+					Query.value(1).toString(),
+					QVariant(QVariant::List)
+				});
 
-				auto ListA = ObjectsA[Index].second.toList();
+				auto ListA = ObjectsA[Index].Geometry.toList();
 
 				if (!ListA.contains(PointA)) ListA.append(PointA);
 				if (!ListA.contains(PointB)) ListA.append(PointB);
 
-				ObjectsA[Index].second.setValue(ListA);
+				ObjectsA[Index].Geometry.setValue(ListA);
 			}
 
 			if (FilterB)
 			{
-				if (!ObjectsB.contains(Index))
-				{
-					ObjectsB.insert(Index, qMakePair(
-								 Query.value(1).toString(),
-								 QVariant(QVariant::List)));
-				}
+				if (!ObjectsB.contains(Index)) ObjectsB.insert(Index, {
+					Query.value(0).toInt(),
+					Query.value(6).toString(),
+					Query.value(1).toString(),
+					QVariant(QVariant::List)
+				});
 
-				auto ListB = ObjectsB[Index].second.toList();
+				auto ListB = ObjectsB[Index].Geometry.toList();
 
 				if (!ListB.contains(PointA)) ListB.append(PointA);
 				else ListB.removeOne(PointA);
 				if (!ListB.contains(PointB)) ListB.append(PointB);
 				else ListB.removeOne(PointB);
 
-				ObjectsB[Index].second.setValue(ListB);
+				ObjectsB[Index].Geometry.setValue(ListB);
 			}
 		}
 
 		QFutureSynchronizer<void> Synchronizer;
-		QMutex LockerA, LockerB;
-		QSet<int> ListA, ListB;
+		QMutex LockerA, LockerB; QSet<int> ListA, ListB;
 
 		if (Geometry.contains(2)) for (auto i = ObjectsA.constBegin(); i != ObjectsA.constEnd(); ++i)
 		{
@@ -819,14 +832,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		{
 			const QString Class = Query.value(0).toString();
 
-			if ((Geometry.contains(10) && (Geometry[10].toStringList().contains("*") || Geometry[10].toStringList().contains(Class))) ||
-			    (Geometry.contains(11) && (Geometry[11].toStringList().contains("*") || Geometry[11].toStringList().contains(Class))))
-			{
-				if (!Lines.contains(Class)) Lines.insert(Class, QList<QPointF>());
+			if (!Lines.contains(Class)) Lines.insert(Class, QList<QPointF>());
 
-				Lines[Class].append(QPointF(Query.value(1).toDouble(), Query.value(2).toDouble()));
-				Lines[Class].append(QPointF(Query.value(3).toDouble(), Query.value(4).toDouble()));
-			}
+			Lines[Class].append(QPointF(Query.value(1).toDouble(), Query.value(2).toDouble()));
+			Lines[Class].append(QPointF(Query.value(3).toDouble(), Query.value(4).toDouble()));
 		}
 
 		Query.prepare(
@@ -848,11 +857,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(4).toString()))
+		if (Query.exec()) while (Query.next())
 		{
-			Points.insert(Query.value(0).toInt(),
-					    QPointF(Query.value(1).toDouble(),
-							  Query.value(2).toDouble()));
+			Points.insert(Query.value(0).toInt(), QPointF(Query.value(1).toDouble(), Query.value(2).toDouble()));
 		}
 
 		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
@@ -3475,9 +3482,9 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 
 	Query.prepare(
 		"UPDATE OR INSERT INTO "
-			"EW_INTERFEJSY (NAZWA, PROGRAM, TYP, MODALNY) "
+			"EW_OB_INTERFEJSY (NAZWA, PROGRAM, TYP, MODALNY, IDKATALOG) "
 		"VALUES "
-			"('EW-Database', ?, ?, ?) "
+			"('EW-Database', ?, ?, ?, 1) "
 		"MATCHING "
 			"(PROGRAM)");
 

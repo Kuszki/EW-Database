@@ -338,8 +338,8 @@ void MainWindow::interfaceActionClicked(void)
 {
 	const QString Path = QApplication::applicationDirPath();
 
-	bool OK = Driver->addInterface(Path + "/EW-Marker", 1, true);
-	OK = OK && Driver->addInterface(Path + "/EW-Selector", 9, false);
+	bool OK = Driver->addInterface(Path + "/EW-Marker.exe", 1, true);
+	OK = OK && Driver->addInterface(Path + "/EW-Selector.exe", 9, false);
 
 	if (OK) ui->statusBar->showMessage(tr("Intreface registered"));
 	else ui->statusBar->showMessage(tr("Error with registering interface"));
