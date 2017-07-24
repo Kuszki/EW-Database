@@ -192,6 +192,8 @@ class DatabaseDriver : public QObject
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
 		void getClass(RecordModel* Model, const QModelIndexList& Items);
 
+		bool addInterface(const QString& Path, int Type, bool Modal);
+
 	signals:
 
 		void onError(const QString&);

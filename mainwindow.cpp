@@ -67,6 +67,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
+	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -331,6 +332,17 @@ void MainWindow::batchActionClicked(void)
 			ui->statusBar->showMessage(tr("Error with opening file: ") + File.errorString());
 		}
 	}
+}
+
+void MainWindow::interfaceActionClicked(void)
+{
+	const QString Path = QApplication::applicationDirPath();
+
+	bool OK = Driver->addInterface(Path + "/EW-Marker", 1, true);
+	OK = OK && Driver->addInterface(Path + "/EW-Selector", 9, false);
+
+	if (OK) ui->statusBar->showMessage(tr("Intreface registered"));
+	else ui->statusBar->showMessage(tr("Error with registering interface"));
 }
 
 void MainWindow::selectionChanged(void)
@@ -738,6 +750,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionReload->setEnabled(true);
 			ui->actionLoad->setEnabled(true);
 			ui->actionUnhide->setEnabled(true);
+			ui->actionInterface->setEnabled(true);
 		break;
 		case DISCONNECTED:
 			ui->statusBar->showMessage(tr("Database disconnected"));
@@ -763,6 +776,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
+			ui->actionInterface->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -784,6 +798,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionText->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
+			ui->actionInterface->setEnabled(false);
 			ui->Data->setEnabled(false);
 		break;
 		case DONE:
@@ -795,6 +810,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionReload->setEnabled(true);
 			ui->actionLoad->setEnabled(true);
 			ui->actionUnhide->setEnabled(true);
+			ui->actionInterface->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);

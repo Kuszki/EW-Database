@@ -3467,6 +3467,27 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 	emit onClassReady(Classes, Lines, Points, Texts);
 }
 
+bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
+{
+	if (!Database.isOpen() || !QFile::exists(Path)) return false;
+
+	QSqlQuery Query(Database);
+
+	Query.prepare(
+		"UPDATE OR INSERT INTO "
+			"EW_INTERFEJSY (NAZWA, PROGRAM, TYP, MODALNY) "
+		"VALUES "
+			"('EW-Database', ?, ?, ?) "
+		"MATCHING "
+			"(PROGRAM)");
+
+	Query.addBindValue(Path);
+	Query.addBindValue(Type);
+	Query.addBindValue(Modal);
+
+	return Query.exec();
+}
+
 bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two)
 {
 	return
