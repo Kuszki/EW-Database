@@ -1227,7 +1227,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	emit onDataRemove(Model);
 }
 
-void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items, const QList<QPair<int, BatchWidget::FUNCTION> >& Functions, const QList<QStringList>& Values)
+void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items, const QList<QPair<int, BatchWidget::FUNCTION>>& Functions, const QList<QStringList>& Values)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onBatchExec(0); return; } int Changes(0);
 

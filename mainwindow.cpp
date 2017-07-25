@@ -728,7 +728,7 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 	}
 }
 
-void MainWindow::execBatch(const QList<QPair<int, BatchWidget::FUNCTION> >& Roles, const QList<QStringList>& Data)
+void MainWindow::execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles, const QList<QStringList>& Data)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
