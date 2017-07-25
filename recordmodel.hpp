@@ -25,6 +25,7 @@
 #include <QAbstractItemModel>
 #include <QMutexLocker>
 #include <QVariant>
+#include <QMutex>
 #include <QList>
 #include <QHash>
 
@@ -130,6 +131,8 @@ class RecordModel : public QAbstractItemModel
 
 		QStringList Header;
 		QStringList Groups;
+
+		mutable QMutex Locker;
 
 	public:
 

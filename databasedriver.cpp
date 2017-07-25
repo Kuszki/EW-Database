@@ -450,10 +450,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		{
 			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
-				if (i.key() == j.key() || j.value().Geometry.type() != QVariant::PointF ||
+				if (!j.value().Filter || i.key() == j.key() || j.value().Geometry.type() != QVariant::PointF ||
 				    (!Classes.contains("*") && !Classes.contains(j.value().Class))) continue;
 
-				if (i.value().Geometry.type() == QVariant::PointF && i.value().Filter)
+				if (i.value().Geometry.type() == QVariant::PointF)
 				{
 					if (i.value().Geometry.toPointF() == j.value().Geometry.toPointF())
 					{
@@ -1280,9 +1280,7 @@ void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items,
 
 		if (Filtered.size() && Updates.size())
 		{
-			updateData(Model, Filtered, Updates, false);
-
-			Changes += Filtered.size();
+			updateData(Model, Filtered, Updates, false); Changes += Filtered.size();
 		}
 	}
 

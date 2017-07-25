@@ -207,7 +207,7 @@ bool RecordModel::SortObject::operator () (RecordModel::RecordObject* First, Rec
 }
 
 RecordModel::RecordModel(const QStringList& Head, QObject* Parent)
-: QAbstractItemModel(Parent), Header(Head) {}
+	: QAbstractItemModel(Parent), Header(Head), Locker(QMutex::Recursive) {}
 
 RecordModel::~RecordModel(void)
 {
@@ -216,6 +216,8 @@ RecordModel::~RecordModel(void)
 
 QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!hasIndex(Row, Col, Parent)) return QModelIndex();
 
 	if (!Root) return createIndex(Row, Col, Objects.value(Row));
@@ -231,6 +233,8 @@ QModelIndex RecordModel::index(int Row, int Col, const QModelIndex& Parent) cons
 
 QModelIndex RecordModel::parent(const QModelIndex& Index) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Root || !Index.isValid()) return QModelIndex();
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -252,6 +256,8 @@ QModelIndex RecordModel::parent(const QModelIndex& Index) const
 
 bool RecordModel::hasChildren(const QModelIndex& Parent) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (Parent == QModelIndex()) return true;
 
 	RecordObject* Object = (RecordObject*) Parent.internalPointer();
@@ -265,6 +271,8 @@ bool RecordModel::hasChildren(const QModelIndex& Parent) const
 
 int RecordModel::rowCount(const QModelIndex& Parent) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Parent.isValid())
 	{
 		if (Root) return Root->childrenCount();
@@ -282,11 +290,13 @@ int RecordModel::rowCount(const QModelIndex& Parent) const
 
 int RecordModel::columnCount(const QModelIndex &Parent) const
 {
-	return Header.size();
+	QMutexLocker Synchronizer(&Locker); return Header.size();
 }
 
 QVariant RecordModel::headerData(int Section, Qt::Orientation Orientation, int Role) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (Orientation != Qt::Horizontal || Section > Header.size()) return QVariant();
 
 	if (Role != Qt::DisplayRole) return QVariant();
@@ -295,6 +305,8 @@ QVariant RecordModel::headerData(int Section, Qt::Orientation Orientation, int R
 
 QVariant RecordModel::data(const QModelIndex &Index, int Role) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid() || !(Role == Qt::DisplayRole || Role == Qt::EditRole)) return QVariant();
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -305,6 +317,8 @@ QVariant RecordModel::data(const QModelIndex &Index, int Role) const
 
 Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid()) return Qt::ItemFlags(0);
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -315,6 +329,8 @@ Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
 
 bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int Role)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid() || !(Role == Qt::DisplayRole || Role == Qt::EditRole)) return false;
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -348,6 +364,8 @@ bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int R
 
 void RecordModel::sort(int Column, Qt::SortOrder Order)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	SortObject Sort(Column, Order == Qt::AscendingOrder);
 
 	beginResetModel();
@@ -365,6 +383,8 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 
 bool RecordModel::setData(int Index, const QHash<int, QVariant>& Data, bool Replace)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	for (const auto& Item : Objects) if (Item->getUid() == Index)
 	{
 		if (Root) return setData(createIndex(Parents[Item]->getIndex(Item), 0, Item), Data, Replace);
@@ -376,6 +396,8 @@ bool RecordModel::setData(int Index, const QHash<int, QVariant>& Data, bool Repl
 
 bool RecordModel::setData(const QModelIndex& Index, const QHash<int, QVariant>& Data, bool Replace)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid()) return false;
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -408,6 +430,8 @@ bool RecordModel::setData(const QModelIndex& Index, const QHash<int, QVariant>& 
 
 QHash<int, QVariant> RecordModel::fullData(const QModelIndex& Index) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid()) return QHash<int, QVariant>();
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -417,6 +441,8 @@ QHash<int, QVariant> RecordModel::fullData(const QModelIndex& Index) const
 
 QVariant RecordModel::fieldData(const QModelIndex& Index, int Col) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid()) return QVariant();
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -426,6 +452,8 @@ QVariant RecordModel::fieldData(const QModelIndex& Index, int Col) const
 
 QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!hasChildren(Parent)) return QModelIndexList();
 
 	QModelIndexList List; int Count = rowCount(Parent);
@@ -437,7 +465,7 @@ QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent) const
 
 QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 {
-	QList<int> List;
+	QMutexLocker Synchronizer(&Locker); QList<int> List;
 
 	for (const auto& Index : Selection)
 	{
@@ -453,6 +481,8 @@ QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 
 int RecordModel::getUid(const QModelIndex& Index) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
 	if (dynamic_cast<GroupObject*>(Object)) return -1;
@@ -462,6 +492,8 @@ int RecordModel::getUid(const QModelIndex& Index) const
 
 bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	for (const auto& Index : Columns) if (Header.size() <= Index) return false;
 
 	QFile File(Path); if (!File.open(QFile::WriteOnly | QFile::Text)) return false;
@@ -494,6 +526,8 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 
 bool RecordModel::removeItem(const QModelIndex& Index)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Index.isValid()) return false;
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
@@ -530,6 +564,8 @@ bool RecordModel::removeItem(const QModelIndex& Index)
 
 bool RecordModel::removeItem(int Index)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	for (const auto& Item : Objects) if (Item->getUid() == Index)
 	{
 		if (Root) return removeItem(createIndex(Parents[Item]->getIndex(Item), 0, Item));
@@ -541,12 +577,12 @@ bool RecordModel::removeItem(int Index)
 
 int RecordModel::totalCount(void) const
 {
-	return Objects.count();
+	QMutexLocker Synchronizer(&Locker); return Objects.count();
 }
 
 bool RecordModel::isGrouped(void) const
 {
-	return Root;
+	QMutexLocker Synchronizer(&Locker); return Root;
 }
 
 bool RecordModel::exists(int Index) const
@@ -556,6 +592,8 @@ bool RecordModel::exists(int Index) const
 
 QModelIndex RecordModel::index(int Index) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	for (const auto& Item : Objects) if (Item->getUid() == Index)
 	{
 		if (Root) return createIndex(Parents[Item]->getIndex(Item), 0, Item);
@@ -567,22 +605,24 @@ QModelIndex RecordModel::index(int Index) const
 
 QModelIndex RecordModel::find(int Index, QVariant Data) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (Objects.isEmpty() || Header.size() <= Index) return QModelIndex();
 
-	QMutex Synchronizer; QModelIndex Item; bool Found(false);
+	QMutex Mutex; QModelIndex Item; bool Found(false);
 
-	QtConcurrent::blockingMap(Objects, [this, &Synchronizer, &Found, &Item, Index, Data] (RecordObject* Object)
+	QtConcurrent::blockingMap(Objects, [this, &Mutex, &Found, &Item, Index, Data] (RecordObject* Object)
 	{
 		if (!Found && Object->getField(Index) == Data)
 		{
-			Synchronizer.lock();
+			Mutex.lock();
 
 			Item = Root ? createIndex(Parents[Object]->getIndex(Object), 0, Object) :
 					    createIndex(Objects.indexOf(Object), 0, Object);
 
 			Found = true;
 
-			Synchronizer.unlock();
+			Mutex.unlock();
 		}
 	});
 
@@ -591,6 +631,8 @@ QModelIndex RecordModel::find(int Index, QVariant Data) const
 
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Parent) Parent = new GroupObject();
 
 	for (const auto& Field : (*From).second)
@@ -618,6 +660,8 @@ RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVari
 
 RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Object)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (!Root) return nullptr;
 
 	GroupObject* Current = Root;
@@ -669,6 +713,8 @@ RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Obj
 
 int RecordModel::getIndex(const QString& Field) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	int i = 0; for (const auto& Item : Header)
 	{
 		if (Item == Field) return i; ++i;
@@ -679,6 +725,8 @@ int RecordModel::getIndex(const QString& Field) const
 
 void RecordModel::removeEmpty(RecordModel::GroupObject* Parent, bool Emit)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (Parent)
 	{
 		if (Parent->hasChids()) for (auto Child : Parent->getChilds())
@@ -714,6 +762,8 @@ void RecordModel::removeEmpty(RecordModel::GroupObject* Parent, bool Emit)
 
 void RecordModel::groupItems(void)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	QList<QPair<int, QList<QVariant>>> Indexes;
 
 	if (Root) delete Root; Parents.clear();
@@ -739,7 +789,7 @@ void RecordModel::groupItems(void)
 
 void RecordModel::groupByInt(const QList<int>& Levels)
 {
-	QStringList Groupby;
+	QMutexLocker Synchronizer(&Locker); QStringList Groupby;
 
 	for (const auto& I : Levels) if (I < Header.size()) Groupby.append(Header[I]);
 
@@ -748,6 +798,8 @@ void RecordModel::groupByInt(const QList<int>& Levels)
 
 void RecordModel::groupByStr(const QStringList& Groupby)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (Groups == Groupby) { emit onGroupComplete(); return; } Groups = Groupby;
 
 	beginResetModel();
@@ -767,6 +819,8 @@ void RecordModel::groupByStr(const QStringList& Groupby)
 
 void RecordModel::addItem(int ID, const QHash<int, QVariant>& Attributes)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	auto Object = new RecordObject(ID, Attributes);
 
 	if (Root) appendItem(Object);
@@ -783,6 +837,8 @@ void RecordModel::addItem(int ID, const QHash<int, QVariant>& Attributes)
 
 void RecordModel::addItems(const QHash<int, QHash<int, QVariant>>& Items)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	if (Root) for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
 	{
 		appendItem(new RecordObject(i.key(), i.value()));
