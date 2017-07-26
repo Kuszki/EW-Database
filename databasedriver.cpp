@@ -2247,7 +2247,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 							  .arg(Table.Data).arg(Names.join(", "));
 
 		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, NUMER, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
-									  "SELECT %1, 'OB_ID_' || %1, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %2");
+									  "SELECT %1, 'OB_ID_' || '%2', IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %3");
 
 		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i) if (t.value().contains(i.key()))
 		{
@@ -2264,7 +2264,9 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 
 				if (Query.exec() && Query.next()) Index = Query.value(0).toInt();
 
-				Query.exec(objectInsert.arg(Index).arg(i.key()));
+				const QString Numer = QString::number(qHash(qMakePair(Index, QDateTime::currentDateTimeUtc())), 16);
+
+				Query.exec(objectInsert.arg(Index).arg(Numer).arg(i.key()));
 				Query.exec(dataInsert.arg(Index).arg(i.key()));
 
 				for (int p = *j; p < Stop; ++p)
