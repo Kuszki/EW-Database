@@ -2847,13 +2847,15 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	QSqlQuery Query(Database), Select(Database), Text(Database), Element(Database);
 	const QList<int> Tasks = Model->getUids(Items); Query.setForwardOnly(true);
-	QList<POINT> List; int Step = 0, Count;
+	QList<POINT> List; int Step = 0, Count = 0;
 
-	if (P) J |= 0b11000; if (!J)
+	if (!J)
 	{
-		if (X > 0) J += 1; else if (X < 0) J += 3; else J += 2;
-		if (Y < 0) J += 6; else if (Y == 0) J += 3;
+		if (Y > 0) J += 1; else if (Y < 0) J += 3; else J += 2;
+		if (X < 0) J += 6; else if (X == 0) J += 3;
 	}
+
+	if (P) J |= 0b110000;
 
 	emit onBeginProgress(tr("Generating tasklist"));
 	emit onSetupProgress(0, 0);
@@ -2899,9 +2901,9 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	Select.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
 
-	Text.prepare(QString("INSERT INTO EW_TEXT (ID, STAN_ZMIANY, CREATE_TS, MODIFY_TS, TYP, TEXT, POS_X, POS_Y, ID_WARSTWY, JUSTYFIKACJA) "
-					 "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, %2)")
-			   .arg(Label).arg(J));
+	Text.prepare(QString("INSERT INTO EW_TEXT (ID, STAN_ZMIANY, CREATE_TS, MODIFY_TS, TYP, TEXT, POS_X, POS_Y, ID_WARSTWY, JUSTYFIKACJA, ODN_X, ODN_Y) "
+					 "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, %2, %3, %4)")
+			   .arg(Label).arg(J).arg(-X).arg(-Y));
 
 	Element.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, TYP, IDE, N) "
 				 "VALUES (?, 0, ?, 1 + ("
@@ -2939,6 +2941,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 			Element.addBindValue(Item.ID);
 			Element.addBindValue(ID);
+			Element.addBindValue(Item.ID);
 
 			if (!Element.exec()) continue;
 
