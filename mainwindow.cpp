@@ -95,6 +95,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataRefactor, this, &MainWindow::refactorData);
 	connect(Driver, &DatabaseDriver::onClassReady, this, &MainWindow::prepareClass);
 	connect(Driver, &DatabaseDriver::onTextEdit, this, &MainWindow::textEdit);
+	connect(Driver, &DatabaseDriver::onLabelInsert, this, &MainWindow::labelInsert);
 	connect(Driver, &DatabaseDriver::onDataMerge, this, &MainWindow::dataMerged);
 	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
@@ -126,6 +127,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onRefactorRequest, Driver, &DatabaseDriver::refactorData);
 
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
+	connect(this, &MainWindow::onLabelRequest, Driver, &DatabaseDriver::insertLabel);
 
 	connect(this, &MainWindow::onMergeRequest, Driver, &DatabaseDriver::mergeData);
 	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
@@ -351,8 +353,6 @@ void MainWindow::selectionChanged(void)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	const int From = Model ? Model->totalCount() : 0;
 
-	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
-
 	ui->actionDelete->setEnabled(Count > 0);
 	ui->actionEdit->setEnabled(Count > 0);
 	ui->actionSave->setEnabled(Count > 0);
@@ -363,8 +363,11 @@ void MainWindow::selectionChanged(void)
 	ui->actionRefactor->setEnabled(Count > 0);
 	ui->actionBatch->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
+	ui->actionLabel->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
+
+	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 }
 
 void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter)
@@ -430,6 +433,14 @@ void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, doubl
 	lockUi(BUSY); emit onTextRequest(Model, Selected, Move, Justify, Rotate, Sort, Length);
 }
 
+void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool P)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onLabelRequest(Model, Selected, Text, J, X, Y, P);
+}
+
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
@@ -441,6 +452,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Export = new ExportDialog(this, Headers);
 	Merge = new MergeDialog(this, Fields, Classes);
 	Cut = new CutDialog(this, Classes);
+	Label = new LabelDialog(this);
 	Text = new TextDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
@@ -450,13 +462,15 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Export, &ExportDialog::onExportRequest, this, &MainWindow::saveData);
 	connect(Merge, &MergeDialog::onFieldsUpdate, this, &MainWindow::mergeData);
 	connect(Cut, &CutDialog::onClassesUpdate, this, &MainWindow::cutData);
+	connect(Label, &LabelDialog::onLabelRequest, this, &MainWindow::insertLabel);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
 	connect(ui->actionFilter, &QAction::triggered, Filter, &FilterDialog::open);
 	connect(ui->actionSave, &QAction::triggered, Export, &ExportDialog::open);
-	connect(ui->actionSplit, &QAction::triggered, Cut, &CutDialog::show);
+	connect(ui->actionSplit, &QAction::triggered, Cut, &CutDialog::open);
+	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
@@ -552,6 +566,11 @@ void MainWindow::joinData(int Count)
 void MainWindow::textEdit(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Edited %n text(s)", nullptr, Count));
+}
+
+void MainWindow::labelInsert(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n label(s)", nullptr, Count));
 }
 
 void MainWindow::batchExec(int Count)
@@ -774,6 +793,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRefactor->setEnabled(false);
 			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
+			ui->actionLabel->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
@@ -796,6 +816,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRefactor->setEnabled(false);
 			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
+			ui->actionLabel->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);

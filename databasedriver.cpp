@@ -2839,6 +2839,119 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	emit onTextEdit(Points.size() - Rejected);
 }
 
+void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int J, double X, double Y, bool P)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelInsert(0); return; }
+
+	struct POINT { int ID; double X, Y; int Layer; };
+
+	QSqlQuery Query(Database), Select(Database), Text(Database), Element(Database);
+	const QList<int> Tasks = Model->getUids(Items); Query.setForwardOnly(true);
+	QList<POINT> List; int Step = 0, Count;
+
+	if (P) J |= 0b11000; if (!J)
+	{
+		if (X > 0) J += 1; else if (X < 0) J += 3; else J += 2;
+		if (Y < 0) J += 6; else if (Y == 0) J += 3;
+	}
+
+	emit onBeginProgress(tr("Generating tasklist"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, T.POS_X, T.POS_Y, IIF(( "
+				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+				"INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
+				"WHERE G.NAZWA = ( "
+					"SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
+					"INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
+					"WHERE J.ID = T.ID_WARSTWY "
+				") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
+				") IS NOT NULL, (  "
+				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P  "
+				"INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
+				"WHERE G.NAZWA = ( "
+					"SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
+					"INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
+					"WHERE J.ID = T.ID_WARSTWY "
+				") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
+				"), T.ID_WARSTWY) "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN  "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"E.UIDO = O.UID "
+		"INNER JOIN  "
+			"EW_TEXT T "
+		"ON "
+			"(T.ID = E.IDE AND E.TYP = 0) "
+		"WHERE "
+			"O.RODZAJ = 4 AND "
+			"O.STATUS = 0 AND "
+			"0 = ( "
+				"SELECT COUNT(L.ID) FROM EW_TEXT L "
+				"INNER JOIN EW_OB_ELEMENTY Q "
+				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
+				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
+			")");
+
+	Select.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
+
+	Text.prepare(QString("INSERT INTO EW_TEXT (ID, STAN_ZMIANY, CREATE_TS, MODIFY_TS, TYP, TEXT, POS_X, POS_Y, ID_WARSTWY, JUSTYFIKACJA) "
+					 "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, %2)")
+			   .arg(Label).arg(J));
+
+	Element.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, TYP, IDE, N) "
+				 "VALUES (?, 0, ?, 1 + ("
+					"SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?)"
+				 ")");
+
+	if (Query.exec()) while (Query.next()) if (Tasks.contains(Query.value(0).toInt())) List.append(
+	{
+		Query.value(0).toInt(),
+		Query.value(1).toDouble(),
+		Query.value(2).toDouble(),
+		Query.value(3).toInt()
+	});
+
+	QtConcurrent::blockingMap(List, [X, Y] (POINT& Point) -> void
+	{
+		Point.X += X; Point.Y += Y;
+	});
+
+	emit onBeginProgress(tr("Inserting labels"));
+	emit onSetupProgress(0, List.size());
+
+	for (const auto& Item : List)
+	{
+		if (Select.exec() && Select.next())
+		{
+			const int ID = Select.value(0).toInt();
+
+			Text.addBindValue(ID);
+			Text.addBindValue(Item.X);
+			Text.addBindValue(Item.Y);
+			Text.addBindValue(Item.Layer);
+
+			if (!Text.exec()) continue;
+
+			Element.addBindValue(Item.ID);
+			Element.addBindValue(ID);
+
+			if (!Element.exec()) continue;
+
+			Count += 1;
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onLabelInsert(Count);
+}
+
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();

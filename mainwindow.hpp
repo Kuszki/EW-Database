@@ -41,6 +41,7 @@
 #include "classdialog.hpp"
 #include "mergedialog.hpp"
 #include "batchdialog.hpp"
+#include "labeldialog.hpp"
 #include "joindialog.hpp"
 #include "textdialog.hpp"
 #include "cutdialog.hpp"
@@ -82,6 +83,7 @@ class MainWindow : public QMainWindow
 		UpdateDialog* Update;
 		ExportDialog* Export;
 		MergeDialog* Merge;
+		LabelDialog* Label;
 		TextDialog* Text;
 		CutDialog* Cut;
 
@@ -150,6 +152,7 @@ class MainWindow : public QMainWindow
 		void changeClass(const QString& Class,
 					  int Line, int Point, int Text);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
+		void insertLabel(const QString Text, int J, double X, double Y, bool P);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -174,6 +177,7 @@ class MainWindow : public QMainWindow
 		void groupData(void);
 		void joinData(int Count);
 		void textEdit(int Count);
+		void labelInsert(int Count);
 
 		void batchExec(int Count);
 
@@ -229,6 +233,9 @@ class MainWindow : public QMainWindow
 
 		void onTextRequest(RecordModel*, const QModelIndexList&,
 					    bool, bool, bool, bool, double);
+
+		void onLabelRequest(RecordModel*, const QModelIndexList&,
+						const QString&, int, double, double, bool);
 
 		void onGroupRequest(const QList<int>&);
 
