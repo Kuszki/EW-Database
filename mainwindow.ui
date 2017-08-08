@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>18</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -163,6 +163,7 @@
    <addaction name="actionSplit"/>
    <addaction name="actionRestore"/>
    <addaction name="actionHistory"/>
+   <addaction name="actionLabel"/>
    <addaction name="actionText"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
@@ -457,6 +458,9 @@
    </property>
   </action>
   <action name="actionLabel">
+   <property name="icon">
+    <iconset theme="format-text-italic"/>
+   </property>
    <property name="text">
     <string>Insert labels</string>
    </property>
