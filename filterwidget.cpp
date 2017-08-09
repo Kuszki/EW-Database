@@ -219,7 +219,7 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 
 		for (auto i = Field.Dict.constBegin(); i != Field.Dict.constEnd(); ++i)
 		{
-			auto Item = new QStandardItem(i.value());
+			auto Item = new QStandardItem(QString(i.value()).replace('|', '\n'));
 
 			Item->setData(i.key());
 			Item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
@@ -238,6 +238,8 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 			{
 				auto Combo = new QComboBox(this); Widget = Combo;
 
+				Combo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLength);
+
 				Model->setParent(Widget);
 				Combo->setModel(Model);
 				Combo->setProperty("MASK", true);
@@ -250,9 +252,11 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 				auto Combo = new QComboBox(this); Widget = Combo;
 				auto Mixed = new QComboBox(this); Simple = Mixed;
 
+				Combo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLength);
+
 				for (auto i = Field.Dict.constBegin(); i != Field.Dict.constEnd(); ++i)
 				{
-					Combo->addItem(i.value(), i.key());
+					Combo->addItem(QString(i.value()).replace('|', '\n'), i.key());
 				}
 
 				Combo->model()->sort(0);
