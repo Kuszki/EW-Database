@@ -3081,32 +3081,37 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 	{
 		const int ID = List.first().ID; const QPolygonF Polygon = SORT(List);
 
-		for (const auto& P : Points) if (!Used.contains(P.ID))
+		for (const auto& P : Points)
 		{
-			for (const auto& G : List) if ((G.R != 0.0) && (G.R >= qSqrt(qPow(P.X - G.X1, 2) + qPow(P.Y - G.Y1, 2))))
-			{
-				Locker.lock();
+			Locker.lock(); const bool Calc = !Used.contains(P.ID); Locker.unlock();
 
-				if (!Used.contains(P.ID) && !Geometry[G.ID].contains(P.ID))
+			if (Calc)
+			{
+				for (const auto& G : List) if ((G.R != 0.0) && (G.R >= qSqrt(qPow(P.X - G.X1, 2) + qPow(P.Y - G.Y1, 2))))
 				{
-					Insert[G.ID].insert(P.ID);
-					Used.insert(P.ID);
+					Locker.lock();
+
+					if (!Used.contains(P.ID) && !Geometry[G.ID].contains(P.ID))
+					{
+						Insert[G.ID].insert(P.ID);
+						Used.insert(P.ID);
+					}
+
+					Locker.unlock();
 				}
 
-				Locker.unlock();
-			}
-
-			if (Polygon.containsPoint(QPointF(P.X, P.Y), Qt::OddEvenFill))
-			{
-				Locker.lock();
-
-				if (!Used.contains(P.ID) && !Geometry[ID].contains(P.ID))
+				if (Polygon.containsPoint(QPointF(P.X, P.Y), Qt::OddEvenFill))
 				{
-					Insert[ID].insert(P.ID);
-					Used.insert(P.ID);
-				}
+					Locker.lock();
 
-				Locker.unlock();
+					if (!Used.contains(P.ID) && !Geometry[ID].contains(P.ID))
+					{
+						Insert[ID].insert(P.ID);
+						Used.insert(P.ID);
+					}
+
+					Locker.unlock();
+				}
 			}
 		}
 	});
