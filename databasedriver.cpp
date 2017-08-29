@@ -2776,37 +2776,70 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	QtConcurrent::blockingMap(Points, [&Lines, &Objects, Move, Justify, Rotate, Length] (POINT& Point) -> void
 	{
+		static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
+		{
+				const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+				const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+				const double l = L.length();
+
+				if ((a * a <= l * l + b * b) &&
+				    (b * b <= a * a + l * l))
+				{
+					const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+					const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+					return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+				}
+				else return INFINITY;
+		};
+
+		bool Found = false; LINE Match;
+
 		for (const auto& Object : Objects)
 			if (Object.ID != Point.ID && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
 
 		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.Changed = true; }
 
-		if (Justify) for (const auto& Line : Lines)
+		if (Justify && !Found) for (const auto& Line : Lines) if (!Found)
 			if ((Point.WX == Line.X1 && Point.WY == Line.Y1) || (Point.WX == Line.X2 && Point.WY == Line.Y2))
 			{
-				if (Justify && !Rotate)
-				{
-					if (Point.J == 1) { Point.J = 4; Point.Changed = true; return; }
-				}
-				else if (Justify && Rotate && (Line.Length >= Length))
-				{
-					Point.A = qAtan((Line.Y1 - Line.Y2) / (Line.X1 - Line.X2)) - M_PI / 2.0;
-
-					if (Line.Y1 < Line.Y2)
-					{
-						if (Point.WX == Line.X1 && Point.WY == Line.Y1) Point.J = 4; else Point.J = 6;
-					}
-					else
-					{
-						if (Point.WX == Line.X2 && Point.WY == Line.Y2) Point.J = 4; else Point.J = 6;
-					}
-
-					while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
-					while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
-
-					Point.Changed = true; return;
-				}
+				Match = Line; Found = true;
 			}
+
+		if (Justify && !Found) for (const auto& Line : Lines) if (!Found)
+			if (distance(QLineF(Line.X1, Line.Y1, Line.X2, Line.Y2), QPointF(Point.WX, Point.WY)) <= 0.05)
+			{
+				Match = Line; Found = true;
+			}
+
+		if (Found)
+		{
+			if (Justify && !Rotate)
+			{
+				if (Point.J == 1) { Point.J = 4; Point.Changed = true; return; }
+			}
+			else if (Justify && Rotate && (Match.Length >= Length))
+			{
+				Point.A = qAtan((Match.Y1 - Match.Y2) / (Match.X1 - Match.X2)) - M_PI / 2.0;
+
+				const double lengthA = QLineF(Point.WX, Point.WY, Match.X1, Match.Y1).length();
+				const double lengthB = QLineF(Point.WX, Point.WY, Match.X2, Match.Y2).length();
+
+				if (Match.Y1 < Match.Y2)
+				{
+					if (lengthA < lengthB) Point.J = 4; else Point.J = 6;
+				}
+				else
+				{
+					if (lengthB < lengthA) Point.J = 4; else Point.J = 6;
+				}
+
+				while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
+				while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
+
+				Point.Changed = true;
+			}
+		}
 	});
 
 	emit onEndProgress(); Step = 0;
@@ -2858,7 +2891,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 	if (P) J |= 0b110000;
 
 	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, Tasks.count()); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -2910,13 +2943,18 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 					"SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?)"
 				 ")");
 
-	if (Query.exec()) while (Query.next()) if (Tasks.contains(Query.value(0).toInt())) List.append(
+	if (Query.exec()) while (Query.next()) if (Tasks.contains(Query.value(0).toInt()))
 	{
-		Query.value(0).toInt(),
-		Query.value(1).toDouble(),
-		Query.value(2).toDouble(),
-		Query.value(3).toInt()
-	});
+		List.append(
+		{
+			Query.value(0).toInt(),
+			Query.value(1).toDouble(),
+			Query.value(2).toDouble(),
+			Query.value(3).toInt()
+		});
+
+		emit onUpdateProgress(++Step);
+	}
 
 	QtConcurrent::blockingMap(List, [X, Y] (POINT& Point) -> void
 	{
@@ -2924,7 +2962,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 	});
 
 	emit onBeginProgress(tr("Inserting labels"));
-	emit onSetupProgress(0, List.size());
+	emit onSetupProgress(0, List.size()); Step = 0;
 
 	for (const auto& Item : List)
 	{
@@ -3154,9 +3192,37 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 	if (Query.exec()) while (Query.next())
 	{
 		if (Tasks.contains(Query.value(0).toInt())) for (const auto P : Points) if (!Used.contains(P.ID))
-		{
-			if ((qAbs(Query.value(1).toDouble() - P.X) <= Radius && qAbs(Query.value(2).toDouble() - P.Y) <= Radius) ||
-			    (qAbs(Query.value(3).toDouble() - P.X) <= Radius && qAbs(Query.value(4).toDouble() - P.Y) <= Radius))
+		{	
+			static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
+			{
+					const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+					const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+					const double l = L.length();
+
+					if ((a * a <= l * l + b * b) &&
+					    (b * b <= a * a + l * l))
+					{
+						const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+						const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+						return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+					}
+					else return INFINITY;
+			};
+
+			bool Continue = false;
+
+			const double X1 = Query.value(1).toDouble();
+			const double Y1 = Query.value(2).toDouble();
+
+			const double X2 = Query.value(3).toDouble();
+			const double Y2 = Query.value(4).toDouble();
+
+			if (!Continue) Continue = QLineF(X1, Y1, P.X, P.Y).length() <= Radius;
+			if (!Continue) Continue = QLineF(X2, Y2, P.X, P.Y).length() <= Radius;
+			if (!Continue) Continue = distance(QLineF(X1, Y1, X2, Y2), QPointF(P.X, P.Y)) <= Radius;
+
+			if (Continue)
 			{
 				const int ID = Query.value(0).toInt();
 
