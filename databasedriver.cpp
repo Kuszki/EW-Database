@@ -1204,7 +1204,15 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 
 			Query.exec(QString(
 				"DELETE FROM "
-					"EW_ELEMENTY "
+					"EW_OB_ELEMENTY "
+				"WHERE "
+					"IDE = '%1' AND "
+					"TYP = 1")
+					 .arg(Index));
+
+			Query.exec(QString(
+				"DELETE FROM "
+					"EW_OB_ELEMENTY "
 				"WHERE "
 					"UIDO = '%1'")
 					 .arg(Index));
