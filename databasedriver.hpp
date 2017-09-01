@@ -82,6 +82,7 @@ class DatabaseDriver : public QObject
 		QString Data;
 
 		bool Point;
+		int Type;
 
 		QList<FIELD> Fields;
 		QList<int> Indexes;
@@ -132,15 +133,15 @@ class DatabaseDriver : public QObject
 
 		QHash<int, QSet<int>> joinSurfaces(const QHash<int, QSet<int>>& Geometry,
 									const QList<DatabaseDriver::POINT>& Points,
-									const QList<int>& Tasks, const QString Class,
+									const QList<int>& Tasks, const QString& Class,
 									double Radius = 0.0);
 		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
-								  const QList<int>& Tasks, const QString Class,
+								  const QList<int>& Tasks, const QString& Class,
 								  double Radius = 0.0);
 		QHash<int, QSet<int>> joinPoints(const QHash<int, QSet<int>>& Geometry,
 								   const QList<DatabaseDriver::POINT>& Points,
-								   const QList<int>& Tasks, const QString Class,
+								   const QList<int>& Tasks, const QString& Class,
 								   double Radius = 0.0);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
@@ -216,7 +217,7 @@ class DatabaseDriver : public QObject
 		void onDataUpdate(RecordModel*);
 		void onDataJoin(int);
 		void onDataSplit(int);
-		void onDataRefactor(void);
+		void onDataRefactor(int);
 
 		void onBatchExec(int);
 

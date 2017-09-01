@@ -187,7 +187,7 @@ class MainWindow : public QMainWindow
 		void dataMerged(int Count);
 		void dataCutted(int Count);
 
-		void refactorData(void);
+		void refactorData(int Count);
 
 		void loginAttempt(void);
 

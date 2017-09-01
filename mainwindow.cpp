@@ -599,9 +599,9 @@ void MainWindow::dataCutted(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Splitted %n object(s)", nullptr, Count));
 }
 
-void MainWindow::refactorData(void)
+void MainWindow::refactorData(int Count)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Class changed"));
+	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n object(s)", nullptr, Count));
 }
 
 void MainWindow::loginAttempt(void)
