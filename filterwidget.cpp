@@ -421,6 +421,16 @@ void FilterWidget::setValue(const QVariant& Value)
 		}
 	}
 
+	if (auto W = dynamic_cast<QSpinBox*>(Simple))
+	{
+		W->setValue(Value.toInt());
+	}
+
+	if (auto W = dynamic_cast<QDoubleSpinBox*>(Simple))
+	{
+		W->setValue(Value.toDouble());
+	}
+
 	if (auto W = dynamic_cast<QComboBox*>(Widget))
 	{
 		if (W->property("MASK").toBool())
