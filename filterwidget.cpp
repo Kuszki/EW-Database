@@ -65,6 +65,7 @@ QString FilterWidget::getCondition(void) const
 {
 	const bool IS = ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL";
 	const bool IN = ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN";
+	const bool BT = ui->Operator->currentText() == "BETWEEN";
 
 	if (IS)
 	{
@@ -79,6 +80,13 @@ QString FilterWidget::getCondition(void) const
 				.arg(ui->Operator->currentText())
 				.arg(getValue().toStringList().join("', '"));
 	}
+	else if (BT)
+	{
+		return QString("%1 BETWEEN '%2' AND '%3'")
+				.arg(objectName())
+				.arg(getValue().toList()[0].toString())
+				.arg(getValue().toList()[1].toString());
+	}
 	else
 	{
 		return QString("%1 %2 '%3'")
@@ -92,7 +100,7 @@ QVariant FilterWidget::getValue(void) const
 {
 	if (ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL") return QVariant();
 
-	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN")
+	if (ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN" || ui->Operator->currentText() == "BETWEEN")
 	{
 		if (auto W = dynamic_cast<QComboBox*>(Simple))
 		{
@@ -107,6 +115,22 @@ QVariant FilterWidget::getValue(void) const
 				}
 
 			return Checked;
+		}
+		else if (auto W = dynamic_cast<QSpinBox*>(Simple))
+		{
+			if (auto N = dynamic_cast<QSpinBox*>(Widget))
+			{
+				return QList<QVariant>() << N->value() << W->value();
+			}
+			else return QVariant();
+		}
+		else if (auto W = dynamic_cast<QDoubleSpinBox*>(Simple))
+		{
+			if (auto N = dynamic_cast<QDoubleSpinBox*>(Widget))
+			{
+				return QList<QVariant>() << N->value() << W->value();
+			}
+			else return QVariant();
 		}
 		else return QVariant();
 	}
@@ -173,9 +197,10 @@ void FilterWidget::operatorChanged(const QString& Name)
 {
 	const bool IS = Name == "IS NULL" || Name == "IS NOT NULL";
 	const bool IN = Name == "IN" || Name == "NOT IN";
+	const bool BT = Name == "BETWEEN";
 
-	if (Widget) Widget->setVisible(!IS && (!IN || !Simple));
-	if (Simple) Simple->setVisible(!IS && IN);
+	if (Widget) Widget->setVisible(BT || (!IS && (!IN || !Simple)));
+	if (Simple) Simple->setVisible(BT || (!IS && IN));
 }
 
 void FilterWidget::editFinished(void)
@@ -210,6 +235,11 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 	if (Field.Type != DatabaseDriver::STRING)
 	{
 		Operators.removeOne("LIKE"); Operators.removeOne("NOT LIKE");
+	}
+
+	if (Field.Type != DatabaseDriver::INTEGER && Field.Type != DatabaseDriver::DOUBLE)
+	{
+		Operators.removeOne("BETWEEN");
 	}
 
 	if (!Field.Dict.isEmpty())
@@ -279,10 +309,16 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 			case DatabaseDriver::INTEGER:
 			case DatabaseDriver::SMALLINT:
 			{
-				auto Spin = new QSpinBox(this); Widget = Spin;
+				const int Max = Field.Type == DatabaseDriver::SMALLINT ? 255 : INT_MAX;
 
-				Spin->setSingleStep(1);
-				Spin->setRange(0, 100);
+				auto SpinA = new QSpinBox(this); Widget = SpinA;
+				auto SpinB = new QSpinBox(this); Simple = SpinB;
+
+				SpinA->setSingleStep(1);
+				SpinA->setRange(0, Max);
+
+				SpinB->setSingleStep(1);
+				SpinB->setRange(0, Max);
 
 				Datatype = QVariant::Int;
 			}
@@ -300,10 +336,14 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 			break;
 			case DatabaseDriver::DOUBLE:
 			{
-				auto Spin = new QDoubleSpinBox(this); Widget = Spin;
+				auto SpinA = new QDoubleSpinBox(this); Widget = SpinA;
+				auto SpinB = new QDoubleSpinBox(this); Simple = SpinB;
 
-				Spin->setSingleStep(1.0);
-				Spin->setRange(0.0, 10000.0);
+				SpinA->setSingleStep(1.0);
+				SpinA->setRange(0.0, 10000.0);
+
+				SpinB->setSingleStep(1.0);
+				SpinB->setRange(0.0, 10000.0);
 
 				Datatype = QVariant::Double;
 			}

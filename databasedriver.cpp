@@ -22,7 +22,7 @@
 
 const QStringList DatabaseDriver::Operators =
 {
-	"=", "<>", ">=", ">", "<=", "<",
+	"=", "<>", ">=", ">", "<=", "<", "BETWEEN",
 	"LIKE", "NOT LIKE",
 	"IN", "NOT IN",
 	"IS NULL", "IS NOT NULL"
