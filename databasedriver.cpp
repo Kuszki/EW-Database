@@ -2925,9 +2925,6 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	if (P) J |= 0b110000;
 
-	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, Tasks.count()); Step = 0;
-
 	Query.prepare(
 		"SELECT "
 			"O.UID, T.POS_X, T.POS_Y, IIF(( "
@@ -2958,6 +2955,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 		"ON "
 			"(T.ID = E.IDE AND E.TYP = 0) "
 		"WHERE "
+			"O.UID = ? AND "
 			"O.RODZAJ = 4 AND "
 			"O.STATUS = 0 AND "
 			"0 = ( "
@@ -2978,9 +2976,14 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 					"SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?)"
 				 ")");
 
-	if (Query.exec()) while (Query.next()) if (Tasks.contains(Query.value(0).toInt()))
+	emit onBeginProgress(tr("Generating tasklist"));
+	emit onSetupProgress(0, Tasks.count()); Step = 0;
+
+	for (const auto& UID : Tasks)
 	{
-		List.append(
+		Query.addBindValue(UID);
+
+		if (Query.exec() && Query.next()) List.append(
 		{
 			Query.value(0).toInt(),
 			Query.value(1).toDouble(),

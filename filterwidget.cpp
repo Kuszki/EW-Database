@@ -38,6 +38,7 @@ QPair<QString, QVariant> FilterWidget::getBinding(void) const
 {
 	const bool IS = ui->Operator->currentText() == "IS NULL" || ui->Operator->currentText() == "IS NOT NULL";
 	const bool IN = ui->Operator->currentText() == "IN" || ui->Operator->currentText() == "NOT IN";
+	const bool BT = ui->Operator->currentText() == "BETWEEN";
 
 	if (IS)
 	{
@@ -54,6 +55,10 @@ QPair<QString, QVariant> FilterWidget::getBinding(void) const
 		for (int i = 1; i < Value.size(); ++i) Key.append(", ?");
 
 		return qMakePair(Key.append(")"), Value);
+	}
+	else if (BT)
+	{
+		return qMakePair(QString("%1 BETWEEN ? AND ?").arg(objectName()), getValue());
 	}
 	else
 	{
@@ -129,6 +134,22 @@ QVariant FilterWidget::getValue(void) const
 			if (auto N = dynamic_cast<QDoubleSpinBox*>(Widget))
 			{
 				return QList<QVariant>() << N->value() << W->value();
+			}
+			else return QVariant();
+		}
+		else if (auto W = dynamic_cast<QDateEdit*>(Simple))
+		{
+			if (auto N = dynamic_cast<QDateEdit*>(Widget))
+			{
+				return QList<QVariant>() << N->date().toString("dd.MM.yyyy") << W->date().toString("dd.MM.yyyy");
+			}
+			else return QVariant();
+		}
+		else if (auto W = dynamic_cast<QDateTimeEdit*>(Simple))
+		{
+			if (auto N = dynamic_cast<QDateTimeEdit*>(Widget))
+			{
+				return QList<QVariant>() << N->date().toString("dd.MM.yyyy hh:mm:ss") << W->date().toString("dd.MM.yyyy hh:mm:ss");
 			}
 			else return QVariant();
 		}
@@ -237,7 +258,8 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 		Operators.removeOne("LIKE"); Operators.removeOne("NOT LIKE");
 	}
 
-	if (Field.Type != DatabaseDriver::INTEGER && Field.Type != DatabaseDriver::DOUBLE)
+	if (Field.Type != DatabaseDriver::INTEGER && Field.Type != DatabaseDriver::DOUBLE &&
+	    Field.Type != DatabaseDriver::DATE && Field.Type != DatabaseDriver::DATETIME)
 	{
 		Operators.removeOne("BETWEEN");
 	}
@@ -350,20 +372,28 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 			break;
 			case DatabaseDriver::DATE:
 			{
-				auto Date = new QDateEdit(this); Widget = Date;
+				auto DateA = new QDateEdit(this); Widget = DateA;
+				auto DateB = new QDateEdit(this); Simple = DateB;
 
-				Date->setDisplayFormat("dd.MM.yyyy");
-				Date->setCalendarPopup(true);
+				DateA->setDisplayFormat("dd.MM.yyyy");
+				DateA->setCalendarPopup(true);
+
+				DateB->setDisplayFormat("dd.MM.yyyy");
+				DateB->setCalendarPopup(true);
 
 				Datatype = QVariant::Date;
 			}
 			break;
 			case DatabaseDriver::DATETIME:
 			{
-				auto Date = new QDateTimeEdit(this); Widget = Date;
+				auto DateA = new QDateTimeEdit(this); Widget = DateA;
+				auto DateB = new QDateTimeEdit(this); Simple = DateB;
 
-				Date->setDisplayFormat("dd.MM.yyyy hh:mm:ss");
-				Date->setCalendarPopup(true);
+				DateA->setDisplayFormat("dd.MM.yyyy hh:mm:ss");
+				DateA->setCalendarPopup(true);
+
+				DateB->setDisplayFormat("dd.MM.yyyy hh:mm:ss");
+				DateB->setCalendarPopup(true);
 
 				Datatype = QVariant::DateTime;
 			}
