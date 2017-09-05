@@ -390,7 +390,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 
 QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>> Data, const QHash<int, QVariant>& Geometry, const QString& Limiter)
 {
-	if (!Database.isOpen()) Data;
+	if (!Database.isOpen()) return Data;
 
 	struct OBJECT
 	{
