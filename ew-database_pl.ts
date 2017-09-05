@@ -315,7 +315,6 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="databasedriver.cpp" line="1516"/>
         <location filename="databasedriver.cpp" line="2113"/>
-        <location filename="databasedriver.cpp" line="2928"/>
         <source>Generating tasklist</source>
         <translation>Generowanie listy zadań</translation>
     </message>
@@ -376,42 +375,52 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Zapizywanie zmian</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2999"/>
+        <location filename="databasedriver.cpp" line="3018"/>
+        <source>Generating tasklist for symbols</source>
+        <translation>Generowanie listy zadań dla obiektów punktowych</translation>
+    </message>
+    <message>
+        <location filename="databasedriver.cpp" line="3036"/>
+        <source>Generating tasklist for lines</source>
+        <translation>Generowanie listy zadań dla obiektów liniowych</translation>
+    </message>
+    <message>
+        <location filename="databasedriver.cpp" line="3117"/>
         <source>Inserting labels</source>
         <translation>Wstawianie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3351"/>
+        <location filename="databasedriver.cpp" line="3496"/>
         <source>Preparing edit data</source>
         <translation>Przygotowywanie okna edycji danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3381"/>
-        <location filename="databasedriver.cpp" line="3430"/>
+        <location filename="databasedriver.cpp" line="3526"/>
+        <location filename="databasedriver.cpp" line="3575"/>
         <source>Preparing classes</source>
         <translation>Ładowanie dostępnych kodów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3452"/>
+        <location filename="databasedriver.cpp" line="3597"/>
         <source>Selecting layers data</source>
         <translation>Wczytywanie danych o warstwach</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3754"/>
-        <location filename="databasedriver.cpp" line="3781"/>
+        <location filename="databasedriver.cpp" line="3899"/>
+        <location filename="databasedriver.cpp" line="3926"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3754"/>
-        <location filename="databasedriver.cpp" line="3782"/>
+        <location filename="databasedriver.cpp" line="3899"/>
+        <location filename="databasedriver.cpp" line="3927"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="156"/>
         <location filename="databasedriver.cpp" line="194"/>
-        <location filename="databasedriver.cpp" line="3772"/>
+        <location filename="databasedriver.cpp" line="3917"/>
         <source>Unknown</source>
         <translation>Niezdefiniowane</translation>
     </message>
@@ -463,10 +472,10 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="2577"/>
         <location filename="databasedriver.cpp" line="2638"/>
         <location filename="databasedriver.cpp" line="2912"/>
-        <location filename="databasedriver.cpp" line="3334"/>
-        <location filename="databasedriver.cpp" line="3345"/>
-        <location filename="databasedriver.cpp" line="3370"/>
-        <location filename="databasedriver.cpp" line="3422"/>
+        <location filename="databasedriver.cpp" line="3479"/>
+        <location filename="databasedriver.cpp" line="3490"/>
+        <location filename="databasedriver.cpp" line="3515"/>
+        <location filename="databasedriver.cpp" line="3567"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -589,17 +598,17 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
 <context>
     <name>FilterWidget</name>
     <message>
-        <location filename="filterwidget.cpp" line="218"/>
+        <location filename="filterwidget.cpp" line="270"/>
         <source>Select values</source>
         <translation>Zaznacz wartości</translation>
     </message>
     <message>
-        <location filename="filterwidget.cpp" line="294"/>
+        <location filename="filterwidget.cpp" line="352"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="filterwidget.cpp" line="295"/>
+        <location filename="filterwidget.cpp" line="353"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
@@ -763,45 +772,67 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Wstaw etykiety</translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="23"/>
+        <location filename="labeldialog.ui" line="97"/>
         <source>X offset</source>
         <translation>Przesunięcie X</translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="30"/>
-        <location filename="labeldialog.ui" line="56"/>
+        <location filename="labeldialog.ui" line="34"/>
+        <location filename="labeldialog.ui" line="58"/>
+        <location filename="labeldialog.ui" line="104"/>
+        <location filename="labeldialog.ui" line="174"/>
         <source> m</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="49"/>
+        <location filename="labeldialog.ui" line="136"/>
         <source>Y offset</source>
         <translation>Przesunięcie Y</translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="75"/>
+        <location filename="labeldialog.ui" line="77"/>
         <source>Justification</source>
         <translation>Justyfikacja</translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="82"/>
+        <location filename="labeldialog.ui" line="123"/>
         <source>Auto</source>
         <translation>Automatyczna</translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="95"/>
+        <location filename="labeldialog.ui" line="44"/>
         <source>Label</source>
         <translation>Etykieta</translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="102"/>
+        <location filename="labeldialog.ui" line="24"/>
+        <source>Minimum length</source>
+        <translation>Minimalna długość</translation>
+    </message>
+    <message>
+        <location filename="labeldialog.ui" line="31"/>
+        <source>No minimum length</source>
+        <translation>Brak minimalnej długości</translation>
+    </message>
+    <message>
+        <location filename="labeldialog.ui" line="51"/>
         <source>${u.ETYKIETA}</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="labeldialog.ui" line="124"/>
+        <location filename="labeldialog.ui" line="145"/>
         <source>Add pointer</source>
         <translation>Wstaw odnośnik</translation>
+    </message>
+    <message>
+        <location filename="labeldialog.ui" line="164"/>
+        <source>Repeat every</source>
+        <translation>Powtarzaj co</translation>
+    </message>
+    <message>
+        <location filename="labeldialog.ui" line="171"/>
+        <source>Do not repeat</source>
+        <translation>Nie powtarzaj etykiet</translation>
     </message>
 </context>
 <context>
@@ -1486,12 +1517,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Zaznacz wartości</translation>
     </message>
     <message>
-        <location filename="updatewidget.cpp" line="199"/>
+        <location filename="updatewidget.cpp" line="203"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="updatewidget.cpp" line="200"/>
+        <location filename="updatewidget.cpp" line="204"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
