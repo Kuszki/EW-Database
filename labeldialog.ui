@@ -7,50 +7,52 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>193</height>
+    <height>250</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Insert label</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="format-text-italic"/>
+   <iconset theme="format-text-italic">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="xLabel">
+   <item row="5" column="0">
+    <widget class="QLabel" name="limiterLabel">
      <property name="text">
-      <string>X offset</string>
+      <string>Minimum length</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="1">
-    <widget class="QDoubleSpinBox" name="xSpin">
+   <item row="5" column="1">
+    <widget class="QDoubleSpinBox" name="limiterSpin">
+     <property name="specialValueText">
+      <string>No minimum length</string>
+     </property>
      <property name="suffix">
       <string> m</string>
      </property>
-     <property name="minimum">
-      <double>-10.000000000000000</double>
-     </property>
      <property name="maximum">
-      <double>10.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.010000000000000</double>
-     </property>
-     <property name="value">
-      <double>1.000000000000000</double>
+      <double>1000.000000000000000</double>
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="yLabel">
+   <item row="10" column="0">
+    <widget class="QLabel" name="textLabel">
      <property name="text">
-      <string>Y offset</string>
+      <string>Label</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="1">
+   <item row="10" column="1">
+    <widget class="QLineEdit" name="textEdit">
+     <property name="text">
+      <string>${u.ETYKIETA}</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
     <widget class="QDoubleSpinBox" name="ySpin">
      <property name="suffix">
       <string> m</string>
@@ -69,14 +71,53 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="4" column="0">
     <widget class="QLabel" name="justifyLabel">
      <property name="text">
       <string>Justification</string>
      </property>
     </widget>
    </item>
+   <item row="11" column="0" colspan="2">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>379</width>
+       <height>135</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="xLabel">
+     <property name="text">
+      <string>X offset</string>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="1">
+    <widget class="QDoubleSpinBox" name="xSpin">
+     <property name="suffix">
+      <string> m</string>
+     </property>
+     <property name="minimum">
+      <double>-10.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>10.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
     <widget class="QSpinBox" name="justifySpin">
      <property name="specialValueText">
       <string>Auto</string>
@@ -90,33 +131,13 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="textLabel">
+    <widget class="QLabel" name="yLabel">
      <property name="text">
-      <string>Label</string>
+      <string>Y offset</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QLineEdit" name="textEdit">
-     <property name="text">
-      <string>${u.ETYKIETA}</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="2">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>379</width>
-       <height>135</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="5" column="0" colspan="2">
+   <item row="12" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QCheckBox" name="pointerBox">
@@ -136,6 +157,26 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="repeatLabel">
+     <property name="text">
+      <string>Repeat every</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDoubleSpinBox" name="repeatSpin">
+     <property name="specialValueText">
+      <string>Do not repeat</string>
+     </property>
+     <property name="suffix">
+      <string> m</string>
+     </property>
+     <property name="maximum">
+      <double>1000.000000000000000</double>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

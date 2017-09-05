@@ -44,7 +44,9 @@ void LabelDialog::accept(void)
 			ui->justifySpin->value(),
 			ui->xSpin->value(),
 			ui->ySpin->value(),
-			ui->pointerBox->isChecked());
+			ui->pointerBox->isChecked(),
+			ui->limiterSpin->value(),
+			ui->repeatSpin->value());
 
 	QDialog::accept();
 }

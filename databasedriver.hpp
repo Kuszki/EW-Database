@@ -188,8 +188,8 @@ class DatabaseDriver : public QObject
 		void editText(RecordModel* Model, const QModelIndexList& Items,
 				    bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 
-		void insertLabel(RecordModel* Model, const QModelIndexList& Items,
-					  const QString& Label, int J, double X, double Y, bool P);
+		void insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label,
+					  int J, double X, double Y, bool P, double L, double R);
 
 		void getCommon(RecordModel* Model, const QModelIndexList& Items);
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);

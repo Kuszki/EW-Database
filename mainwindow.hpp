@@ -152,7 +152,7 @@ class MainWindow : public QMainWindow
 		void changeClass(const QString& Class,
 					  int Line, int Point, int Text);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
-		void insertLabel(const QString Text, int J, double X, double Y, bool P);
+		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -234,8 +234,8 @@ class MainWindow : public QMainWindow
 		void onTextRequest(RecordModel*, const QModelIndexList&,
 					    bool, bool, bool, bool, double);
 
-		void onLabelRequest(RecordModel*, const QModelIndexList&,
-						const QString&, int, double, double, bool);
+		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
+						int, double, double, bool, double, double);
 
 		void onGroupRequest(const QList<int>&);
 

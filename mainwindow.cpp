@@ -433,12 +433,12 @@ void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, doubl
 	lockUi(BUSY); emit onTextRequest(Model, Selected, Move, Justify, Rotate, Sort, Length);
 }
 
-void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool P)
+void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onLabelRequest(Model, Selected, Text, J, X, Y, P);
+	lockUi(BUSY); emit onLabelRequest(Model, Selected, Text, J, X, Y, P, L, R);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)

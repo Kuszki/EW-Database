@@ -2907,15 +2907,19 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	emit onTextEdit(Points.size() - Rejected);
 }
 
-void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int J, double X, double Y, bool P)
+void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int J, double X, double Y, bool P, double L, double R)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelInsert(0); return; }
 
+	struct LABEL { int ID; double X, Y, R; int Layer; };
+
+	struct LINE { int ID; QList<QLineF> Lines; int Layer; };
+
 	struct POINT { int ID; double X, Y; int Layer; };
 
-	QSqlQuery Query(Database), Select(Database), Text(Database), Element(Database);
-	const QList<int> Tasks = Model->getUids(Items); Query.setForwardOnly(true);
-	QList<POINT> List; int Step = 0, Count = 0;
+	QSqlQuery Symbols(Database), Lines(Database), Select(Database), Text(Database), Element(Database);
+	QList<POINT> SymbolList; QList<LINE> LineList; QList<LABEL> LineInserts; int Step = 0, Count = 0;
+	const QList<int> Tasks = Model->getUids(Items); QMutex Synchronizer;
 
 	if (!J)
 	{
@@ -2925,7 +2929,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	if (P) J |= 0b110000;
 
-	Query.prepare(
+	Symbols.prepare(
 		"SELECT "
 			"O.UID, T.POS_X, T.POS_Y, IIF(( "
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
@@ -2965,10 +2969,45 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
 			")");
 
+	Lines.prepare(
+		"SELECT "
+			"O.UID, T.P0_X, T.P0_Y, "
+			"IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), "
+			"IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), "
+			"( "
+				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+				"WHERE P.NAZWA = ( "
+					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
+					"WHERE H.ID = T.ID_WARSTWY "
+				") "
+			") "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"E.UIDO = O.UID "
+		"INNER JOIN "
+			"EW_POLYLINE T "
+		"ON "
+			"(T.ID = E.IDE AND E.TYP = 0) "
+		"WHERE "
+			"O.UID = ? AND "
+			"O.RODZAJ = 2 AND "
+			"O.STATUS = 0 AND "
+			"0 = ( "
+				"SELECT COUNT(L.ID) FROM EW_TEXT L "
+				"INNER JOIN EW_OB_ELEMENTY Q "
+				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
+				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
+			") "
+		"ORDER BY "
+			"E.N ASCENDING");
+
 	Select.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
 
-	Text.prepare(QString("INSERT INTO EW_TEXT (ID, STAN_ZMIANY, CREATE_TS, MODIFY_TS, TYP, TEXT, POS_X, POS_Y, ID_WARSTWY, JUSTYFIKACJA, ODN_X, ODN_Y) "
-					 "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, %2, %3, %4)")
+	Text.prepare(QString("INSERT INTO EW_TEXT (ID, STAN_ZMIANY, CREATE_TS, MODIFY_TS, TYP, TEXT, POS_X, POS_Y, KAT, ID_WARSTWY, JUSTYFIKACJA, ODN_X, ODN_Y) "
+					 "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, ?, %2, %3, %4)")
 			   .arg(Label).arg(J).arg(-X).arg(-Y));
 
 	Element.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, TYP, IDE, N) "
@@ -2976,33 +3015,109 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 					"SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?)"
 				 ")");
 
-	emit onBeginProgress(tr("Generating tasklist"));
+	emit onBeginProgress(tr("Generating tasklist for symbols"));
 	emit onSetupProgress(0, Tasks.count()); Step = 0;
 
 	for (const auto& UID : Tasks)
 	{
-		Query.addBindValue(UID);
+		Symbols.addBindValue(UID);
 
-		if (Query.exec() && Query.next()) List.append(
+		if (Symbols.exec() && Symbols.next()) SymbolList.append(
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toDouble(),
-			Query.value(2).toDouble(),
-			Query.value(3).toInt()
+			Symbols.value(0).toInt(),
+			Symbols.value(1).toDouble(),
+			Symbols.value(2).toDouble(),
+			Symbols.value(3).toInt()
 		});
 
 		emit onUpdateProgress(++Step);
 	}
 
-	QtConcurrent::blockingMap(List, [X, Y] (POINT& Point) -> void
+	emit onBeginProgress(tr("Generating tasklist for lines"));
+	emit onSetupProgress(0, Tasks.count()); Step = 0;
+
+	for (const auto& UID : Tasks)
+	{
+		Lines.addBindValue(UID);
+		QPointF Start, End;
+
+		if (Lines.exec()) while (Lines.next())
+		{
+			const int UID = Lines.value(0).toInt();
+
+			const QPointF First =
+			{
+				Lines.value(1).toDouble(),
+				Lines.value(2).toDouble()
+			};
+
+			const QPointF Last =
+			{
+				Lines.value(3).toDouble(),
+				Lines.value(4).toDouble()
+			};
+
+			if (Start != QPointF())
+			{
+				auto& Segments = getItemByField(LineList, UID, &LINE::ID).Lines;
+
+				if (End == First) Segments.push_back({ First, End = Last });
+				else if (End == Last) Segments.push_back({ Last, End = First });
+				else if (Start == First) Segments.push_front({ Start = Last, First });
+				else if (Start == Last) Segments.push_front({ Start = First, Last });
+			}
+			else
+			{
+				LineList.append(
+				{
+					Lines.value(0).toInt(),
+					QList<QLineF>() << QLineF(Start = First, End = Last),
+					Lines.value(5).toInt()
+				});
+			}
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	QtConcurrent::blockingMap(SymbolList, [X, Y] (POINT& Point) -> void
+	{
+		Point.X += X; Point.Y += Y;
+	});
+
+	QtConcurrent::blockingMap(LineList, [&LineInserts, &Synchronizer, X, Y, L, R, P] (LINE& Line) -> void
+	{
+		double Length(0.0); for (const auto& Segment : Line.Lines) Length += Segment.length(); if (Length < L) return;
+
+		double Step((R != 0.0) ? ((Length - (int(Length / R) * R)) / 2.0) : (Length / 2.0)), Now(0.0);
+
+		for (const auto& Segment : Line.Lines) if (const double Len = Segment.length())
+		{
+			const double Last = Now; Now += Len; while (Now >= Step)
+			{
+				double A = qAtan((Segment.y1() - Segment.y2()) / (Segment.x1() - Segment.x2())) - M_PI / 2.0;
+				while (A < -(M_PI / 2.0)) A += M_PI; while (A > (M_PI / 2.0)) A -= M_PI;
+
+				const QPointF Point = Segment.pointAt((Step - Last) / Len);
+
+				Synchronizer.lock();
+				LineInserts.append({ Line.ID, Point.x(), Point.y(), P ? 0.0 : A, Line.Layer });
+				Synchronizer.unlock();
+
+				if (R != 0.0) Step += R; else return;
+			}
+		}
+	});
+
+	QtConcurrent::blockingMap(LineInserts, [X, Y] (LABEL& Point) -> void
 	{
 		Point.X += X; Point.Y += Y;
 	});
 
 	emit onBeginProgress(tr("Inserting labels"));
-	emit onSetupProgress(0, List.size()); Step = 0;
+	emit onSetupProgress(0, SymbolList.size() + LineInserts.size()); Step = 0;
 
-	for (const auto& Item : List)
+	for (const auto& Item : SymbolList)
 	{
 		if (Select.exec() && Select.next())
 		{
@@ -3011,6 +3126,33 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 			Text.addBindValue(ID);
 			Text.addBindValue(Item.X);
 			Text.addBindValue(Item.Y);
+			Text.addBindValue(0.0);
+			Text.addBindValue(Item.Layer);
+
+			if (!Text.exec()) continue;
+
+			Element.addBindValue(Item.ID);
+			Element.addBindValue(ID);
+			Element.addBindValue(Item.ID);
+
+			if (!Element.exec()) continue;
+
+			Count += 1;
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (const auto& Item : LineInserts)
+	{
+		if (Select.exec() && Select.next())
+		{
+			const int ID = Select.value(0).toInt();
+
+			Text.addBindValue(ID);
+			Text.addBindValue(Item.X);
+			Text.addBindValue(Item.Y);
+			Text.addBindValue(Item.R);
 			Text.addBindValue(Item.Layer);
 
 			if (!Text.exec()) continue;

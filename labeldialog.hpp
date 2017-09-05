@@ -55,7 +55,8 @@ class LabelDialog : public QDialog
 	signals:
 
 		void onLabelRequest(const QString&, int,
-						double, double, bool);
+						double, double, bool,
+						double, double);
 
 };
 
