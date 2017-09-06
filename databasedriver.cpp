@@ -19,7 +19,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "databasedriver.hpp"
-
+#include <QMessageBox>
 const QStringList DatabaseDriver::Operators =
 {
 	"=", "<>", ">=", ">", "<=", "<", "BETWEEN",
@@ -298,7 +298,7 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 	QMap<QString, QList<int>> List; int Step = 0;
 
 	emit onBeginProgress(tr("Preparing queries"));
-	emit onSetupProgress(0, Indexes.count());
+	emit onSetupProgress(0, Indexes.size());
 
 	if (Common) List.insert("EW_OBIEKTY", QList<int>());
 
@@ -2890,11 +2890,11 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	struct LINE { int ID; QList<QLineF> Lines; int Layer; };
 
-	struct POINT { int ID; double X, Y; int Layer; };
+	struct SURFACE { int ID; QPolygonF Surface; int Layer; };
 
-	QSqlQuery Symbols(Database), Lines(Database), Select(Database), Text(Database), Element(Database);
-	QList<POINT> SymbolList; QList<LINE> LineList; QList<LABEL> LineInserts; int Step = 0, Count = 0;
-	const QList<int> Tasks = Model->getUids(Items); QMutex Synchronizer;
+	QSqlQuery Symbols(Database), Lines(Database), Surfaces(Database), Select(Database), Text(Database), Element(Database);
+	QList<LINE> LineList; QList<SURFACE> SurfaceList; QList<LABEL> Insertions; QSet<int> Used;
+	const QList<int> Tasks = Model->getUids(Items); QMutex Synchronizer; int Step = 0, Count = 0;
 
 	if (!J)
 	{
@@ -2906,18 +2906,18 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	Symbols.prepare(
 		"SELECT "
-			"O.UID, T.POS_X, T.POS_Y, IIF(( "
+			"O.UID, T.POS_X, T.POS_Y, IIF(("
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
 				"INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
-				"WHERE G.NAZWA = ( "
+				"WHERE G.NAZWA = ("
 					"SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
 					"INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
 					"WHERE J.ID = T.ID_WARSTWY "
 				") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
-				") IS NOT NULL, (  "
+				") IS NOT NULL, ("
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P  "
 				"INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
-				"WHERE G.NAZWA = ( "
+				"WHERE G.NAZWA = ("
 					"SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
 					"INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
 					"WHERE J.ID = T.ID_WARSTWY "
@@ -2937,7 +2937,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 			"O.UID = ? AND "
 			"O.RODZAJ = 4 AND "
 			"O.STATUS = 0 AND "
-			"0 = ( "
+			"0 = ("
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
 				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
@@ -2949,9 +2949,9 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 			"O.UID, T.P0_X, T.P0_Y, "
 			"IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), "
 			"IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), "
-			"( "
+			"("
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
-				"WHERE P.NAZWA = ( "
+				"WHERE P.NAZWA = ("
 					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
 					"WHERE H.ID = T.ID_WARSTWY "
 				") "
@@ -2970,7 +2970,42 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 			"O.UID = ? AND "
 			"O.RODZAJ = 2 AND "
 			"O.STATUS = 0 AND "
-			"0 = ( "
+			"0 = ("
+				"SELECT COUNT(L.ID) FROM EW_TEXT L "
+				"INNER JOIN EW_OB_ELEMENTY Q "
+				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
+				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
+			") "
+		"ORDER BY "
+			"E.N ASCENDING");
+
+	Surfaces.prepare(
+		"SELECT "
+			"O.UID, T.P1_FLAGS, T.P0_X, T.P0_Y, "
+			"IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), "
+			"IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), "
+			"("
+				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+				"WHERE P.NAZWA = LEFT(("
+					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
+					"WHERE H.ID = T.ID_WARSTWY "
+				"), 6) "
+			") "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"E.UIDO = O.UID "
+		"INNER JOIN "
+			"EW_POLYLINE T "
+		"ON "
+			"(T.ID = E.IDE AND E.TYP = 0) "
+		"WHERE "
+			"O.UID = ? AND "
+			"O.RODZAJ = 3 AND "
+			"O.STATUS = 0 AND "
+			"0 = ("
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
 				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
@@ -2991,35 +3026,38 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				 ")");
 
 	emit onBeginProgress(tr("Generating tasklist for symbols"));
-	emit onSetupProgress(0, Tasks.count()); Step = 0;
+	emit onSetupProgress(0, Tasks.size() - Used.size()); Step = 0;
 
-	for (const auto& UID : Tasks)
+	for (const auto& UID : Tasks) if (!Used.contains(UID))
 	{
 		Symbols.addBindValue(UID);
 
-		if (Symbols.exec() && Symbols.next()) SymbolList.append(
+		if (Symbols.exec() && Symbols.next())
 		{
-			Symbols.value(0).toInt(),
-			Symbols.value(1).toDouble(),
-			Symbols.value(2).toDouble(),
-			Symbols.value(3).toInt()
-		});
+			Used.insert(UID);
+
+			Insertions.append(
+			{
+				Symbols.value(0).toInt(),
+				Symbols.value(1).toDouble(),
+				Symbols.value(2).toDouble(),
+				0.0, Symbols.value(3).toInt()
+			});
+		}
 
 		emit onUpdateProgress(++Step);
 	}
 
 	emit onBeginProgress(tr("Generating tasklist for lines"));
-	emit onSetupProgress(0, Tasks.count()); Step = 0;
+	emit onSetupProgress(0, Tasks.size() - Used.size()); Step = 0;
 
-	for (const auto& UID : Tasks)
+	for (const auto& UID : Tasks) if (!Used.contains(UID))
 	{
-		Lines.addBindValue(UID);
-		QPointF Start, End;
+		Lines.addBindValue(UID); int Layer(0);
+		QPointF Start, End; QList<QLineF> Line;
 
 		if (Lines.exec()) while (Lines.next())
 		{
-			const int UID = Lines.value(0).toInt();
-
 			const QPointF First =
 			{
 				Lines.value(1).toDouble(),
@@ -3032,35 +3070,80 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				Lines.value(4).toDouble()
 			};
 
-			if (Start != QPointF())
+			if (!Line.isEmpty())
 			{
-				auto& Segments = getItemByField(LineList, UID, &LINE::ID).Lines;
-
-				if (End == First) Segments.push_back({ First, End = Last });
-				else if (End == Last) Segments.push_back({ Last, End = First });
-				else if (Start == First) Segments.push_front({ Start = Last, First });
-				else if (Start == Last) Segments.push_front({ Start = First, Last });
+				if (End == First) Line.push_back({ First, End = Last });
+				else if (End == Last) Line.push_back({ Last, End = First });
+				else if (Start == First) Line.push_front({ Start = Last, First });
+				else if (Start == Last) Line.push_front({ Start = First, Last });
 			}
 			else
 			{
-				LineList.append(
-				{
-					Lines.value(0).toInt(),
-					QList<QLineF>() << QLineF(Start = First, End = Last),
-					Lines.value(5).toInt()
-				});
+				Line.append({ Start = First, End = Last });
+				Layer = Lines.value(5).toInt();
 			}
 		}
+
+		if (!Line.isEmpty()) { LineList.append({ UID, Line, Layer }); Used.insert(UID); }
 
 		emit onUpdateProgress(++Step);
 	}
 
-	QtConcurrent::blockingMap(SymbolList, [X, Y] (POINT& Point) -> void
-	{
-		Point.X += X; Point.Y += Y;
-	});
+	emit onBeginProgress(tr("Generating tasklist for surfaces"));
+	emit onSetupProgress(0, Tasks.size() - Used.size()); Step = 0;
 
-	QtConcurrent::blockingMap(LineList, [&LineInserts, &Synchronizer, X, Y, L, R, P] (LINE& Line) -> void
+	for (const auto& UID : Tasks) if (!Used.contains(UID))
+	{
+		Surfaces.addBindValue(UID); int Layer(0); QPolygonF Surface;
+
+		if (Surfaces.exec()) while (Surfaces.next())
+		{
+			const QPointF First =
+			{
+				Surfaces.value(2).toDouble(),
+				Surfaces.value(3).toDouble()
+			};
+
+			const QPointF Last =
+			{
+				Surfaces.value(4).toDouble(),
+				Surfaces.value(5).toDouble()
+			};
+
+			if (Surfaces.value(1).toInt() == 4)
+			{
+				const double X = (First.x() + Last.x()) / 2.0;
+				const double Y = (First.y() + Last.y()) / 2.0;
+
+				Insertions.append({ UID, X, Y, 0.0, Surfaces.value(6).toInt() });
+			}
+			else
+			{
+				if (!Surface.isEmpty() && (!Surface.contains(First) || !Surface.contains(Last)))
+				{
+					if (Surface.last() == First) Surface.push_back(Last);
+					else if (Surface.last() == Last) Surface.push_back(First);
+					else if (Surface.first() == First) Surface.push_front(Last);
+					else if (Surface.first() == Last) Surface.push_front(First);
+				}
+				else
+				{
+					Surface.append(First); Surface.append(Last);
+
+					Layer = Surfaces.value(6).toInt();
+				}
+			}
+		}
+
+		if (!Surface.isEmpty()) { SurfaceList.append({ UID, Surface, Layer }); Used.insert(UID); }
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onBeginProgress(tr("Computing labels"));
+	emit onSetupProgress(0, 0); Step = 0;
+
+	QtConcurrent::blockingMap(LineList, [&Insertions, &Synchronizer, L, R, P] (LINE& Line) -> void
 	{
 		double Length(0.0); for (const auto& Segment : Line.Lines) Length += Segment.length(); if (Length < L) return;
 
@@ -3076,7 +3159,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				const QPointF Point = Segment.pointAt((Step - Last) / Len);
 
 				Synchronizer.lock();
-				LineInserts.append({ Line.ID, Point.x(), Point.y(), P ? 0.0 : A, Line.Layer });
+				Insertions.append({ Line.ID, Point.x(), Point.y(), P ? 0.0 : A, Line.Layer });
 				Synchronizer.unlock();
 
 				if (R != 0.0) Step += R; else return;
@@ -3084,41 +3167,27 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 		}
 	});
 
-	QtConcurrent::blockingMap(LineInserts, [X, Y] (LABEL& Point) -> void
+	QtConcurrent::blockingMap(SurfaceList, [&Insertions, &Synchronizer] (SURFACE& Surface) -> void
+	{
+		if (Surface.Surface.isEmpty()) return;
+
+		const double Mul = 1.0 / Surface.Surface.size(); double X(0.0), Y(0.0);
+		for (const auto& P : Surface.Surface) { X += Mul * P.x(); Y += Mul * P.y(); }
+
+		Synchronizer.lock();
+		Insertions.append({ Surface.ID, X, Y, 0.0, Surface.Layer });
+		Synchronizer.unlock();
+	});
+
+	QtConcurrent::blockingMap(Insertions, [X, Y] (LABEL& Point) -> void
 	{
 		Point.X += X; Point.Y += Y;
 	});
 
 	emit onBeginProgress(tr("Inserting labels"));
-	emit onSetupProgress(0, SymbolList.size() + LineInserts.size()); Step = 0;
+	emit onSetupProgress(0, Insertions.size()); Step = 0;
 
-	for (const auto& Item : SymbolList)
-	{
-		if (Select.exec() && Select.next())
-		{
-			const int ID = Select.value(0).toInt();
-
-			Text.addBindValue(ID);
-			Text.addBindValue(Item.X);
-			Text.addBindValue(Item.Y);
-			Text.addBindValue(0.0);
-			Text.addBindValue(Item.Layer);
-
-			if (!Text.exec()) continue;
-
-			Element.addBindValue(Item.ID);
-			Element.addBindValue(ID);
-			Element.addBindValue(Item.ID);
-
-			if (!Element.exec()) continue;
-
-			Count += 1;
-		}
-
-		emit onUpdateProgress(++Step);
-	}
-
-	for (const auto& Item : LineInserts)
+	for (const auto& Item : Insertions)
 	{
 		if (Select.exec() && Select.next())
 		{
