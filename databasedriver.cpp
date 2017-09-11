@@ -2636,7 +2636,10 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT "
-			"O.UID, T.UID, T.TYP, T.POS_X, T.POS_Y, T.JUSTYFIKACJA "
+			"O.UID, T.UID, T.TYP, "
+			"ROUND(T.POS_X, 3), "
+			"ROUND(T.POS_Y, 3), "
+			"T.JUSTYFIKACJA "
 		"FROM "
 			"EW_TEXT T "
 		"INNER JOIN "
@@ -2691,7 +2694,10 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT "
-			"P.P0_X, P.P0_Y, P.P1_X, P.P1_Y "
+			"ROUND(P.P0_X, 3), "
+			"ROUND(P.P0_Y, 3), "
+			"ROUND(P.P1_X, 3), "
+			"ROUND(P.P1_Y, 3) "
 		"FROM "
 			"EW_POLYLINE P "
 		"INNER JOIN "
@@ -2703,9 +2709,11 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		"ON "
 			"E.UIDO = O.UID "
 		"WHERE "
-			"O.STATUS = 0 AND O.RODZAJ = 2 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
 			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0");
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS = 0");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -2730,8 +2738,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	Query.prepare(
 		"SELECT "
 			"O.UID, P.UID, "
-			"(P.P0_X + P.P1_X) / 2.0, "
-			"(P.P0_Y + P.P1_Y) / 2.0 "
+			"ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
+			"ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
