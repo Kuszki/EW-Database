@@ -40,6 +40,15 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 
 DatabaseDriver::~DatabaseDriver(void) {}
 
+QString DatabaseDriver::getDatabaseName(void) const
+{
+	return QString("%1:%2@%3:%4")
+			.arg(Database.driverName())
+			.arg(Database.userName())
+			.arg(Database.hostName())
+			.arg(Database.databaseName());
+}
+
 QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 {
 	if (!Database.isOpen()) return QList<FIELD>();
@@ -929,6 +938,17 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		if (Query.exec(Select)) while (Query.next()) Data.remove(Query.value(0).toInt());
 	}
 
+	if (Geometry.contains(100))
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		const QString Select = QString("SELECT O.UID FROM EW_OBIEKTY O "
+								 "WHERE O.STATUS = 0 AND O.RODZAJ NOT IN ('%1')")
+						   .arg(Geometry[100].toStringList().join("', '"));
+
+		if (Query.exec(Select)) while (Query.next()) Data.remove(Query.value(0).toInt());
+	}
+
 	return Data;
 }
 
@@ -1381,7 +1401,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
 	QList<POINT> Points; QList<int> Joined; QHash<int, QSet<int>> Geometry, Insert;
-	QSqlQuery Query(Database), QueryA(Database), QueryB(Database);
+	QSqlQuery Query(Database), QueryA(Database), QueryB(Database); Query.setForwardOnly(true);
 	int Step = 0; int Count = 0;
 
 	if (!Tasks.contains(Point) || !Tasks.contains(Join)) { emit onDataJoin(0); return; }
@@ -1424,29 +1444,32 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		"INNER "
 			"JOIN EW_TEXT T "
 		"ON "
-			"E.IDE = T.ID "
+			"(E.IDE = T.ID AND E.TYP = 0) "
 		"WHERE "
-			"O.UID = ? AND "
 			"O.KOD = ? AND "
-			"E.TYP = 0 AND "
 			"T.STAN_ZMIANY = 0 AND "
 			"T.TYP = 4 AND "
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 4");
 
-	for (const auto& UID : Tasks[Point])
+	Query.addBindValue(Point);
+
+	if (Query.exec()) while (Query.next())
 	{
-		Query.addBindValue(UID);
-		Query.addBindValue(Point);
+		const int UID = Query.value(0).toInt();
+		const int ID = Query.value(1).toInt();
 
-		if (Query.exec()) while (Query.next()) if (!Joined.contains(Query.value(1).toInt())) Points.append(
+		if (Tasks[Point].contains(UID))
 		{
-			Query.value(1).toInt(),
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble()
-		});
+			if (!Joined.contains(ID)) Points.append(
+			{
+				Query.value(1).toInt(),
+				Query.value(2).toDouble(),
+				Query.value(3).toDouble()
+			});
 
-		emit onUpdateProgress(++Step);
+			emit onUpdateProgress(++Step);
+		}
 	}
 
 	emit onEndProgress(); Step = 0;
@@ -1463,17 +1486,17 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		"ON "
 			"O.UID = E.UIDO "
 		"WHERE "
-			"O.UID = ? AND "
 			"O.KOD = ? AND "
 			"E.TYP = 1 AND "
 			"O.STATUS = 0");
 
-	for (const auto& UID : Tasks[Join])
-	{
-		Query.addBindValue(UID);
-		Query.addBindValue(Join);
+	Query.addBindValue(Join);
 
-		if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+
+		if (Tasks[Join].contains(UID))
 		{
 			const int ID = Query.value(0).toInt();
 
@@ -1481,14 +1504,14 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 			if (!Insert.contains(ID)) Insert.insert(ID, QSet<int>());
 
 			Geometry[ID].insert(Query.value(1).toInt());
-		}
 
-		emit onUpdateProgress(++Step);
+			emit onUpdateProgress(++Step);
+		}
 	}
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, Tasks[Join].size());
+	emit onSetupProgress(0, 0);
 
 	switch (Type)
 	{
@@ -2310,7 +2333,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
 	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); int Step = 0;
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol;
+	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database), ClassQuery(Database);
 
 	const int Type = getItemByField(Tables, Class, &TABLE::Name).Type;
 	const QList<int> List = Model->getUids(Items); QSet<int> Change;
@@ -2337,6 +2361,68 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		if (OK) Change.insert(UID);
 	}
 
+	LineQuery.prepare(
+		"UPDATE "
+			"EW_POLYLINE "
+		"SET "
+			"TYP_LINII = ?, "
+			"ID_WARSTWY = ? "
+		"WHERE "
+			"ID IN ("
+				"SELECT "
+					"IDE "
+				"FROM "
+					"EW_OB_ELEMENTY "
+				"WHERE "
+					"TYP = 0 AND "
+					"UIDO = ?"
+			")");
+
+	SymbolQuery.prepare(
+		"UPDATE "
+			"EW_TEXT "
+		"SET "
+			"TEXT = ?, "
+			"ID_WARSTWY = ? "
+		"WHERE "
+			"TYP = 4 AND "
+			"ID IN ("
+				"SELECT "
+					"IDE "
+				"FROM "
+					"EW_OB_ELEMENTY "
+				"WHERE "
+					"TYP = 0 AND "
+					"UIDO = ?"
+			")");
+
+	LabelQuery.prepare(
+		"UPDATE "
+			"EW_TEXT "
+		"SET "
+			"ID_WARSTWY = ? "
+		"WHERE "
+			"TYP = 6 AND "
+			"ID IN ("
+				"SELECT "
+					"IDE "
+				"FROM "
+					"EW_OB_ELEMENTY "
+				"WHERE "
+					"TYP = 0 AND "
+					"UIDO = ?"
+			")");
+
+	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
+
+	Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
+
+	if (Query.exec() && Query.next()) LineStyle = Query.value(0).toInt();
+
+	Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
+
+	if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
+
 	emit onBeginProgress(tr("Updating class"));
 	emit onSetupProgress(0, Change.size());
 
@@ -2357,109 +2443,42 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 		for (const auto& Item : i.value()) if (Change.contains(Item))
 		{
-			if (Tab.Name != Class) Query.exec(QString(
-				"INSERT INTO "
-					"%1 (UIDO, %2) "
-				"SELECT "
-					"UIDO, %2 "
-				"FROM "
-					"%3 "
-				"WHERE "
-					"UIDO = '%4'")
-					 .arg(Table.Data)
-					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
-					 .arg(i.key())
-					 .arg(Item));
+			if (Tab.Name != Class)
+			{
+				Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
+							    "SELECT UIDO, %2 FROM %3 "
+							    "WHERE UIDO = '%4'")
+						 .arg(Table.Data)
+						 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+						 .arg(i.key())
+						 .arg(Item));
 
-			if (Tab.Name != Class) Query.exec(QString(
-				"DELETE FROM "
-					"%1 "
-				"WHERE "
-					"UIDO = '%2'")
-					 .arg(i.key())
-					 .arg(Item));
+				Query.exec(QString("DELETE FROM %1 WHERE UIDO = '%2'")
+						 .arg(i.key())
+						 .arg(Item));
+			}
 
-			Query.exec(QString(
-				"UPDATE "
-					"EW_POLYLINE "
-				"SET "
-					"TYP_LINII = ("
-						"SELECT "
-							"TYP_LINII "
-						"FROM "
-							"EW_WARSTWA_LINIOWA "
-						"WHERE "
-							"ID = '%1'"
-					"), "
-					"ID_WARSTWY = '%1' "
-				"WHERE "
-					"ID IN ("
-						"SELECT "
-							"IDE "
-						"FROM "
-							"EW_OB_ELEMENTY "
-						"WHERE "
-							"TYP = 0 AND "
-							"UIDO = '%2'"
-					")")
-					 .arg(Line)
-					 .arg(Item));
+			LineQuery.addBindValue(LineStyle);
+			LineQuery.addBindValue(Line);
+			LineQuery.addBindValue(Item);
 
-			Query.exec(QString(
-				"UPDATE "
-					"EW_TEXT "
-				"SET "
-					"TEXT = ("
-						"SELECT "
-							"NAZWA "
-						"FROM "
-							"EW_WARSTWA_TEXTOWA "
-						"WHERE "
-							"ID = '%1'"
-					"), "
-					"ID_WARSTWY = '%1' "
-				"WHERE "
-					"TYP = 4 AND "
-					"ID IN ("
-						"SELECT "
-							"IDE "
-						"FROM "
-							"EW_OB_ELEMENTY "
-						"WHERE "
-							"TYP = 0 AND "
-							"UIDO = '%2'"
-					")")
-					 .arg(Point)
-					 .arg(Item));
+			LineQuery.exec();
 
-			Query.exec(QString(
-				"UPDATE "
-					"EW_TEXT "
-				"SET "
-					"ID_WARSTWY = '%1' "
-				"WHERE "
-					"TYP = 6 AND "
-					"ID IN ("
-						"SELECT "
-							"IDE "
-						"FROM "
-							"EW_OB_ELEMENTY "
-						"WHERE "
-							"TYP = 0 AND "
-							"UIDO = '%2'"
-					")")
-					 .arg(Text)
-					 .arg(Item));
+			SymbolQuery.addBindValue(NewSymbol);
+			SymbolQuery.addBindValue(Point);
+			SymbolQuery.addBindValue(Item);
 
-			if (Tab.Name != Class) Query.exec(QString(
-				"UPDATE "
-					"EW_OBIEKTY "
-				"SET "
-					"KOD = '%1' "
-				"WHERE "
-					"UID = '%2'")
-					 .arg(Class)
-					 .arg(Item));
+			SymbolQuery.exec();
+
+			LabelQuery.addBindValue(Text);
+			LabelQuery.addBindValue(Item);
+
+			LabelQuery.exec();
+
+			ClassQuery.addBindValue(Class);
+			ClassQuery.addBindValue(Item);
+
+			ClassQuery.exec();
 
 			emit onUpdateProgress(++Step);
 		}
@@ -3284,7 +3303,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QHash<int, QSet<int>> Insert; QSet<int> Used;
 	QMutex Locker; QMap<int, QList<PART>> Parts;
 
 	Query.prepare(
@@ -3304,7 +3323,6 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
-			"O.UID = ? AND "
 			"O.KOD = ? AND "
 			"P.STAN_ZMIANY = 0 AND "
 			"E.TYP = 0 AND "
@@ -3313,12 +3331,13 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		"ORDER BY "
 			"E.N ASCENDING");
 
-	for (const auto& UID : Tasks)
-	{
-		Query.addBindValue(UID);
-		Query.addBindValue(Class);
+	Query.addBindValue(Class);
 
-		if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+
+		if (Tasks.contains(UID))
 		{
 			if (!Parts.contains(UID)) Parts.insert(UID, QList<PART>());
 
@@ -3343,8 +3362,6 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 				});
 			}
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
 	QtConcurrent::blockingMap(Parts, [&Insert, &Used, &Geometry, &Points, &Locker, SORT] (QList<PART>& List) -> void
@@ -3394,7 +3411,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QHash<int, QSet<int>> Insert; QSet<int> Used;
 
 	static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
 	{
@@ -3430,45 +3447,47 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
-			"O.UID = ? AND "
 			"O.KOD = ? AND "
 			"P.STAN_ZMIANY = 0 AND "
 			"E.TYP = 0 AND "
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 2");
 
-	for (const auto& UID : Tasks)
+	Query.addBindValue(Class);
+
+	if (Query.exec()) while (Query.next())
 	{
-		Query.addBindValue(UID);
-		Query.addBindValue(Class);
+		const int UID = Query.value(0).toInt();
 
-		if (Query.exec()) while (Query.next()) for (const auto P : Points) if (!Used.contains(P.ID))
+		if (Tasks.contains(UID))
 		{
-			const double X1 = Query.value(1).toDouble();
-			const double Y1 = Query.value(2).toDouble();
 
-			const double X2 = Query.value(3).toDouble();
-			const double Y2 = Query.value(4).toDouble();
-
-			bool Continue = false;
-
-			if (!Continue) Continue = QLineF(X1, Y1, P.X, P.Y).length() <= Radius;
-			if (!Continue) Continue = QLineF(X2, Y2, P.X, P.Y).length() <= Radius;
-			if (!Continue) Continue = distance(QLineF(X1, Y1, X2, Y2), QPointF(P.X, P.Y)) <= Radius;
-
-			if (Continue)
+			for (const auto P : Points) if (!Used.contains(P.ID))
 			{
-				const int ID = Query.value(0).toInt();
+				const double X1 = Query.value(1).toDouble();
+				const double Y1 = Query.value(2).toDouble();
 
-				if (!Geometry[ID].contains(P.ID))
+				const double X2 = Query.value(3).toDouble();
+				const double Y2 = Query.value(4).toDouble();
+
+				bool Continue = false;
+
+				if (!Continue) Continue = QLineF(X1, Y1, P.X, P.Y).length() <= Radius;
+				if (!Continue) Continue = QLineF(X2, Y2, P.X, P.Y).length() <= Radius;
+				if (!Continue) Continue = distance(QLineF(X1, Y1, X2, Y2), QPointF(P.X, P.Y)) <= Radius;
+
+				if (Continue)
 				{
-					Insert[ID].insert(P.ID);
-					Used.insert(P.ID);
+					const int ID = Query.value(0).toInt();
+
+					if (!Geometry[ID].contains(P.ID))
+					{
+						Insert[ID].insert(P.ID);
+						Used.insert(P.ID);
+					}
 				}
 			}
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
 	return Insert;
@@ -3479,7 +3498,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QHash<int, QSet<int>> Insert; QSet<int> Used; int Step = 0;
+	QHash<int, QSet<int>> Insert; QSet<int> Used;
 
 	Query.prepare(
 		"SELECT "
@@ -3503,27 +3522,29 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 4");
 
-	for (const auto& UID : Tasks)
+	Query.addBindValue(Class);
+
+	if (Query.exec()) while (Query.next())
 	{
-		Query.addBindValue(UID);
-		Query.addBindValue(Class);
+		const int UID = Query.value(0).toInt();
 
-		if (Query.exec()) while (Query.next()) for (const auto P : Points) if (!Used.contains(P.ID))
+		if (Tasks.contains(UID))
 		{
-			if (qAbs(Query.value(1).toDouble() - P.X) <= Radius &&
-			    qAbs(Query.value(2).toDouble() - P.Y) <= Radius)
+			for (const auto P : Points) if (!Used.contains(P.ID))
 			{
-				const int ID = Query.value(0).toInt();
-
-				if (!Geometry[ID].contains(P.ID))
+				if (qAbs(Query.value(1).toDouble() - P.X) <= Radius &&
+				    qAbs(Query.value(2).toDouble() - P.Y) <= Radius)
 				{
-					Insert[ID].insert(P.ID);
-					Used.insert(P.ID);
+					const int ID = Query.value(0).toInt();
+
+					if (!Geometry[ID].contains(P.ID))
+					{
+						Insert[ID].insert(P.ID);
+						Used.insert(P.ID);
+					}
 				}
 			}
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
 	return Insert;

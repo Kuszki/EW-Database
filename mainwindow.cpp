@@ -106,6 +106,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
 	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setValue);
 	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
 
 	connect(this, &MainWindow::onLoadRequest, Driver, &DatabaseDriver::loadList);
@@ -473,6 +474,8 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 
+	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
+
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 }
 
@@ -489,6 +492,8 @@ void MainWindow::databaseDisconnected(void)
 	Cut->deleteLater();
 	Label->deleteLater();
 	Text->deleteLater();
+
+	setWindowTitle(tr("EW-Database"));
 
 	updateView(nullptr);
 	lockUi(DISCONNECTED);

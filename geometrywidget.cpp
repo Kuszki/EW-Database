@@ -25,6 +25,7 @@ const QVector<int> GeometryWidget::Numbers = { 0, 1 };
 const QVector<int> GeometryWidget::Points = { 2, 3, 4, 5, 6, 7 };
 const QVector<int> GeometryWidget::Classes = { 8, 9 };
 const QVector<int> GeometryWidget::Lines = { 10, 11 };
+const QVector<int> GeometryWidget::Geometries = { 13, 14, 15 };
 
 GeometryWidget::GeometryWidget(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::GeometryWidget)
@@ -39,12 +40,16 @@ GeometryWidget::~GeometryWidget(void)
 
 QPair<int, QVariant> GeometryWidget::getCondition(void) const
 {
+	static const QHash<int, int> Map = { {13, 4}, {14, 2}, {15, 3} };
+
 	const int Index = ui->typeCombo->currentIndex();
 
 	if (Numbers.contains(Index)) return qMakePair(Index, ui->sizeSpin->value());
 	if (Lines.contains(Index)) return qMakePair(Index, ui->lineCombo->currentData());
 	if (Points.contains(Index)) return qMakePair(Index, ui->pointCombo->currentData());
 	if (Classes.contains(Index)) return qMakePair(Index, ui->classCombo->currentData());
+
+	if (Geometries.contains(Index)) return qMakePair(100, Map.value(Index));
 
 	return qMakePair(Index, QVariant());
 }

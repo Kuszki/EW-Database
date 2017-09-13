@@ -105,6 +105,8 @@ class DatabaseDriver : public QObject
 		explicit DatabaseDriver(QObject* Parent = nullptr);
 		virtual ~DatabaseDriver(void) override;
 
+		QString getDatabaseName(void) const;
+
 	protected:
 
 		QList<FIELD> loadCommon(bool Emit = false);
