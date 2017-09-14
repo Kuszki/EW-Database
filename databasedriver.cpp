@@ -2627,7 +2627,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	struct POINT
 	{
-		int ID;
+		int UIDO, IDE;
 
 		double WX, WY;
 		double DX, DY;
@@ -2640,6 +2640,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	struct LINE
 	{
+		int UIDO, IDE;
+
 		double X1, Y1;
 		double X2, Y2;
 
@@ -2647,11 +2649,11 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
-	QMap<int, POINT> Points, Objects; QList<LINE> Lines; int Rejected = 0;
-	const QList<int> Tasks = Model->getUids(Items);
+	QMap<int, POINT> Points, Texts, Objects; QList<LINE> Lines;
+	const QList<int> Tasks = Model->getUids(Items); QList<const POINT*> Union;
 
 	emit onBeginProgress(tr("Loading points"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, 0);
 
 	Query.prepare(
 		"SELECT "
@@ -2696,15 +2698,13 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 			case 6:
 
-				Ref.ID = Query.value(1).toInt();
+				Ref.IDE = Query.value(1).toInt();
 				Ref.DX = Query.value(3).toDouble();
 				Ref.DX = Query.value(4).toDouble();
 				Ref.J = Query.value(5).toUInt();
 
 			break;
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress(); Step = 0;
@@ -2713,6 +2713,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.prepare(
 		"SELECT "
+			"E.UIDO, E.IDE, "
 			"ROUND(P.P0_X, 3), "
 			"ROUND(P.P0_Y, 3), "
 			"ROUND(P.P1_X, 3), "
@@ -2741,7 +2742,51 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble(),
 			Query.value(2).toDouble(),
-			Query.value(3).toDouble()
+			Query.value(3).toDouble(),
+			Query.value(4).toDouble(),
+			Query.value(5).toDouble()
+		});
+	}
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, T.UID, "
+			"ROUND(T.POS_X, 3), "
+			"ROUND(T.POS_Y, 3), "
+			"T.JUSTYFIKACJA "
+		"FROM "
+			"EW_TEXT T "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"T.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"E.UIDO = O.UID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"E.TYP = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
+			"T.TYP = 6 "
+		"ORDER BY "
+			"O.UID ASC");
+
+	if (Query.exec()) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+		const int IDE = Query.value(1).toInt();
+
+		if (Tasks.contains(UID)) Texts.insert(IDE,
+		{
+			Query.value(0).toInt(),
+			Query.value(1).toInt(),
+			0.0, 0.0,
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble(),
+			0.0,
+			Query.value(4).toDouble()
 		});
 	}
 
@@ -2782,6 +2827,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 		if (!Objects.contains(ID)) Objects.insert(ID,
 		{
+			Query.value(0).toInt(),
 			Query.value(1).toInt(),
 			Query.value(2).toDouble(),
 			Query.value(3).toDouble()
@@ -2827,7 +2873,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		bool Found = false; LINE Match;
 
 		for (const auto& Object : Objects)
-			if (Object.ID != Point.ID && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
+			if (Object.IDE != Point.IDE && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
 
 		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.J &= 0b1111; Point.Changed = true; }
 
@@ -2873,9 +2919,68 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		}
 	});
 
+	QtConcurrent::blockingMap(Texts, [&Lines, Move, Justify, Rotate, Length] (POINT& Point) -> void
+	{
+		static const auto length = [] (double x1, double y1, double x2, double y2)
+		{
+			const double dx = x1 - x2;
+			const double dy = y1 - y2;
+
+			return qSqrt(dx * dx + dy * dy);
+		};
+
+		const LINE* Match = nullptr; double Distance = NAN;
+
+		if (Justify) { Point.J = 5; Point.Changed = true; }
+
+		if (Move || Rotate) for (const auto& L : Lines) if (Point.UIDO == L.UIDO)
+		{
+			const double a = length(Point.DX, Point.DY, L.X1, L.Y1);
+			const double b = length(Point.DX, Point.DY, L.X2, L.Y2);
+			const double l = length(L.X1, L.Y1, L.X2, L.Y2);
+
+			if ((a * a <= l * l + b * b) && (b * b <= l * l + a * a))
+			{
+				const double A = Point.DX - L.X1; const double B = Point.DY - L.Y1;
+				const double C = L.X2 - L.X1; const double D = L.Y2 - L.Y1;
+
+				const double h = qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+
+				if (qIsNaN(Distance) || h < Distance)
+				{
+					Distance = h; Match = &L;
+				}
+			}
+		}
+
+		if (Match)
+		{
+			double dtg = qAtan2(Match->Y1 - Match->Y2, Match->X1 - Match->X2) + (M_PI / 2.0);
+
+			while (dtg >= M_PI) dtg -= M_PI; while (dtg < 0.0) dtg += M_PI;
+
+			if ((dtg > (M_PI / 2.0)) && (dtg < M_PI)) dtg += M_PI;
+			if ((dtg > M_PI) && (dtg < (M_PI * 1.5))) dtg -= M_PI;
+
+			const QLineF Line(Match->X1, Match->Y1, Match->X2, Match->Y2);
+			QLineF Offset(Point.DX, Point.DY, 0, 0);
+			Offset.setAngle(Line.angle() + 90.0);
+
+			QPointF Int; Offset.intersect(Line, &Int);
+
+			if (Move) { Point.DX = Int.x(); Point.DY = Int.y(); }
+			if (Rotate) { Point.A = dtg; }
+
+			Point.Changed = true;
+		}
+	});
+
+	for (const auto& Point : Points) if (Point.Changed) Union.append(&Point);
+	for (const auto& Point : Texts) if (Point.Changed) Union.append(&Point);
+
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Saving changes"));
-	emit onSetupProgress(0, Points.size());
+	emit onSetupProgress(0, Union.size());
 
 	Query.prepare(
 		"UPDATE "
@@ -2888,25 +2993,21 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		"WHERE "
 			"UID = ?");
 
-	for (const auto& Point : Points)
+	for (const auto& Point : Union)
 	{
-		if (Point.Changed)
-		{
-			Query.addBindValue(Point.DX);
-			Query.addBindValue(Point.DY);
-			Query.addBindValue(Point.A);
-			Query.addBindValue(Point.J);
-			Query.addBindValue(Point.ID);
+		Query.addBindValue(Point->DX);
+		Query.addBindValue(Point->DY);
+		Query.addBindValue(Point->A);
+		Query.addBindValue(Point->J);
+		Query.addBindValue(Point->IDE);
 
-			Query.exec();
-		}
-		else Rejected += 1;
+		Query.exec();
 
 		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
-	emit onTextEdit(Points.size() - Rejected);
+	emit onTextEdit(Union.size());
 }
 
 void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int J, double X, double Y, bool P, double L, double R)
@@ -3370,7 +3471,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 		for (const auto& P : Points)
 		{
-			Locker.lock(); const bool Calc = !Used.contains(P.ID); Locker.unlock();
+			Locker.lock(); const bool Calc = !Used.contains(P.IDE); Locker.unlock();
 
 			if (Calc)
 			{
@@ -3378,10 +3479,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 				{
 					Locker.lock();
 
-					if (!Used.contains(P.ID) && !Geometry[G.ID].contains(P.ID))
+					if (!Used.contains(P.IDE) && !Geometry[G.ID].contains(P.IDE))
 					{
-						Insert[G.ID].insert(P.ID);
-						Used.insert(P.ID);
+						Insert[G.ID].insert(P.IDE);
+						Used.insert(P.IDE);
 					}
 
 					Locker.unlock();
@@ -3391,10 +3492,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 				{
 					Locker.lock();
 
-					if (!Used.contains(P.ID) && !Geometry[ID].contains(P.ID))
+					if (!Used.contains(P.IDE) && !Geometry[ID].contains(P.IDE))
 					{
-						Insert[ID].insert(P.ID);
-						Used.insert(P.ID);
+						Insert[ID].insert(P.IDE);
+						Used.insert(P.IDE);
 					}
 
 					Locker.unlock();
@@ -3462,7 +3563,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 		if (Tasks.contains(UID))
 		{
 
-			for (const auto P : Points) if (!Used.contains(P.ID))
+			for (const auto P : Points) if (!Used.contains(P.IDE))
 			{
 				const double X1 = Query.value(1).toDouble();
 				const double Y1 = Query.value(2).toDouble();
@@ -3480,10 +3581,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 				{
 					const int ID = Query.value(0).toInt();
 
-					if (!Geometry[ID].contains(P.ID))
+					if (!Geometry[ID].contains(P.IDE))
 					{
-						Insert[ID].insert(P.ID);
-						Used.insert(P.ID);
+						Insert[ID].insert(P.IDE);
+						Used.insert(P.IDE);
 					}
 				}
 			}
@@ -3530,17 +3631,17 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 
 		if (Tasks.contains(UID))
 		{
-			for (const auto P : Points) if (!Used.contains(P.ID))
+			for (const auto P : Points) if (!Used.contains(P.IDE))
 			{
 				if (qAbs(Query.value(1).toDouble() - P.X) <= Radius &&
 				    qAbs(Query.value(2).toDouble() - P.Y) <= Radius)
 				{
 					const int ID = Query.value(0).toInt();
 
-					if (!Geometry[ID].contains(P.ID))
+					if (!Geometry[ID].contains(P.IDE))
 					{
-						Insert[ID].insert(P.ID);
-						Used.insert(P.ID);
+						Insert[ID].insert(P.IDE);
+						Used.insert(P.IDE);
 					}
 				}
 			}

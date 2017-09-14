@@ -46,7 +46,7 @@ class DatabaseDriver : public QObject
 
 	public: struct POINT
 	{
-		int ID;
+		int IDE;
 
 		double X;
 		double Y;
