@@ -2875,7 +2875,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		for (const auto& Object : Objects)
 			if (Object.IDE != Point.IDE && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
 
-		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.J &= 0b1111; Point.Changed = true; }
+		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.J &= 0b1011111; Point.Changed = true; }
 
 		if (Justify && !Found) for (const auto& Line : Lines) if (!Found)
 			if ((Point.WX == Line.X1 && Point.WY == Line.Y1) || (Point.WX == Line.X2 && Point.WY == Line.Y2))
