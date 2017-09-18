@@ -3488,7 +3488,9 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 					Locker.unlock();
 				}
 
-				if (Polygon.containsPoint(QPointF(P.X, P.Y), Qt::OddEvenFill))
+				bool OK(false); for (const auto& E : Polygon) if (QLineF(E, QPointF(P.X, P.Y)).length() < 0.05) OK = true;
+
+				if (OK || Polygon.containsPoint(QPointF(P.X, P.Y), Qt::OddEvenFill))
 				{
 					Locker.lock();
 
