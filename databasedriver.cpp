@@ -3615,7 +3615,6 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 		"ON "
 			"E.IDE = T.ID "
 		"WHERE "
-			"O.UID = ? AND "
 			"O.KOD = ? AND "
 			"E.TYP = 0 AND "
 			"T.STAN_ZMIANY = 0 AND "
