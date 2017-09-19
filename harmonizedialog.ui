@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>HarmonizeDialog</class>
+ <widget class="QDialog" name="HarmonizeDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Fit geometry</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="fileLabel">
+     <property name="text">
+      <string>File</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLineEdit" name="fileEdit">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="toolButton">
+       <property name="text">
+        <string>Open</string>
+       </property>
+       <property name="icon">
+        <iconset theme="document-open">
+         <normaloff>../EW-Builder</normaloff>../EW-Builder</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="x1Label">
+     <property name="text">
+      <string>X1 index</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QSpinBox" name="x1Spin">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>9</number>
+     </property>
+     <property name="value">
+      <number>1</number>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="y1Label">
+     <property name="text">
+      <string>Y1 index</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="y1Spin">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>9</number>
+     </property>
+     <property name="value">
+      <number>2</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="x2Label">
+     <property name="text">
+      <string>X2 index</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="x2Spin">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>9</number>
+     </property>
+     <property name="value">
+      <number>3</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="y2Label">
+     <property name="text">
+      <string>Y2 index</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="y2Spin">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>9</number>
+     </property>
+     <property name="value">
+      <number>4</number>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="distanceLabel">
+     <property name="text">
+      <string>Distance</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QDoubleSpinBox" name="distanceSpin">
+     <property name="suffix">
+      <string> m</string>
+     </property>
+     <property name="minimum">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>10.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="lengthLabel">
+     <property name="text">
+      <string>Length</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDoubleSpinBox" name="lengthSpin">
+     <property name="suffix">
+      <string> m</string>
+     </property>
+     <property name="minimum">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>10.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>257</x>
+     <y>290</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>325</x>
+     <y>290</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>x1Spin</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>fitParametersChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>323</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>567</x>
+     <y>51</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>y1Spin</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>fitParametersChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>356</x>
+     <y>75</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>575</x>
+     <y>80</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>x2Spin</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>fitParametersChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>362</x>
+     <y>104</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>533</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>y2Spin</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>fitParametersChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>353</x>
+     <y>132</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>564</x>
+     <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton</sender>
+   <signal>clicked()</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>openButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>381</x>
+     <y>17</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>516</x>
+     <y>21</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>distanceSpin</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>fitParametersChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>168</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>580</x>
+     <y>170</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lengthSpin</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>HarmonizeDialog</receiver>
+   <slot>fitParametersChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>369</x>
+     <y>197</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>630</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>fitParametersChanged()</slot>
+  <slot>openButtonClicked()</slot>
+ </slots>
+</ui>

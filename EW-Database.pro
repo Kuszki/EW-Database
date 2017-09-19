@@ -48,7 +48,8 @@ SOURCES		+=	main.cpp \
 				cutdialog.cpp \
 				batchdialog.cpp \
 				batchwidget.cpp \
-				labeldialog.cpp
+				labeldialog.cpp \
+				harmonizedialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -72,7 +73,8 @@ HEADERS		+=	mainwindow.hpp \
 				cutdialog.hpp \
 				batchdialog.hpp \
 				batchwidget.hpp \
-				labeldialog.hpp
+				labeldialog.hpp \
+				harmonizedialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -92,7 +94,8 @@ FORMS		+=	mainwindow.ui \
 				cutdialog.ui \
 				batchdialog.ui \
 				batchwidget.ui \
-				labeldialog.ui
+				labeldialog.ui \
+				harmonizedialog.ui
 
 RESOURCES		+=	resources.qrc
 
