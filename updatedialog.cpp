@@ -21,10 +21,10 @@
 #include "updatedialog.hpp"
 #include "ui_updatedialog.h"
 
-UpdateDialog::UpdateDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields)
+UpdateDialog::UpdateDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields, bool Singletons)
 : QDialog(Parent), ui(new Ui::UpdateDialog)
 {
-	ui->setupUi(this); setFields(Fields);
+	ui->setupUi(this); setFields(Fields, Singletons);
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
@@ -116,13 +116,13 @@ void UpdateDialog::accept(void)
 	emit onValuesUpdate(getUpdatedValues()); QDialog::accept();
 }
 
-void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields)
+void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, bool Singletons)
 {
 	while (auto I = ui->fieldsLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater(); Status.clear();
 
 	for (int i = 0; i < Fields.size(); ++i)
 	{
-		const bool Singleton = (Fields[i].Dict.size() == 2 && Fields[i].Dict.contains(0));
+		const bool Singleton = !Singletons && (Fields[i].Dict.size() == 2 && Fields[i].Dict.contains(0));
 
 		if (Fields[i].Type == DatabaseDriver::READONLY || Singleton) continue;
 

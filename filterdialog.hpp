@@ -61,7 +61,7 @@ class FilterDialog : public QDialog
 		explicit FilterDialog(QWidget* Parent = nullptr,
 						  const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>(),
 						  const QList<DatabaseDriver::TABLE>& Tables = QList<DatabaseDriver::TABLE>(),
-						  unsigned Common = 0);
+						  unsigned Common = 0, bool Singletons = false);
 		virtual ~FilterDialog(void) override;
 
 		QString getLimiterFile(void) const;
@@ -78,7 +78,7 @@ class FilterDialog : public QDialog
 
 		void buttonBoxClicked(QAbstractButton* Button);
 
-		void linitBoxChecked(bool Checked);
+		void limiterBoxChecked(bool Checked);
 
 		void classBoxChecked(void);
 
@@ -93,7 +93,7 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common = 0);
+		void setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common = 0, bool Singletons = false);
 
 	signals:
 

@@ -122,6 +122,8 @@ class MainWindow : public QMainWindow
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
 
+		void singletonActionToggled(bool Active);
+
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,

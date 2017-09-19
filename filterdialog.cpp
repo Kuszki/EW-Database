@@ -21,10 +21,10 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
+FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setFields(Fields, Tables, Common); filterRulesChanged();
+	ui->setupUi(this); setFields(Fields, Tables, Common, Singletons); filterRulesChanged();
 
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
@@ -180,7 +180,7 @@ void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
 		}
 }
 
-void FilterDialog::linitBoxChecked(bool Checked)
+void FilterDialog::limiterBoxChecked(bool Checked)
 {
 	if (!Checked) Limiter.clear();
 	else
@@ -188,10 +188,10 @@ void FilterDialog::linitBoxChecked(bool Checked)
 		Limiter = QFileDialog::getOpenFileName(this, tr("Select objects list"), QString(),
 									    tr("Text files (*.txt);;All files (*.*)"));
 
-		if (Limiter.isEmpty()) ui->limitCheck->setChecked(false);
+		if (Limiter.isEmpty()) ui->limiterCheck->setChecked(false);
 	}
 
-	ui->limitCheck->setToolTip(Limiter);
+	ui->limiterCheck->setToolTip(Limiter);
 }
 
 void FilterDialog::classBoxChecked(void)
@@ -233,7 +233,7 @@ void FilterDialog::filterRulesChanged(void)
 	ui->operatorBox->setVisible(Index == 1);
 
 	ui->newButton->setVisible(Index == 2);
-	ui->limitCheck->setVisible(Index == 2);
+	ui->limiterCheck->setVisible(Index == 2);
 }
 
 void FilterDialog::newButtonClicked(void)
@@ -277,7 +277,7 @@ void FilterDialog::accept(void)
 	emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter); QDialog::accept();
 }
 
-void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common)
+void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
 {
 	Classes.clear(); Points.clear(); Attributes.clear(); Above = Common;
 
@@ -301,7 +301,7 @@ void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const Q
 
 	for (int i = 0; i < Fields.size(); ++i)
 	{
-		const bool Singleton = (Fields[i].Dict.size() == 2 && Fields[i].Dict.contains(0));
+		const bool Singleton = !Singletons && (Fields[i].Dict.size() == 2 && Fields[i].Dict.contains(0));
 
 		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 	}

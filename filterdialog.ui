@@ -215,7 +215,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="limitCheck">
+      <widget class="QCheckBox" name="limiterCheck">
        <property name="text">
         <string>Limit objects list</string>
        </property>
@@ -448,10 +448,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>limitCheck</sender>
+   <sender>limiterCheck</sender>
    <signal>toggled(bool)</signal>
    <receiver>FilterDialog</receiver>
-   <slot>linitBoxChecked(bool)</slot>
+   <slot>limiterBoxChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>698</x>
@@ -475,6 +475,6 @@
   <slot>copyButtonClicked()</slot>
   <slot>filterRulesChanged()</slot>
   <slot>newButtonClicked()</slot>
-  <slot>linitBoxChecked(bool)</slot>
+  <slot>limiterBoxChecked(bool)</slot>
  </slots>
 </ui>

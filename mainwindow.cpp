@@ -53,6 +53,10 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	QSettings Settings("EW-Database");
 
+	Settings.beginGroup("Interface");
+	ui->actionSingleton->setChecked(Settings.value("singletons").toBool());
+	Settings.endGroup();
+
 	Settings.beginGroup("Window");
 	restoreGeometry(Settings.value("geometry").toByteArray());
 	restoreState(Settings.value("state").toByteArray());
@@ -68,6 +72,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
+	connect(ui->actionSingleton, &QAction::toggled, this, &MainWindow::singletonActionToggled);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -144,6 +149,10 @@ MainWindow::MainWindow(QWidget* Parent)
 MainWindow::~MainWindow(void)
 {
 	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Interface");
+	Settings.setValue("singletons", ui->actionSingleton->isChecked());
+	Settings.endGroup();
 
 	Settings.beginGroup("Window");
 	Settings.setValue("state", saveState());
@@ -348,6 +357,11 @@ void MainWindow::interfaceActionClicked(void)
 	else ui->statusBar->showMessage(tr("Error with registering interface"));
 }
 
+void MainWindow::singletonActionToggled(bool Active)
+{
+
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -446,10 +460,12 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
 
+	const bool Singletons = ui->actionSingleton->isChecked();
+
 	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);
-	Filter = new FilterDialog(this, Fields, Classes, Common);
-	Update = new UpdateDialog(this, Fields);
+	Filter = new FilterDialog(this, Fields, Classes, Common, Singletons);
+	Update = new UpdateDialog(this, Fields, Singletons);
 	Export = new ExportDialog(this, Headers);
 	Merge = new MergeDialog(this, Fields, Classes);
 	Cut = new CutDialog(this, Classes);
@@ -776,6 +792,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLoad->setEnabled(true);
 			ui->actionUnhide->setEnabled(true);
 			ui->actionInterface->setEnabled(true);
+			ui->actionSingleton->setEnabled(false);
 		break;
 		case DISCONNECTED:
 			ui->statusBar->showMessage(tr("Database disconnected"));
@@ -803,6 +820,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
+			ui->actionSingleton->setEnabled(true);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
