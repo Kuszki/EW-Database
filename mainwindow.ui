@@ -464,7 +464,8 @@
   </action>
   <action name="actionLabel">
    <property name="icon">
-    <iconset theme="format-text-italic"/>
+    <iconset theme="format-text-italic">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Insert labels</string>
@@ -477,11 +478,17 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset theme="viewmag1"/>
+   </property>
    <property name="text">
     <string>Show singleton fields</string>
    </property>
   </action>
   <action name="actionFit">
+   <property name="icon">
+    <iconset theme="view-fullscreen"/>
+   </property>
    <property name="text">
     <string>Fit geometry</string>
    </property>

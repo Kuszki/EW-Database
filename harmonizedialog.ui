@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>250</width>
-    <height>250</height>
+    <height>262</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Fit geometry</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="view-fullscreen"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="6" column="0" colspan="2">
