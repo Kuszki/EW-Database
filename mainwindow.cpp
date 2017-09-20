@@ -72,7 +72,6 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
-	connect(ui->actionSingleton, &QAction::toggled, this, &MainWindow::singletonActionToggled);
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -104,6 +103,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataMerge, this, &MainWindow::dataMerged);
 	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
+	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -139,6 +139,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
 
 	connect(this, &MainWindow::onBatchRequest, Driver, &DatabaseDriver::execBatch);
+
+	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 
 	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
 	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
@@ -357,11 +359,6 @@ void MainWindow::interfaceActionClicked(void)
 	else ui->statusBar->showMessage(tr("Error with registering interface"));
 }
 
-void MainWindow::singletonActionToggled(bool Active)
-{
-
-}
-
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -379,6 +376,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionBatch->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
 	ui->actionLabel->setEnabled(Count > 0);
+	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 
@@ -456,6 +454,14 @@ void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool
 	lockUi(BUSY); emit onLabelRequest(Model, Selected, Text, J, X, Y, P, L, R);
 }
 
+void MainWindow::fitData(const QString& File, int X1, int Y1, int X2, int Y2, double R, double L)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onFitRequest(Model, Selected, File, X1, Y1, X2, Y2, R, L);
+}
+
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
@@ -469,6 +475,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Export = new ExportDialog(this, Headers);
 	Merge = new MergeDialog(this, Fields, Classes);
 	Cut = new CutDialog(this, Classes);
+	Fit = new HarmonizeDialog(this);
 	Label = new LabelDialog(this);
 	Text = new TextDialog(this);
 
@@ -481,6 +488,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Cut, &CutDialog::onClassesUpdate, this, &MainWindow::cutData);
 	connect(Label, &LabelDialog::onLabelRequest, this, &MainWindow::insertLabel);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
+	connect(Fit, &HarmonizeDialog::onFitRequest, this, &MainWindow::fitData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -489,6 +497,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionSplit, &QAction::triggered, Cut, &CutDialog::open);
 	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
+	connect(ui->actionFit, &QAction::triggered, Fit, &HarmonizeDialog::open);
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
 
@@ -618,6 +627,11 @@ void MainWindow::dataMerged(int Count)
 void MainWindow::dataCutted(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Splitted %n object(s)", nullptr, Count));
+}
+
+void MainWindow::dataFitted(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n lines(s)", nullptr, Count));
 }
 
 void MainWindow::refactorData(int Count)
@@ -817,6 +831,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionLabel->setEnabled(false);
+			ui->actionFit->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
@@ -841,6 +856,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionLabel->setEnabled(false);
+			ui->actionFit->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);

@@ -183,6 +183,9 @@ class DatabaseDriver : public QObject
 		void refactorData(RecordModel* Model, const QModelIndexList& Items,
 					   const QString& Class, int Line, int Point, int Text);
 
+		void fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path,
+				   int X1, int Y1, int X2, int Y2, double Radius, double Length);
+
 		void restoreJob(RecordModel* Model, const QModelIndexList& Items);
 
 		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
@@ -220,6 +223,7 @@ class DatabaseDriver : public QObject
 		void onDataJoin(int);
 		void onDataSplit(int);
 		void onDataRefactor(int);
+		void onDataFit(int);
 
 		void onBatchExec(int);
 

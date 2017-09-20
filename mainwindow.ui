@@ -116,6 +116,8 @@
     <addaction name="separator"/>
     <addaction name="actionText"/>
     <addaction name="actionLabel"/>
+    <addaction name="separator"/>
+    <addaction name="actionFit"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -167,6 +169,7 @@
    <addaction name="actionHistory"/>
    <addaction name="actionLabel"/>
    <addaction name="actionText"/>
+   <addaction name="actionFit"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
    <addaction name="actionFilter"/>
@@ -476,6 +479,14 @@
    </property>
    <property name="text">
     <string>Show singleton fields</string>
+   </property>
+  </action>
+  <action name="actionFit">
+   <property name="text">
+    <string>Fit geometry</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
    </property>
   </action>
  </widget>

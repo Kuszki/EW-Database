@@ -24,7 +24,7 @@
 HarmonizeDialog::HarmonizeDialog(QWidget* Parent)
 : QDialog(Parent), ui(new Ui::HarmonizeDialog)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
 HarmonizeDialog::~HarmonizeDialog(void)
@@ -37,10 +37,10 @@ void HarmonizeDialog::accept(void)
 	QDialog::accept();
 
 	emit onFitRequest(ui->fileEdit->text(),
-				   ui->x1Spin->value(),
-				   ui->y1Spin->value(),
-				   ui->x2Spin->value(),
-				   ui->y2Spin->value(),
+				   ui->x1Spin->value() - 1,
+				   ui->y1Spin->value() - 1,
+				   ui->x2Spin->value() - 1,
+				   ui->y2Spin->value() - 1,
 				   ui->distanceSpin->value(),
 				   ui->lengthSpin->value());
 }

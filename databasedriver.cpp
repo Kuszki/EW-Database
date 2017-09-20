@@ -2502,6 +2502,203 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onDataRefactor(Change.size());
 }
 
+void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path, int X1, int Y1, int X2, int Y2, double Radius, double Length)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataFit(0); return; }
+
+	struct OBJECT { QList<int> Indexes; QList<QLineF> Lines; QList<QPointF> Points; };
+	struct LINE { int ID; QLineF Line; QPointF Point; bool Changed = false; };
+
+	const QList<int> Tasks = Model->getUids(Items); int Step = 0;
+	QSqlQuery Load(Database), Update(Database); Load.setForwardOnly(true);
+	QHash<int, OBJECT> Objects; QList<LINE> Updates; QMutex Synchronizer;
+
+	Load.prepare(
+		"SELECT "
+			"O.UID, P.ID, P.P1_FLAGS, P.P0_X, P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0");
+
+	Update.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ? AND STAN_ZMIANY = 0");
+
+	emit onBeginProgress(tr("Loading file data"));
+	emit onSetupProgress(0, 0);
+
+	QList<QLineF> Lines; QFile File(Path); QTextStream Stream(&File);
+
+	File.open(QFile::ReadOnly | QFile::Text);
+
+	const bool CSV = (QFileInfo(File).suffix() == "csv");
+	const int Max = qMax(qMax(X1, Y1), qMax(X2, Y2));
+
+	const QRegExp Exp(CSV ? "," : "\\s+");
+
+	while (!Stream.atEnd())
+	{
+		const QStringList Items = Stream.readLine().trimmed().split(Exp, QString::SkipEmptyParts);
+
+		if (Max < Items.size())
+		{
+			bool OK(true), Current;
+
+			const double pX1 = Items[X1].toDouble(&Current); OK = OK && Current;
+			const double pY1 = Items[Y1].toDouble(&Current); OK = OK && Current;
+			const double pX2 = Items[X2].toDouble(&Current); OK = OK && Current;
+			const double pY2 = Items[Y2].toDouble(&Current); OK = OK && Current;
+
+			if (OK) Lines.append({ pX1, pY1, pX2, pY2 });
+		}
+		else continue;
+	}
+
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, Tasks.size());
+
+	if (Load.exec()) while (Load.next())
+	{
+		const int UID = Load.value(0).toInt();
+
+		if (Tasks.contains(UID))
+		{
+			if (!Objects.contains(UID)) Objects.insert(UID, OBJECT());
+
+			OBJECT& Object = Objects[UID];
+
+			QPointF P1(Load.value(3).toDouble(), Load.value(4).toDouble());
+			QPointF P2(Load.value(5).toDouble(), Load.value(6).toDouble());
+
+			if (Object.Points.contains(P1)) Object.Points.removeOne(P1);
+			else Object.Points.append(P1);
+
+			if (Object.Points.contains(P2)) Object.Points.removeOne(P2);
+			else Object.Points.append(P2);
+
+			if (Load.value(2).toInt() == 0)
+			{
+				Object.Indexes.append(Load.value(1).toInt());
+				Object.Lines.append({ P1, P2 });
+			}
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Objects, [&Updates, &Synchronizer] (OBJECT& Object) -> void
+	{
+		if (Object.Lines.isEmpty() || Object.Points.size() != 2) return; QLineF Start, End; int sIndex(0), eIndex(0);
+
+		const auto& S = Object.Points.first(); const auto& E = Object.Points.last();
+
+		for (int i = 0; i < Object.Indexes.size(); ++i)
+		{
+			auto& L = Object.Lines[i];
+
+			if (L.p1() == S || L.p2() == S)
+			{
+				Start = L; sIndex = Object.Indexes[i];
+			}
+
+			if (L.p1() == E || L.p2() == E)
+			{
+				End = L; eIndex = Object.Indexes[i];
+			}
+		}
+
+		if (sIndex || eIndex)
+		{
+			Synchronizer.lock();
+
+			if (sIndex) Updates.append({ sIndex, Start, S, false });
+			if (eIndex) Updates.append({ eIndex, End, E, false });
+
+			Synchronizer.unlock();
+		}
+	});
+
+	QtConcurrent::blockingMap(Updates, [&Lines, Radius, Length] (LINE& Part) -> void
+	{
+		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
+		{
+			const double lx1 = qMax(x1, x2); const double lx2 = qMin(x1, x2);
+			const double ly1 = qMax(y1, y2); const double ly2 = qMin(y1, y2);
+
+			return (px <= lx1) && (px >= lx2) && (py <= ly1) && (py >= ly2);
+		};
+
+		QPointF Final; double h = NAN; const QPointF Second = Part.Point == Part.Line.p1() ? Part.Line.p2() : Part.Line.p1();
+
+		for (const auto& L : Lines)
+		{
+			QLineF Normal(Part.Point, Second); QPointF IntersectR, IntersectL;
+
+			Normal.setAngle(L.angle() + 90.0);
+			Normal.intersect(L, &IntersectR);
+			Part.Line.intersect(L, &IntersectL);
+
+			const double Rad = QLineF(Part.Point, IntersectR).length();
+			const double Len = QLineF(Part.Point, IntersectL).length();
+
+			const QLineF Current(Second, Part.Point);
+			const QLineF New(Second, IntersectL);
+
+			const bool Int = between(IntersectL.x(), IntersectL.y(), L.x1(), L.y1(), L.x2(), L.y2());
+			const bool Ang = qAbs(Current.angle() - New.angle()) < 1.0;
+
+			if (Int && Ang && Rad <= Radius && Len <= Length && (qIsNaN(h) || h > Rad))
+			{
+				Final = IntersectL; h = Rad;
+			}
+		}
+
+		if (Part.Changed = (!qIsNaN(h) && Final != Part.Point))
+		{
+			if (Part.Point == Part.Line.p1()) Part.Line.setP1(Final);
+			if (Part.Point == Part.Line.p2()) Part.Line.setP2(Final);
+		}
+	});
+
+	emit onBeginProgress(tr("Computing geometry")); int Rejected(0);
+	emit onSetupProgress(0, Updates.size()); Step = 0;
+
+	for (const auto& L : Updates)
+	{
+		if (L.Changed)
+		{
+			Update.addBindValue(L.Line.x1());
+			Update.addBindValue(L.Line.y1());
+			Update.addBindValue(L.Line.x2());
+			Update.addBindValue(L.Line.y2());
+			Update.addBindValue(L.ID);
+
+			Update.exec();
+		}
+		else ++Rejected;
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onDataFit(Updates.size() - Rejected);
+}
+
 void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJobsRestore(0); return; }

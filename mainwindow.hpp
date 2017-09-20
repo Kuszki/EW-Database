@@ -31,6 +31,8 @@
 #include <QThread>
 
 #include "databasedriver.hpp"
+
+#include "harmonizedialog.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
 #include "filterdialog.hpp"
@@ -77,6 +79,8 @@ class MainWindow : public QMainWindow
 		QComboBox* Selector;
 
 		DatabaseDriver* Driver;
+
+		HarmonizeDialog* Fit;
 		ColumnsDialog* Columns;
 		GroupDialog* Groups;
 		FilterDialog* Filter;
@@ -122,8 +126,6 @@ class MainWindow : public QMainWindow
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
 
-		void singletonActionToggled(bool Active);
-
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,
@@ -155,6 +157,7 @@ class MainWindow : public QMainWindow
 					  int Line, int Point, int Text);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
+		void fitData(const QString& File, int X1, int Y1, int X2, int Y2, double R, double L);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -188,6 +191,7 @@ class MainWindow : public QMainWindow
 
 		void dataMerged(int Count);
 		void dataCutted(int Count);
+		void dataFitted(int Count);
 
 		void refactorData(int Count);
 
@@ -238,6 +242,9 @@ class MainWindow : public QMainWindow
 
 		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
 						int, double, double, bool, double, double);
+
+		void onFitRequest(RecordModel*, const QModelIndexList&, const QString&,
+					   int, int, int, int, double, double);
 
 		void onGroupRequest(const QList<int>&);
 
