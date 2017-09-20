@@ -72,6 +72,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
+	connect(ui->actionFit, &QAction::triggered, this, &MainWindow::fitActionClicked);
+
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -359,6 +361,13 @@ void MainWindow::interfaceActionClicked(void)
 	else ui->statusBar->showMessage(tr("Error with registering interface"));
 }
 
+void MainWindow::fitActionClicked(void)
+{
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(), tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+
+	if (!Path.isEmpty()) Fit->open(Path);
+}
+
 void MainWindow::selectionChanged(void)
 {
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
@@ -497,7 +506,6 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionSplit, &QAction::triggered, Cut, &CutDialog::open);
 	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
-	connect(ui->actionFit, &QAction::triggered, Fit, &HarmonizeDialog::open);
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
 

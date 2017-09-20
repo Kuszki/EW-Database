@@ -21,8 +21,8 @@
 #include "harmonizedialog.hpp"
 #include "ui_harmonizedialog.h"
 
-HarmonizeDialog::HarmonizeDialog(QWidget* Parent)
-: QDialog(Parent), ui(new Ui::HarmonizeDialog)
+HarmonizeDialog::HarmonizeDialog(QWidget* Parent, const QString& Path)
+: QDialog(Parent), ui(new Ui::HarmonizeDialog), File(Path)
 {
 	ui->setupUi(this); ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
@@ -36,13 +36,28 @@ void HarmonizeDialog::accept(void)
 {
 	QDialog::accept();
 
-	emit onFitRequest(ui->fileEdit->text(),
+	emit onFitRequest(File,
 				   ui->x1Spin->value() - 1,
 				   ui->y1Spin->value() - 1,
 				   ui->x2Spin->value() - 1,
 				   ui->y2Spin->value() - 1,
 				   ui->distanceSpin->value(),
 				   ui->lengthSpin->value());
+}
+
+void HarmonizeDialog::open(const QString& Path)
+{
+	QDialog::open(); File = Path;
+}
+
+void HarmonizeDialog::setPath(const QString& Path)
+{
+	File = Path;
+}
+
+QString HarmonizeDialog::getPath(void) const
+{
+	return File;
 }
 
 void HarmonizeDialog::fitParametersChanged(void)
@@ -56,14 +71,7 @@ void HarmonizeDialog::fitParametersChanged(void)
 	Indexes.insert(ui->x2Spin->value());
 	Indexes.insert(ui->y2Spin->value());
 
-	Accepted = Range && Indexes.size() == 4 && !ui->fileEdit->text().isEmpty();
+	Accepted = Range && Indexes.size() == 4;
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Accepted);
-}
-
-void HarmonizeDialog::openButtonClicked(void)
-{
-	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"));
-
-	if (!Path.isEmpty()) ui->fileEdit->setText(Path); fitParametersChanged();
 }

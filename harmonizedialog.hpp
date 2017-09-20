@@ -40,20 +40,26 @@ class HarmonizeDialog : public QDialog
 
 		Ui::HarmonizeDialog* ui;
 
+		QString File;
+
 	public:
 
-		explicit HarmonizeDialog(QWidget* Parent = nullptr);
+		explicit HarmonizeDialog(QWidget* Parent = nullptr, const QString& Path = QString());
 		virtual ~HarmonizeDialog(void) override;
 
 	public slots:
 
 		virtual void accept(void) override;
 
+		virtual void open(const QString& Path);
+
+		void setPath(const QString& Path);
+
+		QString getPath(void) const;
+
 	private slots:
 
 		void fitParametersChanged(void);
-
-		void openButtonClicked(void);
 
 	signals:
 

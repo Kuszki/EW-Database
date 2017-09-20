@@ -125,6 +125,7 @@ class MainWindow : public QMainWindow
 		void unhideActionClicked(void);
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
+		void fitActionClicked(void);
 
 		void selectionChanged(void);
 
