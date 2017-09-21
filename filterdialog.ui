@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1145</width>
+    <width>1227</width>
     <height>500</height>
    </rect>
   </property>
@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1077</width>
-            <height>428</height>
+            <width>1166</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1077</width>
-            <height>428</height>
+            <width>1166</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1077</width>
-            <height>428</height>
+            <width>1166</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -292,7 +292,7 @@
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
        </property>
       </widget>
      </item>
@@ -313,7 +313,7 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>989</x>
+     <x>1216</x>
      <y>488</y>
     </hint>
     <hint type="destinationlabel">
@@ -329,28 +329,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>989</x>
+     <x>1216</x>
      <y>488</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>clicked(QAbstractButton*)</signal>
-   <receiver>FilterDialog</receiver>
-   <slot>buttonBoxClicked(QAbstractButton*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>989</x>
-     <y>488</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>431</x>
-     <y>422</y>
     </hint>
    </hints>
   </connection>
@@ -393,8 +377,8 @@
    <slot>selectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>574</x>
-     <y>489</y>
+     <x>588</x>
+     <y>487</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -409,8 +393,8 @@
    <slot>unselectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>604</x>
-     <y>489</y>
+     <x>612</x>
+     <y>487</y>
     </hint>
     <hint type="destinationlabel">
      <x>567</x>
@@ -457,8 +441,8 @@
    <slot>newButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>632</x>
-     <y>478</y>
+     <x>995</x>
+     <y>487</y>
     </hint>
     <hint type="destinationlabel">
      <x>632</x>
@@ -473,8 +457,8 @@
    <slot>limiterBoxChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>698</x>
-     <y>485</y>
+     <x>862</x>
+     <y>487</y>
     </hint>
     <hint type="destinationlabel">
      <x>700</x>
@@ -485,7 +469,6 @@
  </connections>
  <slots>
   <slot>classSearchEdited(QString)</slot>
-  <slot>buttonBoxClicked(QAbstractButton*)</slot>
   <slot>addButtonClicked()</slot>
   <slot>operatorTextChanged(QString)</slot>
   <slot>simpleSearchEdited(QString)</slot>

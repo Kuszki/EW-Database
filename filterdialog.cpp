@@ -26,15 +26,52 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 {
 	ui->setupUi(this); setFields(Fields, Tables, Common, Singletons); filterRulesChanged();
 
+	QMenu* Menu = new QMenu(this);
+
+	resetClass = new QAction(tr("Reset class list"), this);
+	resetFields = new QAction(tr("Reset fields list"), this);
+	resetGeometry = new QAction(tr("Reset geometry filters"), this);
+
+	resetClass->setCheckable(true); Menu->addAction(resetClass);
+	resetFields->setCheckable(true); Menu->addAction(resetFields);
+	resetGeometry->setCheckable(true); Menu->addAction(resetGeometry);
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Filter");
+	resetClass->setChecked(Settings.value("class", true).toBool());
+	resetFields->setChecked(Settings.value("fields", true).toBool());
+	resetGeometry->setChecked(Settings.value("geometry", true).toBool());
+	Settings.endGroup();
+
+	QToolButton* Button = new QToolButton(this);
+
+	Button->setText(QApplication::tr("Reset", "QtBase"));
+	Button->setPopupMode(QToolButton::MenuButtonPopup);
+	Button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+	Button->setMenu(Menu);
+
+	ui->buttonBox->addButton(Button, QDialogButtonBox::ResetRole);
+
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
 	ui->geometryLayout->setAlignment(Qt::AlignTop);
 
 	ui->rightSpacer->changeSize(ui->copyButton->sizeHint().width(), 0);
+
+	connect(Button, &QToolButton::clicked, this, &FilterDialog::buttonBoxClicked);
 }
 
 FilterDialog::~FilterDialog(void)
 {
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Filter");
+	Settings.setValue("class", resetClass->isChecked());
+	Settings.setValue("fields", resetFields->isChecked());
+	Settings.setValue("geometry", resetGeometry->isChecked());
+	Settings.endGroup();
+
 	delete ui;
 }
 
@@ -168,17 +205,21 @@ void FilterDialog::simpleSearchEdited(const QString& Search)
 		}
 }
 
-void FilterDialog::buttonBoxClicked(QAbstractButton* Button)
+void FilterDialog::buttonBoxClicked(void)
 {
-	if (Button != ui->buttonBox->button(QDialogButtonBox::Reset)) return;
+	if (resetClass->isChecked()) for (int i = 0; i < ui->classLayout->count(); ++i)
+		if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
+		{
+			W->setChecked(false);
+		}
 
-	for (int i = 0; i < ui->simpleLayout->count(); ++i)
+	if (resetFields->isChecked()) for (int i = 0; i < ui->simpleLayout->count(); ++i)
 		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 		{
 			W->reset();
 		}
 
-	for (int i = 0; i < ui->geometryLayout->count(); ++i)
+	if (resetGeometry->isChecked()) for (int i = 0; i < ui->geometryLayout->count(); ++i)
 		if (auto W = qobject_cast<GeometryWidget*>(ui->geometryLayout->itemAt(i)->widget()))
 		{
 			W->deleteLater();

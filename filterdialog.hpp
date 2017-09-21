@@ -28,6 +28,7 @@
 #include <QCheckBox>
 #include <QDialog>
 #include <QHash>
+#include <QMenu>
 
 #include <float.h>
 
@@ -48,6 +49,10 @@ class FilterDialog : public QDialog
 	private:
 
 		Ui::FilterDialog* ui;
+
+		QAction* resetClass;
+		QAction* resetFields;
+		QAction* resetGeometry;
 
 		QHash<QString, QString> Classes;
 		QHash<QString, QString> Points;
@@ -78,7 +83,7 @@ class FilterDialog : public QDialog
 		void classSearchEdited(const QString& Search);
 		void simpleSearchEdited(const QString& Search);
 
-		void buttonBoxClicked(QAbstractButton* Button);
+		void buttonBoxClicked(void);
 
 		void limiterBoxChecked(bool Checked);
 
