@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1166</width>
-            <height>433</height>
+            <width>1159</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1166</width>
-            <height>433</height>
+            <width>1159</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1166</width>
-            <height>433</height>
+            <width>1159</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -226,6 +226,9 @@
       <widget class="QToolButton" name="limiterCheck">
        <property name="text">
         <string>Limit objects list</string>
+       </property>
+       <property name="icon">
+        <iconset theme="document-new"/>
        </property>
       </widget>
      </item>

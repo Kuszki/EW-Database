@@ -46,7 +46,7 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 
 	QToolButton* Button = new QToolButton(this);
 
-	Button->setText(QApplication::tr("Reset", "QtBase"));
+	Button->setText(tr("Reset"));
 	Button->setPopupMode(QToolButton::MenuButtonPopup);
 	Button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
 	Button->setMenu(Menu);
