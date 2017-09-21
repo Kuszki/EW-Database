@@ -397,7 +397,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	return List;
 }
 
-QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>> Data, const QHash<int, QVariant>& Geometry, const QString& Limiter)
+QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>> Data, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius)
 {
 	if (!Database.isOpen()) return Data;
 
@@ -457,7 +457,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 	if (Geometry.contains(2) || Geometry.contains(3) ||
 	    Geometry.contains(4) || Geometry.contains(5))
 	{
-		auto Process = [] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
+		auto Process = [Radius] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
 		{
 			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
@@ -466,7 +466,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 				if (i.value().Geometry.type() == QVariant::PointF)
 				{
-					if (i.value().Geometry.toPointF() == j.value().Geometry.toPointF())
+					const QLineF Distance(i.value().Geometry.toPointF(), j.value().Geometry.toPointF());
+
+					if (Distance.length() <= Radius)
 					{
 						Locker->lock();
 						List->insert(i.key());
@@ -475,7 +477,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				}
 				else for (const auto& Point : i.value().Geometry.toList())
 				{
-					if (Point.toPointF() == j.value().Geometry.toPointF())
+					const QLineF Distance(Point.toPointF(), j.value().Geometry.toPointF());
+
+					if (Distance.length() <= Radius)
 					{
 						Locker->lock();
 						List->insert(i.key());
@@ -873,24 +877,34 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			Points.insert(Query.value(0).toInt(), QPointF(Query.value(1).toDouble(), Query.value(2).toDouble()));
 		}
 
-		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
+		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [&Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
 		{
 			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
 				if (Geometry[10].toStringList().contains("*") || Geometry[10].toStringList().contains(i.key()))
 				{
-					for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+					for (const auto Point : i.value())
+					{
+						const QLineF Distance(Points.value(Value.first), Point);
+
+						if (Distance.length() <= Radius) ++Value.second;
+					}
 				}
 			}
 		});
 
-		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [&Points, &Lines, &Geometry] (QPair<int, int>& Value) -> void
+		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [&Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
 		{
 			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
 				if (Geometry[11].toStringList().contains("*") || Geometry[11].toStringList().contains(i.key()))
 				{
-					for (const auto Point : i.value()) if (Points.value(Value.first) == Point) ++Value.second;
+					for (const auto Point : i.value())
+					{
+						const QLineF Distance(Points.value(Value.first), Point);
+
+						if (Distance.length() <= Radius) ++Value.second;
+					}
 				}
 			}
 		});
@@ -1064,7 +1078,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QString& Limiter)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -1094,7 +1108,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		emit onBeginProgress(tr("Applying geometry filters"));
 		emit onSetupProgress(0, 0);
 
-		Model->addItems(filterData(List, Geometry, Limiter));
+		Model->addItems(filterData(List, Geometry, Limiter, Radius));
 	}
 
 	emit onEndProgress();

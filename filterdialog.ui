@@ -204,18 +204,26 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="newButton">
-       <property name="text">
-        <string>Add</string>
+      <widget class="QDoubleSpinBox" name="radiusSpin">
+       <property name="specialValueText">
+        <string>Match exactly</string>
        </property>
-       <property name="icon">
-        <iconset theme="list-add">
-         <normaloff>.</normaloff>.</iconset>
+       <property name="prefix">
+        <string>Search in </string>
+       </property>
+       <property name="suffix">
+        <string> m radius</string>
+       </property>
+       <property name="maximum">
+        <double>10.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="limiterCheck">
+      <widget class="QToolButton" name="limiterCheck">
        <property name="text">
         <string>Limit objects list</string>
        </property>
@@ -246,6 +254,17 @@
          <string notr="true">OR</string>
         </property>
        </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="newButton">
+       <property name="text">
+        <string>Add</string>
+       </property>
+       <property name="icon">
+        <iconset theme="list-add">
+         <normaloff>.</normaloff>.</iconset>
+       </property>
       </widget>
      </item>
      <item>
@@ -449,7 +468,7 @@
   </connection>
   <connection>
    <sender>limiterCheck</sender>
-   <signal>toggled(bool)</signal>
+   <signal>clicked(bool)</signal>
    <receiver>FilterDialog</receiver>
    <slot>limiterBoxChecked(bool)</slot>
    <hints>

@@ -71,6 +71,8 @@ class FilterDialog : public QDialog
 		QHash<int, QVariant> getGeometryRules(void) const;
 		QHash<QString, QVariant> getFieldsRules(void) const;
 
+		double getRadius(void) const;
+
 	private slots:
 
 		void classSearchEdited(const QString& Search);
@@ -97,7 +99,7 @@ class FilterDialog : public QDialog
 
 	signals:
 
-		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&, const QString&);
+		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&, const QString&, double);
 
 };
 

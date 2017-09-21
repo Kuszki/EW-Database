@@ -209,7 +209,7 @@ void MainWindow::deleteActionClicked(void)
 
 void MainWindow::refreshActionClicked(void)
 {
-	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules(), Filter->getLimiterFile());
+	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules(), Filter->getLimiterFile(), Filter->getRadius());
 }
 
 void MainWindow::editActionClicked(void)
@@ -392,9 +392,9 @@ void MainWindow::selectionChanged(void)
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter)
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius)
 {
-	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter);
+	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter, Radius);
 }
 
 void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)

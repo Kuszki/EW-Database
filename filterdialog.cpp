@@ -145,6 +145,11 @@ QHash<QString, QVariant> FilterDialog::getFieldsRules(void) const
 	return Rules;
 }
 
+double FilterDialog::getRadius(void) const
+{
+	return ui->radiusSpin->value();
+}
+
 void FilterDialog::classSearchEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->classLayout->count(); ++i)
@@ -234,6 +239,7 @@ void FilterDialog::filterRulesChanged(void)
 
 	ui->newButton->setVisible(Index == 2);
 	ui->limiterCheck->setVisible(Index == 2);
+	ui->radiusSpin->setVisible(Index == 2);
 }
 
 void FilterDialog::newButtonClicked(void)
@@ -274,7 +280,7 @@ void FilterDialog::unselectButtonClicked(void)
 
 void FilterDialog::accept(void)
 {
-	emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter); QDialog::accept();
+	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter, ui->radiusSpin->value());
 }
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
