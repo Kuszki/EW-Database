@@ -299,17 +299,17 @@ QStringList DatabaseDriver::normalizeHeaders(QList<DatabaseDriver::TABLE>& Tabs,
 	return List;
 }
 
-QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Indexes, bool Common, int Index)
+QMap<QString, QSet<int> > DatabaseDriver::getClassGroups(const QSet<int>& Indexes, bool Common, int Index)
 {
-	if (!Database.isOpen()) return QMap<QString, QList<int>>();
+	if (!Database.isOpen()) return QMap<QString, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<QString, QList<int>> List; int Step = 0;
+	QMap<QString, QSet<int>> List; int Step = 0;
 
 	emit onBeginProgress(tr("Preparing queries"));
 	emit onSetupProgress(0, Indexes.size());
 
-	if (Common) List.insert("EW_OBIEKTY", QList<int>());
+	if (Common) List.insert("EW_OBIEKTY", QSet<int>());
 
 	Query.prepare(
 		"SELECT "
@@ -328,11 +328,11 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 		const QString Table = Query.value(Index + 1).toString();
 		const int ID = Query.value(0).toInt();
 
-		if (!List.contains(Table)) List.insert(Table, QList<int>());
+		if (!List.contains(Table)) List.insert(Table, QSet<int>());
 
-		List[Table].append(ID);
+		List[Table].insert(ID);
 
-		if (Common) List["EW_OBIEKTY"].append(ID);
+		if (Common) List["EW_OBIEKTY"].insert(ID);
 
 		emit onUpdateProgress(++Step);
 	}
@@ -340,7 +340,7 @@ QMap<QString, QList<int>> DatabaseDriver::getClassGroups(const QList<int>& Index
 	emit onEndProgress(); return List;
 }
 
-QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QList<int>& Filter, const QString& Where, bool Dict, bool View)
+QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QSet<int>& Filter, const QString& Where, bool Dict, bool View)
 {
 	if (!Database.isOpen()) return QHash<int, QHash<int, QVariant>>();
 
@@ -1054,19 +1054,32 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	QSet<int> UIDS; UIDS.reserve(Filter.size()); int Step = 0;
+	const QSet<QString> Hash = Filter.toSet();
+
+	emit onBeginProgress(tr("Preparing objects list"));
+	emit onSetupProgress(0, Hash.size());
+
+	Query.prepare("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0");
+
+	if (Query.exec()) while (Query.next()) if (Hash.contains(Query.value(1).toString()))
+	{
+		UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
+	}
+
 	emit onBeginProgress(tr("Querying database"));
 	emit onSetupProgress(0, Tables.size());
 
-	const int Index = Headers.indexOf(tr("Object ID"));
-
-	RecordModel* Model = new RecordModel(Headers, this); int Step = 0;
+	RecordModel* Model = new RecordModel(Headers, this); Step = 0;
 
 	for (const auto& Table : Tables)
 	{
-		auto Data = loadData(Table, QList<int>(), QString(), true, true);
+		auto Data = loadData(Table, QSet<int>(), QString(), true, true);
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
-			if (Filter.contains(i.value().value(Index).toString()))
+			if (UIDS.contains(i.key()))
 			{
 				Model->addItem(i.key(), i.value());
 			}
@@ -1092,7 +1105,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
-		auto Data = loadData(Table, QList<int>(), Filter, true, true);
+		auto Data = loadData(Table, QSet<int>(), Filter, true, true);
 
 		if (Geometry.isEmpty()) Model->addItems(Data);
 		else for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
@@ -1119,8 +1132,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(Model); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 1);
-	const QList<int> Used = Values.keys(); int Step = 0; QStringList All;
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 1);
+	const QSet<int> Used = Values.keys().toSet(); int Step = 0; QStringList All;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
@@ -1204,7 +1217,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(Model); return; }
 
 	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database), QueryE(Database), QueryF(Database);
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1); int Step = 0;
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1); int Step = 0;
 
 	emit onBeginProgress(tr("Removing data"));
 	emit onSetupProgress(0, Items.size());
@@ -1323,8 +1336,8 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataSplit(0); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
-	QList<int> Points; QHash<int, QList<int>> Objects; int Step = 0; int Count = 0;
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 0);
+	QSet<int> Points; QHash<int, QList<int>> Objects; int Step = 0; int Count = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	Type = Type == 0 ? 2 : Type == 1 ? 4 : Type == 2 ? 3 : 0;
@@ -1350,7 +1363,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 	{
 		if (Tasks[Point].contains(Query.value(0).toInt()))
 		{
-			Points.append(Query.value(1).toInt());
+			Points.insert(Query.value(1).toInt());
 		}
 
 		emit onUpdateProgress(++Step);
@@ -1419,8 +1432,8 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 0);
-	QList<POINT> Points; QList<int> Joined; QHash<int, QSet<int>> Geometry, Insert;
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 0);
+	QList<POINT> Points; QSet<int> Joined; QHash<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database), QueryA(Database), QueryB(Database); Query.setForwardOnly(true);
 	int Step = 0; int Count = 0;
 
@@ -1444,7 +1457,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	if (Query.exec()) while (Query.next())
 	{
-		Joined.append(Query.value(0).toInt());
+		Joined.insert(Query.value(0).toInt());
 	}
 
 	emit onEndProgress(); Step = 0;
@@ -1609,7 +1622,7 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataMerge(0); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 0);
 	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QList<int> Counts; QList<QPointF> Ends;
 	QHash<int, QSet<int>> Merges; QList<QPointF> Cuts; int Step = 0; QSet<int> Merged;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
@@ -1965,7 +1978,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 		for (auto& Part : P.Objects) find(P.Lines, Part);
 	};
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 0);
 	QHash<int, PARTS> Parts; QList<QPointF> Cuts; QHash<int, QSet<int>> Queue; int Step = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true); QMutex Locker;
 
@@ -2351,13 +2364,13 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(0); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1);
 	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); int Step = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol;
 	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database), ClassQuery(Database);
 
 	const int Type = getItemByField(Tables, Class, &TABLE::Name).Type;
-	const QList<int> List = Model->getUids(Items); QSet<int> Change;
+	const QSet<int> List = Model->getUids(Items).toSet(); QSet<int> Change;
 
 	if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
 	{
@@ -2529,7 +2542,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	struct OBJECT { QList<int> Indexes; QList<QLineF> Lines; QList<QPointF> Points; };
 	struct LINE { int ID; QLineF Line; QPointF Point; bool Changed = false; };
 
-	const QList<int> Tasks = Model->getUids(Items); int Step = 0;
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); int Step = 0;
 	QSqlQuery Load(Database), Update(Database); Load.setForwardOnly(true);
 	QHash<int, OBJECT> Objects; QList<LINE> Updates; QMutex Synchronizer;
 
@@ -2723,7 +2736,7 @@ void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJobsRestore(0); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), true, 0);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 0);
 	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database); int Step = 0; int Count = 0;
 
 	emit onBeginProgress(tr("Restoring job name"));
@@ -2799,7 +2812,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onHistoryRemove(0); return; }
 
 	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database); int Step = 0;
-	const QList<int> Tasks = Model->getUids(Items); int Count = 0;
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); int Count = 0;
 
 	emit onBeginProgress(tr("Removing history"));
 	emit onSetupProgress(0, Tasks.size());
@@ -2867,7 +2880,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0;
 	QMap<int, POINT> Points, Texts, Objects; QList<LINE> Lines;
-	const QList<int> Tasks = Model->getUids(Items); QList<const POINT*> Union;
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); QList<const POINT*> Union;
 
 	emit onBeginProgress(tr("Loading points"));
 	emit onSetupProgress(0, 0);
@@ -3239,7 +3252,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	QSqlQuery Symbols(Database), Lines(Database), Surfaces(Database), Select(Database), Text(Database), Element(Database);
 	QList<LINE> LineList; QList<SURFACE> SurfaceList; QList<LABEL> Insertions; QSet<int> Used;
-	const QList<int> Tasks = Model->getUids(Items); QMutex Synchronizer; int Step = 0, Count = 0;
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); QMutex Synchronizer; int Step = 0, Count = 0;
 
 	if (!J)
 	{
@@ -3562,7 +3575,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onLabelInsert(Count);
 }
 
-QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QList<int>& Tasks, const QString& Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
@@ -3726,7 +3739,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 	return Insert;
 }
 
-QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString& Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
@@ -3813,7 +3826,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 	return Insert;
 }
 
-QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QList<int>& Tasks, const QString& Class, double Radius)
+QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Geometry, const QList<POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
@@ -3873,7 +3886,7 @@ void DatabaseDriver::getCommon(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onCommonReady(QList<int>()); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1);
 	const QList<int> Used = getCommonFields(Tasks.keys());
 
 	emit onEndProgress();
@@ -3884,7 +3897,7 @@ void DatabaseDriver::getPreset(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPresetReady(QList<QHash<int, QVariant>>(), QList<int>()); return; }
 
-	const QMap<QString, QList<int>> Tasks = getClassGroups(Model->getUids(Items), false, 1);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1);
 	const QList<int> Used = getCommonFields(Tasks.keys());
 	QList<QHash<int, QVariant>> Values; int Step = 0;
 
@@ -3909,7 +3922,7 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJoinsReady(QHash<QString, QString>(), QHash<QString, QString>(), QHash<QString, QString>()); return; }
 
-	const QList<int> Tasks = Model->getUids(Items);
+	const QSet<int> Tasks = Model->getUids(Items).toSet();
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<QString, QString> Points, Lines, Circles; int Step = 0;
 
@@ -3967,7 +3980,7 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 	QHash<QString, QHash<int, QString>> Lines, Points, Texts;
 	QHash<QString, QString> Classes; int Step = 0;
 
-	const QList<int> Tasks = Model->getUids(Items);
+	const QSet<int> Tasks = Model->getUids(Items).toSet();
 
 	const int Mask = 8 | 2 | 256; int Type = 0;
 
