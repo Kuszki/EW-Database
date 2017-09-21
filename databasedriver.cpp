@@ -1211,9 +1211,15 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 				"SELECT IDE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND UIDO = ?"
 			")");
 
-	QueryC.prepare("DELETE FROM EW_OBIEKTY WHERE UID = ?");
-	QueryD.prepare("DELETE FROM EW_OB_ELEMENTY WHERE IDE = ? AND TYP = 1");
-	QueryE.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
+	QueryC.prepare(
+		"DELETE FROM "
+			"EW_OB_ELEMENTY "
+		"WHERE "
+			"IDE = ANY(SELECT ID FROM EW_OBIEKTY WHERE UID = ?) AND TYP = 1");
+
+	QueryD.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
+
+	QueryE.prepare("DELETE FROM EW_OBIEKTY WHERE UID = ?");
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -2645,7 +2651,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 		QPointF Final; double h = NAN; const QPointF Second = Part.Point == Part.Line.p1() ? Part.Line.p2() : Part.Line.p1();
 
-		for (const auto& L : Lines)
+		for (const auto& L : Lines) if (Part.Point != L.p1() && Part.Point != L.p2())
 		{
 			QLineF Normal(Part.Point, Second); QPointF IntersectR, IntersectL;
 
