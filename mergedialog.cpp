@@ -82,7 +82,7 @@ void MergeDialog::allButtonChecked(bool Enabled)
 
 void MergeDialog::accept(void)
 {
-	emit onFieldsUpdate(getSelectedFields(), getFilterClasses()); QDialog::accept();
+	QDialog::accept(); emit onMergeRequest(getSelectedFields(), getFilterClasses());
 }
 
 void MergeDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables)

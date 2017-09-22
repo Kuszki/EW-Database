@@ -493,7 +493,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Filter, &FilterDialog::onFiltersUpdate, this, &MainWindow::refreshData);
 	connect(Update, &UpdateDialog::onValuesUpdate, this, &MainWindow::updateValues);
 	connect(Export, &ExportDialog::onExportRequest, this, &MainWindow::saveData);
-	connect(Merge, &MergeDialog::onFieldsUpdate, this, &MainWindow::mergeData);
+	connect(Merge, &MergeDialog::onMergeRequest, this, &MainWindow::mergeData);
 	connect(Cut, &CutDialog::onClassesUpdate, this, &MainWindow::cutData);
 	connect(Label, &LabelDialog::onLabelRequest, this, &MainWindow::insertLabel);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);

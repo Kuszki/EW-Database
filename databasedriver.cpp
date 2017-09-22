@@ -1858,6 +1858,48 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 					Query.value(6).toBool()
 				});
 
+				{
+					QVariantList ValuesA, ValuesB, finallValues; QStringList Params;
+
+					Query.exec(QString("SELECT * FROM %1 WHERE UIDO = %2").arg(Table.Data).arg(Index));
+
+					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesA.append(Query.value(i));
+
+					Query.exec(QString("SELECT * FROM %1 WHERE UIDO = %2").arg(Table.Data).arg(Part));
+
+					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesB.append(Query.value(i));
+
+					for (int i = 0; i < ValuesA.size(); ++i)
+					{
+						finallValues.append(isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i]); Params.append("?");
+					}
+
+					Query.prepare(QString("UPDATE OR INSERT INTO %1 VALUES (%2) MATCHING (UIDO)").arg(Table.Data).arg(Params.join(", ")));
+
+					for (const auto& V : finallValues) Query.addBindValue(V); Query.exec();
+				}
+
+				{
+					QVariantList ValuesA, ValuesB, finallValues; QStringList Params;
+
+					Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Index));
+
+					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesA.append(Query.value(i));
+
+					Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
+
+					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesB.append(Query.value(i));
+
+					for (int i = 0; i < ValuesA.size(); ++i)
+					{
+						finallValues.append(isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i]); Params.append("?");
+					}
+
+					Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY VALUES (%1) MATCHING (UID)").arg(Params.join(", ")));
+
+					for (const auto& V : finallValues) Query.addBindValue(V); Query.exec();
+				}
+
 				Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(Part));
 
 				if (Part == Index) continue; else Merged.insert(Part);
@@ -1929,6 +1971,23 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	}
 
 	for (const auto& Item : Merged) emit onRowRemove(Model->index(Item));
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size());
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j)
+		{
+			if (!Merged.contains(j.key())) emit onRowUpdate(j.key(), j.value());
+		}
+
+		emit onUpdateProgress(++Step);
+	}
 
 	emit onEndProgress();
 	emit onDataMerge(Merged.size() + Merges.size());
@@ -3130,6 +3189,10 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			Query.value(5).toDouble()
 		});
 	}
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Loading texts"));
+	emit onSetupProgress(0, 0);
 
 	Query.prepare(
 		"SELECT "
@@ -4541,4 +4604,19 @@ template<class Type, class Field, template<class> class Container>
 bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer)
 {
 	for (auto& Item : Items) if (Item.*Pointer == Data) return true; return false;
+}
+
+bool isVariantEmpty(const QVariant& Value)
+{
+	switch (Value.type())
+	{
+		case QVariant::Int: return Value == QVariant(int(0));
+		case QVariant::Double: return Value == QVariant(double(0.0));
+		case QVariant::Date: return Value == QVariant(QDate());
+		case QVariant::DateTime: return Value == QVariant(QDateTime());
+		case QVariant::String: return Value == QVariant(QString());
+		case QVariant::List: return Value == QVariantList();
+
+		default: return false;
+	}
 }
