@@ -1888,7 +1888,7 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 				}
 
 				{
-					QVariantList ValuesA, ValuesB, finallValues; QStringList Params;
+					QVariantList ValuesA, ValuesB; QStringList Params;
 
 					Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Index));
 
@@ -1898,14 +1898,16 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesB.append(Query.value(i));
 
-					for (int i = 0; i < ValuesA.size(); ++i)
+					for (int i = 8; i < ValuesA.size(); ++i)
 					{
-						finallValues.append(isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i]); Params.append("?");
+						ValuesA[i] = isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i];
 					}
+
+					for (int i = 0; i < ValuesA.size(); ++i) Params.append("?");
 
 					Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY VALUES (%1) MATCHING (UID)").arg(Params.join(", ")));
 
-					for (const auto& V : finallValues) Query.addBindValue(V); Query.exec();
+					for (const auto& V : ValuesA) Query.addBindValue(V); Query.exec();
 				}
 
 				Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(Part));
