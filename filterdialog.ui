@@ -229,6 +229,9 @@
        </property>
        <property name="icon">
         <iconset theme="document-new"/>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
        </property>
       </widget>
      </item>
