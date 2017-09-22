@@ -2682,7 +2682,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Objects, [&lUpdates, &Synchronizer] (OBJECT& Object) -> void
+	if (!Lines.isEmpty()) QtConcurrent::blockingMap(Objects, [&lUpdates, &Synchronizer] (OBJECT& Object) -> void
 	{
 		if (Object.Lines.isEmpty() || Object.Points.size() != 2) return; QLineF Start, End; int sIndex(0), eIndex(0);
 
@@ -2711,6 +2711,49 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 			if (eIndex) lUpdates.append({ eIndex, End, E, false });
 
 			Synchronizer.unlock();
+		}
+	});
+
+	if (!Sources.isEmpty()) QtConcurrent::blockingMap(Objects, [&Sources, &lUpdates, &Synchronizer, Radius] (OBJECT& Object) -> void
+	{
+		for (int i = 0; i < Object.Indexes.size(); ++i)
+		{
+			QPointF Final1, Final2; double h1 = NAN, h2 = NAN;
+			const QLineF& L = Object.Lines[i]; QLineF Current = L;
+
+			for (const auto& P : Sources)
+			{
+				const double Rad1 = QLineF(P, L.p1()).length();
+
+				if (Rad1 <= Radius && (qIsNaN(h1) || Rad1 < h1))
+				{
+					Final1 = P; h1 = Rad1;
+				}
+
+				const double Rad2 = QLineF(P, L.p2()).length();
+
+				if (Rad2 <= Radius && (qIsNaN(h2) || Rad2 < h2))
+				{
+					Final2 = P; h2 = Rad2;
+				}
+			}
+
+			if (!qIsNaN(h1) && Final1 != Current.p1())
+			{
+				Current.setP1(Final1);
+			}
+
+			if (!qIsNaN(h2) && Final2 != Current.p2())
+			{
+				Current.setP2(Final2);
+			}
+
+			if (Current != L)
+			{
+				Synchronizer.lock();
+				lUpdates.append({ Object.Indexes[i], Current, QPointF(), true });
+				Synchronizer.unlock();
+			}
 		}
 	});
 
