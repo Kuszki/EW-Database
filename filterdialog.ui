@@ -20,294 +20,294 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
-     <property name="tabPosition">
-      <enum>QTabWidget::West</enum>
-     </property>
-     <property name="currentIndex">
-      <number>1</number>
-     </property>
-     <property name="documentMode">
-      <bool>true</bool>
-     </property>
-     <widget class="QWidget" name="classTab">
-      <attribute name="title">
-       <string>Classes</string>
-      </attribute>
-      <layout class="QGridLayout" name="classScroolLayout">
-       <item row="0" column="0">
-        <widget class="QScrollArea" name="classScrool">
-         <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
-         </property>
-         <property name="lineWidth">
-          <number>0</number>
-         </property>
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="classAreaWidgetContents">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1159</width>
-            <height>427</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="classLayout"/>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="simpleTab">
-      <attribute name="title">
-       <string>Fields</string>
-      </attribute>
-      <layout class="QGridLayout" name="fieldsLayout">
-       <item row="0" column="0">
-        <widget class="QScrollArea" name="simpleScrool">
-         <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
-         </property>
-         <property name="lineWidth">
-          <number>0</number>
-         </property>
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="simpleAreaWidgetContents">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1159</width>
-            <height>427</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="simpleLayout"/>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="geometryTab">
-      <attribute name="title">
-       <string>Geometry</string>
-      </attribute>
-      <layout class="QGridLayout" name="geometryScroolLayout">
-       <item row="0" column="0">
-        <widget class="QScrollArea" name="geometryScrool">
-         <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
-         </property>
-         <property name="lineWidth">
-          <number>0</number>
-         </property>
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="geometryAreaWidgetContents">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>1159</width>
-            <height>427</height>
-           </rect>
-          </property>
-          <layout class="QVBoxLayout" name="geometryLayout"/>
-         </widget>
-        </widget>
-       </item>
-      </layout>
-     </widget>
+	<property name="tabPosition">
+	 <enum>QTabWidget::West</enum>
+	</property>
+	<property name="currentIndex">
+	 <number>1</number>
+	</property>
+	<property name="documentMode">
+	 <bool>true</bool>
+	</property>
+	<widget class="QWidget" name="classTab">
+	 <attribute name="title">
+	  <string>Classes</string>
+	 </attribute>
+	 <layout class="QGridLayout" name="classScroolLayout">
+	  <item row="0" column="0">
+	   <widget class="QScrollArea" name="classScrool">
+	    <property name="frameShape">
+		<enum>QFrame::NoFrame</enum>
+	    </property>
+	    <property name="lineWidth">
+		<number>0</number>
+	    </property>
+	    <property name="widgetResizable">
+		<bool>true</bool>
+	    </property>
+	    <widget class="QWidget" name="classAreaWidgetContents">
+		<property name="geometry">
+		 <rect>
+		  <x>0</x>
+		  <y>0</y>
+		  <width>1159</width>
+		  <height>427</height>
+		 </rect>
+		</property>
+		<layout class="QVBoxLayout" name="classLayout"/>
+	    </widget>
+	   </widget>
+	  </item>
+	 </layout>
+	</widget>
+	<widget class="QWidget" name="simpleTab">
+	 <attribute name="title">
+	  <string>Fields</string>
+	 </attribute>
+	 <layout class="QGridLayout" name="fieldsLayout">
+	  <item row="0" column="0">
+	   <widget class="QScrollArea" name="simpleScrool">
+	    <property name="frameShape">
+		<enum>QFrame::NoFrame</enum>
+	    </property>
+	    <property name="lineWidth">
+		<number>0</number>
+	    </property>
+	    <property name="widgetResizable">
+		<bool>true</bool>
+	    </property>
+	    <widget class="QWidget" name="simpleAreaWidgetContents">
+		<property name="geometry">
+		 <rect>
+		  <x>0</x>
+		  <y>0</y>
+		  <width>1159</width>
+		  <height>427</height>
+		 </rect>
+		</property>
+		<layout class="QVBoxLayout" name="simpleLayout"/>
+	    </widget>
+	   </widget>
+	  </item>
+	 </layout>
+	</widget>
+	<widget class="QWidget" name="geometryTab">
+	 <attribute name="title">
+	  <string>Geometry</string>
+	 </attribute>
+	 <layout class="QGridLayout" name="geometryScroolLayout">
+	  <item row="0" column="0">
+	   <widget class="QScrollArea" name="geometryScrool">
+	    <property name="frameShape">
+		<enum>QFrame::NoFrame</enum>
+	    </property>
+	    <property name="lineWidth">
+		<number>0</number>
+	    </property>
+	    <property name="widgetResizable">
+		<bool>true</bool>
+	    </property>
+	    <widget class="QWidget" name="geometryAreaWidgetContents">
+		<property name="geometry">
+		 <rect>
+		  <x>0</x>
+		  <y>0</y>
+		  <width>1159</width>
+		  <height>427</height>
+		 </rect>
+		</property>
+		<layout class="QVBoxLayout" name="geometryLayout"/>
+	    </widget>
+	   </widget>
+	  </item>
+	 </layout>
+	</widget>
     </widget>
    </item>
    <item row="1" column="0">
     <layout class="QHBoxLayout" name="toolsLayout">
-     <item>
-      <widget class="QLineEdit" name="simpleSearch">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>250</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="placeholderText">
-        <string>Search</string>
-       </property>
-       <property name="clearButtonEnabled">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="copyButton">
-       <property name="text">
-        <string>Copy</string>
-       </property>
-       <property name="icon">
-        <iconset theme="edit-copy">
-         <normaloff>.</normaloff>.</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="classSearch">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>250</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="placeholderText">
-        <string>Search</string>
-       </property>
-       <property name="clearButtonEnabled">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="selectButton">
-       <property name="text">
-        <string>All</string>
-       </property>
-       <property name="icon">
-        <iconset theme="list-add">
-         <normaloff>.</normaloff>.</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="unselectButton">
-       <property name="text">
-        <string>None</string>
-       </property>
-       <property name="icon">
-        <iconset theme="list-remove">
-         <normaloff>.</normaloff>.</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QDoubleSpinBox" name="radiusSpin">
-       <property name="minimumSize">
-        <size>
-         <width>250</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="specialValueText">
-        <string>Match exactly</string>
-       </property>
-       <property name="prefix">
-        <string>Search in </string>
-       </property>
-       <property name="suffix">
-        <string> m radius</string>
-       </property>
-       <property name="maximum">
-        <double>10.000000000000000</double>
-       </property>
-       <property name="singleStep">
-        <double>0.010000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="limiterCheck">
-       <property name="text">
-        <string>Limit objects list</string>
-       </property>
-       <property name="icon">
-        <iconset theme="document-new"/>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="leftSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QComboBox" name="operatorBox">
-       <item>
-        <property name="text">
-         <string notr="true">AND</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string notr="true">OR</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="newButton">
-       <property name="text">
-        <string>Add</string>
-       </property>
-       <property name="icon">
-        <iconset theme="list-add">
-         <normaloff>.</normaloff>.</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="rightSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
-       </property>
-      </widget>
-     </item>
+	<item>
+	 <widget class="QLineEdit" name="simpleSearch">
+	  <property name="sizePolicy">
+	   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+	    <horstretch>0</horstretch>
+	    <verstretch>0</verstretch>
+	   </sizepolicy>
+	  </property>
+	  <property name="minimumSize">
+	   <size>
+	    <width>250</width>
+	    <height>0</height>
+	   </size>
+	  </property>
+	  <property name="placeholderText">
+	   <string>Search</string>
+	  </property>
+	  <property name="clearButtonEnabled">
+	   <bool>true</bool>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QToolButton" name="copyButton">
+	  <property name="text">
+	   <string>Copy</string>
+	  </property>
+	  <property name="icon">
+	   <iconset theme="edit-copy">
+	    <normaloff>.</normaloff>.</iconset>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QLineEdit" name="classSearch">
+	  <property name="sizePolicy">
+	   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+	    <horstretch>0</horstretch>
+	    <verstretch>0</verstretch>
+	   </sizepolicy>
+	  </property>
+	  <property name="minimumSize">
+	   <size>
+	    <width>250</width>
+	    <height>0</height>
+	   </size>
+	  </property>
+	  <property name="placeholderText">
+	   <string>Search</string>
+	  </property>
+	  <property name="clearButtonEnabled">
+	   <bool>true</bool>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QToolButton" name="selectButton">
+	  <property name="text">
+	   <string>All</string>
+	  </property>
+	  <property name="icon">
+	   <iconset theme="list-add">
+	    <normaloff>.</normaloff>.</iconset>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QToolButton" name="unselectButton">
+	  <property name="text">
+	   <string>None</string>
+	  </property>
+	  <property name="icon">
+	   <iconset theme="list-remove">
+	    <normaloff>.</normaloff>.</iconset>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QDoubleSpinBox" name="radiusSpin">
+	  <property name="minimumSize">
+	   <size>
+	    <width>250</width>
+	    <height>0</height>
+	   </size>
+	  </property>
+	  <property name="specialValueText">
+	   <string>Match exactly</string>
+	  </property>
+	  <property name="prefix">
+	   <string>Search in </string>
+	  </property>
+	  <property name="suffix">
+	   <string> m radius</string>
+	  </property>
+	  <property name="maximum">
+	   <double>10.000000000000000</double>
+	  </property>
+	  <property name="singleStep">
+	   <double>0.010000000000000</double>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QToolButton" name="limiterCheck">
+	  <property name="text">
+	   <string>Limit objects list</string>
+	  </property>
+	  <property name="icon">
+	   <iconset theme="document-new"/>
+	   </property>
+	  <property name="checkable">
+	   <bool>true</bool>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <spacer name="leftSpacer">
+	  <property name="orientation">
+	   <enum>Qt::Horizontal</enum>
+	  </property>
+	  <property name="sizeHint" stdset="0">
+	   <size>
+	    <width>0</width>
+	    <height>0</height>
+	   </size>
+	  </property>
+	 </spacer>
+	</item>
+	<item>
+	 <widget class="QComboBox" name="operatorBox">
+	  <item>
+	   <property name="text">
+	    <string notr="true">AND</string>
+	   </property>
+	  </item>
+	  <item>
+	   <property name="text">
+	    <string notr="true">OR</string>
+	   </property>
+	  </item>
+	 </widget>
+	</item>
+	<item>
+	 <widget class="QToolButton" name="newButton">
+	  <property name="text">
+	   <string>Add</string>
+	  </property>
+	  <property name="icon">
+	   <iconset theme="list-add">
+	    <normaloff>.</normaloff>.</iconset>
+	  </property>
+	 </widget>
+	</item>
+	<item>
+	 <spacer name="rightSpacer">
+	  <property name="orientation">
+	   <enum>Qt::Horizontal</enum>
+	  </property>
+	  <property name="sizeHint" stdset="0">
+	   <size>
+	    <width>0</width>
+	    <height>0</height>
+	   </size>
+	  </property>
+	 </spacer>
+	</item>
+	<item>
+	 <widget class="QDialogButtonBox" name="buttonBox">
+	  <property name="sizePolicy">
+	   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+	    <horstretch>0</horstretch>
+	    <verstretch>0</verstretch>
+	   </sizepolicy>
+	  </property>
+	  <property name="orientation">
+	   <enum>Qt::Horizontal</enum>
+	  </property>
+	  <property name="standardButtons">
+	   <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+	  </property>
+	 </widget>
+	</item>
     </layout>
    </item>
   </layout>
@@ -325,12 +325,12 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1216</x>
-     <y>488</y>
+	<x>1216</x>
+	<y>488</y>
     </hint>
     <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
+	<x>157</x>
+	<y>274</y>
     </hint>
    </hints>
   </connection>
@@ -341,12 +341,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1216</x>
-     <y>488</y>
+	<x>1216</x>
+	<y>488</y>
     </hint>
     <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
+	<x>286</x>
+	<y>274</y>
     </hint>
    </hints>
   </connection>
@@ -357,12 +357,12 @@
    <slot>simpleSearchEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>471</y>
+	<x>248</x>
+	<y>471</y>
     </hint>
     <hint type="destinationlabel">
-     <x>256</x>
-     <y>554</y>
+	<x>256</x>
+	<y>554</y>
     </hint>
    </hints>
   </connection>
@@ -373,12 +373,12 @@
    <slot>classSearchEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>545</x>
-     <y>488</y>
+	<x>545</x>
+	<y>488</y>
     </hint>
     <hint type="destinationlabel">
-     <x>81</x>
-     <y>602</y>
+	<x>81</x>
+	<y>602</y>
     </hint>
    </hints>
   </connection>
@@ -389,12 +389,12 @@
    <slot>selectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>588</x>
-     <y>487</y>
+	<x>588</x>
+	<y>487</y>
     </hint>
     <hint type="destinationlabel">
-     <x>530</x>
-     <y>559</y>
+	<x>530</x>
+	<y>559</y>
     </hint>
    </hints>
   </connection>
@@ -405,12 +405,12 @@
    <slot>unselectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>612</x>
-     <y>487</y>
+	<x>612</x>
+	<y>487</y>
     </hint>
     <hint type="destinationlabel">
-     <x>567</x>
-     <y>560</y>
+	<x>567</x>
+	<y>560</y>
     </hint>
    </hints>
   </connection>
@@ -421,12 +421,12 @@
    <slot>copyButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>280</x>
-     <y>471</y>
+	<x>280</x>
+	<y>471</y>
     </hint>
     <hint type="destinationlabel">
-     <x>294</x>
-     <y>598</y>
+	<x>294</x>
+	<y>598</y>
     </hint>
    </hints>
   </connection>
@@ -437,12 +437,12 @@
    <slot>filterRulesChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>364</y>
+	<x>20</x>
+	<y>364</y>
     </hint>
     <hint type="destinationlabel">
-     <x>61</x>
-     <y>579</y>
+	<x>61</x>
+	<y>579</y>
     </hint>
    </hints>
   </connection>
@@ -453,12 +453,12 @@
    <slot>newButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>995</x>
-     <y>487</y>
+	<x>995</x>
+	<y>487</y>
     </hint>
     <hint type="destinationlabel">
-     <x>632</x>
-     <y>552</y>
+	<x>632</x>
+	<y>552</y>
     </hint>
    </hints>
   </connection>
@@ -469,12 +469,12 @@
    <slot>limiterBoxChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>862</x>
-     <y>487</y>
+	<x>862</x>
+	<y>487</y>
     </hint>
     <hint type="destinationlabel">
-     <x>700</x>
-     <y>603</y>
+	<x>700</x>
+	<y>603</y>
     </hint>
    </hints>
   </connection>

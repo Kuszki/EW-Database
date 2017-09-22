@@ -639,7 +639,7 @@ void MainWindow::dataCutted(int Count)
 
 void MainWindow::dataFitted(int Count)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n objects(s)", nullptr, Count));
+	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n segment(s)", nullptr, Count));
 }
 
 void MainWindow::refactorData(int Count)
