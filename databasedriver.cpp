@@ -1869,14 +1869,22 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesB.append(Query.value(i));
 
-					for (int i = 0; i < ValuesA.size(); ++i)
+					if (!ValuesA.isEmpty() && !ValuesB.isEmpty()) for (int i = 0; i < ValuesA.size(); ++i)
 					{
-						finallValues.append(isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i]); Params.append("?");
+						finallValues.append(isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i]);
 					}
+					else if (!ValuesB.isEmpty()) finallValues = ValuesB;
 
-					Query.prepare(QString("UPDATE OR INSERT INTO %1 VALUES (%2) MATCHING (UIDO)").arg(Table.Data).arg(Params.join(", ")));
+					if (!finallValues.isEmpty())
+					{
+						for (int i = 0; i < finallValues.size(); ++i) Params.append("?");
 
-					for (const auto& V : finallValues) Query.addBindValue(V); Query.exec();
+						Query.prepare(QString("UPDATE OR INSERT INTO %1 VALUES (%2) MATCHING (UIDO)")
+								    .arg(Table.Data)
+								    .arg(Params.join(", ")));
+
+						for (const auto& V : finallValues) Query.addBindValue(V); Query.exec();
+					}
 				}
 
 				{
