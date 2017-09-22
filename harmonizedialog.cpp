@@ -24,7 +24,7 @@
 HarmonizeDialog::HarmonizeDialog(QWidget* Parent, const QString& Path)
 : QDialog(Parent), ui(new Ui::HarmonizeDialog), File(Path)
 {
-	ui->setupUi(this); ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+	ui->setupUi(this); fitParametersChanged();
 }
 
 HarmonizeDialog::~HarmonizeDialog(void)
@@ -36,7 +36,7 @@ void HarmonizeDialog::accept(void)
 {
 	QDialog::accept();
 
-	emit onFitRequest(File,
+	emit onFitRequest(File, ui->sourceCombo->currentIndex(),
 				   ui->x1Spin->value() - 1,
 				   ui->y1Spin->value() - 1,
 				   ui->x2Spin->value() - 1,
@@ -60,18 +60,34 @@ QString HarmonizeDialog::getPath(void) const
 	return File;
 }
 
+void HarmonizeDialog::sourceTypeChanged(int Type)
+{
+	const bool Point = Type == 1;
+
+	ui->x2Spin->setDisabled(Point);
+	ui->y2Spin->setDisabled(Point);
+	ui->lengthSpin->setDisabled(Point);
+
+	fitParametersChanged();
+}
+
 void HarmonizeDialog::fitParametersChanged(void)
 {
 	QSet<int> Indexes; bool Accepted;
 
 	const bool Range = ui->lengthSpin->value() >= ui->distanceSpin->value();
+	const bool Point = ui->sourceCombo->currentIndex() == 1;
 
 	Indexes.insert(ui->x1Spin->value());
 	Indexes.insert(ui->y1Spin->value());
-	Indexes.insert(ui->x2Spin->value());
-	Indexes.insert(ui->y2Spin->value());
 
-	Accepted = Range && Indexes.size() == 4;
+	if (!Point)
+	{
+		Indexes.insert(ui->x2Spin->value());
+		Indexes.insert(ui->y2Spin->value());
+	}
+
+	Accepted = (Range || Point) && (Indexes.size() == (Point ? 2 : 4));
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Accepted);
 }

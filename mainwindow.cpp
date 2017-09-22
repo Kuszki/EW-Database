@@ -463,12 +463,12 @@ void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool
 	lockUi(BUSY); emit onLabelRequest(Model, Selected, Text, J, X, Y, P, L, R);
 }
 
-void MainWindow::fitData(const QString& File, int X1, int Y1, int X2, int Y2, double R, double L)
+void MainWindow::fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onFitRequest(Model, Selected, File, X1, Y1, X2, Y2, R, L);
+	lockUi(BUSY); emit onFitRequest(Model, Selected, File, Points, X1, Y1, X2, Y2, R, L);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
@@ -639,7 +639,7 @@ void MainWindow::dataCutted(int Count)
 
 void MainWindow::dataFitted(int Count)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n lines(s)", nullptr, Count));
+	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n objects(s)", nullptr, Count));
 }
 
 void MainWindow::refactorData(int Count)

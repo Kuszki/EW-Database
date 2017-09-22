@@ -184,7 +184,7 @@ class DatabaseDriver : public QObject
 					   const QString& Class, int Line, int Point, int Text);
 
 		void fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path,
-				   int X1, int Y1, int X2, int Y2, double Radius, double Length);
+				   bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length);
 
 		void restoreJob(RecordModel* Model, const QModelIndexList& Items);
 

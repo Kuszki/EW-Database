@@ -158,7 +158,7 @@ class MainWindow : public QMainWindow
 					  int Line, int Point, int Text);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
-		void fitData(const QString& File, int X1, int Y1, int X2, int Y2, double R, double L);
+		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -245,7 +245,7 @@ class MainWindow : public QMainWindow
 						int, double, double, bool, double, double);
 
 		void onFitRequest(RecordModel*, const QModelIndexList&, const QString&,
-					   int, int, int, int, double, double);
+					   bool, int, int, int, int, double, double);
 
 		void onGroupRequest(const QList<int>&);
 

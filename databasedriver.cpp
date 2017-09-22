@@ -2535,18 +2535,22 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onDataRefactor(Change.size());
 }
 
-void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path, int X1, int Y1, int X2, int Y2, double Radius, double Length)
+void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path, bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataFit(0); return; }
 
 	struct OBJECT { QList<int> Indexes; QList<QLineF> Lines; QList<QPointF> Points; };
 	struct LINE { int ID; QLineF Line; QPointF Point; bool Changed = false; };
+	struct POINT { int ID; QPointF Point; bool Changed = false; };
 
-	const QSet<int> Tasks = Model->getUids(Items).toSet(); int Step = 0;
-	QSqlQuery Load(Database), Update(Database); Load.setForwardOnly(true);
-	QHash<int, OBJECT> Objects; QList<LINE> Updates; QMutex Synchronizer;
+	const QSet<int> Tasks = Model->getUids(Items).toSet();
+	QHash<int, OBJECT> Objects; QList<LINE> lUpdates; QList<POINT> pUpdates;
+	QSqlQuery LoadLines(Database), LoadPoints(Database),
+			UpdateLines(Database), UpdatePoints(Database);
 
-	Load.prepare(
+	QMutex Synchronizer; int Step = 0; if (Points) X2 = Y2 = 0;
+
+	LoadLines.prepare(
 		"SELECT "
 			"O.UID, P.ID, P.P1_FLAGS, P.P0_X, P0_Y, "
 			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
@@ -2567,12 +2571,34 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 			"P.STAN_ZMIANY = 0 AND "
 			"E.TYP = 0");
 
-	Update.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ? AND STAN_ZMIANY = 0");
+	LoadPoints.prepare(
+		"SELECT "
+			"O.UID, P.ID, "
+			"P.POS_X, P.POS_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.TYP = 4 AND "
+			"E.TYP = 0");
+
+	UpdateLines.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ? AND STAN_ZMIANY = 0");
+	UpdatePoints.prepare("UPDATE EW_TEXT SET POS_X = ?, POS_Y = ? WHERE ID = ? AND STAN_ZMIANY = 0");
 
 	emit onBeginProgress(tr("Loading file data"));
 	emit onSetupProgress(0, 0);
 
-	QList<QLineF> Lines; QFile File(Path); QTextStream Stream(&File);
+	QList<QPointF> Sources; QList<QLineF> Lines; QFile File(Path); QTextStream Stream(&File);
 
 	File.open(QFile::ReadOnly | QFile::Text);
 
@@ -2594,7 +2620,11 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 			const double pX2 = Items[X2].toDouble(&Current); OK = OK && Current;
 			const double pY2 = Items[Y2].toDouble(&Current); OK = OK && Current;
 
-			if (OK) Lines.append({ pX1, pY1, pX2, pY2 });
+			if (OK)
+			{
+				if (!Points) Lines.append({ pX1, pY1, pX2, pY2 });
+				else Sources.append({ pX1, pY1 });
+			}
 		}
 		else continue;
 	}
@@ -2602,9 +2632,9 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onBeginProgress(tr("Loading geometry"));
 	emit onSetupProgress(0, Tasks.size());
 
-	if (Load.exec()) while (Load.next())
+	if (LoadLines.exec()) while (LoadLines.next())
 	{
-		const int UID = Load.value(0).toInt();
+		const int UID = LoadLines.value(0).toInt();
 
 		if (Tasks.contains(UID))
 		{
@@ -2612,8 +2642,8 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 			OBJECT& Object = Objects[UID];
 
-			QPointF P1(Load.value(3).toDouble(), Load.value(4).toDouble());
-			QPointF P2(Load.value(5).toDouble(), Load.value(6).toDouble());
+			QPointF P1(LoadLines.value(3).toDouble(), LoadLines.value(4).toDouble());
+			QPointF P2(LoadLines.value(5).toDouble(), LoadLines.value(6).toDouble());
 
 			if (Object.Points.contains(P1)) Object.Points.removeOne(P1);
 			else Object.Points.append(P1);
@@ -2621,11 +2651,29 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 			if (Object.Points.contains(P2)) Object.Points.removeOne(P2);
 			else Object.Points.append(P2);
 
-			if (Load.value(2).toInt() == 0)
+			if (LoadLines.value(2).toInt() == 0)
 			{
-				Object.Indexes.append(Load.value(1).toInt());
+				Object.Indexes.append(LoadLines.value(1).toInt());
 				Object.Lines.append({ P1, P2 });
 			}
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	if (LoadPoints.exec()) while (LoadPoints.next())
+	{
+		const int UID = LoadPoints.value(0).toInt();
+
+		if (Tasks.contains(UID))
+		{
+			pUpdates.append({
+				LoadPoints.value(1).toInt(),
+				{
+					LoadPoints.value(2).toDouble(),
+					LoadPoints.value(3).toDouble()
+				}
+			});
 
 			emit onUpdateProgress(++Step);
 		}
@@ -2634,7 +2682,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Objects, [&Updates, &Synchronizer] (OBJECT& Object) -> void
+	QtConcurrent::blockingMap(Objects, [&lUpdates, &Synchronizer] (OBJECT& Object) -> void
 	{
 		if (Object.Lines.isEmpty() || Object.Points.size() != 2) return; QLineF Start, End; int sIndex(0), eIndex(0);
 
@@ -2659,14 +2707,14 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		{
 			Synchronizer.lock();
 
-			if (sIndex) Updates.append({ sIndex, Start, S, false });
-			if (eIndex) Updates.append({ eIndex, End, E, false });
+			if (sIndex) lUpdates.append({ sIndex, Start, S, false });
+			if (eIndex) lUpdates.append({ eIndex, End, E, false });
 
 			Synchronizer.unlock();
 		}
 	});
 
-	QtConcurrent::blockingMap(Updates, [&Lines, Radius, Length] (LINE& Part) -> void
+	if (!Lines.isEmpty()) QtConcurrent::blockingMap(lUpdates, [&Lines, Radius, Length] (LINE& Part) -> void
 	{
 		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
 		{
@@ -2708,20 +2756,82 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	});
 
-	emit onBeginProgress(tr("Computing geometry")); int Rejected(0);
-	emit onSetupProgress(0, Updates.size()); Step = 0;
+	if (!Lines.isEmpty()) QtConcurrent::blockingMap(pUpdates, [&Lines, Radius] (POINT& Symbol) -> void
+	{
+		QPointF Final; double h = NAN;
 
-	for (const auto& L : Updates)
+		for (const auto& L : Lines)
+		{
+			const double Rad1 = QLineF(Symbol.Point, L.p1()).length();
+
+			if (Rad1 <= Radius && (qIsNaN(h) || Rad1 < h))
+			{
+				Final = L.p1(); h = Rad1;
+			}
+
+			const double Rad2 = QLineF(Symbol.Point, L.p1()).length();
+
+			if (Rad2 <= Radius && (qIsNaN(h) || Rad2 < h))
+			{
+				Final = L.p2(); h = Rad2;
+			}
+		}
+
+		if (Symbol.Changed = (!qIsNaN(h) && Final != Symbol.Point))
+		{
+			Symbol.Point = Final;
+		}
+	});
+
+	if (!Sources.isEmpty()) QtConcurrent::blockingMap(pUpdates, [&Sources, Radius] (POINT& Symbol) -> void
+	{
+		QPointF Final; double h = NAN;
+
+		for (const auto& P : Sources)
+		{
+			const double Rad = QLineF(Symbol.Point, P).length();
+
+			if (Rad <= Radius && (qIsNaN(h) || Rad < h))
+			{
+				Final = P; h = Rad;
+			}
+		}
+
+		if (Symbol.Changed = (!qIsNaN(h) && Final != Symbol.Point))
+		{
+			Symbol.Point = Final;
+		}
+	});
+
+	emit onBeginProgress(tr("Updating geometry")); int Rejected(0);
+	emit onSetupProgress(0, lUpdates.size() + pUpdates.size()); Step = 0;
+
+	for (const auto& L : lUpdates)
 	{
 		if (L.Changed)
 		{
-			Update.addBindValue(L.Line.x1());
-			Update.addBindValue(L.Line.y1());
-			Update.addBindValue(L.Line.x2());
-			Update.addBindValue(L.Line.y2());
-			Update.addBindValue(L.ID);
+			UpdateLines.addBindValue(L.Line.x1());
+			UpdateLines.addBindValue(L.Line.y1());
+			UpdateLines.addBindValue(L.Line.x2());
+			UpdateLines.addBindValue(L.Line.y2());
+			UpdateLines.addBindValue(L.ID);
 
-			Update.exec();
+			UpdateLines.exec();
+		}
+		else ++Rejected;
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (const auto& P : pUpdates)
+	{
+		if (P.Changed)
+		{
+			UpdatePoints.addBindValue(P.Point.x());
+			UpdatePoints.addBindValue(P.Point.y());
+			UpdatePoints.addBindValue(P.ID);
+
+			UpdatePoints.exec();
 		}
 		else ++Rejected;
 
@@ -2729,7 +2839,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	}
 
 	emit onEndProgress();
-	emit onDataFit(Updates.size() - Rejected);
+	emit onDataFit(lUpdates.size() + pUpdates.size() - Rejected);
 }
 
 void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items)

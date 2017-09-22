@@ -59,11 +59,13 @@ class HarmonizeDialog : public QDialog
 
 	private slots:
 
+		void sourceTypeChanged(int Type);
+
 		void fitParametersChanged(void);
 
 	signals:
 
-		void onFitRequest(const QString&,
+		void onFitRequest(const QString&, bool,
 					   int, int, int, int,
 					   double, double);
 
