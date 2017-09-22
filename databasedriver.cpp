@@ -55,8 +55,8 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 
 	QList<FIELD> Fields =
 	{
-		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
+		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
 		{ DATETIME,	"EW_OBIEKTY.DTU",		tr("Creation date")		},
 		{ DATETIME,	"EW_OBIEKTY.DTW",		tr("Modification date")	},
@@ -66,8 +66,8 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 
 	QHash<QString, QString> Dict =
 	{
-		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY"	},
 		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY"	},
+		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY"	},
 		{ "EW_OBIEKTY.OSOU",		"SELECT ID, NAME FROM EW_USERS"		},
 		{ "EW_OBIEKTY.OSOW",		"SELECT ID, NAME FROM EW_USERS"		}
 	};

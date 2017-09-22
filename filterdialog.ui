@@ -205,6 +205,12 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="radiusSpin">
+       <property name="minimumSize">
+        <size>
+         <width>250</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="specialValueText">
         <string>Match exactly</string>
        </property>
@@ -458,7 +464,7 @@
   </connection>
   <connection>
    <sender>limiterCheck</sender>
-   <signal>clicked(bool)</signal>
+   <signal>toggled(bool)</signal>
    <receiver>FilterDialog</receiver>
    <slot>limiterBoxChecked(bool)</slot>
    <hints>
