@@ -1879,7 +1879,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 					{
 						for (int i = 0; i < finallValues.size(); ++i) Params.append("?");
 
-						Query.prepare(QString("UPDATE OR INSERT INTO %1 VALUES (%2) MATCHING (UIDO)")
+						Query.prepare(QString("UPDATE OR INSERT INTO %1 "
+										  "VALUES (%2) MATCHING (UIDO)")
 								    .arg(Table.Data)
 								    .arg(Params.join(", ")));
 
@@ -1905,7 +1906,9 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 					for (int i = 0; i < ValuesA.size(); ++i) Params.append("?");
 
-					Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY VALUES (%1) MATCHING (UID)").arg(Params.join(", ")));
+					Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY "
+									  "VALUES (%1) MATCHING (UID)")
+							    .arg(Params.join(", ")));
 
 					for (const auto& V : ValuesA) Query.addBindValue(V); Query.exec();
 				}
@@ -4166,8 +4169,7 @@ void DatabaseDriver::getJoins(RecordModel* Model, const QModelIndexList& Items)
 			"O.KOD = D.KOD "
 		"WHERE "
 			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ IN (2, 3, 4)");
+			"O.STATUS = 0");
 
 	for (const auto& UID : Tasks)
 	{
