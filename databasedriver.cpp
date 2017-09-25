@@ -3155,7 +3155,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 				Ref.IDE = Query.value(1).toInt();
 				Ref.DX = Query.value(3).toDouble();
-				Ref.DX = Query.value(4).toDouble();
+				Ref.DY = Query.value(4).toDouble();
 				Ref.J = Query.value(5).toUInt();
 
 			break;
