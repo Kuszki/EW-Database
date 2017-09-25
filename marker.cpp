@@ -52,8 +52,7 @@ int main(int argc, char *argv[])
 
 	if (Output.isOpen())
 	{
-		Socket->writeDatagram(Info.join('\n').toUtf8(),
-						  QHostAddress::LocalHost, 7777);
+		Socket->writeDatagram(Info.join('\n').toUtf8(), QHostAddress::LocalHost, 7777);
 
 		Stream << "0 4\nKOD\n**\n";
 	}

@@ -523,6 +523,7 @@ void MainWindow::databaseDisconnected(void)
 	Export->deleteLater();
 	Merge->deleteLater();
 	Cut->deleteLater();
+	Fit->deleteLater();
 	Label->deleteLater();
 	Text->deleteLater();
 
