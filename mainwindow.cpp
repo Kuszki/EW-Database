@@ -44,8 +44,8 @@ MainWindow::MainWindow(QWidget* Parent)
 				    << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
 
-	Marker->bind(QHostAddress::LocalHost, 7777);
-	Socket->bind(QHostAddress::LocalHost, 6666);
+	Marker->bind(QHostAddress::LocalHost, 7777, QUdpSocket::ShareAddress);
+	Socket->bind(QHostAddress::LocalHost, 6666, QUdpSocket::ShareAddress);
 
 	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
 	ui->supportTool->insertSeparator(ui->actionUnhide);
@@ -666,14 +666,28 @@ void MainWindow::readDatagram(void)
 	Data.resize(Socket->pendingDatagramSize());
 	Socket->readDatagram(Data.data(), Data.size());
 
+	QStringList List = QString::fromUtf8(Data).split('\n');
+
+	if (List.isEmpty()) return;
+
+	const QString currentName = Driver->getDatabasePath();
+	const QString remoteName = List.takeFirst();
+
+	if (List.isEmpty() || !remoteName.contains(currentName)) return;
+
+	const QString currentHome = QDir::homePath();
+	const QString remoteHome = List.takeFirst();
+
+	if (List.isEmpty() || currentHome != remoteHome) return;
+
 	if (int Action = Selector->currentIndex())
 	{
 		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 		auto Selection = ui->Data->selectionModel();
 
-		if (Model && Selection)
+		if (Model && Selection) for (const auto& UUID : List)
 		{
-			const QModelIndex Index = Model->find(2, Data);
+			const QModelIndex Index = Model->find(2, UUID);
 
 			if (Index.isValid())
 			{
@@ -701,6 +715,20 @@ void MainWindow::readRequest(void)
 
 	Array.resize(Marker->pendingDatagramSize());
 	Marker->readDatagram(Array.data(), Array.size());
+
+	QStringList List = QString::fromUtf8(Array).split('\n');
+
+	if (List.isEmpty()) return;
+
+	const QString currentName = Driver->getDatabasePath();
+	const QString remoteName = List.takeFirst();
+
+	if (List.isEmpty() || !remoteName.contains(currentName)) return;
+
+	const QString currentHome = QDir::homePath();
+	const QString remoteHome = List.takeFirst();
+
+	if (currentHome != remoteHome) return;
 
 	if (Model) for (const auto& Index : Selected)
 	{

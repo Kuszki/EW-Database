@@ -49,6 +49,11 @@ QString DatabaseDriver::getDatabaseName(void) const
 			.arg(Database.databaseName());
 }
 
+QString DatabaseDriver::getDatabasePath(void) const
+{
+	return Database.databaseName();
+}
+
 QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 {
 	if (!Database.isOpen()) return QList<FIELD>();

@@ -106,6 +106,7 @@ class DatabaseDriver : public QObject
 		virtual ~DatabaseDriver(void) override;
 
 		QString getDatabaseName(void) const;
+		QString getDatabasePath(void) const;
 
 	protected:
 

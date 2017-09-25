@@ -22,20 +22,24 @@
 #include <QUdpSocket>
 #include <QTimer>
 #include <QFile>
+#include <QDir>
 
 int main(int argc, char *argv[])
 {
-	QCoreApplication a(argc, argv);
+	QCoreApplication a(argc, argv); QStringList Datagram;
 	QFile File(argv[1]); QUdpSocket Socket;
+
+	Datagram.push_front(QDir::homePath());
 
 	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
 		const QString Line = File.readLine();
 
-		if (Line.startsWith(" 5")) Socket.writeDatagram(
-					Line.mid(3).trimmed().toUtf8(),
-					QHostAddress::LocalHost, 6666);
+		if (Line.startsWith("fb:")) Datagram.push_front(Line.mid(3).trimmed());
+		if (Line.startsWith(" 5")) Datagram.push_back(Line.mid(3).trimmed());
 	}
+
+	Socket.writeDatagram(Datagram.join('\n').toUtf8(), QHostAddress::LocalHost, 6666);
 
 	QTimer::singleShot(50, &a, &QCoreApplication::quit);
 

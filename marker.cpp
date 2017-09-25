@@ -22,6 +22,7 @@
 #include <QUdpSocket>
 #include <QTimer>
 #include <QFile>
+#include <QDir>
 
 int main(int argc, char *argv[])
 {
@@ -30,22 +31,28 @@ int main(int argc, char *argv[])
 	QUdpSocket* Socket = new QUdpSocket(&a);
 	QFile File(argv[1]); QByteArray Array;
 
+	QStringList Info; Info.push_front(QDir::homePath());
+
 	Socket->bind(QHostAddress::LocalHost, 8888);
 
 	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
-		const QString Line = File.readLine();
+		const QString Line = File.readLine(); ++i;
 
-		if (++i == 2)
+		if (i == 2)
 		{
 			Output.setFileName(Line.trimmed());
 			Output.open(QFile::WriteOnly | QFile::Text);
+		}
+		else if (i == 3)
+		{
+			Info.push_front(Line.trimmed());
 		}
 	}
 
 	if (Output.isOpen())
 	{
-		Socket->writeDatagram(QString("GET").toUtf8(),
+		Socket->writeDatagram(Info.join('\n').toUtf8(),
 						  QHostAddress::LocalHost, 7777);
 
 		Stream << "0 4\nKOD\n**\n";
@@ -59,7 +66,7 @@ int main(int argc, char *argv[])
 		Stream << Array; if (Array.endsWith("\n\n")) a.quit();
 	});
 
-	QTimer::singleShot(5000, &a, &QCoreApplication::quit);
+	QTimer::singleShot(10000, &a, &QCoreApplication::quit);
 
 	return a.exec();
 }
