@@ -706,7 +706,7 @@ void MainWindow::readRequest(void)
 	{
 		QString Data = QString()
 			.append("11 13\n")
-			.append(Codes.value(Model->fieldData(Index, 1).toString()))
+			.append(Codes.value(Model->fieldData(Index, 0).toString()))
 			.append(";")
 			.append(Model->fieldData(Index, 2).toString())
 			.append("\n");
