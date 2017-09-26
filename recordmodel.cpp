@@ -366,11 +366,11 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 {
 	QMutexLocker Synchronizer(&Locker);
 
-	SortObject Sort(Column, Order == Qt::AscendingOrder);
+	const SortObject Sort(Column, Order == Qt::AscendingOrder);
 
 	beginResetModel();
 
-	if (!Root) std::stable_sort(Objects.begin(), Objects.end(), Sort);
+	if (!Root) __gnu_parallel::sort(Objects.begin(), Objects.end(), Sort);
 	else
 	{
 		QFutureSynchronizer<void> Synchronizer;
