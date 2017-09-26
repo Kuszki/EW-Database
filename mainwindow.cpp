@@ -26,9 +26,6 @@ MainWindow::MainWindow(QWidget* Parent)
 {
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
-	Marker = new QUdpSocket(this);
-	Socket = new QUdpSocket(this);
-
 	Selector = new QComboBox(this);
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
@@ -43,9 +40,6 @@ MainWindow::MainWindow(QWidget* Parent)
 				    << tr("Add to selection") << tr("Remove from selection")
 				    << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
-
-	Marker->bind(QHostAddress::LocalHost, 7777, QUdpSocket::ShareAddress);
-	Socket->bind(QHostAddress::LocalHost, 6666, QUdpSocket::ShareAddress);
 
 	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
 	ui->supportTool->insertSeparator(ui->actionUnhide);
@@ -144,9 +138,6 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 
-	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
-	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
-
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
 
@@ -162,6 +153,9 @@ MainWindow::~MainWindow(void)
 	Settings.setValue("state", saveState());
 	Settings.setValue("geometry", saveGeometry());
 	Settings.endGroup();
+
+	Settings.beginGroup("Sockets");
+	Settings.remove(dbPath);
 
 	Thread.exit();
 	Thread.wait();
@@ -508,6 +502,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
+	registerSockets(Driver->getDatabasePath());
 
 	lockUi(CONNECTED); ui->tipLabel->setText(tr("Press F5 or use Refresh action to load data"));
 }
@@ -528,6 +523,7 @@ void MainWindow::databaseDisconnected(void)
 	Text->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
+	freeSockets();
 
 	updateView(nullptr);
 	lockUi(DISCONNECTED);
@@ -669,19 +665,7 @@ void MainWindow::readDatagram(void)
 
 	QStringList List = QString::fromUtf8(Data).split('\n');
 
-	if (List.isEmpty()) return;
-
-	const QString currentName = Driver->getDatabasePath();
-	const QString remoteName = List.takeFirst();
-
-	if (List.isEmpty() || !remoteName.contains(currentName)) return;
-
-	const QString currentHome = QDir::homePath();
-	const QString remoteHome = List.takeFirst();
-
-	if (List.isEmpty() || currentHome != remoteHome) return;
-
-	if (int Action = Selector->currentIndex())
+	if (!List.isEmpty()) if (int Action = Selector->currentIndex())
 	{
 		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 		auto Selection = ui->Data->selectionModel();
@@ -717,19 +701,7 @@ void MainWindow::readRequest(void)
 	Array.resize(Marker->pendingDatagramSize());
 	Marker->readDatagram(Array.data(), Array.size());
 
-	QStringList List = QString::fromUtf8(Array).split('\n');
-
-	if (List.isEmpty()) return;
-
-	const QString currentName = Driver->getDatabasePath();
-	const QString remoteName = List.takeFirst();
-
-	if (List.isEmpty() || !remoteName.contains(currentName)) return;
-
-	const QString currentHome = QDir::homePath();
-	const QString remoteHome = List.takeFirst();
-
-	if (currentHome != remoteHome) return;
+	const int Port = QString::fromUtf8(Array).toInt();
 
 	if (Model) for (const auto& Index : Selected)
 	{
@@ -740,10 +712,10 @@ void MainWindow::readRequest(void)
 			.append(Model->fieldData(Index, 2).toString())
 			.append("\n");
 
-		Sender.writeDatagram(Data.toUtf8(), QHostAddress::LocalHost, 8888);
+		Sender.writeDatagram(Data.toUtf8(), QHostAddress::LocalHost, Port);
 	}
 
-	Sender.writeDatagram("\n\n", QHostAddress::LocalHost, 8888);
+	Sender.writeDatagram("\n\n", QHostAddress::LocalHost, Port);
 }
 
 void MainWindow::prepareMerge(const QList<int>& Used)
@@ -930,4 +902,35 @@ void MainWindow::updateView(RecordModel* Model)
 	connect(ui->Data->selectionModel(),
 		   &QItemSelectionModel::selectionChanged,
 		   this, &MainWindow::selectionChanged);
+}
+
+void MainWindow::registerSockets(const QString& Database)
+{
+	QSettings Settings("EW-Database"); dbPath = Database;
+
+	Settings.beginGroup("Sockets"); Settings.beginGroup(Database);
+
+	qsrand(QDateTime::currentMSecsSinceEpoch());
+
+	Marker = new QUdpSocket(this); Socket = new QUdpSocket(this);
+
+	while (!Marker->bind(QHostAddress::LocalHost, qrand() & 0xFFFF));
+	while (!Socket->bind(QHostAddress::LocalHost, qrand() & 0xFFFF));
+
+	Settings.setValue("marker", Marker->localPort());
+	Settings.setValue("selector", Socket->localPort());
+
+	connect(Marker, &QUdpSocket::readyRead, this, &MainWindow::readRequest);
+	connect(Socket, &QUdpSocket::readyRead, this, &MainWindow::readDatagram);
+}
+
+void MainWindow::freeSockets(void)
+{
+	if (Marker) Marker->deleteLater();
+	if (Socket) Socket->deleteLater();
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Sockets");
+	Settings.remove(dbPath);
 }

@@ -95,12 +95,16 @@ class MainWindow : public QMainWindow
 
 		QMap<QString, QString> Codes;
 		QStringList allHeaders;
+		QString dbPath;
 
 	private:
 
 		void lockUi(STATUS Status);
 
 		void updateView(RecordModel* Model);
+
+		void registerSockets(const QString& Database);
+		void freeSockets(void);
 
 	public:
 

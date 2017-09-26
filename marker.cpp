@@ -20,6 +20,8 @@
 
 #include <QCoreApplication>
 #include <QUdpSocket>
+#include <QDateTime>
+#include <QSettings>
 #include <QTimer>
 #include <QFile>
 #include <QDir>
@@ -31,9 +33,9 @@ int main(int argc, char *argv[])
 	QUdpSocket* Socket = new QUdpSocket(&a);
 	QFile File(argv[1]); QByteArray Array;
 
-	QStringList Info; Info.push_front(QDir::homePath());
+	QString Database; int Port(0);
 
-	Socket->bind(QHostAddress::LocalHost, 8888);
+	qsrand(QDateTime::currentMSecsSinceEpoch());
 
 	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
@@ -46,13 +48,32 @@ int main(int argc, char *argv[])
 		}
 		else if (i == 3)
 		{
-			Info.push_front(Line.trimmed());
+			Database = Line.trimmed();
 		}
+	}
+
+	if (!Database.isEmpty())
+	{
+		QSettings Settings("EW-Database");
+		Settings.beginGroup("Sockets");
+
+		for (const auto& K : Settings.childGroups()) if (!Port)
+		{
+			if (Database.contains(K))
+			{
+				Settings.beginGroup(K);
+				Port = Settings.value("marker").toInt();
+				Settings.endGroup();
+			}
+		}
+
+		if (Port) while (!Socket->bind(QHostAddress::LocalHost, qrand() & 0xFFFF));
 	}
 
 	if (Output.isOpen())
 	{
-		Socket->writeDatagram(Info.join('\n').toUtf8(), QHostAddress::LocalHost, 7777);
+		Socket->writeDatagram(QString::number(Socket->localPort()).toUtf8(),
+						  QHostAddress::LocalHost, Port);
 
 		Stream << "0 4\nKOD\n**\n";
 	}
@@ -65,7 +86,5 @@ int main(int argc, char *argv[])
 		Stream << Array; if (Array.endsWith("\n\n")) a.quit();
 	});
 
-	QTimer::singleShot(10000, &a, &QCoreApplication::quit);
-
-	return a.exec();
+	QTimer::singleShot(10000, &a, &QCoreApplication::quit); return a.exec();
 }

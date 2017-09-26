@@ -20,28 +20,41 @@
 
 #include <QCoreApplication>
 #include <QUdpSocket>
+#include <QSettings>
 #include <QTimer>
 #include <QFile>
 #include <QDir>
 
 int main(int argc, char *argv[])
 {
-	QCoreApplication a(argc, argv); QStringList Datagram;
-	QFile File(argv[1]); QUdpSocket Socket;
-
-	Datagram.push_front(QDir::homePath());
+	QCoreApplication a(argc, argv); QString Database; int Port(0);
+	QFile File(argv[1]); QUdpSocket Socket; QStringList Items;
 
 	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
 		const QString Line = File.readLine();
 
-		if (Line.startsWith("fb:")) Datagram.push_front(Line.mid(3).trimmed());
-		if (Line.startsWith(" 5")) Datagram.push_back(Line.mid(3).trimmed());
+		if (Line.startsWith("fb:")) Database = Line.trimmed();
+		if (Line.startsWith(" 5")) Items.append(Line.mid(3).trimmed());
 	}
 
-	Socket.writeDatagram(Datagram.join('\n').toUtf8(), QHostAddress::LocalHost, 6666);
+	if (!Database.isEmpty())
+	{
+		QSettings Settings("EW-Database");
+		Settings.beginGroup("Sockets");
 
-	QTimer::singleShot(50, &a, &QCoreApplication::quit);
+		for (const auto& K : Settings.childGroups()) if (!Port)
+		{
+			if (Database.contains(K))
+			{
+				Settings.beginGroup(K);
+				Port = Settings.value("selector").toInt();
+				Settings.endGroup();
+			}
+		}
+	}
 
-	return a.exec();
+	if (Port) Socket.writeDatagram(Items.join('\n').toUtf8(), QHostAddress::LocalHost, Port);
+
+	QTimer::singleShot(50, &a, &QCoreApplication::quit); return a.exec();
 }
