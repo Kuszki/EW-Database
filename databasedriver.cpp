@@ -19,7 +19,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "databasedriver.hpp"
-#include <QMessageBox>
+
 const QStringList DatabaseDriver::Operators =
 {
 	"=", "<>", ">=", ">", "<=", "<", "BETWEEN",

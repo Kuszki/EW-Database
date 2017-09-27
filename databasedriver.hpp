@@ -34,7 +34,6 @@
 
 #include <QtConcurrent>
 
-#include <QDebug>
 
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
 		for (const auto& K : Settings.childGroups()) if (!Port)
 		{
-			if (Database.contains(K))
+			if (Database.contains(K, Qt::CaseInsensitive))
 			{
 				Settings.beginGroup(K);
 				Port = Settings.value("selector").toInt();
