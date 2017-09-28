@@ -50,6 +50,8 @@ class FilterDialog : public QDialog
 
 		Ui::FilterDialog* ui;
 
+		QActionGroup* saveMode;
+
 		QAction* resetClass;
 		QAction* resetFields;
 		QAction* resetGeometry;
@@ -83,7 +85,7 @@ class FilterDialog : public QDialog
 		void classSearchEdited(const QString& Search);
 		void simpleSearchEdited(const QString& Search);
 
-		void buttonBoxClicked(void);
+		void resetButtonClicked(void);
 
 		void limiterBoxChecked(bool Checked);
 
@@ -104,7 +106,7 @@ class FilterDialog : public QDialog
 
 	signals:
 
-		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&, const QString&, double);
+		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&, const QString&, double, int);
 
 };
 

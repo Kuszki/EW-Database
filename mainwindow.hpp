@@ -146,7 +146,7 @@ class MainWindow : public QMainWindow
 		void updateValues(const QHash<int, QVariant>& Values);
 		void refreshData(const QString& Where, const QList<int>& Used,
 					  const QHash<int, QVariant>& Geometry,
-					  const QString& Limiter, double Radius);
+					  const QString& Limiter, double Radius, int Mode);
 
 		void updateRow(int Index, const QHash<int, QVariant>& Data);
 		void removeRow(const QModelIndex& Index);
@@ -210,7 +210,8 @@ class MainWindow : public QMainWindow
 		void onLoadRequest(const QStringList&);
 		void onReloadRequest(const QString&, const QList<int>&,
 						 const QHash<int, QVariant>&,
-						 const QString&, double);
+						 const QString&, double, int,
+						 RecordModel*, const QModelIndexList&);
 
 		void onCommonRequest(RecordModel*, const QModelIndexList&);
 		void onEditRequest(RecordModel*, const QModelIndexList&);

@@ -26,15 +26,36 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 {
 	ui->setupUi(this); setFields(Fields, Tables, Common, Singletons); filterRulesChanged();
 
-	QMenu* Menu = new QMenu(this);
+	QMenu* resetMenu = new QMenu(this);
 
 	resetClass = new QAction(tr("Reset class list"), this);
 	resetFields = new QAction(tr("Reset fields list"), this);
 	resetGeometry = new QAction(tr("Reset geometry filters"), this);
 
-	resetClass->setCheckable(true); Menu->addAction(resetClass);
-	resetFields->setCheckable(true); Menu->addAction(resetFields);
-	resetGeometry->setCheckable(true); Menu->addAction(resetGeometry);
+	resetClass->setCheckable(true); resetMenu->addAction(resetClass);
+	resetFields->setCheckable(true); resetMenu->addAction(resetFields);
+	resetGeometry->setCheckable(true); resetMenu->addAction(resetGeometry);
+
+	QMenu* saveMenu = new QMenu(this);
+
+	QAction* saveNew = new QAction(tr("Perform new search"), this);
+	QAction* saveCur = new QAction(tr("Filter current selection"), this);
+	QAction* saveAdd = new QAction(tr("Append to current selection"), this);
+	QAction* saveSub = new QAction(tr("Subtract from current selection"), this);
+
+	saveMode = new QActionGroup(this);
+
+	saveNew->setCheckable(true); saveNew->setData(0);
+	saveCur->setCheckable(true); saveCur->setData(1);
+	saveAdd->setCheckable(true); saveAdd->setData(2);
+	saveSub->setCheckable(true); saveSub->setData(3);
+
+	saveMenu->addAction(saveNew); saveMode->addAction(saveNew);
+	saveMenu->addAction(saveCur); saveMode->addAction(saveCur);
+	saveMenu->addAction(saveAdd); saveMode->addAction(saveAdd);
+	saveMenu->addAction(saveSub); saveMode->addAction(saveSub);
+
+	saveMode->setExclusive(true); saveNew->setChecked(true);
 
 	QSettings Settings("EW-Database");
 
@@ -49,9 +70,18 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	Button->setText(tr("Reset"));
 	Button->setPopupMode(QToolButton::MenuButtonPopup);
 	Button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
-	Button->setMenu(Menu);
+	Button->setMenu(resetMenu);
 
 	ui->buttonBox->addButton(Button, QDialogButtonBox::ResetRole);
+
+	QToolButton* Save = new QToolButton(this);
+
+	Save->setText(tr("Apply"));
+	Save->setPopupMode(QToolButton::MenuButtonPopup);
+	Save->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+	Save->setMenu(saveMenu);
+
+	ui->buttonBox->addButton(Save, QDialogButtonBox::YesRole);
 
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
@@ -59,7 +89,8 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 
 	ui->rightSpacer->changeSize(ui->copyButton->sizeHint().width(), 0);
 
-	connect(Button, &QToolButton::clicked, this, &FilterDialog::buttonBoxClicked);
+	connect(Button, &QToolButton::clicked, this, &FilterDialog::resetButtonClicked);
+	connect(Save, &QToolButton::clicked, this, &FilterDialog::accept);
 }
 
 FilterDialog::~FilterDialog(void)
@@ -205,7 +236,7 @@ void FilterDialog::simpleSearchEdited(const QString& Search)
 		}
 }
 
-void FilterDialog::buttonBoxClicked(void)
+void FilterDialog::resetButtonClicked(void)
 {
 	if (resetClass->isChecked()) for (int i = 0; i < ui->classLayout->count(); ++i)
 		if (auto W = qobject_cast<QCheckBox*>(ui->classLayout->itemAt(i)->widget()))
@@ -321,7 +352,8 @@ void FilterDialog::unselectButtonClicked(void)
 
 void FilterDialog::accept(void)
 {
-	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter, ui->radiusSpin->value());
+	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter,
+									ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
 }
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)

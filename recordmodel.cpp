@@ -479,6 +479,15 @@ QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 	return List;
 }
 
+QList<int> RecordModel::getUids(void) const
+{
+	QList<int> Uids; Uids.reserve(Objects.size());
+
+	for (const auto& O : Objects) Uids.append(O->getUid());
+
+	return Uids;
+}
+
 int RecordModel::getUid(const QModelIndex& Index) const
 {
 	QMutexLocker Synchronizer(&Locker);

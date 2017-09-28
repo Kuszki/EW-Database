@@ -171,6 +171,8 @@ class RecordModel : public QAbstractItemModel
 
 		QList<int> getUids(const QModelIndexList& Selection) const;
 
+		QList<int> getUids(void) const;
+
 		int getUid(const QModelIndex& Index) const;
 
 		bool saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const;

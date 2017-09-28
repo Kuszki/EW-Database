@@ -158,7 +158,9 @@ class DatabaseDriver : public QObject
 		void loadList(const QStringList& Filter);
 		void reloadData(const QString& Filter, QList<int> Used,
 					 const QHash<int, QVariant>& Geometry,
-					 const QString& Limiter, double Radius);
+					 const QString& Limiter, double Radius,
+					 int Mode, const RecordModel* Current = nullptr,
+					 const QModelIndexList& Items = QModelIndexList());
 		void updateData(RecordModel* Model, const QModelIndexList& Items,
 					 const QHash<int, QVariant>& Values, bool Emit = true);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);

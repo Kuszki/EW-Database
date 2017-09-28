@@ -1096,7 +1096,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius, int Mode, const RecordModel* Current, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -1106,14 +1106,25 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onSetupProgress(0, Tables.size());
 
 	RecordModel* Model = new RecordModel(Headers, this); int Step = 0;
-	QHash<int, QHash<int, QVariant>> List;
+	QHash<int, QHash<int, QVariant>> List; QSet<int> Loaded;
+
+	if (!Current) Mode = 0;
+	else
+	{
+		QSet<int> Uids = Current->getUids(Items).toSet(); QSet<int> Exists;
+
+		QSqlQuery Query("SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0", Database);
+
+		while (Query.next()) Exists.insert(Query.value(0).toInt());
+
+		Loaded = Uids.intersect(Exists);
+	}
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
 		auto Data = loadData(Table, QSet<int>(), Filter, true, true);
 
-		if (Geometry.isEmpty()) Model->addItems(Data);
-		else for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
 		{
 			List.insert(i.key(), i.value());
 		}
@@ -1126,7 +1137,48 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		emit onBeginProgress(tr("Applying geometry filters"));
 		emit onSetupProgress(0, 0);
 
-		Model->addItems(filterData(List, Geometry, Limiter, Radius));
+		List = filterData(List, Geometry, Limiter, Radius);
+	}
+
+	switch (Mode)
+	{
+		case 1:
+		{
+			for (auto i = List.constBegin(); i != List.constEnd(); ++i)
+			{
+				if (Loaded.contains(i.key())) Model->addItem(i.key(), i.value());
+			}
+		}
+		break;
+		case 2:
+		{
+			const auto Old = Loaded.subtract(List.keys().toSet());
+
+			for (const auto& i : Old)
+			{
+				Model->addItem(i, Current->fullData(Current->index(i)));
+			}
+
+			for (auto i = List.constBegin(); i != List.constEnd(); ++i)
+			{
+				Model->addItem(i.key(), i.value());
+			}
+		}
+		break;
+		case 3:
+		{
+			const auto Old = Loaded.subtract(List.keys().toSet());
+
+			for (const auto& i : Old)
+			{
+				Model->addItem(i, Current->fullData(Current->index(i)));
+			}
+		}
+		break;
+		default:
+		{
+			Model->addItems(List);
+		}
 	}
 
 	emit onEndProgress();

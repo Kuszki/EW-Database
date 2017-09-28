@@ -203,7 +203,7 @@ void MainWindow::deleteActionClicked(void)
 
 void MainWindow::refreshActionClicked(void)
 {
-	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules(), Filter->getLimiterFile(), Filter->getRadius());
+	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules(), Filter->getLimiterFile(), Filter->getRadius(), 0);
 }
 
 void MainWindow::editActionClicked(void)
@@ -386,9 +386,12 @@ void MainWindow::selectionChanged(void)
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius)
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius, int Mode)
 {
-	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter, Radius);
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	const auto Selected = Model ? ui->Data->selectionModel()->selectedRows() : QModelIndexList();
+
+	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter, Radius, Mode, Model, Selected);
 }
 
 void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)
