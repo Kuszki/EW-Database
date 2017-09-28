@@ -47,6 +47,9 @@ ConnectDialog::ConnectDialog(QWidget *Parent)
 	{
 		ui->Password->setFocus();
 	}
+
+	ui->Server->model()->sort(0);
+	ui->Database->model()->sort(0);
 }
 
 ConnectDialog::~ConnectDialog(void)
