@@ -1120,11 +1120,11 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		emit onUpdateProgress(++Step);
 	}
 
+	emit onBeginProgress(tr("Applying geometry filters"));
+	emit onSetupProgress(0, 0);
+
 	if (!Geometry.isEmpty())
 	{
-		emit onBeginProgress(tr("Applying geometry filters"));
-		emit onSetupProgress(0, 0);
-
 		List = filterData(List, Geometry, Limiter, Radius);
 	}
 
