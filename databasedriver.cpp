@@ -1108,18 +1108,6 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	RecordModel* Model = new RecordModel(Headers, this); int Step = 0;
 	QHash<int, QHash<int, QVariant>> List; QSet<int> Loaded;
 
-	if (!Current) Mode = 0;
-	else
-	{
-		QSet<int> Uids = Current->getUids(Items).toSet(); QSet<int> Exists;
-
-		QSqlQuery Query("SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0", Database);
-
-		while (Query.next()) Exists.insert(Query.value(0).toInt());
-
-		Loaded = Uids.intersect(Exists);
-	}
-
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
 		auto Data = loadData(Table, QSet<int>(), Filter, true, true);
@@ -1138,6 +1126,21 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		emit onSetupProgress(0, 0);
 
 		List = filterData(List, Geometry, Limiter, Radius);
+	}
+
+	emit onBeginProgress(tr("Creating object list"));
+	emit onSetupProgress(0, 0);
+
+	if (!Current) Mode = 0;
+	else
+	{
+		QSet<int> Uids = Current->getUids(Items).toSet(); QSet<int> Exists;
+
+		QSqlQuery Query("SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0", Database);
+
+		while (Query.next()) Exists.insert(Query.value(0).toInt());
+
+		Loaded = Uids.intersect(Exists);
 	}
 
 	switch (Mode)
