@@ -34,7 +34,6 @@
 
 #include <QtConcurrent>
 
-
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"
 
@@ -198,6 +197,9 @@ class DatabaseDriver : public QObject
 		void insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label,
 					  int J, double X, double Y, bool P, double L, double R);
 
+		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
+					   int Mode, double Radius);
+
 		void getCommon(RecordModel* Model, const QModelIndexList& Items);
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
@@ -252,6 +254,7 @@ class DatabaseDriver : public QObject
 		void onTextEdit(int);
 
 		void onLabelInsert(int);
+		void onPointInsert(int);
 
 };
 

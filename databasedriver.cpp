@@ -1682,10 +1682,12 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataMerge(0); return; }
 
+	struct PART { int ID, Type; double X1, Y1, X2, Y2; bool Text; };
+
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 0);
 	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QList<int> Counts; QList<QPointF> Ends;
 	QHash<int, QSet<int>> Merges; QList<QPointF> Cuts; int Step = 0; QSet<int> Merged;
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QSqlQuery Query(Database); Query.setForwardOnly(true); QHash<int, QList<PART>> Geometries;
 
 	emit onBeginProgress(tr("Loading points"));
 	emit onSetupProgress(0, 0);
@@ -1761,22 +1763,26 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 			"ROUND(P.P0_X, 3), "
 			"ROUND(P.P0_Y, 3), "
 			"ROUND(P.P1_X, 3), "
-			"ROUND(P.P1_Y, 3) "
+			"ROUND(P.P1_Y, 3), "
+			"E.IDE, E.TYP, "
+			"IIF(P.ID IS NULL, 1, 0) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
 			"EW_OB_ELEMENTY E "
 		"ON "
 			"O.UID = E.UIDO "
-		"INNER JOIN "
+		"LEFT JOIN "
 			"EW_POLYLINE P "
 		"ON "
-			"E.IDE = P.ID "
+			"("
+				"E.IDE = P.ID AND "
+				"P.STAN_ZMIANY = 0 AND "
+				"E.TYP = 0 "
+			")"
 		"WHERE "
 			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 "
+			"O.RODZAJ = 2 "
 		"ORDER BY "
 			"O.UID, E.N ASC");
 
@@ -1789,12 +1795,28 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 			const QPointF PointA(Query.value(1).toDouble(), Query.value(2).toDouble());
 			const QPointF PointB(Query.value(3).toDouble(), Query.value(4).toDouble());
 
-			if (!Geometry.contains(ID)) Geometry.insert(ID, QList<QPointF>());
+			if (!Query.value(6).toBool() && !Query.value(7).toBool())
+			{
+				if (!Geometry.contains(ID)) Geometry.insert(ID, QList<QPointF>());
 
-			if (!Geometry[ID].contains(PointA)) Geometry[ID].append(PointA);
-			else Geometry[ID].removeOne(PointA);
-			if (!Geometry[ID].contains(PointB)) Geometry[ID].append(PointB);
-			else Geometry[ID].removeOne(PointB);
+				if (!Geometry[ID].contains(PointA)) Geometry[ID].append(PointA);
+				else Geometry[ID].removeOne(PointA);
+				if (!Geometry[ID].contains(PointB)) Geometry[ID].append(PointB);
+				else Geometry[ID].removeOne(PointB);
+			}
+
+			if (!Geometries.contains(ID)) Geometries.insert(ID, QList<PART>());
+
+			Geometries[ID].append(
+			{
+				Query.value(5).toInt(),
+				Query.value(6).toInt(),
+				Query.value(1).toDouble(),
+				Query.value(2).toDouble(),
+				Query.value(3).toDouble(),
+				Query.value(4).toDouble(),
+				Query.value(7).toBool()
+			});
 		}
 	}
 
@@ -1881,42 +1903,11 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 		for (const auto& Index : k.value()) if (Merges.contains(Index))
 		{
-			struct PART { int ID, Type; double X1, Y1, X2, Y2; bool Text; };
-
 			QList<PART> Parts, Sorted, Labels; QSet<int> Taken; bool Continue = true; int n = 0;
 
 			for (const auto& Part : Merges[Index])
 			{
-				Query.prepare(QString(
-					"SELECT "
-						"E.IDE, E.TYP, "
-						"ROUND(P.P0_X, 2), ROUND(P.P0_Y, 2), "
-						"ROUND(P.P1_X, 2), ROUND(P.P1_Y, 2), "
-						"IIF(P.P0_X IS NULL OR P.P0_Y IS NULL, 1, 0) "
-					"FROM "
-						"EW_OB_ELEMENTY E "
-					"LEFT JOIN "
-						"EW_POLYLINE P "
-					"ON "
-						"E.IDE = P.ID AND "
-						"E.TYP = 0 AND "
-						"P.STAN_ZMIANY = 0 "
-					"WHERE "
-						"E.UIDO = %1 "
-					"ORDER BY "
-						"E.UIDO, E.N ASC")
-						    .arg(Part));
-
-				if (Query.exec()) while (Query.next()) Parts.append(
-				{
-					Query.value(0).toInt(),
-					Query.value(1).toInt(),
-					Query.value(2).toDouble(),
-					Query.value(3).toDouble(),
-					Query.value(4).toDouble(),
-					Query.value(5).toDouble(),
-					Query.value(6).toBool()
-				});
+				Parts.append(Geometries[Part]);
 
 				{
 					QVariantList ValuesA, ValuesB, finallValues; QStringList Params;
@@ -3862,6 +3853,119 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	emit onEndProgress();
 	emit onLabelInsert(Count);
+}
+
+void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Items, int Mode, double Radius)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPointInsert(0); return; }
+
+	struct LINE { int ID; QLineF Line; };
+
+	struct ELEMENT { int IDE, Typ, N; };
+
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); QMutex Synchronizer; int Step = 0, Count = 0;
+	QHash<int, LINE> Lines; QList<QPointF> Points; QHash<int, ELEMENT> Geometry; QSet<int> Changed;
+
+	QSqlQuery Symbols(Database), Objects(Database), Elements(Database), getIndex(Database),
+			deleteElement(Database), insertElement(Database),
+			deleteSegment(Database), insertSegment(Database);
+
+	Symbols.prepare(
+		"SELECT "
+			"O.UID,"
+			"P.POS_X, "
+			"P.POS_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT T "
+		"ON "
+			"E.IDE = T.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
+			"T.TYP = 4 AND "
+			"E.TYP = 0");
+
+	Objects.prepare(
+		"SELECT "
+			"O.UID, "
+			"P.ID, "
+			"P.P0_X, "
+			"P.P0_Y, "
+			"P.P1_X, "
+			"P.P1_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS = 0");
+
+	Elements.prepare(
+		"SELECT "
+			"E.UIDO, "
+			"E.IDE, "
+			"E.TYP, "
+		"FROM "
+			"EW_OB_ELEMENTY E "
+		"ORDER BY "
+			"E.UIDO ASC, "
+			"E.N ASC");
+
+	insertSegment.prepare(
+		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
+		"SELECT ?, ?, ?, ?, ?, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT FROM EW_POLYLINE WHERE ID = ?");
+
+	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
+
+	insertElement.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
+
+	deleteElement.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
+
+	getIndex.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
+
+	emit onBeginProgress(tr("Loading symbols"));
+	emit onSetupProgress(0, 0);
+
+	if (Symbols.exec()) while (Symbols.next())
+	{
+		if (Tasks.contains(Symbols.value(0).toInt())) Points.append(
+		{
+			Symbols.value(1).toDouble(),
+			Symbols.value(2).toDouble()
+		});
+	}
+
+	emit onBeginProgress(tr("Loading lines"));
+	emit onSetupProgress(0, 0);
+
+	if (Objects.exec()) while (Objects.next())
+	{
+		if (Tasks.contains(Objects.value(0).toInt())) Lines.insert(Objects.value(1).toInt(),
+		{
+			Objects.value(1).toInt(),
+			{
+				Objects.value(2).toDouble(),
+				Objects.value(3).toDouble(),
+				Objects.value(4).toDouble(),
+				Objects.value(5).toDouble()
+			}
+		});
+	}
+
 }
 
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
