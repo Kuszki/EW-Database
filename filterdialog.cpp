@@ -90,7 +90,6 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	ui->rightSpacer->changeSize(ui->copyButton->sizeHint().width(), 0);
 
 	connect(Button, &QToolButton::clicked, this, &FilterDialog::resetButtonClicked);
-	connect(Save, &QToolButton::clicked, this, &FilterDialog::accept);
 }
 
 FilterDialog::~FilterDialog(void)
