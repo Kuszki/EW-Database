@@ -1907,8 +1907,6 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 			for (const auto& Part : Merges[Index])
 			{
-				Parts.append(Geometries[Part]);
-
 				{
 					QVariantList ValuesA, ValuesB, finallValues; QStringList Params;
 
@@ -1970,6 +1968,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 				Query.exec(QString("DELETE FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
 				Query.exec(QString("DELETE FROM %1 WHERE UIDO = %2").arg(Table.Data, Part));
+
+				Parts.append(Geometries[Part]);
 			}
 
 			for (int i = 0; i < Parts.size(); ++i)
@@ -3855,117 +3855,20 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onLabelInsert(Count);
 }
 
-void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Items, int Mode, double Radius)
+void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Items, int Mode, double Radius, bool Recursive)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPointInsert(0); return; }
 
-	struct LINE { int ID; QLineF Line; };
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); int Count(0), Current(0);
 
-	struct ELEMENT { int IDE, Typ, N; };
-
-	const QSet<int> Tasks = Model->getUids(Items).toSet(); QMutex Synchronizer; int Step = 0, Count = 0;
-	QHash<int, LINE> Lines; QList<QPointF> Points; QHash<int, ELEMENT> Geometry; QSet<int> Changed;
-
-	QSqlQuery Symbols(Database), Objects(Database), Elements(Database), getIndex(Database),
-			deleteElement(Database), insertElement(Database),
-			deleteSegment(Database), insertSegment(Database);
-
-	Symbols.prepare(
-		"SELECT "
-			"O.UID,"
-			"P.POS_X, "
-			"P.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT T "
-		"ON "
-			"E.IDE = T.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"T.TYP = 4 AND "
-			"E.TYP = 0");
-
-	Objects.prepare(
-		"SELECT "
-			"O.UID, "
-			"P.ID, "
-			"P.P0_X, "
-			"P.P0_Y, "
-			"P.P1_X, "
-			"P.P1_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 0");
-
-	Elements.prepare(
-		"SELECT "
-			"E.UIDO, "
-			"E.IDE, "
-			"E.TYP, "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"ORDER BY "
-			"E.UIDO ASC, "
-			"E.N ASC");
-
-	insertSegment.prepare(
-		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
-		"SELECT ?, ?, ?, ?, ?, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT FROM EW_POLYLINE WHERE ID = ?");
-
-	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
-
-	insertElement.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
-
-	deleteElement.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
-
-	getIndex.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
-
-	emit onBeginProgress(tr("Loading symbols"));
-	emit onSetupProgress(0, 0);
-
-	if (Symbols.exec()) while (Symbols.next())
+	do
 	{
-		if (Tasks.contains(Symbols.value(0).toInt())) Points.append(
-		{
-			Symbols.value(1).toDouble(),
-			Symbols.value(2).toDouble()
-		});
+		Current = insertBreakpoints(Tasks, Mode, Radius); Count += Current;
 	}
+	while (Recursive && Current);
 
-	emit onBeginProgress(tr("Loading lines"));
-	emit onSetupProgress(0, 0);
-
-	if (Objects.exec()) while (Objects.next())
-	{
-		if (Tasks.contains(Objects.value(0).toInt())) Lines.insert(Objects.value(1).toInt(),
-		{
-			Objects.value(1).toInt(),
-			{
-				Objects.value(2).toDouble(),
-				Objects.value(3).toDouble(),
-				Objects.value(4).toDouble(),
-				Objects.value(5).toDouble()
-			}
-		});
-	}
-
+	emit onEndProgress();
+	emit onPointInsert(Count);
 }
 
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
@@ -4273,6 +4176,371 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 	}
 
 	return Insert;
+}
+
+int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius)
+{
+	struct LINE { int ID; QLineF Line; bool Changed = false, Locked = false; };
+
+	struct INSERT { int ID, Base; QLineF Line; };
+
+	struct ELEMENT { int IDE, Typ, N; };
+
+	QSqlQuery Symbols(Database), Objects(Database), Elements(Database), getIndex(Database),
+			deleteElement(Database), insertElement(Database),
+			updateSegment(Database), insertSegment(Database);
+
+	QMutex Synchronizer; int Currentrun(0), Step(0);
+
+	Symbols.prepare(
+		"SELECT "
+			"O.UID,"
+			"P.POS_X, "
+			"P.POS_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT T "
+		"ON "
+			"E.IDE = T.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
+			"T.TYP = 4 AND "
+			"E.TYP = 0");
+
+	Objects.prepare(
+		"SELECT "
+			"O.UID, "
+			"P.ID, "
+			"P.P0_X, "
+			"P.P0_Y, "
+			"P.P1_X, "
+			"P.P1_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS = 0");
+
+	Elements.prepare(
+		"SELECT "
+			"E.UIDO, "
+			"E.IDE, "
+			"E.TYP,"
+			"E.N "
+		"FROM "
+			"EW_OB_ELEMENTY E "
+		"ORDER BY "
+			"E.UIDO ASC, "
+			"E.N ASC");
+
+	insertSegment.prepare(
+		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
+		"SELECT ?, ?, ?, ?, ?, 0, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT FROM EW_POLYLINE WHERE ID = ?");
+
+	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ?");
+
+	insertElement.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
+
+	deleteElement.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
+
+	getIndex.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
+
+	QHash<int, QList<ELEMENT>> Geometry; QList<INSERT> Inserts; QSet<int> Changed;
+	QHash<int, QList<QPointF>> Unique;	QHash<int, LINE> Lines;
+	QList<QPointF> Points, Ends, Breaks, Intersect, pointCuts;
+
+	emit onBeginProgress(tr("Loading symbols"));
+	emit onSetupProgress(0, 0); Currentrun = 0;
+
+	if (Symbols.exec()) while (Symbols.next())
+	{
+		if (Tasks.contains(Symbols.value(0).toInt())) Points.append(
+		{
+			Symbols.value(1).toDouble(),
+			Symbols.value(2).toDouble()
+		});
+	}
+
+	emit onBeginProgress(tr("Loading lines"));
+	emit onSetupProgress(0, 0);
+
+	if (Objects.exec()) while (Objects.next())
+	{
+		const int UID = Objects.value(0).toInt();
+
+		const QPointF A(Objects.value(2).toDouble(),
+					 Objects.value(3).toDouble());
+
+		const QPointF B(Objects.value(4).toDouble(),
+					 Objects.value(5).toDouble());
+
+		if (Tasks.contains(UID))
+		{
+			Lines.insert(Objects.value(1).toInt(),
+			{
+				Objects.value(1).toInt(), { A, B }
+			});
+
+			if (!Unique.contains(UID)) Unique.insert(UID, QList<QPointF>());
+
+			if (!Unique[UID].contains(A)) Unique[UID].append(A);
+			else Unique[UID].removeAll(A);
+
+			if (!Unique[UID].contains(B)) Unique[UID].append(B);
+			else Unique[UID].removeAll(B);
+
+			if (!Breaks.contains(A)) Breaks.append(A);
+			if (!Breaks.contains(B)) Breaks.append(B);
+		}
+	}
+
+	for (const auto& E : Unique) Ends.append(E);
+	for (const auto& E : Ends) Breaks.removeAll(E);
+
+	emit onBeginProgress(tr("Loading elements"));
+	emit onSetupProgress(0, 0);
+
+	if (Elements.exec()) while (Elements.next())
+	{
+		const int UID = Elements.value(0).toInt();
+
+		if (Tasks.contains(UID))
+		{
+			if (!Geometry.contains(UID)) Geometry.insert(UID, QList<ELEMENT>());
+
+			Geometry[UID].append(
+			{
+				Elements.value(1).toInt(),
+				Elements.value(2).toInt(),
+				Elements.value(3).toInt(),
+			});
+		}
+	}
+
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Lines, [&Lines, &Intersect, &Synchronizer] (LINE& Part) -> void
+	{
+		for (auto& L : Lines) if (L.ID != Part.ID)
+		{
+			if (L.Line.p1() != Part.Line.p1() && L.Line.p1() != Part.Line.p2() &&
+			    L.Line.p2() != Part.Line.p1() && L.Line.p2() != Part.Line.p2());
+			else continue;
+
+			QPointF Int; const auto Type = Part.Line.intersect(L.Line, &Int);
+
+			if (Type == QLineF::BoundedIntersection)
+			{
+				Synchronizer.lock();
+
+				if (!Intersect.contains(Int)) Intersect.append(Int);
+
+				Synchronizer.unlock();
+			}
+		}
+	});
+
+	if (Mode & 0x1) pointCuts.append(Ends);
+	if (Mode & 0x2) pointCuts.append(Breaks);
+	if (Mode & 0x4) pointCuts.append(Intersect);
+	if (Mode & 0x8) pointCuts.append(Points);
+
+	QtConcurrent::blockingMap(Lines, [&pointCuts, &Inserts, &Synchronizer, Radius] (LINE& Part) -> void
+	{
+		for (const auto& P : pointCuts) if (P != Part.Line.p1() && P != Part.Line.p2())
+		{
+			QPointF Int; QLineF Normal(P, QPointF());
+
+			Normal.setAngle(Part.Line.angle() + 90.0);
+			Part.Line.intersect(Normal, &Int);
+
+			const double a = QLineF(Int, Part.Line.p1()).length();
+			const double b = QLineF(Int, Part.Line.p2()).length();
+			const double c = Part.Line.length();
+
+			if (QLineF(Int, P).length() <= Radius &&
+			    Int != Part.Line.p1() &&
+			    Int != Part.Line.p2() &&
+			    a * a <= c * c + b * b &&
+			    b * b <= c * c + a * a)
+			{
+				const QLineF NewA(Part.Line.p1(), P);
+				const QLineF NewB(P, Part.Line.p2());
+
+				Synchronizer.lock();
+
+				if (!Part.Locked)
+				{
+					Inserts.append({ 0, Part.ID, NewA });
+
+					Part.Changed = true;
+					Part.Locked = true;
+					Part.Line = NewB;
+				}
+
+				Synchronizer.unlock();
+			}
+		}
+	});
+
+	for (const auto& L : Lines) if (L.Changed) Changed.insert(L.ID);
+
+	emit onBeginProgress(tr("Inserting segments"));
+	emit onSetupProgress(0, Inserts.size()); Step = 0;
+
+	for (auto& I : Inserts)
+	{
+		emit onUpdateProgress(++Step);
+
+		if (getIndex.exec() && getIndex.next())
+		{
+			I.ID = getIndex.value(0).toInt();
+		}
+		else continue;
+
+		insertSegment.addBindValue(I.ID);
+
+		insertSegment.addBindValue(I.Line.x1());
+		insertSegment.addBindValue(I.Line.y1());
+		insertSegment.addBindValue(I.Line.x2());
+		insertSegment.addBindValue(I.Line.y2());
+
+		insertSegment.addBindValue(I.Base);
+
+		insertSegment.exec();
+	}
+
+	emit onBeginProgress(tr("Updating segments"));
+	emit onSetupProgress(0, Changed.size()); Step = 0;
+
+	for (const auto& L : Lines) if (L.Changed)
+	{
+		emit onUpdateProgress(++Step);
+
+		updateSegment.addBindValue(L.Line.x1());
+		updateSegment.addBindValue(L.Line.y1());
+		updateSegment.addBindValue(L.Line.x2());
+		updateSegment.addBindValue(L.Line.y2());
+
+		updateSegment.addBindValue(L.ID);
+
+		updateSegment.exec();
+	}
+
+	emit onBeginProgress(tr("Updating geometry"));
+	emit onSetupProgress(0, Geometry.size()); Step = 0;
+
+	for (auto i = Geometry.constBegin(); i != Geometry.constEnd(); ++i)
+	{
+		emit onUpdateProgress(++Step);
+
+		QList<int> Parts, Sorted, Rest; int N(0);
+		QSet<int> Used; bool Continue(true);
+
+		for (const auto& E : i.value())
+		{
+			if (E.Typ == 1 || !Lines.contains(E.IDE))
+			{
+				Rest.append(E.IDE);
+			}
+			else
+			{
+				Parts.append(E.IDE);
+
+				if (Changed.contains(E.IDE))
+				{
+					Parts.append(getItemByField(Inserts, E.IDE, &INSERT::Base).ID);
+				}
+			}
+		}
+
+		if (i.value().size() == (Parts.size() + Rest.size())) continue;
+		else Currentrun +=Parts.size() + Rest.size() - i.value().size();
+
+		const QLineF First = Lines[Parts.first()].Line;
+		QPointF P1(First.p1()); QPointF P2(First.p2());
+
+		Sorted.append(Parts.first());
+		Used.insert(Parts.first());
+
+		while (Continue)
+		{
+			const int oldSize = Sorted.size();
+
+			for (const auto& L : Parts) if (!Used.contains(L))
+			{
+				QPointF L1, L2; if (Lines.contains(L))
+				{
+					const QLineF Line = Lines[L].Line;
+
+					L1 = Line.p1(); L2 = Line.p2();
+				}
+				else if (hasItemByField(Inserts, L, &INSERT::ID))
+				{
+					const QLineF Line = getItemByField(Inserts, L, &INSERT::ID).Line;
+
+					L1 = Line.p1(); L2 = Line.p2();
+				}
+
+				int T(0); if (P1 == L1) T = 1;
+				else if (P1 == L2) T = 2;
+				else if (P2 == L1) T = 3;
+				else if (P2 == L2) T = 4;
+
+				switch (T)
+				{
+					case 1: P1 = L2; Sorted.push_front(L); break;
+					case 2: P1 = L1; Sorted.push_front(L); break;
+					case 3: P2 = L2; Sorted.push_back(L); break;
+					case 4: P2 = L1; Sorted.push_back(L); break;
+				}
+
+				if (T) Used.insert(L);
+			}
+
+			Continue = oldSize != Sorted.size();
+		}
+
+		deleteElement.addBindValue(i.key()); deleteElement.exec();
+
+		for (const auto& IDE : Sorted)
+		{
+			insertElement.addBindValue(i.key());
+			insertElement.addBindValue(IDE);
+			insertElement.addBindValue(0);
+			insertElement.addBindValue(N++);
+
+			insertElement.exec();
+		}
+
+		for (const auto& IDE : Rest)
+		{
+			insertElement.addBindValue(i.key());
+			insertElement.addBindValue(IDE);
+			insertElement.addBindValue(getItemByField(i.value(), IDE, &ELEMENT::IDE).Typ);
+			insertElement.addBindValue(N++);
+
+			insertElement.exec();
+		}
+	}
+
+	return Currentrun;
 }
 
 void DatabaseDriver::getCommon(RecordModel* Model, const QModelIndexList& Items)

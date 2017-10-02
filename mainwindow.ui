@@ -118,6 +118,7 @@
     <addaction name="actionLabel"/>
     <addaction name="separator"/>
     <addaction name="actionFit"/>
+    <addaction name="actionInsert"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -494,6 +495,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionInsert">
+   <property name="text">
+    <string>Insert breakpoints</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
    </property>
   </action>
  </widget>

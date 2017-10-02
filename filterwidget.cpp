@@ -405,6 +405,14 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 				Edit->setClearButtonEnabled(true);
 
 				Datatype = QVariant::String;
+
+				if (Field.Type != DatabaseDriver::STRING)
+				{
+					const int Index = Operators.indexOf("IS NULL");
+
+					Operators.insert(Index, "NOT LIKE");
+					Operators.insert(Index, "LIKE");
+				}
 			}
 			break;
 		}

@@ -49,7 +49,8 @@ SOURCES		+=	main.cpp \
 				batchdialog.cpp \
 				batchwidget.cpp \
 				labeldialog.cpp \
-				harmonizedialog.cpp
+				harmonizedialog.cpp \
+				insertdialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -74,7 +75,8 @@ HEADERS		+=	mainwindow.hpp \
 				batchdialog.hpp \
 				batchwidget.hpp \
 				labeldialog.hpp \
-				harmonizedialog.hpp
+				harmonizedialog.hpp \
+				insertdialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -95,7 +97,8 @@ FORMS		+=	mainwindow.ui \
 				batchdialog.ui \
 				batchwidget.ui \
 				labeldialog.ui \
-				harmonizedialog.ui
+				harmonizedialog.ui \
+				insertdialog.ui
 
 LIBS			+=	-fopenmp
 

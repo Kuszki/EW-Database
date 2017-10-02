@@ -35,6 +35,7 @@
 #include "harmonizedialog.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
+#include "insertdialog.hpp"
 #include "filterdialog.hpp"
 #include "updatedialog.hpp"
 #include "exportdialog.hpp"
@@ -82,6 +83,7 @@ class MainWindow : public QMainWindow
 
 		HarmonizeDialog* Fit;
 		ColumnsDialog* Columns;
+		InsertDialog* Insert;
 		GroupDialog* Groups;
 		FilterDialog* Filter;
 		UpdateDialog* Update;
@@ -163,6 +165,7 @@ class MainWindow : public QMainWindow
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L);
+		void insertBreaks(int Mode, double Radius, double Recursive);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -188,6 +191,7 @@ class MainWindow : public QMainWindow
 		void joinData(int Count);
 		void textEdit(int Count);
 		void labelInsert(int Count);
+		void breaksInsert(int Count);
 
 		void batchExec(int Count);
 
@@ -253,6 +257,8 @@ class MainWindow : public QMainWindow
 					   bool, int, int, int, int, double, double);
 
 		void onGroupRequest(const QList<int>&);
+
+		void onInsertRequest(RecordModel*, const QModelIndexList&, int, double, bool);
 
 };
 

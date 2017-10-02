@@ -145,6 +145,8 @@ class DatabaseDriver : public QObject
 								   const QSet<int>& Tasks, const QString& Class,
 								   double Radius = 0.0);
 
+		int insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius);
+
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 
 	public slots:
@@ -198,7 +200,7 @@ class DatabaseDriver : public QObject
 					  int J, double X, double Y, bool P, double L, double R);
 
 		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
-					   int Mode, double Radius);
+					   int Mode, double Radius, bool Recursive);
 
 		void getCommon(RecordModel* Model, const QModelIndexList& Items);
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);

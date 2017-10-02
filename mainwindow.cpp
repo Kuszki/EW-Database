@@ -100,6 +100,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
+	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -137,6 +138,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onBatchRequest, Driver, &DatabaseDriver::execBatch);
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
+	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -381,6 +383,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionLabel->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
+	ui->actionInsert->setEnabled(Count > 1);
 	ui->actionJoin->setEnabled(Count > 1);
 
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
@@ -468,6 +471,14 @@ void MainWindow::fitData(const QString& File, bool Points, int X1, int Y1, int X
 	lockUi(BUSY); emit onFitRequest(Model, Selected, File, Points, X1, Y1, X2, Y2, R, L);
 }
 
+void MainWindow::insertBreaks(int Mode, double Radius, double Recursive)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onInsertRequest(Model, Selected, Mode, Radius, Recursive);
+}
+
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
@@ -484,6 +495,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Fit = new HarmonizeDialog(this);
 	Label = new LabelDialog(this);
 	Text = new TextDialog(this);
+	Insert = new InsertDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -495,6 +507,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Label, &LabelDialog::onLabelRequest, this, &MainWindow::insertLabel);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 	connect(Fit, &HarmonizeDialog::onFitRequest, this, &MainWindow::fitData);
+	connect(Insert, &InsertDialog::onInsertRequest, this, &MainWindow::insertBreaks);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -503,6 +516,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionSplit, &QAction::triggered, Cut, &CutDialog::open);
 	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
+	connect(ui->actionInsert, &QAction::triggered, Insert, &TextDialog::open);
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
 	registerSockets(Driver->getDatabasePath());
@@ -524,6 +538,7 @@ void MainWindow::databaseDisconnected(void)
 	Fit->deleteLater();
 	Label->deleteLater();
 	Text->deleteLater();
+	Insert->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();
@@ -610,6 +625,11 @@ void MainWindow::textEdit(int Count)
 void MainWindow::labelInsert(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n label(s)", nullptr, Count));
+}
+
+void MainWindow::breaksInsert(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n breakpoint(s)", nullptr, Count));
 }
 
 void MainWindow::batchExec(int Count)
@@ -844,6 +864,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionText->setEnabled(false);
 			ui->actionLabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
+			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
@@ -869,6 +890,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionText->setEnabled(false);
 			ui->actionLabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
+			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
