@@ -171,6 +171,7 @@
    <addaction name="actionLabel"/>
    <addaction name="actionText"/>
    <addaction name="actionFit"/>
+   <addaction name="actionInsert"/>
    <addaction name="separator"/>
    <addaction name="actionView"/>
    <addaction name="actionFilter"/>
@@ -480,7 +481,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="viewmag1"/>
+    <iconset theme="viewmag1">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Show singleton fields</string>
@@ -488,7 +490,8 @@
   </action>
   <action name="actionFit">
    <property name="icon">
-    <iconset theme="view-fullscreen"/>
+    <iconset theme="view-fullscreen">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Fit geometry</string>
@@ -498,6 +501,9 @@
    </property>
   </action>
   <action name="actionInsert">
+   <property name="icon">
+    <iconset theme="list-add"/>
+   </property>
    <property name="text">
     <string>Insert breakpoints</string>
    </property>
