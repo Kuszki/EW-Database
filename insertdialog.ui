@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>200</height>
+    <height>213</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Insert breakpoints</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="list-add"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0" colspan="2">
