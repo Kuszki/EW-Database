@@ -19,7 +19,10 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <QCoreApplication>
+#include <QTextStream>
+#include <QTextCodec>
 #include <QUdpSocket>
+#include <QDateTime>
 #include <QSettings>
 #include <QTimer>
 #include <QFile>
@@ -32,7 +35,7 @@ int main(int argc, char *argv[])
 
 	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
-		const QString Line = File.readLine();
+		const QString Line = QString::fromLocal8Bit(File.readLine());
 
 		if (Line.startsWith("fb:")) Database = Line.trimmed();
 		if (Line.startsWith(" 5")) Items.append(Line.mid(3).trimmed());

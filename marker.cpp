@@ -19,6 +19,8 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <QCoreApplication>
+#include <QTextStream>
+#include <QTextCodec>
 #include <QUdpSocket>
 #include <QDateTime>
 #include <QSettings>
@@ -32,14 +34,14 @@ int main(int argc, char *argv[])
 	QFile Output; QTextStream Stream(&Output);
 	QUdpSocket* Socket = new QUdpSocket(&a);
 	QFile File(argv[1]); QByteArray Array;
-
 	QString Database; int Port(0);
 
 	qsrand(QDateTime::currentMSecsSinceEpoch());
+	Stream.setCodec(QTextCodec::codecForLocale());
 
 	if (File.open(QFile::ReadOnly | QFile::Text)) while (!File.atEnd())
 	{
-		const QString Line = File.readLine(); ++i;
+		const QString Line = QString::fromLocal8Bit(File.readLine()); ++i;
 
 		if (i == 2)
 		{
