@@ -4195,8 +4195,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	Symbols.prepare(
 		"SELECT "
 			"O.UID,"
-			"P.POS_X, "
-			"P.POS_Y "
+			"T.POS_X, "
+			"T.POS_Y "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
