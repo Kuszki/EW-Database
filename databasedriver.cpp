@@ -4180,7 +4180,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 
 int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius)
 {
-	struct LINE { int ID; QLineF Line; bool Changed = false, Locked = false; };
+	struct LINE { int ID; QLineF Line; bool Changed = false; };
 
 	struct INSERT { int ID, Base; QLineF Line; };
 
@@ -4260,7 +4260,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	getIndex.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
 
-	QHash<int, QList<ELEMENT>> Geometry; QList<INSERT> Inserts; QSet<int> Changed;
+	QHash<int, QList<ELEMENT>> Geometry; QHash<int, INSERT> Inserts; QSet<int> Changed;
 	QHash<int, QList<QPointF>> Unique;	QHash<int, LINE> Lines;
 	QList<QPointF> Points, Ends, Breaks, Intersect, pointCuts;
 
@@ -4293,7 +4293,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		{
 			Lines.insert(Objects.value(1).toInt(),
 			{
-				Objects.value(1).toInt(), { A, B }
+				Objects.value(1).toInt(), QLineF(A, B)
 			});
 
 			if (!Unique.contains(UID)) Unique.insert(UID, QList<QPointF>());
@@ -4356,6 +4356,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		}
 	});
 
+	if (Mode) pointCuts.setSharable(false);
+
 	if (Mode & 0x1) pointCuts.append(Ends);
 	if (Mode & 0x2) pointCuts.append(Breaks);
 	if (Mode & 0x4) pointCuts.append(Intersect);
@@ -4385,16 +4387,12 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 				Synchronizer.lock();
 
-				if (!Part.Locked)
-				{
-					Inserts.append({ 0, Part.ID, NewA });
-
-					Part.Changed = true;
-					Part.Locked = true;
-					Part.Line = NewB;
-				}
+				Inserts.insert(Part.ID, { 0, Part.ID, NewA });
 
 				Synchronizer.unlock();
+
+				Part.Changed = true;
+				Part.Line = NewB;
 			}
 		}
 	});
@@ -4411,25 +4409,25 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		if (getIndex.exec() && getIndex.next())
 		{
 			I.ID = getIndex.value(0).toInt();
+
+			insertSegment.addBindValue(I.ID);
+
+			insertSegment.addBindValue(I.Line.x1());
+			insertSegment.addBindValue(I.Line.y1());
+			insertSegment.addBindValue(I.Line.x2());
+			insertSegment.addBindValue(I.Line.y2());
+
+			insertSegment.addBindValue(I.Base);
+
+			insertSegment.exec();
 		}
-		else continue;
-
-		insertSegment.addBindValue(I.ID);
-
-		insertSegment.addBindValue(I.Line.x1());
-		insertSegment.addBindValue(I.Line.y1());
-		insertSegment.addBindValue(I.Line.x2());
-		insertSegment.addBindValue(I.Line.y2());
-
-		insertSegment.addBindValue(I.Base);
-
-		insertSegment.exec();
+		else Changed.remove(I.Base);
 	}
 
 	emit onBeginProgress(tr("Updating segments"));
 	emit onSetupProgress(0, Changed.size()); Step = 0;
 
-	for (const auto& L : Lines) if (L.Changed)
+	for (const auto& L : Lines) if (L.Changed && Changed.contains(L.ID))
 	{
 		emit onUpdateProgress(++Step);
 
@@ -4448,92 +4446,62 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	for (auto i = Geometry.constBegin(); i != Geometry.constEnd(); ++i)
 	{
-		emit onUpdateProgress(++Step);
-
-		QList<int> Parts, Sorted, Rest; int N(0);
-		QSet<int> Used; bool Continue(true);
+		QList<ELEMENT> Sorted, Rest; int N(0);
 
 		for (const auto& E : i.value())
 		{
-			if (E.Typ == 1 || !Lines.contains(E.IDE))
+			if (E.Typ == 1 || !Lines.contains(E.IDE)) Rest.append(E);
+			else Sorted.append(E);
+		}
+
+		for (int n = 0; n < Sorted.size(); ++n)
+		{
+			if (Inserts.contains(Sorted[n].IDE) &&
+			    Changed.contains(Sorted[n].IDE));
+			else continue;
+
+			const QLineF& Current = Lines[Sorted[n].IDE].Line;
+			const QLineF& Next =
+					(n < Sorted.size() - 1) ?
+						Lines[Sorted[n + 1].IDE].Line :
+					(n > 0) ?
+						Lines[Sorted[n - 1].IDE].Line :
+					Lines[Sorted[n].IDE].Line;
+
+			const int& IDE = Sorted[n].IDE;
+
+			if (Current.p1() == Next.p1() || Current.p1() == Next.p2() ||
+			    Current.p2() == Next.p1() || Current.p2() == Next.p2())
 			{
-				Rest.append(E.IDE);
+				if (n < Sorted.size() - 1)
+				{
+					Sorted.insert(n, { Inserts[IDE].ID, 0, 0 });
+				}
+				else
+				{
+					Sorted.insert(n + 1, { Inserts[IDE].ID, 0, 0 });
+				}
 			}
 			else
 			{
-				Parts.append(E.IDE);
-
-				if (Changed.contains(E.IDE))
-				{
-					Parts.append(getItemByField(Inserts, E.IDE, &INSERT::Base).ID);
-				}
+				Sorted.insert(n + 1, { Inserts[IDE].ID, 0, 0 });
 			}
 		}
 
-		if (i.value().size() == (Parts.size() + Rest.size())) continue;
-		else Currentrun +=Parts.size() + Rest.size() - i.value().size();
+		for (const auto& R : Rest) Sorted.append(R);
 
-		const QLineF First = Lines[Parts.first()].Line;
-		QPointF P1(First.p1()); QPointF P2(First.p2());
+		emit onUpdateProgress(++Step);
 
-		Sorted.append(Parts.first());
-		Used.insert(Parts.first());
-
-		while (Continue)
-		{
-			const int oldSize = Sorted.size();
-
-			for (const auto& L : Parts) if (!Used.contains(L))
-			{
-				QPointF L1, L2; if (Lines.contains(L))
-				{
-					const QLineF Line = Lines[L].Line;
-
-					L1 = Line.p1(); L2 = Line.p2();
-				}
-				else if (hasItemByField(Inserts, L, &INSERT::ID))
-				{
-					const QLineF Line = getItemByField(Inserts, L, &INSERT::ID).Line;
-
-					L1 = Line.p1(); L2 = Line.p2();
-				}
-
-				int T(0); if (P1 == L1) T = 1;
-				else if (P1 == L2) T = 2;
-				else if (P2 == L1) T = 3;
-				else if (P2 == L2) T = 4;
-
-				switch (T)
-				{
-					case 1: P1 = L2; Sorted.push_front(L); break;
-					case 2: P1 = L1; Sorted.push_front(L); break;
-					case 3: P2 = L2; Sorted.push_back(L); break;
-					case 4: P2 = L1; Sorted.push_back(L); break;
-				}
-
-				if (T) Used.insert(L);
-			}
-
-			Continue = oldSize != Sorted.size();
-		}
+		if (i.value().size() == Sorted.size()) continue;
+		else Currentrun += Sorted.size() - i.value().size();
 
 		deleteElement.addBindValue(i.key()); deleteElement.exec();
 
-		for (const auto& IDE : Sorted)
+		for (const auto& E : Sorted)
 		{
 			insertElement.addBindValue(i.key());
-			insertElement.addBindValue(IDE);
-			insertElement.addBindValue(0);
-			insertElement.addBindValue(N++);
-
-			insertElement.exec();
-		}
-
-		for (const auto& IDE : Rest)
-		{
-			insertElement.addBindValue(i.key());
-			insertElement.addBindValue(IDE);
-			insertElement.addBindValue(getItemByField(i.value(), IDE, &ELEMENT::IDE).Typ);
+			insertElement.addBindValue(E.IDE);
+			insertElement.addBindValue(E.Typ);
 			insertElement.addBindValue(N++);
 
 			insertElement.exec();
