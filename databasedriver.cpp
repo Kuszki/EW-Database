@@ -4180,11 +4180,11 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 
 int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius)
 {
-	struct LINE { int ID; QLineF Line; bool Changed = false; };
+	struct LINE { int ID; QLineF Line; int Type; bool Changed = false; };
 
 	struct INSERT { int ID, Base; QLineF Line; };
 
-	struct ELEMENT { int IDE, Typ, N; };
+	struct ELEMENT { int IDE, Typ; bool operator == (const ELEMENT& o) {return o.IDE == IDE;}};
 
 	QSqlQuery Symbols(Database), Objects(Database), Elements(Database), getIndex(Database),
 			deleteElement(Database), insertElement(Database),
@@ -4215,12 +4215,11 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	Objects.prepare(
 		"SELECT "
-			"O.UID, "
-			"P.ID, "
-			"P.P0_X, "
-			"P.P0_Y, "
-			"P.P1_X, "
-			"P.P1_Y "
+			"O.UID, P.ID, "
+			"P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
+			"P.P1_FLAGS "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -4234,16 +4233,22 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		"WHERE "
 			"O.STATUS = 0 AND "
 			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 0");
+			"P.P1_FLAGS = 0 AND "
+			"E.TYP = 0");
 
 	Elements.prepare(
 		"SELECT "
 			"E.UIDO, "
 			"E.IDE, "
-			"E.TYP,"
-			"E.N "
+			"E.TYP "
 		"FROM "
 			"EW_OB_ELEMENTY E "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"O.UID = E.UIDO "
+		"WHERE "
+			"O.STATUS = 0 "
 		"ORDER BY "
 			"E.UIDO ASC, "
 			"E.N ASC");
@@ -4261,23 +4266,26 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	getIndex.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
 
 	QHash<int, QList<ELEMENT>> Geometry; QHash<int, INSERT> Inserts; QSet<int> Changed;
-	QHash<int, QList<QPointF>> Unique;	QHash<int, LINE> Lines;
+	QHash<int, QList<QPointF>> Unique;	QHash<int, LINE> Lines, Origins;
 	QList<QPointF> Points, Ends, Breaks, Intersect, pointCuts;
 
 	emit onBeginProgress(tr("Loading symbols"));
-	emit onSetupProgress(0, 0); Currentrun = 0;
+	emit onSetupProgress(0, 0);
 
-	if (Symbols.exec()) while (Symbols.next())
+	if (Mode & 0x8) if (Symbols.exec()) while (Symbols.next())
 	{
-		if (Tasks.contains(Symbols.value(0).toInt())) Points.append(
+		if (Tasks.contains(Symbols.value(0).toInt()))
 		{
-			Symbols.value(1).toDouble(),
-			Symbols.value(2).toDouble()
-		});
+			Points.append(
+			{
+				Symbols.value(1).toDouble(),
+				Symbols.value(2).toDouble()
+			});
+		}
 	}
 
 	emit onBeginProgress(tr("Loading lines"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, Tasks.size());
 
 	if (Objects.exec()) while (Objects.next())
 	{
@@ -4291,29 +4299,39 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 		if (Tasks.contains(UID))
 		{
+			if (Mode & 0x3)
+			{
+				if (!Unique.contains(UID)) Unique.insert(UID, QList<QPointF>());
+
+				if (!Unique[UID].contains(A)) Unique[UID].append(A);
+				else Unique[UID].removeAll(A);
+
+				if (!Unique[UID].contains(B)) Unique[UID].append(B);
+				else Unique[UID].removeAll(B);
+
+				if ((Mode & 0x2) && !Breaks.contains(A)) Breaks.append(A);
+				if ((Mode & 0x2) && !Breaks.contains(B)) Breaks.append(B);
+			}
+
 			Lines.insert(Objects.value(1).toInt(),
 			{
-				Objects.value(1).toInt(), QLineF(A, B)
+				Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
 			});
 
-			if (!Unique.contains(UID)) Unique.insert(UID, QList<QPointF>());
+			Origins.insert(Objects.value(1).toInt(),
+			{
+				Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
+			});
 
-			if (!Unique[UID].contains(A)) Unique[UID].append(A);
-			else Unique[UID].removeAll(A);
-
-			if (!Unique[UID].contains(B)) Unique[UID].append(B);
-			else Unique[UID].removeAll(B);
-
-			if (!Breaks.contains(A)) Breaks.append(A);
-			if (!Breaks.contains(B)) Breaks.append(B);
+			emit onUpdateProgress(++Step);
 		}
 	}
 
-	for (const auto& E : Unique) Ends.append(E);
-	for (const auto& E : Ends) Breaks.removeAll(E);
+	if (Mode & 0x1) for (const auto& E : Unique) Ends.append(E);
+	if (Mode & 0x2) for (const auto& E : Ends) Breaks.removeAll(E);
 
 	emit onBeginProgress(tr("Loading elements"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
 	if (Elements.exec()) while (Elements.next())
 	{
@@ -4326,21 +4344,22 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 			Geometry[UID].append(
 			{
 				Elements.value(1).toInt(),
-				Elements.value(2).toInt(),
-				Elements.value(3).toInt(),
+				Elements.value(2).toInt()
 			});
+
+			emit onUpdateProgress(++Step);
 		}
 	}
 
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Lines, [&Lines, &Intersect, &Synchronizer] (LINE& Part) -> void
+	if (Mode & 0x4) QtConcurrent::blockingMap(Lines, [&Lines, &Intersect, &Synchronizer] (LINE& Part) -> void
 	{
-		for (auto& L : Lines) if (L.ID != Part.ID)
+		for (auto& L : Lines) if (!Part.Type && !L.Type && L.ID != Part.ID)
 		{
-			if (L.Line.p1() != Part.Line.p1() && L.Line.p1() != Part.Line.p2() &&
-			    L.Line.p2() != Part.Line.p1() && L.Line.p2() != Part.Line.p2());
+			if (!pointComp(L.Line.p1(), Part.Line.p1()) && !pointComp(L.Line.p1(), Part.Line.p2()) &&
+			    !pointComp(L.Line.p2(), Part.Line.p1()) && !pointComp(L.Line.p2(), Part.Line.p2()));
 			else continue;
 
 			QPointF Int; const auto Type = Part.Line.intersect(L.Line, &Int);
@@ -4363,9 +4382,9 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	if (Mode & 0x4) pointCuts.append(Intersect);
 	if (Mode & 0x8) pointCuts.append(Points);
 
-	QtConcurrent::blockingMap(Lines, [&pointCuts, &Inserts, &Synchronizer, Radius] (LINE& Part) -> void
+	QtConcurrent::blockingMap(Lines, [&pointCuts, &Inserts, &Origins, &Synchronizer, Radius] (LINE& Part) -> void
 	{
-		for (const auto& P : pointCuts) if (P != Part.Line.p1() && P != Part.Line.p2())
+		if (!Part.Type) for (const auto& P : pointCuts) if (P != Part.Line.p1() && P != Part.Line.p2())
 		{
 			QPointF Int; QLineF Normal(P, QPointF());
 
@@ -4385,14 +4404,22 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 				const QLineF NewA(Part.Line.p1(), P);
 				const QLineF NewB(P, Part.Line.p2());
 
-				Synchronizer.lock();
+				if (NewA.length() >= Radius &&
+				    NewB.length() >= Radius)
+				{
+					const INSERT Insert = { 0, Part.ID, NewA };
 
-				Inserts.insert(Part.ID, { 0, Part.ID, NewA });
+					Synchronizer.lock();
 
-				Synchronizer.unlock();
+					Inserts.insert(Part.ID, Insert);
 
-				Part.Changed = true;
-				Part.Line = NewB;
+					Part.Changed = true;
+					Part.Line = NewB;
+
+					Synchronizer.unlock();
+				}
+
+				if (Part.Changed) return;
 			}
 		}
 	});
@@ -4446,66 +4473,85 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	for (auto i = Geometry.constBegin(); i != Geometry.constEnd(); ++i)
 	{
-		QList<ELEMENT> Sorted, Rest; int N(0);
+		QList<ELEMENT> Inserted, Rest;
+		QList<LINE> Sorted; int N(0);
 
 		for (const auto& E : i.value())
 		{
-			if (E.Typ == 1 || !Lines.contains(E.IDE)) Rest.append(E);
-			else Sorted.append(E);
+			if (E.Typ == 1 || !Origins.contains(E.IDE))
+			{
+				Rest.append(E);
+			}
+			else Sorted.append(Origins[E.IDE]);
 		}
 
 		for (int n = 0; n < Sorted.size(); ++n)
 		{
-			if (Inserts.contains(Sorted[n].IDE) &&
-			    Changed.contains(Sorted[n].IDE));
-			else continue;
+			const int IDE = Sorted[n].ID;
 
-			const QLineF& Current = Lines[Sorted[n].IDE].Line;
-			const QLineF& Next =
-					(n < Sorted.size() - 1) ?
-						Lines[Sorted[n + 1].IDE].Line :
-					(n > 0) ?
-						Lines[Sorted[n - 1].IDE].Line :
-					Lines[Sorted[n].IDE].Line;
-
-			const int& IDE = Sorted[n].IDE;
-
-			if (Current.p1() == Next.p1() || Current.p1() == Next.p2() ||
-			    Current.p2() == Next.p1() || Current.p2() == Next.p2())
+			if (Inserts.contains(IDE) && Changed.contains(IDE))
 			{
-				if (n < Sorted.size() - 1)
+				const int IID = Inserts[IDE].ID;
+
+				const QLineF& A = Inserts[IDE].Line;
+				const QLineF& B = Lines[IDE].Line;
+
+				const QLineF Next = (n < Sorted.size() - 1) ? Sorted[n + 1].Line : QLineF();
+				const QLineF Prev = (n > 0) ? Sorted[n - 1].Line : QLineF();
+
+				if (pointComp(A.p1(), Next.p1()) || pointComp(A.p1(), Next.p2()) ||
+				    pointComp(A.p2(), Next.p1()) || pointComp(A.p2(), Next.p2()))
 				{
-					Sorted.insert(n, { Inserts[IDE].ID, 0, 0 });
+					Inserted.append({ IDE, 0 }); Inserted.append({ IID, 0 });
+				}
+				else if (pointComp(A.p1(), Prev.p1()) || pointComp(A.p1(), Prev.p2()) ||
+					    pointComp(A.p2(), Prev.p1()) || pointComp(A.p2(), Prev.p2()))
+				{
+					Inserted.append({ IID, 0 }); Inserted.append({ IDE, 0 });
+				}
+				else if (pointComp(B.p1(), Next.p1()) || pointComp(B.p1(), Next.p2()) ||
+					    pointComp(B.p2(), Next.p1()) || pointComp(B.p2(), Next.p2()))
+				{
+					Inserted.append({ IID, 0 }); Inserted.append({ IDE, 0 });
+				}
+				else if (pointComp(B.p1(), Prev.p1()) || pointComp(B.p1(), Prev.p2()) ||
+					    pointComp(B.p2(), Prev.p1()) || pointComp(B.p2(), Prev.p2()))
+				{
+
+					Inserted.append({ IDE, 0 }); Inserted.append({ IID, 0 });
 				}
 				else
 				{
-					Sorted.insert(n + 1, { Inserts[IDE].ID, 0, 0 });
+					Inserted.append({ IDE, 0 }); Inserted.append({ IID, 0 });
 				}
 			}
 			else
 			{
-				Sorted.insert(n + 1, { Inserts[IDE].ID, 0, 0 });
+				Inserted.append({ IDE, 0 });
 			}
 		}
 
-		for (const auto& R : Rest) Sorted.append(R);
+		for (const auto& R : Rest) Inserted.append(R);
+
+		if (i.value().size() != Inserted.size())
+		{
+			deleteElement.addBindValue(i.key());
+			deleteElement.exec();
+
+			for (const auto& E : Inserted)
+			{
+				insertElement.addBindValue(i.key());
+				insertElement.addBindValue(E.IDE);
+				insertElement.addBindValue(E.Typ);
+				insertElement.addBindValue(N++);
+
+				insertElement.exec();
+			}
+
+			Currentrun += Inserted.size() - i.value().size();
+		}
 
 		emit onUpdateProgress(++Step);
-
-		if (i.value().size() == Sorted.size()) continue;
-		else Currentrun += Sorted.size() - i.value().size();
-
-		deleteElement.addBindValue(i.key()); deleteElement.exec();
-
-		for (const auto& E : Sorted)
-		{
-			insertElement.addBindValue(i.key());
-			insertElement.addBindValue(E.IDE);
-			insertElement.addBindValue(E.Typ);
-			insertElement.addBindValue(N++);
-
-			insertElement.exec();
-		}
 	}
 
 	return Currentrun;
@@ -5031,4 +5077,9 @@ bool isVariantEmpty(const QVariant& Value)
 
 		default: return false;
 	}
+}
+
+bool pointComp(const QPointF& A, const QPointF& B, double d)
+{
+	return (qAbs(A.x() - B.x()) <= d) && (qAbs(A.y() - B.y()) <= d);
 }

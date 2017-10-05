@@ -275,6 +275,8 @@ const Type& getItemByField(const Container<Type>& Items, const Field& Data, Fiel
 template<class Type, class Field, template<class> class Container>
 bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
 
+bool pointComp(const QPointF& A, const QPointF& B, double d = 0.001);
+
 bool isVariantEmpty(const QVariant& Value);
 
 #endif // DATABASEDRIVER_HPP
