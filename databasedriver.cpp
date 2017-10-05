@@ -4184,7 +4184,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	struct INSERT { int ID, Base; QLineF Line; };
 
-	struct ELEMENT { int IDE, Typ; bool operator == (const ELEMENT& o) {return o.IDE == IDE;}};
+	struct ELEMENT { int IDE, Typ; };
 
 	QSqlQuery Symbols(Database), Objects(Database), Elements(Database), getIndex(Database),
 			deleteElement(Database), insertElement(Database),
