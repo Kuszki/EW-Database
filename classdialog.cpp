@@ -94,5 +94,4 @@ void ClassDialog::classIndexChanged(int Index)
 		(Texts.size() && !Texts.values().contains(Label)) ||
 		(Lines.size() && !Lines.values().contains(Label)) ||
 		(Points.size() && !Points.values().contains(Label)));
-
 }
