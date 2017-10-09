@@ -439,12 +439,12 @@ void MainWindow::cutData(const QStringList& Points, bool Endings)
 	lockUi(BUSY); emit onCutRequest(Model, Selected, Points, Endings);
 }
 
-void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text)
+void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text);
+	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text, Symbol, Style);
 }
 
 void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length)
