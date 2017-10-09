@@ -184,7 +184,12 @@ class DatabaseDriver : public QObject
 				   const QStringList& Points, bool Endings);
 
 		void refactorData(RecordModel* Model, const QModelIndexList& Items,
-					   const QString& Class, int Line, int Point, int Text);
+					   const QString& Class, int Line, int Point, int Text,
+					   const QString& Symbol, int Style);
+
+		void copyData(RecordModel* Model, const QModelIndexList& Items,
+				    const QString& Class, int Line, int Point, int Text,
+				    const QString& Symbol, int Style);
 
 		void fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path,
 				   bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length);
@@ -229,6 +234,7 @@ class DatabaseDriver : public QObject
 		void onDataJoin(int);
 		void onDataSplit(int);
 		void onDataRefactor(int);
+		void onDataCopy(int);
 		void onDataFit(int);
 
 		void onBatchExec(int);

@@ -63,6 +63,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
 		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
 		{ READONLY,	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
+		{ READONLY,	"EW_OBIEKTY.IIP",		tr("GML identifier")	},
 		{ DATETIME,	"EW_OBIEKTY.DTU",		tr("Creation date")		},
 		{ DATETIME,	"EW_OBIEKTY.DTW",		tr("Modification date")	},
 		{ INTEGER,	"EW_OBIEKTY.OSOU",		tr("Created by")		},
@@ -2483,7 +2484,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onDataCut(Queue.size());
 }
 
-void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text)
+void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(0); return; }
 
@@ -2571,13 +2572,21 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
 
-	Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
+	if (!Style)
+	{
+		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
 
-	if (Query.exec() && Query.next()) LineStyle = Query.value(0).toInt();
+		if (Query.exec() && Query.next()) LineStyle = Query.value(0).toInt();
+	}
+	else LineStyle = Style;
 
-	Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
+	if (Symbol.isEmpty())
+	{
+		Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
 
-	if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
+		if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
+	}
+	else NewSymbol = Symbol;
 
 	emit onBeginProgress(tr("Updating class"));
 	emit onSetupProgress(0, Change.size());
@@ -2656,6 +2665,256 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	emit onEndProgress();
 	emit onDataRefactor(Change.size());
+}
+
+void DatabaseDriver::copyData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataCopy(0); return; }
+
+	struct ELEMENT { int IDE, Type; }; QHash<int, QList<ELEMENT>> Elements;
+
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1);
+	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); int Step = 0;
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol;
+	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database),
+			ClassQuery(Database), ElementsQuery(Database), GeometryQuery(Database);
+
+	QSqlQuery getUidQuery(Database), getIdQuery(Database);
+
+	const int Type = getItemByField(Tables, Class, &TABLE::Name).Type;
+	const QSet<int> List = Model->getUids(Items).toSet(); QSet<int> Change;
+
+	if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+
+		if (!List.contains(UID)) continue;
+
+		bool OK(false); switch (Query.value(1).toInt())
+		{
+			case 2:
+				OK = Type & 109;
+			break;
+			case 3:
+				OK = Type & 103;
+			break;
+			case 4:
+				OK = Type & 357;
+			break;
+		}
+
+		if (OK) Change.insert(UID);
+	}
+
+	LineQuery.prepare(
+		"INSERT INTO "
+			"EW_POLYLINE (ID, ID_WARSTWY, TYP_LINII, STAN_ZMIANY, OPERAT, POINTCOUNT, P0_X, P0_Y, P1_FLAGS, P1_X, P1_Y, PN_X, PN_Y) "
+		"SELECT "
+			"?, ?, ?, 0, OPERAT, POINTCOUNT, P0_X, P0_Y, P1_FLAGS, P1_X, P1_Y, PN_X, PN_Y "
+		"FROM "
+			"EW_POLYLINE "
+		"WHERE "
+			"ID = ?");
+
+	SymbolQuery.prepare(
+		"INSERT INTO "
+			"EW_TEXT (ID, ID_WARSTWY, TEXT, STAN_ZMIANY, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP) "
+		"SELECT "
+			"?, ?, ?, 0, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP "
+		"FROM "
+			"EW_TEXT "
+		"WHERE "
+			"ID = ?");
+
+	LabelQuery.prepare(
+		"INSERT INTO "
+			"EW_TEXT (ID, ID_WARSTWY, TEXT, STAN_ZMIANY, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP) "
+		"SELECT "
+			"?, ?, TEXT, 0, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP "
+		"FROM "
+			"EW_TEXT "
+		"WHERE "
+			"ID = ?");
+
+	ClassQuery.prepare(
+		"INSERT INTO "
+			"EW_OBIEKTY (UID, NUMER, KOD, STATUS, IDKATALOG, RODZAJ, OSOU, OSOW, DTU, DTR, OPERAT) "
+		"SELECT "
+			"?, ?, ?, 0, IDKATALOG, RODZAJ, OSOU, OSOW, DTU, DTR, OPERAT "
+		"FROM "
+			"EW_OBIEKTY "
+		"WHERE "
+			"UIDO = ?");
+
+	ElementsQuery.prepare(
+		"INSERT INTO "
+			"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+		"VALUES "
+			"(?, ?, 0, ?)");
+
+	GeometryQuery.prepare(
+		"SELECT "
+			"E.UIDO, E.IDE, T.TYP "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"LEFT JOIN "
+			"EW_TEXT T "
+		"ON "
+			"(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
+		"LEFT JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 "
+		"ORDER BY "
+			"O.UID ASC, "
+			"E.N ASC");
+
+	getUidQuery.prepare("SELECT GEN_ID(EW_OBIEKTY_UID_GEN, 1) FROM RDB$DATABASE");
+	getIdQuery.prepare("SELECT GEN_ID(EW_OBIEKTY_ID_GEN, 1) FROM RDB$DATABASE");
+
+	if (!Style)
+	{
+		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
+
+		if (Query.exec() && Query.next()) LineStyle = Query.value(0).toInt();
+	}
+	else LineStyle = Style;
+
+	if (Symbol.isEmpty())
+	{
+		Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
+
+		if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
+	}
+	else NewSymbol = Symbol;
+
+	emit onBeginProgress(tr("Loading elements"));
+	emit onSetupProgress(0, Change.size()); Step = 0;
+
+	if (GeometryQuery.exec()) while (GeometryQuery.next())
+	{
+		const int UID = GeometryQuery.value(0).toInt();
+
+		if (Change.contains(UID))
+		{
+			if (!Elements.contains(UID)) Elements.insert(UID, QList<ELEMENT>());
+
+			Elements[UID].append(
+			{
+				GeometryQuery.value(1).toInt(),
+				GeometryQuery.value(2).toInt()
+			});
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	emit onBeginProgress(tr("Copying objects"));
+	emit onSetupProgress(0, Change.size()); Step = 0;
+
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		const auto& Tab = getItemByField(Tables, i.key(), &TABLE::Data);
+		QStringList Fields;
+
+		for (const auto& Field : Table.Fields)
+		{
+			if (hasItemByField(Tab.Fields, Field.Name, &FIELD::Name))
+			{
+				const auto& B = getItemByField(Tab.Fields, Field.Name, &FIELD::Name);
+
+				if (Field == B) Fields.append(Field.Name);
+			}
+		}
+
+		for (const auto& Item : i.value()) if (Change.contains(Item))
+		{
+			int UIDO(0); if (getUidQuery.exec() && getUidQuery.next())
+			{
+				UIDO = getUidQuery.value(0).toInt();
+			}
+			else continue;
+
+			const QString Numer = QString("OB_ID_%1").arg(QString::number(qHash(qMakePair(UIDO, QDateTime::currentDateTimeUtc())), 16));
+
+			Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
+						    "SELECT '%3', %2 FROM %4 "
+						    "WHERE UIDO = '%5'")
+					 .arg(Table.Data)
+					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+					 .arg(UIDO)
+					 .arg(i.key())
+					 .arg(Item));
+
+			ClassQuery.addBindValue(UIDO);
+			ClassQuery.addBindValue(Numer);
+			ClassQuery.addBindValue(Class);
+			ClassQuery.addBindValue(Item);
+
+			ClassQuery.exec();
+
+			int N(0); for (const auto& E : Elements[Item])
+			{
+				int ID(0); if (getIdQuery.exec() && getIdQuery.next())
+				{
+					ID = getIdQuery.value(0).toInt();
+				}
+				else continue;
+
+				switch (E.Type)
+				{
+					case 4:
+
+						SymbolQuery.addBindValue(ID);
+						SymbolQuery.addBindValue(Point);
+						SymbolQuery.addBindValue(NewSymbol);
+						SymbolQuery.addBindValue(E.IDE);
+
+						SymbolQuery.exec();
+
+					break;
+
+					case 6:
+
+						LabelQuery.addBindValue(ID);
+						LabelQuery.addBindValue(Text);
+						LabelQuery.addBindValue(E.IDE);
+
+						LabelQuery.exec();
+
+					break;
+
+					default:
+
+						LineQuery.addBindValue(ID);
+						LineQuery.addBindValue(Line);
+						LineQuery.addBindValue(LineStyle);
+						LineQuery.addBindValue(E.IDE);
+
+						LineQuery.exec();
+
+				}
+
+				ElementsQuery.addBindValue(UIDO);
+				ElementsQuery.addBindValue(ID);
+				ElementsQuery.addBindValue(N++);
+
+				ElementsQuery.exec();
+			}
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	emit onEndProgress();
+	emit onDataCopy(Change.size());
 }
 
 void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path, bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length)
@@ -3579,7 +3838,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
 				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
-				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
+				"WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
 			")");
 
 	Lines.prepare(
@@ -3612,7 +3871,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
 				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
-				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
+				"WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
 			") "
 		"ORDER BY "
 			"E.N ASCENDING");
@@ -3647,7 +3906,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
 				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
-				"WHERE Q.UIDO = O.UID AND L.TYP = 6 "
+				"WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
 			") "
 		"ORDER BY "
 			"E.N ASCENDING");
