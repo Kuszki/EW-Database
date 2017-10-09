@@ -7,13 +7,20 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>200</height>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Set object class</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="0">
+    <widget class="QLabel" name="styleLabel">
+     <property name="text">
+      <string>Line style</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="1">
     <widget class="QComboBox" name="Class"/>
    </item>
@@ -24,7 +31,10 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
+   <item row="1" column="1">
+    <widget class="QComboBox" name="Line"/>
+   </item>
+   <item row="6" column="0" colspan="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -37,29 +47,10 @@
      </property>
     </spacer>
    </item>
-   <item row="1" column="1">
-    <widget class="QComboBox" name="Line"/>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="lineLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Line layer</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QComboBox" name="Point"/>
-   </item>
    <item row="3" column="1">
     <widget class="QComboBox" name="Text"/>
    </item>
-   <item row="5" column="0">
+   <item row="7" column="0">
     <widget class="QCheckBox" name="advancedCheck">
      <property name="text">
       <string>Advanced</string>
@@ -68,6 +59,9 @@
       <bool>true</bool>
      </property>
     </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="Point"/>
    </item>
    <item row="0" column="0">
     <widget class="QLabel" name="classLabel">
@@ -82,13 +76,16 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="1">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="1" column="0">
+    <widget class="QLabel" name="lineLabel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     <property name="text">
+      <string>Line layer</string>
      </property>
     </widget>
    </item>
@@ -105,6 +102,43 @@
      </property>
     </widget>
    </item>
+   <item row="7" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="symbolLabel">
+     <property name="text">
+      <string>Symbol name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="Symbol">
+     <property name="placeholderText">
+      <string>Default for layer</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="Style">
+     <property name="placeholderText">
+      <string>Default for layer</string>
+     </property>
+     <property name="clearButtonEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
@@ -116,8 +150,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>257</x>
-     <y>178</y>
+     <x>345</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -132,8 +166,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>325</x>
-     <y>178</y>
+     <x>390</x>
+     <y>290</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -164,12 +198,12 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>74</x>
-     <y>172</y>
+     <x>81</x>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>40</x>
-     <y>62</y>
+     <x>49</x>
+     <y>58</y>
     </hint>
    </hints>
   </connection>
@@ -180,12 +214,12 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>54</x>
-     <y>165</y>
+     <x>63</x>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>123</x>
-     <y>59</y>
+     <x>211</x>
+     <y>58</y>
     </hint>
    </hints>
   </connection>
@@ -196,12 +230,12 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>29</x>
-     <y>166</y>
+     <x>38</x>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>38</x>
-     <y>99</y>
+     <x>47</x>
+     <y>86</y>
     </hint>
    </hints>
   </connection>
@@ -212,12 +246,12 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>18</x>
-     <y>174</y>
+     <x>27</x>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>123</x>
-     <y>95</y>
+     <x>211</x>
+     <y>86</y>
     </hint>
    </hints>
   </connection>
@@ -228,12 +262,12 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>85</x>
-     <y>164</y>
+     <x>81</x>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
-     <x>62</x>
-     <y>122</y>
+     <x>57</x>
+     <y>114</y>
     </hint>
    </hints>
   </connection>
@@ -244,12 +278,76 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>52</x>
-     <y>164</y>
+     <x>61</x>
+     <y>289</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>227</x>
+     <y>114</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>styleLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>49</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>56</x>
+     <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Style</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>68</x>
+     <y>272</y>
     </hint>
     <hint type="destinationlabel">
      <x>139</x>
-     <y>121</y>
+     <y>130</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>symbolLabel</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>33</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>36</x>
+     <y>162</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Symbol</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>23</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>130</x>
+     <y>162</y>
     </hint>
    </hints>
   </connection>

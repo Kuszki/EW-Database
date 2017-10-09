@@ -26,10 +26,15 @@ ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QSt
 {
 	ui->setupUi(this);
 
-	for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i) ui->Class->addItem(i.value(), i.key());
+	for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i)
+	{
+		ui->Class->addItem(i.value(), i.key());
+	}
 
 	ui->Class->model()->sort(0);
 	ui->Class->setCurrentIndex(0);
+
+	ui->Style->setValidator(new QIntValidator(0, 10000, this));
 }
 
 ClassDialog::~ClassDialog(void)
@@ -42,7 +47,9 @@ void ClassDialog::accept(void)
 	emit onChangeRequest(ui->Class->currentData().toString(),
 					 ui->Line->currentData().toInt(),
 					 ui->Point->currentData().toInt(),
-					 ui->Text->currentData().toInt());
+					 ui->Text->currentData().toInt(),
+					 ui->Symbol->text(),
+					 ui->Style->text().toInt());
 
 	QDialog::accept();
 }

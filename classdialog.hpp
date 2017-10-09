@@ -21,6 +21,7 @@
 #ifndef CLASSDIALOG_HPP
 #define CLASSDIALOG_HPP
 
+#include <QIntValidator>
 #include <QDialog>
 #include <QPair>
 #include <QMap>
@@ -62,7 +63,8 @@ class ClassDialog : public QDialog
 
 	signals:
 
-		void onChangeRequest(const QString&, int, int, int);
+		void onChangeRequest(const QString&, int, int, int,
+						 const QString&, int);
 
 };
 
