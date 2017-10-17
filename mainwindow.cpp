@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadActionClicked);
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
+	connect(ui->actionDeletelab, &QAction::triggered, this, &MainWindow::removelabActionClicked);
 	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
 	connect(ui->actionJoin, &QAction::triggered, this, &MainWindow::joinActionClicked);
 	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
@@ -101,6 +102,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
 	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
+	connect(Driver, &DatabaseDriver::onLabelsDelete, this, &MainWindow::labelDelete);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -131,6 +133,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
 	connect(this, &MainWindow::onLabelRequest, Driver, &DatabaseDriver::insertLabel);
+	connect(this, &MainWindow::onRemovelabelRequest, Driver, &DatabaseDriver::removeLabel);
 
 	connect(this, &MainWindow::onMergeRequest, Driver, &DatabaseDriver::mergeData);
 	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
@@ -200,6 +203,19 @@ void MainWindow::deleteActionClicked(void)
 		ui->Data->selectionModel()->clearSelection();
 
 		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
+	}
+}
+
+void MainWindow::removelabActionClicked()
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (QMessageBox::question(this, tr("Delete %n object(s) labels", nullptr, Selected.count()),
+						 tr("Are you sure to delete selected items labels?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+		lockUi(BUSY); emit onRemovelabelRequest(Model, Selected);
 	}
 }
 
@@ -371,6 +387,7 @@ void MainWindow::selectionChanged(void)
 	const int From = Model ? Model->totalCount() : 0;
 
 	ui->actionDelete->setEnabled(Count > 0);
+	ui->actionDeletelab->setEnabled(Count > 0);
 	ui->actionEdit->setEnabled(Count > 0);
 	ui->actionSave->setEnabled(Count > 0);
 	ui->actionRestore->setEnabled(Count > 0);
@@ -627,6 +644,11 @@ void MainWindow::labelInsert(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n label(s)", nullptr, Count));
 }
 
+void MainWindow::labelDelete(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n label(s)", nullptr, Count));
+}
+
 void MainWindow::breaksInsert(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n breakpoint(s)", nullptr, Count));
@@ -853,6 +875,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLoad->setEnabled(false);
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
+			ui->actionDeletelab->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
 			ui->actionSave->setEnabled(false);
 			ui->actionRestore->setEnabled(false);
@@ -879,6 +902,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLoad->setEnabled(false);
 			ui->actionEdit->setEnabled(false);
 			ui->actionDelete->setEnabled(false);
+			ui->actionDeletelab->setEnabled(false);
 			ui->actionJoin->setEnabled(false);
 			ui->actionSave->setEnabled(false);
 			ui->actionRestore->setEnabled(false);

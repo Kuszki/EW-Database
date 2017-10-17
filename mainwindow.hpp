@@ -119,6 +119,7 @@ class MainWindow : public QMainWindow
 
 		void connectActionClicked(void);
 		void deleteActionClicked(void);
+		void removelabActionClicked(void);
 		void refreshActionClicked(void);
 		void editActionClicked(void);
 		void joinActionClicked(void);
@@ -191,6 +192,7 @@ class MainWindow : public QMainWindow
 		void joinData(int Count);
 		void textEdit(int Count);
 		void labelInsert(int Count);
+		void labelDelete(int Count);
 		void breaksInsert(int Count);
 
 		void batchExec(int Count);
@@ -253,6 +255,8 @@ class MainWindow : public QMainWindow
 
 		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
 						int, double, double, bool, double, double);
+
+		void onRemovelabelRequest(RecordModel*, const QModelIndexList&);
 
 		void onFitRequest(RecordModel*, const QModelIndexList&, const QString&,
 					   bool, int, int, int, int, double, double);

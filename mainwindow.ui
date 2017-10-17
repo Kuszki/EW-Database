@@ -116,6 +116,7 @@
     <addaction name="separator"/>
     <addaction name="actionText"/>
     <addaction name="actionLabel"/>
+    <addaction name="actionDeletelab"/>
     <addaction name="separator"/>
     <addaction name="actionFit"/>
     <addaction name="actionInsert"/>
@@ -169,6 +170,7 @@
    <addaction name="actionRestore"/>
    <addaction name="actionHistory"/>
    <addaction name="actionLabel"/>
+   <addaction name="actionDeletelab"/>
    <addaction name="actionText"/>
    <addaction name="actionFit"/>
    <addaction name="actionInsert"/>
@@ -509,6 +511,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actionDeletelab">
+   <property name="text">
+    <string>Remove labels</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
    </property>
   </action>
  </widget>

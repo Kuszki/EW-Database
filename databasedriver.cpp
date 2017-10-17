@@ -4114,6 +4114,66 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onLabelInsert(Count);
 }
 
+void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Items)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelsDelete(0); return; }
+
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); QSet<int> Deletes; int Step = 0;
+	QSqlQuery Select(Database), DeleteA(Database), DeleteB(Database); Select.setForwardOnly(true);
+
+	Select.prepare(
+		"SELECT "
+			"O.UID, "
+			"P.ID "
+		"FROM "
+			"EW_TEXT P "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"P.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"O.UID = E.UIDO "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.TYP <> 4");
+
+	DeleteA.prepare("DELETE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND IDE = ?");
+	DeleteB.prepare("DELETE FROM EW_TEXT WHERE ID = ?");
+
+	emit onBeginProgress(tr("Loading labels"));
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
+
+	if (Select.exec()) while (Select.next())
+	{
+		const int UID = Select.value(0).toInt();
+
+		if (Tasks.contains(UID))
+		{
+			Deletes.insert(Select.value(1).toInt());
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	emit onBeginProgress(tr("Deleting labels"));
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
+
+	for (const auto& IDE : Deletes)
+	{
+		DeleteA.addBindValue(IDE); DeleteA.exec();
+		DeleteB.addBindValue(IDE); DeleteB.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onLabelsDelete(Deletes.size());
+}
+
 void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Items, int Mode, double Radius, bool Recursive)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPointInsert(0); return; }

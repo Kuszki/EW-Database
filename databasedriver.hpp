@@ -204,6 +204,8 @@ class DatabaseDriver : public QObject
 		void insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label,
 					  int J, double X, double Y, bool P, double L, double R);
 
+		void removeLabel(RecordModel* Model, const QModelIndexList& Items);
+
 		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
 					   int Mode, double Radius, bool Recursive);
 
@@ -263,6 +265,7 @@ class DatabaseDriver : public QObject
 
 		void onLabelInsert(int);
 		void onPointInsert(int);
+		void onLabelsDelete(int);
 
 };
 
