@@ -504,7 +504,8 @@
   </action>
   <action name="actionInsert">
    <property name="icon">
-    <iconset theme="list-add"/>
+    <iconset theme="list-add">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Insert breakpoints</string>
@@ -514,6 +515,9 @@
    </property>
   </action>
   <action name="actionDeletelab">
+   <property name="icon">
+    <iconset theme="mail-mark-junk"/>
+   </property>
    <property name="text">
     <string>Remove labels</string>
    </property>
