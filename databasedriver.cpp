@@ -261,7 +261,7 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 	return List;
 }
 
-QHash<QString, QSet<QString> > DatabaseDriver::loadVariables(void) const
+QHash<QString, QSet<QString>> DatabaseDriver::loadVariables(void) const
 {
 	if (!Database.isOpen()) return QHash<QString, QSet<QString>>();
 
@@ -326,7 +326,7 @@ QStringList DatabaseDriver::normalizeHeaders(QList<DatabaseDriver::TABLE>& Tabs,
 	return List;
 }
 
-QMap<QString, QSet<int> > DatabaseDriver::getClassGroups(const QSet<int>& Indexes, bool Common, int Index)
+QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes, bool Common, int Index)
 {
 	if (!Database.isOpen()) return QMap<QString, QSet<int>>();
 
