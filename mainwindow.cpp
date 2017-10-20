@@ -64,6 +64,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
 	connect(ui->actionHistory, &QAction::triggered, this, &MainWindow::historyActionClicked);
 	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
+	connect(ui->actionRelabel, &QAction::triggered, this, &MainWindow::relabelActionClicked);
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
@@ -102,7 +103,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
 	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
-	connect(Driver, &DatabaseDriver::onLabelsDelete, this, &MainWindow::labelDelete);
+	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
+	connect(Driver, &DatabaseDriver::onLabelEdit, this, &MainWindow::labelEdit);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -134,6 +136,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onTextRequest, Driver, &DatabaseDriver::editText);
 	connect(this, &MainWindow::onLabelRequest, Driver, &DatabaseDriver::insertLabel);
 	connect(this, &MainWindow::onRemovelabelRequest, Driver, &DatabaseDriver::removeLabel);
+	connect(this, &MainWindow::onRelabelRequest, Driver, &DatabaseDriver::editLabel);
 
 	connect(this, &MainWindow::onMergeRequest, Driver, &DatabaseDriver::mergeData);
 	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
@@ -373,9 +376,23 @@ void MainWindow::interfaceActionClicked(void)
 	else ui->statusBar->showMessage(tr("Error with registering interface"));
 }
 
+void MainWindow::relabelActionClicked(void)
+{
+	const QString Label = QInputDialog::getText(this, tr("Update item label"), tr("New label:"));
+
+	if (!Label.isEmpty())
+	{
+		const auto Selected = ui->Data->selectionModel()->selectedRows();
+		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+		lockUi(BUSY); emit onRelabelRequest(Model, Selected, Label);
+	}
+}
+
 void MainWindow::fitActionClicked(void)
 {
-	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(), tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty()) Fit->open(Path);
 }
@@ -642,6 +659,11 @@ void MainWindow::textEdit(int Count)
 void MainWindow::labelInsert(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n label(s)", nullptr, Count));
+}
+
+void MainWindow::labelEdit(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Updated %n label(s)", nullptr, Count));
 }
 
 void MainWindow::labelDelete(int Count)

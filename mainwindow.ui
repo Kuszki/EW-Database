@@ -114,6 +114,7 @@
     <addaction name="actionMerge"/>
     <addaction name="actionSplit"/>
     <addaction name="separator"/>
+    <addaction name="actionRelabel"/>
     <addaction name="actionText"/>
     <addaction name="actionLabel"/>
     <addaction name="actionDeletelab"/>
@@ -171,6 +172,7 @@
    <addaction name="actionHistory"/>
    <addaction name="actionLabel"/>
    <addaction name="actionDeletelab"/>
+   <addaction name="actionRelabel"/>
    <addaction name="actionText"/>
    <addaction name="actionFit"/>
    <addaction name="actionInsert"/>
@@ -388,7 +390,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Edit text</string>
+    <string>Move label</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
@@ -523,6 +525,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionRelabel">
+   <property name="text">
+    <string>Edit label</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
    </property>
   </action>
  </widget>

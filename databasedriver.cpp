@@ -2632,7 +2632,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			"TEXT = ?, "
 			"ID_WARSTWY = ? "
 		"WHERE "
-			"TYP = 4 AND "
 			"ID = ?");
 
 	LabelQuery.prepare(
@@ -2641,7 +2640,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		"SET "
 			"ID_WARSTWY = ? "
 		"WHERE "
-			"TYP = 6 AND "
 			"ID = ?");
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
@@ -4237,7 +4235,7 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Items)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelsDelete(0); return; }
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelDelete(0); return; }
 
 	const QSet<int> Tasks = Model->getUids(Items).toSet(); QSet<int> Deletes; int Step = 0;
 	QSqlQuery Select(Database), DeleteA(Database), DeleteB(Database); Select.setForwardOnly(true);
@@ -4292,7 +4290,68 @@ void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Item
 	}
 
 	emit onEndProgress();
-	emit onLabelsDelete(Deletes.size());
+	emit onLabelDelete(Deletes.size());
+}
+
+void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelEdit(0); return; }
+
+	const QSet<int> Tasks = Model->getUids(Items).toSet();
+	QSqlQuery selectQuery(Database), updateQuery(Database);
+	QSet<int> Labels;  int Step = 0;
+
+	selectQuery.prepare(
+		"SELECT "
+			"O.UID, P.ID "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.TYP = 6");
+
+	updateQuery.prepare(
+		"UPDATE "
+			"EW_TEXT "
+		"SET "
+			"TEXT = ? "
+		"WHERE "
+			"ID = ?");
+
+	emit onBeginProgress(tr("Loading texts"));
+	emit onSetupProgress(0, 0);
+
+	if (selectQuery.exec()) while (selectQuery.next())
+		if (Tasks.contains(selectQuery.value(0).toInt()))
+		{
+			Labels.insert(selectQuery.value(1).toInt());
+		}
+
+	emit onBeginProgress(tr("Updating texts"));
+	emit onSetupProgress(0, Labels.size());
+
+	for (const auto& ID : Labels)
+	{
+		updateQuery.addBindValue(Label);
+		updateQuery.addBindValue(ID);
+
+		updateQuery.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onLabelEdit(Labels.size());
 }
 
 void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Items, int Mode, double Radius, bool Recursive)

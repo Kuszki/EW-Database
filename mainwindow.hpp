@@ -21,6 +21,7 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
+#include <QInputDialog>
 #include <QProgressBar>
 #include <QTextStream>
 #include <QMainWindow>
@@ -132,6 +133,7 @@ class MainWindow : public QMainWindow
 		void unhideActionClicked(void);
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
+		void relabelActionClicked(void);
 		void fitActionClicked(void);
 
 		void selectionChanged(void);
@@ -192,6 +194,7 @@ class MainWindow : public QMainWindow
 		void joinData(int Count);
 		void textEdit(int Count);
 		void labelInsert(int Count);
+		void labelEdit(int Count);
 		void labelDelete(int Count);
 		void breaksInsert(int Count);
 
@@ -255,6 +258,8 @@ class MainWindow : public QMainWindow
 
 		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
 						int, double, double, bool, double, double);
+
+		void onRelabelRequest(RecordModel*, const QModelIndexList&, const QString&);
 
 		void onRemovelabelRequest(RecordModel*, const QModelIndexList&);
 
