@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Update item label</string>
   </property>
+  <property name="windowIcon">
+   <iconset theme="edit-select-all"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
@@ -44,7 +47,7 @@
         <x>0</x>
         <y>0</y>
         <width>376</width>
-        <height>227</height>
+        <height>214</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">

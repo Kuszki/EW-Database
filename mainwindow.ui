@@ -518,7 +518,8 @@
   </action>
   <action name="actionDeletelab">
    <property name="icon">
-    <iconset theme="mail-mark-junk"/>
+    <iconset theme="mail-mark-junk">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Remove labels</string>
@@ -528,6 +529,9 @@
    </property>
   </action>
   <action name="actionRelabel">
+   <property name="icon">
+    <iconset theme="edit-select-all"/>
+   </property>
    <property name="text">
     <string>Edit label</string>
    </property>
