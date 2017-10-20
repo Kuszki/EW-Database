@@ -415,6 +415,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionBatch->setEnabled(Count > 0);
 	ui->actionText->setEnabled(Count > 0);
 	ui->actionLabel->setEnabled(Count > 0);
+	ui->actionRelabel->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 1);
@@ -908,6 +909,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionLabel->setEnabled(false);
+			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
@@ -935,6 +937,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionBatch->setEnabled(false);
 			ui->actionText->setEnabled(false);
 			ui->actionLabel->setEnabled(false);
+			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
