@@ -1277,53 +1277,114 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRemove(Model); return; }
 
-	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database), QueryE(Database), QueryF(Database);
-	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1); int Step = 0;
+	const QSet<int> List = Model->getUids(Items).toSet();
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(List, false, 1);
 
-	emit onBeginProgress(tr("Removing data"));
-	emit onSetupProgress(0, Items.size());
+	QSqlQuery selectLines(Database), selectTexts(Database), selectUIDS(Database),
+			QueryA(Database), QueryB(Database), QueryC(Database),
+			QueryD(Database), QueryE(Database), QueryF(Database);
 
-	QueryA.prepare(
-		"DELETE FROM "
-			"EW_TEXT "
+	QSet<int> Lines, Texts; QHash<int, int> UIDS; int Step = 0;
+	const QString deleteQuery = QString("DELETE FROM %1 WHERE UIDO = ?");
+
+	selectLines.prepare(
+		"SELECT "
+			"O.UID, P.ID "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
 		"WHERE "
-			"ID IN ("
-				"SELECT IDE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND UIDO = ?"
-			")");
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0");
 
-	QueryB.prepare(
-		"DELETE FROM "
-			"EW_POLYLINE "
+	selectTexts.prepare(
+		"SELECT "
+			"O.UID, P.ID "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT P "
+		"ON "
+			"E.IDE = P.ID "
 		"WHERE "
-			"ID IN ("
-				"SELECT IDE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND UIDO = ?"
-			")");
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0");
 
-	QueryC.prepare(
-		"DELETE FROM "
-			"EW_OB_ELEMENTY "
-		"WHERE "
-			"IDE = ANY(SELECT ID FROM EW_OBIEKTY WHERE UID = ?) AND TYP = 1");
+	selectUIDS.prepare("SELECT DISTINCT UID, ID FROM EW_OBIEKTY WHERE O.STATUS = 0");
 
+	QueryA.prepare("DELETE FROM EW_TEXT WHERE ID = ?");
+	QueryB.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
+	QueryC.prepare("DELETE FROM EW_OB_ELEMENTY WHERE IDE = ? AND TYP = 1");
 	QueryD.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
-
 	QueryE.prepare("DELETE FROM EW_OBIEKTY WHERE UID = ?");
+
+	emit onBeginProgress(tr("Loading items"));
+	emit onSetupProgress(0, 0);
+
+	if (selectLines.exec()) while (selectLines.next())
+		if (List.contains(selectLines.value(0).toInt()))
+		{
+			Lines.insert(selectLines.value(1).toInt());
+		}
+
+	if (selectTexts.exec()) while (selectTexts.next())
+		if (List.contains(selectTexts.value(0).toInt()))
+		{
+			Texts.insert(selectTexts.value(1).toInt());
+		}
+
+	if (selectUIDS.exec()) while (selectUIDS.next())
+	{
+		UIDS.insert(selectUIDS.value(0).toInt(),
+				  selectUIDS.value(1).toInt());
+	}
+
+	emit onBeginProgress(tr("Removing objects"));
+	emit onSetupProgress(0, Items.size());
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
-		QueryF.prepare(QString("DELETE FROM %1 WHERE UIDO = ?").arg(i.key()));
+		QueryF.prepare(deleteQuery.arg(i.key()));
 
 		for (const auto& Index : i.value())
 		{
-			QueryA.addBindValue(Index); QueryA.exec();
-			QueryB.addBindValue(Index); QueryB.exec();
-			QueryC.addBindValue(Index); QueryC.exec();
+			QueryC.addBindValue(UIDS[Index]); QueryC.exec();
 			QueryD.addBindValue(Index); QueryD.exec();
 			QueryE.addBindValue(Index); QueryE.exec();
 			QueryF.addBindValue(Index); QueryF.exec();
 
 			emit onUpdateProgress(++Step);
 		}
+	}
+
+	emit onBeginProgress(tr("Removing geometry")); Step = 0;
+	emit onSetupProgress(0, Lines.size() + Texts.size());
+
+	for (const auto& ID : Lines)
+	{
+		QueryB.addBindValue(ID); QueryB.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (const auto& ID : Texts)
+	{
+		QueryA.addBindValue(ID); QueryA.exec();
+
+		emit onUpdateProgress(++Step);
 	}
 
 	for (const auto Item : Items) emit onRowRemove(Item);
@@ -2489,9 +2550,10 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(0); return; }
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), false, 1);
-	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); int Step = 0;
-	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol;
-	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database), ClassQuery(Database);
+	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); QSet<int> Lines, Symbols, Texts;
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol; int Step = 0;
+	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database),
+			ClassQuery(Database), selectLines(Database), selectTexts(Database);
 
 	const int Type = getItemByField(Tables, Class, &TABLE::Name).Type;
 	const QSet<int> List = Model->getUids(Items).toSet(); QSet<int> Change;
@@ -2518,6 +2580,42 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		if (OK) Change.insert(UID);
 	}
 
+	selectLines.prepare(
+		"SELECT "
+			"O.UID, P.ID "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0");
+
+	selectTexts.prepare(
+		"SELECT "
+			"O.UID, P.TYP, P.ID "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0");
+
 	LineQuery.prepare(
 		"UPDATE "
 			"EW_POLYLINE "
@@ -2525,15 +2623,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			"TYP_LINII = ?, "
 			"ID_WARSTWY = ? "
 		"WHERE "
-			"ID IN ("
-				"SELECT "
-					"IDE "
-				"FROM "
-					"EW_OB_ELEMENTY "
-				"WHERE "
-					"TYP = 0 AND "
-					"UIDO = ?"
-			")");
+			"ID = ?");
 
 	SymbolQuery.prepare(
 		"UPDATE "
@@ -2543,15 +2633,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			"ID_WARSTWY = ? "
 		"WHERE "
 			"TYP = 4 AND "
-			"ID IN ("
-				"SELECT "
-					"IDE "
-				"FROM "
-					"EW_OB_ELEMENTY "
-				"WHERE "
-					"TYP = 0 AND "
-					"UIDO = ?"
-			")");
+			"ID = ?");
 
 	LabelQuery.prepare(
 		"UPDATE "
@@ -2560,15 +2642,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			"ID_WARSTWY = ? "
 		"WHERE "
 			"TYP = 6 AND "
-			"ID IN ("
-				"SELECT "
-					"IDE "
-				"FROM "
-					"EW_OB_ELEMENTY "
-				"WHERE "
-					"TYP = 0 AND "
-					"UIDO = ?"
-			")");
+			"ID = ?");
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
 
@@ -2587,6 +2661,29 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
 	}
 	else NewSymbol = Symbol;
+
+	emit onBeginProgress(tr("Loading elements"));
+	emit onSetupProgress(0, 0);
+
+	if (selectLines.exec()) while (selectLines.next())
+		if (List.contains(selectLines.value(0).toInt()))
+		{
+			Lines.insert(selectLines.value(1).toInt());
+		}
+
+	if (selectTexts.exec()) while (selectTexts.next())
+		if (List.contains(selectTexts.value(0).toInt()))
+		{
+			switch (selectTexts.value(1).toInt())
+			{
+				case 4:
+					Symbols.insert(selectTexts.value(2).toInt());
+				break;
+				case 6:
+					Texts.insert(selectTexts.value(2).toInt());
+				break;
+			}
+		}
 
 	emit onBeginProgress(tr("Updating class"));
 	emit onSetupProgress(0, Change.size());
@@ -2623,23 +2720,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 						 .arg(Item));
 			}
 
-			LineQuery.addBindValue(LineStyle);
-			LineQuery.addBindValue(Line);
-			LineQuery.addBindValue(Item);
-
-			LineQuery.exec();
-
-			SymbolQuery.addBindValue(NewSymbol);
-			SymbolQuery.addBindValue(Point);
-			SymbolQuery.addBindValue(Item);
-
-			SymbolQuery.exec();
-
-			LabelQuery.addBindValue(Text);
-			LabelQuery.addBindValue(Item);
-
-			LabelQuery.exec();
-
 			ClassQuery.addBindValue(Class);
 			ClassQuery.addBindValue(Item);
 
@@ -2647,6 +2727,47 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 			emit onUpdateProgress(++Step);
 		}
+	}
+
+	emit onBeginProgress(tr("Updating lines"));
+	emit onSetupProgress(0, Lines.size()); Step = 0;
+
+	for (const auto& ID : Lines)
+	{
+		LineQuery.addBindValue(LineStyle);
+		LineQuery.addBindValue(Line);
+		LineQuery.addBindValue(ID);
+
+		LineQuery.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onBeginProgress(tr("Updating symbols"));
+	emit onSetupProgress(0, Symbols.size()); Step = 0;
+
+	for (const auto& ID : Symbols)
+	{
+		SymbolQuery.addBindValue(NewSymbol);
+		SymbolQuery.addBindValue(Point);
+		SymbolQuery.addBindValue(ID);
+
+		SymbolQuery.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onBeginProgress(tr("Updating texts"));
+	emit onSetupProgress(0, Texts.size()); Step = 0;
+
+	for (const auto& ID : Texts)
+	{
+		LabelQuery.addBindValue(Text);
+		LabelQuery.addBindValue(ID);
+
+		LabelQuery.exec();
+
+		emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress(); Step = 0;
