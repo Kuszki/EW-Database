@@ -96,6 +96,8 @@ class DatabaseDriver : public QObject
 		QList<FIELD> Fields;
 		QList<FIELD> Common;
 
+		QHash<QString, QSet<QString>> Variables;
+
 	public:
 
 		static const QStringList Operators;
@@ -113,6 +115,7 @@ class DatabaseDriver : public QObject
 
 		QList<FIELD> loadFields(const QString& Table) const;
 		QMap<QVariant, QString> loadDict(const QString& Field, const QString& Table) const;
+		QHash<QString, QSet<QString>> loadVariables(void) const;
 
 		QList<FIELD> normalizeFields(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
@@ -223,7 +226,8 @@ class DatabaseDriver : public QObject
 		void onError(const QString&);
 
 		void onConnect(const QList<FIELD>&, const QList<TABLE>&,
-					const QStringList&, unsigned);
+					const QStringList&, unsigned,
+					const QHash<QString, QSet<QString>>&);
 		void onDisconnect(void);
 		void onLogin(bool);
 

@@ -64,7 +64,6 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionRestore, &QAction::triggered, this, &MainWindow::restoreActionClicked);
 	connect(ui->actionHistory, &QAction::triggered, this, &MainWindow::historyActionClicked);
 	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
-	connect(ui->actionRelabel, &QAction::triggered, this, &MainWindow::relabelActionClicked);
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
@@ -376,19 +375,6 @@ void MainWindow::interfaceActionClicked(void)
 	else ui->statusBar->showMessage(tr("Error with registering interface"));
 }
 
-void MainWindow::relabelActionClicked(void)
-{
-	const QString Label = QInputDialog::getText(this, tr("Update item label"), tr("New label:"));
-
-	if (!Label.isEmpty())
-	{
-		const auto Selected = ui->Data->selectionModel()->selectedRows();
-		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-
-		lockUi(BUSY); emit onRelabelRequest(Model, Selected, Label);
-	}
-}
-
 void MainWindow::fitActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
@@ -514,7 +500,15 @@ void MainWindow::insertBreaks(int Mode, double Radius, double Recursive)
 	lockUi(BUSY); emit onInsertRequest(Model, Selected, Mode, Radius, Recursive);
 }
 
-void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common)
+void MainWindow::relabelData(const QString& Label)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	lockUi(BUSY); emit onRelabelRequest(Model, Selected, Label);
+}
+
+void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString> >& Variables)
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
 
@@ -531,6 +525,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Label = new LabelDialog(this);
 	Text = new TextDialog(this);
 	Insert = new InsertDialog(this);
+	Variable = new VariablesDialog(Variables, this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -543,6 +538,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 	connect(Fit, &HarmonizeDialog::onFitRequest, this, &MainWindow::fitData);
 	connect(Insert, &InsertDialog::onInsertRequest, this, &MainWindow::insertBreaks);
+	connect(Variable, &VariablesDialog::onChangeRequest, this, &MainWindow::relabelData);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -552,6 +548,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 	connect(ui->actionInsert, &QAction::triggered, Insert, &TextDialog::open);
+	connect(ui->actionRelabel, &QAction::triggered, Variable, &VariablesDialog::open);
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
 	registerSockets(Driver->getDatabasePath());
@@ -574,6 +571,7 @@ void MainWindow::databaseDisconnected(void)
 	Label->deleteLater();
 	Text->deleteLater();
 	Insert->deleteLater();
+	Variable->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();

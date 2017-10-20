@@ -261,6 +261,27 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 	return List;
 }
 
+QHash<QString, QSet<QString> > DatabaseDriver::loadVariables(void) const
+{
+	if (!Database.isOpen()) return QHash<QString, QSet<QString>>();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QHash<QString, QSet<QString>> List;
+
+	Query.prepare("SELECT DISTINCT NAZWA, OPIS FROM EW_OB_ZMIENNE");
+
+	if (Query.exec()) while (Query.next())
+	{
+		const QString Label = Query.value(0).toString();
+
+		if (!List.contains(Label)) List.insert(Label, QSet<QString>());
+
+		List[Label].insert(Query.value(1).toString());
+	}
+
+	return List;
+}
+
 QList<DatabaseDriver::FIELD> DatabaseDriver::normalizeFields(QList<DatabaseDriver::TABLE>& Tabs, const QList<DatabaseDriver::FIELD>& Base) const
 {
 	QList<FIELD> List;
@@ -1034,7 +1055,9 @@ bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, co
 		Fields = normalizeFields(Tables, Common);
 		Headers = normalizeHeaders(Tables, Common);
 
-		emit onEndProgress(); emit onConnect(Fields, Tables, Headers, Common.size());
+		Variables = loadVariables();
+
+		emit onEndProgress(); emit onConnect(Fields, Tables, Headers, Common.size(), Variables);
 	}
 	else
 	{

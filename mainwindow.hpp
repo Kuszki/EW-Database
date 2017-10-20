@@ -33,6 +33,7 @@
 
 #include "databasedriver.hpp"
 
+#include "variablesdialog.hpp"
 #include "harmonizedialog.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
@@ -82,6 +83,7 @@ class MainWindow : public QMainWindow
 
 		DatabaseDriver* Driver;
 
+		VariablesDialog* Variable;
 		HarmonizeDialog* Fit;
 		ColumnsDialog* Columns;
 		InsertDialog* Insert;
@@ -133,14 +135,14 @@ class MainWindow : public QMainWindow
 		void unhideActionClicked(void);
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
-		void relabelActionClicked(void);
 		void fitActionClicked(void);
 
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,
 						   const QList<DatabaseDriver::TABLE>& Classes,
-						   const QStringList& Headers, unsigned Common);
+						   const QStringList& Headers, unsigned Common,
+						   const QHash<QString, QSet<QString>>& Variables);
 
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
@@ -169,6 +171,7 @@ class MainWindow : public QMainWindow
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L);
 		void insertBreaks(int Mode, double Radius, double Recursive);
+		void relabelData(const QString& Label);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
