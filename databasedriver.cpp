@@ -1324,6 +1324,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
+			"O.UID = ? AND "
 			"O.STATUS = 0 AND "
 			"E.TYP = 0 AND "
 			"P.STAN_ZMIANY = 0");
@@ -1342,11 +1343,12 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
+			"O.UID = ? AND "
 			"O.STATUS = 0 AND "
 			"E.TYP = 0 AND "
 			"P.STAN_ZMIANY = 0");
 
-	selectUIDS.prepare("SELECT DISTINCT UID, ID FROM EW_OBIEKTY WHERE O.STATUS = 0");
+	selectUIDS.prepare("SELECT DISTINCT UID, ID FROM EW_OBIEKTY WHERE STATUS = 0");
 
 	QueryA.prepare("DELETE FROM EW_TEXT WHERE ID = ?");
 	QueryB.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
@@ -1355,19 +1357,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	QueryE.prepare("DELETE FROM EW_OBIEKTY WHERE UID = ?");
 
 	emit onBeginProgress(tr("Loading items"));
-	emit onSetupProgress(0, 0);
-
-	if (selectLines.exec()) while (selectLines.next())
-		if (List.contains(selectLines.value(0).toInt()))
-		{
-			Lines.insert(selectLines.value(1).toInt());
-		}
-
-	if (selectTexts.exec()) while (selectTexts.next())
-		if (List.contains(selectTexts.value(0).toInt()))
-		{
-			Texts.insert(selectTexts.value(1).toInt());
-		}
+	emit onSetupProgress(0, List.size());
 
 	if (selectUIDS.exec()) while (selectUIDS.next())
 	{
@@ -1375,8 +1365,27 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 				  selectUIDS.value(1).toInt());
 	}
 
+	for (const auto UID : List)
+	{
+		selectLines.addBindValue(UID);
+
+		if (selectLines.exec()) while (selectLines.next())
+		{
+			Lines.insert(selectLines.value(1).toInt());
+		}
+
+		selectTexts.addBindValue(UID);
+
+		if (selectTexts.exec()) while (selectTexts.next())
+		{
+			Texts.insert(selectTexts.value(1).toInt());
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
 	emit onBeginProgress(tr("Removing objects"));
-	emit onSetupProgress(0, Items.size());
+	emit onSetupProgress(0, Items.size()); Step = 0;
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -2617,6 +2626,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
+			"O.UID = ? AND "
 			"O.STATUS = 0 AND "
 			"E.TYP = 0 AND "
 			"P.STAN_ZMIANY = 0");
@@ -2635,6 +2645,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
+			"O.UID = ? AND "
 			"O.STATUS = 0 AND "
 			"E.TYP = 0 AND "
 			"P.STAN_ZMIANY = 0");
@@ -2684,16 +2695,20 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	else NewSymbol = Symbol;
 
 	emit onBeginProgress(tr("Loading elements"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, List.size());
 
-	if (selectLines.exec()) while (selectLines.next())
-		if (List.contains(selectLines.value(0).toInt()))
+	for (const auto& UID : List)
+	{
+		selectLines.addBindValue(UID);
+
+		if (selectLines.exec()) while (selectLines.next())
 		{
 			Lines.insert(selectLines.value(1).toInt());
 		}
 
-	if (selectTexts.exec()) while (selectTexts.next())
-		if (List.contains(selectTexts.value(0).toInt()))
+		selectTexts.addBindValue(UID);
+
+		if (selectTexts.exec()) while (selectTexts.next())
 		{
 			switch (selectTexts.value(1).toInt())
 			{
@@ -2706,8 +2721,11 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			}
 		}
 
+		emit onUpdateProgress(++Step);
+	}
+
 	emit onBeginProgress(tr("Updating class"));
-	emit onSetupProgress(0, Change.size());
+	emit onSetupProgress(0, Change.size()); Step = 0;
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
