@@ -27,9 +27,14 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
 	Selector = new QComboBox(this);
+	Terminator = new QPushButton(this);
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
 	About = new AboutDialog(this);
+
+	Terminator->hide();
+	Terminator->setText(tr("Stop"));
+	Terminator->setIcon(QIcon::fromTheme("playback-stop"));
 
 	Progress->hide();
 	Driver->moveToThread(&Thread);
@@ -44,6 +49,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
 	ui->supportTool->insertSeparator(ui->actionUnhide);
 	ui->statusBar->addPermanentWidget(Progress);
+	ui->statusBar->addPermanentWidget(Terminator);
 
 	QSettings Settings("EW-Database");
 
@@ -114,6 +120,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setValue);
 	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
 
+	connect(Driver, &DatabaseDriver::onSetupProgress, Terminator, &QToolButton::show);
+	connect(Driver, &DatabaseDriver::onEndProgress, Terminator, &QToolButton::hide);
+
 	connect(this, &MainWindow::onLoadRequest, Driver, &DatabaseDriver::loadList);
 	connect(this, &MainWindow::onReloadRequest, Driver, &DatabaseDriver::reloadData);
 	connect(this, &MainWindow::onRemoveRequest, Driver, &DatabaseDriver::removeData);
@@ -144,6 +153,9 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
+
+	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
+	connect(Terminator, &QPushButton::clicked, Driver, &DatabaseDriver::terminate, Qt::DirectConnection);
 
 	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
 }
@@ -942,6 +954,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
 			ui->Data->setEnabled(false);
+
+			Driver->unterminate();
 		break;
 		case DONE:
 			ui->statusBar->showMessage(tr("Job done"));
@@ -958,6 +972,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->Data->setVisible(true);
 
 			selectionChanged();
+
+			Driver->unterminate();
 		break;
 	}
 }

@@ -89,6 +89,9 @@ class DatabaseDriver : public QObject
 
 	private:
 
+		mutable QMutex Terminator;
+		mutable bool Terminated;
+
 		QSqlDatabase Database;
 		QStringList Headers;
 
@@ -107,6 +110,8 @@ class DatabaseDriver : public QObject
 
 		QString getDatabaseName(void) const;
 		QString getDatabasePath(void) const;
+
+		bool isTerminated(void) const;
 
 	protected:
 
@@ -220,6 +225,9 @@ class DatabaseDriver : public QObject
 		void getClass(RecordModel* Model, const QModelIndexList& Items);
 
 		bool addInterface(const QString& Path, int Type, bool Modal);
+
+		void unterminate(void);
+		void terminate(void);
 
 	signals:
 

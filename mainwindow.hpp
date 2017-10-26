@@ -27,6 +27,7 @@
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QTextStream>
+#include <QToolButton>
 #include <QUdpSocket>
 #include <QTreeView>
 #include <QThread>
@@ -78,6 +79,7 @@ class MainWindow : public QMainWindow
 
 		AboutDialog* About;
 
+		QPushButton* Terminator;
 		QProgressBar* Progress;
 		QComboBox* Selector;
 

@@ -29,7 +29,7 @@ const QStringList DatabaseDriver::Operators =
 };
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent)
+: Terminated(false), QObject(Parent)
 {
 	QSettings Settings("EW-Database");
 
@@ -52,6 +52,11 @@ QString DatabaseDriver::getDatabaseName(void) const
 QString DatabaseDriver::getDatabasePath(void) const
 {
 	return Database.databaseName();
+}
+
+bool DatabaseDriver::isTerminated(void) const
+{
+	QMutexLocker Locker(&Terminator); return Terminated;
 }
 
 QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
@@ -350,7 +355,7 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 		"WHERE "
 			"O.STATUS = 0");
 
-	if (Query.exec()) while (Query.next()) if (Indexes.contains(Query.value(0).toInt()))
+	if (Query.exec()) while (Query.next() && !isTerminated()) if (Indexes.contains(Query.value(0).toInt()))
 	{
 		const QString Table = Query.value(Index + 1).toString();
 		const int ID = Query.value(0).toInt();
@@ -398,7 +403,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 
 	if (!Where.isEmpty()) Exec.append(QString(" AND (%1)").arg(Where));
 
-	if (Query.exec(Exec)) while (Query.next()) if (Filter.isEmpty() || Filter.contains(Query.value(0).toInt()))
+	if (Query.exec(Exec)) while (Query.next() && !isTerminated()) if (Filter.isEmpty() || Filter.contains(Query.value(0).toInt()))
 	{
 		QHash<int, QVariant> Values; int i = 1;
 
@@ -478,13 +483,13 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 		Query.bindValue(":min", Geometry.contains(0) ? Geometry[0].toDouble() : 0.0);
 		Query.bindValue(":max", Geometry.contains(1) ? Geometry[1].toDouble() : 10000.0);
 
-		if (Query.exec()) while (Query.next()) Data.remove(Query.value(0).toInt());
+		if (Query.exec()) while (Query.next() && !isTerminated()) Data.remove(Query.value(0).toInt());
 	}
 
 	if (Geometry.contains(2) || Geometry.contains(3) ||
 	    Geometry.contains(4) || Geometry.contains(5))
 	{
-		auto Process = [Radius] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
+		auto Process = [this, Radius] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
 		{
 			bool End(false); for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
@@ -518,7 +523,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 					}
 				}
 
-				if (End) return;
+				if (End || this->isTerminated()) return;
 			}
 		};
 
@@ -550,7 +555,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			const OBJECT Object =
 			{
@@ -588,7 +593,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"P.P1_FLAGS IN (0, 2) AND "
 				"E.TYP = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next()  && !isTerminated())
 		{
 			const int Index = Query.value(0).toInt();
 
@@ -695,7 +700,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"WHERE "
 				"O.STATUS = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			if (Geometry.contains(6)) CountA.insert(Query.value(0).toInt(), 0);
 			if (Geometry.contains(7)) CountB.insert(Query.value(0).toInt(), 0);
@@ -721,7 +726,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			.arg(Geometry[6].toStringList().contains("*"))
 			.arg(Geometry[6].toStringList().join("', '"))))
 		{
-			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			while (Query.next() && !isTerminated()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
 			{
 				const int ID = Query.value(0).toInt();
 
@@ -733,7 +738,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			.arg(Geometry[7].toStringList().contains("*"))
 			.arg(Geometry[7].toStringList().join("', '"))))
 		{
-			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			while (Query.next() && !isTerminated()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
 			{
 				const int ID = Query.value(0).toInt();
 
@@ -766,7 +771,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"WHERE "
 				"O.STATUS = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			if (Geometry.contains(8)) CountA.insert(Query.value(0).toInt(), 0);
 			if (Geometry.contains(9)) CountB.insert(Query.value(0).toInt(), 0);
@@ -800,7 +805,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			.arg(Geometry[8].toStringList().contains("*"))
 			.arg(Geometry[8].toStringList().join("', '"))))
 		{
-			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			while (Query.next() && !isTerminated()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
 			{
 				const int ID = Query.value(0).toInt();
 
@@ -812,7 +817,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			.arg(Geometry[9].toStringList().contains("*"))
 			.arg(Geometry[9].toStringList().join("', '"))))
 		{
-			while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
+			while (Query.next() && !isTerminated()) if (Limit.isEmpty() || Limit.contains(Query.value(1).toString()))
 			{
 				const int ID = Query.value(0).toInt();
 
@@ -847,7 +852,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			"WHERE "
 				"O.STATUS = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			if (Geometry.contains(10)) CountA.append(qMakePair(Query.value(0).toInt(), 0));
 			if (Geometry.contains(11)) CountB.append(qMakePair(Query.value(0).toInt(), 0));
@@ -876,7 +881,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"P.P1_FLAGS IN (0, 2) AND "
 				"E.TYP = 0");
 
-		if (Query.exec()) while (Query.next()) if (Limit.isEmpty() || Limit.contains(Query.value(5).toString()))
+		if (Query.exec()) while (Query.next() && !isTerminated()) if (Limit.isEmpty() || Limit.contains(Query.value(5).toString()))
 		{
 			const QString Class = Query.value(0).toString();
 
@@ -905,13 +910,15 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 				"E.TYP = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			Points.insert(Query.value(0).toInt(), QPointF(Query.value(1).toDouble(), Query.value(2).toDouble()));
 		}
 
-		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [&Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
+		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [this, &Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
 		{
+			if (this->isTerminated()) return;
+
 			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
 				if (Geometry[10].toStringList().contains("*") || Geometry[10].toStringList().contains(i.key()))
@@ -926,8 +933,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 			}
 		});
 
-		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [&Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
+		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [this, &Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
 		{
+			if (this->isTerminated()) return;
+
 			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
 				if (Geometry[11].toStringList().contains("*") || Geometry[11].toStringList().contains(i.key()))
@@ -982,7 +991,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 					") = 0, 1, NULL)"
 				") < 2");
 
-		if (Query.exec(Select)) while (Query.next()) Data.remove(Query.value(0).toInt());
+		if (Query.exec(Select)) while (Query.next() && !isTerminated()) Data.remove(Query.value(0).toInt());
 	}
 
 	if (Geometry.contains(100))
@@ -993,7 +1002,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 								 "WHERE O.STATUS = 0 AND O.RODZAJ NOT IN ('%1')")
 						   .arg(Geometry[100].toStringList().join("', '"));
 
-		if (Query.exec(Select)) while (Query.next()) Data.remove(Query.value(0).toInt());
+		if (Query.exec(Select)) while (Query.next() && !isTerminated()) Data.remove(Query.value(0).toInt());
 	}
 
 	return Data;
@@ -1099,7 +1108,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 
 	Query.prepare("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0");
 
-	if (Query.exec()) while (Query.next()) if (Hash.contains(Query.value(1).toString()))
+	if (Query.exec()) while (Query.next() && !isTerminated()) if (Hash.contains(Query.value(1).toString()))
 	{
 		UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
 	}
@@ -1109,8 +1118,10 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 
 	RecordModel* Model = new RecordModel(Headers, this); Step = 0;
 
-	for (const auto& Table : Tables)
+	if (!isTerminated()) for (const auto& Table : Tables)
 	{
+		if (isTerminated()) break;
+
 		auto Data = loadData(Table, QSet<int>(), QString(), true, true);
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
@@ -1140,6 +1151,8 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
+		if (isTerminated()) break;
+
 		auto Data = loadData(Table, QSet<int>(), Filter, true, true);
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
@@ -1153,10 +1166,12 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onBeginProgress(tr("Applying geometry filters"));
 	emit onSetupProgress(0, 0);
 
-	if (!Geometry.isEmpty())
+	if (!Geometry.isEmpty() && !isTerminated())
 	{
 		List = filterData(List, Geometry, Limiter, Radius);
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataLoad(Model); return; }
 
 	emit onBeginProgress(tr("Creating object list"));
 	emit onSetupProgress(0, 0);
@@ -1237,6 +1252,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	if (!All.isEmpty()) for (const auto& Index : Tasks.first())
 	{
+		if (isTerminated()) break;
+
 		Query.exec(QString(
 			"UPDATE "
 				"EW_OBIEKTY "
@@ -1270,6 +1287,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 		if (!Updates.isEmpty()) for (const auto& Index : i.value())
 		{
+			if (isTerminated()) break;
+
 			Query.exec(QString(
 				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
 				"VALUES (%3, %4) MATCHING (UIDO)")
@@ -1365,7 +1384,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 	emit onBeginProgress(tr("Loading items"));
 	emit onSetupProgress(0, List.size());
 
-	if (selectUIDS.exec()) while (selectUIDS.next())
+	if (selectUIDS.exec()) while (selectUIDS.next() && !isTerminated())
 	{
 		UIDS.insert(selectUIDS.value(0).toInt(),
 				  selectUIDS.value(1).toInt());
@@ -1373,6 +1392,8 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 
 	for (const auto UID : List)
 	{
+		if (isTerminated()) break;
+
 		selectLines.addBindValue(UID);
 
 		if (selectLines.exec()) while (selectLines.next())
@@ -1389,6 +1410,8 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 
 		emit onUpdateProgress(++Step);
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataRemove(Model); return; }
 
 	emit onBeginProgress(tr("Removing objects"));
 	emit onSetupProgress(0, Items.size()); Step = 0;
@@ -1440,6 +1463,8 @@ void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items,
 
 	for (const auto& Rules : Values)
 	{
+		if (isTerminated()) break;
+
 		QModelIndexList Filtered; QHash<int, QVariant> Updates;
 
 		for (const auto& Index : Items)
@@ -1482,7 +1507,7 @@ void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items,
 			}
 		}
 
-		if (Filtered.size() && Updates.size())
+		if (!isTerminated() && Filtered.size() && Updates.size())
 		{
 			updateData(Model, Filtered, Updates, false); Changes += Filtered.size();
 		}
@@ -1519,7 +1544,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 
 	Query.bindValue(":kod", Point);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		if (Tasks[Point].contains(Query.value(0).toInt()))
 		{
@@ -1551,7 +1576,7 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 	Query.bindValue(":typ", Type);
 	Query.bindValue(":kod", From);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		if (Tasks[From].contains(Query.value(0).toInt()))
 		{
@@ -1564,6 +1589,8 @@ void DatabaseDriver::splitData(RecordModel* Model, const QModelIndexList& Items,
 
 		emit onUpdateProgress(++Step);
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataSplit(0); return; }
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Splitting data"));
@@ -1615,7 +1642,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 			"E.TYP = 1 AND "
 			"O.STATUS = 0");
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		Joined.insert(Query.value(0).toInt());
 	}
@@ -1647,7 +1674,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.addBindValue(Point);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 		const int ID = Query.value(1).toInt();
@@ -1685,7 +1712,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 
 	Query.addBindValue(Join);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 
@@ -1722,6 +1749,8 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Joining data"));
 	emit onSetupProgress(0, Insert.size());
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataJoin(0); return; }
 
 	QueryA.prepare(
 		"INSERT INTO "
@@ -1817,7 +1846,7 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -1846,7 +1875,7 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -1886,7 +1915,7 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 		"ORDER BY "
 			"O.UID, E.N ASC");
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int ID = Query.value(0).toInt();
 
@@ -1941,6 +1970,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
 	{
+		if (isTerminated()) break;
+
 		const auto& Table = getItemByField(Tables, k.key(), &TABLE::Name);
 
 		auto Data = loadData(Table, k.value(), QString(), false, false);
@@ -1992,6 +2023,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 		emit onUpdateProgress(++Step);
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataMerge(0); return; }
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating database"));
@@ -2233,7 +2266,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -2262,7 +2295,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -2298,7 +2331,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 			"ORDER BY "
 				"O.UID, E.N ASC");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			const int ID = Query.value(0).toInt();
 
@@ -2352,7 +2385,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 		"ORDER BY "
 			"O.UID, E.N ASC");
 
-	if (Query.exec()) while (Query.next()) if (Tasks.first().contains(Query.value(0).toInt()))
+	if (Query.exec()) while (Query.next() && !isTerminated()) if (Tasks.first().contains(Query.value(0).toInt()))
 	{
 		const int ID = Query.value(0).toInt();
 
@@ -2373,8 +2406,10 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onBeginProgress(tr("Generating tasklist"));
 	emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Cuts, [&Parts, &Queue, &Locker] (const QPointF& Point) -> void
+	QtConcurrent::blockingMap(Cuts, [this, &Parts, &Queue, &Locker] (const QPointF& Point) -> void
 	{
+		if (this->isTerminated()) return;
+
 		for (auto i = Parts.constBegin(); i != Parts.constEnd(); ++i) for (int j = 1; j < i.value().Lines.size(); ++j)
 		{
 			QPointF A(i.value().Lines[j - 1].X1, i.value().Lines[j - 1].Y1);
@@ -2420,7 +2455,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 			"E.TYP = 0 AND "
 			"T.STAN_ZMIANY = 0");
 
-	if (Query.exec()) while (Query.next()) if (Queue.contains(Query.value(0).toInt()))
+	if (Query.exec()) while (Query.next() && !isTerminated()) if (Queue.contains(Query.value(0).toInt()))
 	{
 		const int ID = Query.value(0).toInt();
 
@@ -2488,7 +2523,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 			"O.RODZAJ = 2 AND "
 			"E.TYP = 1");
 
-	if (Query.exec()) while (Query.next()) if (Queue.contains(Query.value(0).toInt()))
+	if (Query.exec()) while (Query.next() && !isTerminated()) if (Queue.contains(Query.value(0).toInt()))
 	{
 		const int ID = Query.value(0).toInt();
 
@@ -2499,6 +2534,8 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 			Query.value(3).toDouble()
 		});
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataCut(0); return; }
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Inserting objects"));
@@ -2705,6 +2742,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	for (const auto& UID : List)
 	{
+		if (isTerminated()) break;
+
 		selectLines.addBindValue(UID);
 
 		if (selectLines.exec()) while (selectLines.next())
@@ -2729,6 +2768,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 		emit onUpdateProgress(++Step);
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataRefactor(0); return; }
 
 	emit onBeginProgress(tr("Updating class"));
 	emit onSetupProgress(0, Change.size()); Step = 0;
@@ -2964,7 +3005,7 @@ void DatabaseDriver::copyData(RecordModel* Model, const QModelIndexList& Items, 
 	emit onBeginProgress(tr("Loading elements"));
 	emit onSetupProgress(0, Change.size()); Step = 0;
 
-	if (GeometryQuery.exec()) while (GeometryQuery.next())
+	if (GeometryQuery.exec()) while (GeometryQuery.next() && !isTerminated())
 	{
 		const int UID = GeometryQuery.value(0).toInt();
 
@@ -2981,6 +3022,8 @@ void DatabaseDriver::copyData(RecordModel* Model, const QModelIndexList& Items, 
 			emit onUpdateProgress(++Step);
 		}
 	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataCopy(0); return; }
 
 	emit onBeginProgress(tr("Copying objects"));
 	emit onSetupProgress(0, Change.size()); Step = 0;
@@ -3155,7 +3198,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 	const QRegExp Exp(CSV ? "," : "\\s+");
 
-	while (!Stream.atEnd())
+	while (!Stream.atEnd() && !isTerminated())
 	{
 		const QStringList Items = Stream.readLine().trimmed().split(Exp, QString::SkipEmptyParts);
 
@@ -3180,7 +3223,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onBeginProgress(tr("Loading geometry"));
 	emit onSetupProgress(0, Tasks.size());
 
-	if (LoadLines.exec()) while (LoadLines.next())
+	if (LoadLines.exec()) while (LoadLines.next() && !isTerminated())
 	{
 		const int UID = LoadLines.value(0).toInt();
 
@@ -3209,7 +3252,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	}
 
-	if (LoadPoints.exec()) while (LoadPoints.next())
+	if (LoadPoints.exec()) while (LoadPoints.next() && !isTerminated())
 	{
 		const int UID = LoadPoints.value(0).toInt();
 
@@ -3230,8 +3273,10 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0);
 
-	if (!Lines.isEmpty()) QtConcurrent::blockingMap(Objects, [&lUpdates, &Synchronizer] (OBJECT& Object) -> void
+	if (!Lines.isEmpty()) QtConcurrent::blockingMap(Objects, [this, &lUpdates, &Synchronizer] (OBJECT& Object) -> void
 	{
+		if (this->isTerminated()) return;
+
 		if (Object.Lines.isEmpty() || Object.Points.size() != 2) return; QLineF Start, End; int sIndex(0), eIndex(0);
 
 		const auto& S = Object.Points.first(); const auto& E = Object.Points.last();
@@ -3262,8 +3307,10 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	});
 
-	if (!Sources.isEmpty()) QtConcurrent::blockingMap(Objects, [&Sources, &lUpdates, &Synchronizer, Radius] (OBJECT& Object) -> void
+	if (!Sources.isEmpty()) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, Radius] (OBJECT& Object) -> void
 	{
+		if (this->isTerminated()) return;
+
 		for (int i = 0; i < Object.Indexes.size(); ++i)
 		{
 			QPointF Final1, Final2; double h1 = NAN, h2 = NAN;
@@ -3305,7 +3352,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	});
 
-	if (!Lines.isEmpty()) QtConcurrent::blockingMap(lUpdates, [&Lines, Radius, Length] (LINE& Part) -> void
+	if (!Lines.isEmpty()) QtConcurrent::blockingMap(lUpdates, [this, &Lines, Radius, Length] (LINE& Part) -> void
 	{
 		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
 		{
@@ -3314,6 +3361,8 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 			return (px <= lx1) && (px >= lx2) && (py <= ly1) && (py >= ly2);
 		};
+
+		if (this->isTerminated()) return;
 
 		QPointF Final; double h = NAN; const QPointF Second = Part.Point == Part.Line.p1() ? Part.Line.p2() : Part.Line.p1();
 
@@ -3347,8 +3396,10 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	});
 
-	if (!Lines.isEmpty()) QtConcurrent::blockingMap(pUpdates, [&Lines, Radius] (POINT& Symbol) -> void
+	if (!Lines.isEmpty()) QtConcurrent::blockingMap(pUpdates, [this, &Lines, Radius] (POINT& Symbol) -> void
 	{
+		if (this->isTerminated()) return;
+
 		QPointF Final; double h = NAN;
 
 		for (const auto& L : Lines)
@@ -3374,8 +3425,10 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	});
 
-	if (!Sources.isEmpty()) QtConcurrent::blockingMap(pUpdates, [&Sources, Radius] (POINT& Symbol) -> void
+	if (!Sources.isEmpty()) QtConcurrent::blockingMap(pUpdates, [this, &Sources, Radius] (POINT& Symbol) -> void
 	{
+		if (this->isTerminated()) return;
+
 		QPointF Final; double h = NAN;
 
 		for (const auto& P : Sources)
@@ -3393,6 +3446,8 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 			Symbol.Point = Final;
 		}
 	});
+
+	if (isTerminated()) { emit onEndProgress(); emit onDataFit(0); return; }
 
 	emit onBeginProgress(tr("Updating geometry")); int Rejected(0);
 	emit onSetupProgress(0, lUpdates.size() + pUpdates.size()); Step = 0;
@@ -3472,7 +3527,11 @@ void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items
 
 	for (const auto& ID : Tasks.first())
 	{
-		int Now = -1; int Last = -1; emit onUpdateProgress(++Step);
+		if (isTerminated()) break;
+
+		int Now = -1; int Last = -1;
+
+		emit onUpdateProgress(++Step);
 
 		QueryA.addBindValue(ID);
 
@@ -3533,6 +3592,8 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 
 	for (const auto& ID : Tasks)
 	{
+		if (isTerminated()) break;
+
 		QueryA.addBindValue(ID);
 
 		if (QueryA.exec()) while (QueryA.next())
@@ -3609,7 +3670,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		"ORDER BY "
 			"T.TYP DESC");
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int ID = Query.value(0).toInt();
 		const int T = Query.value(2).toInt();
@@ -3666,7 +3727,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			"P.STAN_ZMIANY = 0 AND "
 			"P.P1_FLAGS = 0");
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		Lines.append(
 		{
@@ -3708,7 +3769,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		"ORDER BY "
 			"O.UID ASC");
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 		const int IDE = Query.value(1).toInt();
@@ -3756,7 +3817,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 3");
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int ID = Query.value(0).toInt();
 
@@ -3786,7 +3847,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		return A.Length > B.Length;
 	});
 
-	QtConcurrent::blockingMap(Points, [&Lines, &Objects, Move, Justify, Rotate, Length] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Points, [this, &Lines, &Objects, Move, Justify, Rotate, Length] (POINT& Point) -> void
 	{
 		static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
 		{
@@ -3804,6 +3865,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 				}
 				else return INFINITY;
 		};
+
+		if (this->isTerminated()) return;
 
 		bool Found = false; LINE Match;
 
@@ -3854,7 +3917,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		}
 	});
 
-	QtConcurrent::blockingMap(Texts, [&Lines, Move, Justify, Rotate, Length] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate, Length] (POINT& Point) -> void
 	{
 		static const auto length = [] (double x1, double y1, double x2, double y2)
 		{
@@ -3863,6 +3926,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 			return qSqrt(dx * dx + dy * dy);
 		};
+
+		if (this->isTerminated()) return;
 
 		const LINE* Match = nullptr; double Distance = NAN;
 
@@ -3910,6 +3975,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 		}
 	});
 
+	if (isTerminated()) { emit onEndProgress(); emit onTextEdit(0); return; }
+
 	for (const auto& Point : Points) if (Point.Changed) Union.append(&Point);
 	for (const auto& Point : Texts) if (Point.Changed) Union.append(&Point);
 
@@ -3930,6 +3997,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 
 	for (const auto& Point : Union)
 	{
+		if (isTerminated()) break;
+
 		Query.addBindValue(Point->DX);
 		Query.addBindValue(Point->DY);
 		Query.addBindValue(Point->A);
@@ -3942,7 +4011,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	}
 
 	emit onEndProgress();
-	emit onTextEdit(Union.size());
+	emit onTextEdit(Step);
 }
 
 void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int J, double X, double Y, bool P, double L, double R)
@@ -4093,6 +4162,8 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	for (const auto& UID : Tasks) if (!Used.contains(UID))
 	{
+		if (isTerminated()) break;
+
 		Symbols.addBindValue(UID);
 
 		if (Symbols.exec() && Symbols.next())
@@ -4116,6 +4187,8 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	for (const auto& UID : Tasks) if (!Used.contains(UID))
 	{
+		if (isTerminated()) break;
+
 		Lines.addBindValue(UID); int Layer(0);
 		QPointF Start, End; QList<QLineF> Line;
 
@@ -4157,6 +4230,8 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 
 	for (const auto& UID : Tasks) if (!Used.contains(UID))
 	{
+		if (isTerminated()) break;
+
 		Surfaces.addBindValue(UID); int Layer(0); QPolygonF Surface;
 
 		if (Surfaces.exec()) while (Surfaces.next())
@@ -4206,8 +4281,10 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onBeginProgress(tr("Computing labels"));
 	emit onSetupProgress(0, 0); Step = 0;
 
-	QtConcurrent::blockingMap(LineList, [&Insertions, &Synchronizer, L, R, P] (LINE& Line) -> void
+	QtConcurrent::blockingMap(LineList, [this, &Insertions, &Synchronizer, L, R, P] (LINE& Line) -> void
 	{
+		if (this->isTerminated()) return;
+
 		double Length(0.0); for (const auto& Segment : Line.Lines) Length += Segment.length(); if (Length < L) return;
 
 		double Step((R != 0.0) ? ((Length - (int(Length / R) * R)) / 2.0) : (Length / 2.0)), Now(0.0);
@@ -4230,8 +4307,10 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 		}
 	});
 
-	QtConcurrent::blockingMap(SurfaceList, [&Insertions, &Synchronizer] (SURFACE& Surface) -> void
+	QtConcurrent::blockingMap(SurfaceList, [this, &Insertions, &Synchronizer] (SURFACE& Surface) -> void
 	{
+		if (this->isTerminated()) return;
+
 		if (Surface.Surface.isEmpty()) return;
 
 		const double Mul = 1.0 / Surface.Surface.size(); double X(0.0), Y(0.0);
@@ -4247,11 +4326,15 @@ void DatabaseDriver::insertLabel(RecordModel* Model, const QModelIndexList& Item
 		Point.X += X; Point.Y += Y;
 	});
 
+	if (isTerminated()) { emit onEndProgress(); emit onLabelInsert(0); return; }
+
 	emit onBeginProgress(tr("Inserting labels"));
 	emit onSetupProgress(0, Insertions.size()); Step = 0;
 
 	for (const auto& Item : Insertions)
 	{
+		if (isTerminated()) break;
+
 		if (Select.exec() && Select.next())
 		{
 			const int ID = Select.value(0).toInt();
@@ -4313,7 +4396,7 @@ void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onBeginProgress(tr("Loading labels"));
 	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
-	if (Select.exec()) while (Select.next())
+	if (Select.exec()) while (Select.next() && !isTerminated())
 	{
 		const int UID = Select.value(0).toInt();
 
@@ -4325,11 +4408,15 @@ void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Item
 		}
 	}
 
+	if (isTerminated()) { emit onEndProgress(); emit onLabelDelete(0); return; }
+
 	emit onBeginProgress(tr("Deleting labels"));
 	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
 	for (const auto& IDE : Deletes)
 	{
+		if (isTerminated()) break;
+
 		DeleteA.addBindValue(IDE); DeleteA.exec();
 		DeleteB.addBindValue(IDE); DeleteB.exec();
 
@@ -4337,7 +4424,7 @@ void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Item
 	}
 
 	emit onEndProgress();
-	emit onLabelDelete(Deletes.size());
+	emit onLabelDelete(Step);
 }
 
 void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label)
@@ -4378,17 +4465,21 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 	emit onBeginProgress(tr("Loading texts"));
 	emit onSetupProgress(0, 0);
 
-	if (selectQuery.exec()) while (selectQuery.next())
+	if (selectQuery.exec()) while (selectQuery.next() && !isTerminated())
 		if (Tasks.contains(selectQuery.value(0).toInt()))
 		{
 			Labels.insert(selectQuery.value(1).toInt());
 		}
+
+	if (isTerminated()) { emit onEndProgress(); emit onLabelEdit(0); return; }
 
 	emit onBeginProgress(tr("Updating texts"));
 	emit onSetupProgress(0, Labels.size());
 
 	for (const auto& ID : Labels)
 	{
+		if (isTerminated()) break;
+
 		updateQuery.addBindValue(Label);
 		updateQuery.addBindValue(ID);
 
@@ -4398,7 +4489,7 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 	}
 
 	emit onEndProgress();
-	emit onLabelEdit(Labels.size());
+	emit onLabelEdit(Step);
 }
 
 void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Items, int Mode, double Radius, bool Recursive)
@@ -4407,11 +4498,11 @@ void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Ite
 
 	const QSet<int> Tasks = Model->getUids(Items).toSet(); int Count(0), Current(0);
 
-	do
+	if (!isTerminated()) do
 	{
 		Current = insertBreakpoints(Tasks, Mode, Radius); Count += Current;
 	}
-	while (Recursive && Current);
+	while (Recursive && Current && !isTerminated());
 
 	emit onEndProgress();
 	emit onPointInsert(Count);
@@ -4506,7 +4597,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 	Query.addBindValue(Class);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 
@@ -4537,8 +4628,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		}
 	}
 
-	QtConcurrent::blockingMap(Parts, [&Insert, &Used, &Geometry, &Points, &Locker, SORT] (QList<PART>& List) -> void
+	if (!isTerminated()) QtConcurrent::blockingMap(Parts, [this, &Insert, &Used, &Geometry, &Points, &Locker, SORT] (QList<PART>& List) -> void
 	{
+		if (this->isTerminated()) return;
+
 		const int ID = List.first().ID; const QPolygonF Polygon = SORT(List);
 
 		for (const auto& P : Points)
@@ -4630,7 +4723,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 
 	Query.addBindValue(Class);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 
@@ -4698,7 +4791,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 
 	Query.addBindValue(Class);
 
-	if (Query.exec()) while (Query.next())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 
@@ -4818,7 +4911,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	emit onBeginProgress(tr("Loading symbols"));
 	emit onSetupProgress(0, 0);
 
-	if (Mode & 0x8) if (Symbols.exec()) while (Symbols.next())
+	if (Mode & 0x8) if (Symbols.exec()) while (Symbols.next() && !isTerminated())
 	{
 		if (Tasks.contains(Symbols.value(0).toInt()))
 		{
@@ -4833,7 +4926,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	emit onBeginProgress(tr("Loading lines"));
 	emit onSetupProgress(0, Tasks.size());
 
-	if (Objects.exec()) while (Objects.next())
+	if (Objects.exec()) while (Objects.next() && !isTerminated())
 	{
 		const int UID = Objects.value(0).toInt();
 
@@ -4879,7 +4972,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	emit onBeginProgress(tr("Loading elements"));
 	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
-	if (Elements.exec()) while (Elements.next())
+	if (Elements.exec()) while (Elements.next() && !isTerminated())
 	{
 		const int UID = Elements.value(0).toInt();
 
@@ -4900,8 +4993,10 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0);
 
-	if (Mode & 0x4) QtConcurrent::blockingMap(Lines, [&Lines, &Intersect, &Synchronizer] (LINE& Part) -> void
+	if (Mode & 0x4) QtConcurrent::blockingMap(Lines, [this, &Lines, &Intersect, &Synchronizer] (LINE& Part) -> void
 	{
+		if (this->isTerminated()) return;
+
 		for (auto& L : Lines) if (!Part.Type && !L.Type && L.ID != Part.ID)
 		{
 			if (!pointComp(L.Line.p1(), Part.Line.p1()) && !pointComp(L.Line.p1(), Part.Line.p2()) &&
@@ -4928,8 +5023,10 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	if (Mode & 0x4) pointCuts.append(Intersect);
 	if (Mode & 0x8) pointCuts.append(Points);
 
-	QtConcurrent::blockingMap(Lines, [&pointCuts, &Inserts, &Origins, &Synchronizer, Radius] (LINE& Part) -> void
+	QtConcurrent::blockingMap(Lines, [this, &pointCuts, &Inserts, &Origins, &Synchronizer, Radius] (LINE& Part) -> void
 	{
+		if (this->isTerminated()) return;
+
 		if (!Part.Type) for (const auto& P : pointCuts) if (P != Part.Line.p1() && P != Part.Line.p2())
 		{
 			QPointF Int; QLineF Normal(P, QPointF());
@@ -4969,6 +5066,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 			}
 		}
 	});
+
+	if (isTerminated()) return 0;
 
 	for (const auto& L : Lines) if (L.Changed) Changed.insert(L.ID);
 
@@ -5508,6 +5607,16 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 	Query.addBindValue(Modal);
 
 	return Query.exec();
+}
+
+void DatabaseDriver::unterminate(void)
+{
+	QMutexLocker Locker(&Terminator); Terminated = false;
+}
+
+void DatabaseDriver::terminate(void)
+{
+	QMutexLocker Locker(&Terminator); Terminated = true;
 }
 
 bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD& Two)
