@@ -34,7 +34,6 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	Terminator->hide();
 	Terminator->setText(tr("Stop"));
-	Terminator->setIcon(QIcon::fromTheme("playback-stop"));
 
 	Progress->hide();
 	Driver->moveToThread(&Thread);
@@ -175,6 +174,8 @@ MainWindow::~MainWindow(void)
 
 	Settings.beginGroup("Sockets");
 	Settings.remove(dbPath);
+
+	Driver->terminate();
 
 	Thread.exit();
 	Thread.wait();
