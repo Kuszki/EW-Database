@@ -26,15 +26,13 @@ MainWindow::MainWindow(QWidget* Parent)
 {
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
+	Terminator = new QPushButton(QIcon::fromTheme("playback-stop"), tr("Stop"), this);
 	Selector = new QComboBox(this);
-	Terminator = new QPushButton(this);
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
 	About = new AboutDialog(this);
 
 	Terminator->hide();
-	Terminator->setText(tr("Stop"));
-
 	Progress->hide();
 	Driver->moveToThread(&Thread);
 	Thread.start();
