@@ -486,7 +486,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 	{
 		auto Process = [Radius] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
 		{
-			for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
+			bool End(false); for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
 				if (!j.value().Filter || i.key() == j.key() || j.value().Geometry.type() != QVariant::PointF ||
 				    (!Classes.contains("*") && !Classes.contains(j.value().Class))) continue;
@@ -500,6 +500,8 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 						Locker->lock();
 						List->insert(i.key());
 						Locker->unlock();
+
+						End = true;
 					}
 				}
 				else for (const auto& Point : i.value().Geometry.toList())
@@ -511,8 +513,12 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 						Locker->lock();
 						List->insert(i.key());
 						Locker->unlock();
+
+						End = true;
 					}
 				}
+
+				if (End) return;
 			}
 		};
 
