@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget* Parent)
 {
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
-	Terminator = new QPushButton(QIcon::fromTheme("playback-stop"), tr("Stop"), this);
+	Terminator = new QPushButton(QIcon::fromTheme("process-stop"), tr("Stop"), this);
 	Selector = new QComboBox(this);
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
