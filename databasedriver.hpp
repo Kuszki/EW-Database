@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -193,7 +193,7 @@ class DatabaseDriver : public QObject
 
 		void refactorData(RecordModel* Model, const QModelIndexList& Items,
 					   const QString& Class, int Line, int Point, int Text,
-					   const QString& Symbol, int Style);
+					   const QString& Symbol, int Style, const QString& Label);
 
 		void copyData(RecordModel* Model, const QModelIndexList& Items,
 				    const QString& Class, int Line, int Point, int Text,

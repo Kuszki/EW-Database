@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -21,7 +21,9 @@
 #ifndef CLASSDIALOG_HPP
 #define CLASSDIALOG_HPP
 
+#include <QDialogButtonBox>
 #include <QIntValidator>
+#include <QPushButton>
 #include <QDialog>
 #include <QPair>
 #include <QMap>
@@ -50,6 +52,7 @@ class ClassDialog : public QDialog
 						 const QHash<QString, QHash<int, QString>>& Lines,
 						 const QHash<QString, QHash<int, QString>>& Points,
 						 const QHash<QString, QHash<int, QString>>& Texts,
+						 const QStringList& Variables,
 						 QWidget* Parent = nullptr);
 		virtual ~ClassDialog(void) override;
 
@@ -60,11 +63,14 @@ class ClassDialog : public QDialog
 	private slots:
 
 		void classIndexChanged(int Index);
+		void classCheckToggled(bool Status);
+		void dialogParamsChanged(void);
 
 	signals:
 
 		void onChangeRequest(const QString&, int, int, int,
-						 const QString&, int);
+						 const QString&, int,
+						 const QString&);
 
 };
 

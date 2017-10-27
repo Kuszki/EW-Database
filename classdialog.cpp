@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -21,7 +21,7 @@
 #include "classdialog.hpp"
 #include "ui_classdialog.h"
 
-ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QString, QHash<int, QString>>& Lines, const QHash<QString, QHash<int, QString>>& Points, const QHash<QString, QHash<int, QString>>& Texts, QWidget* Parent)
+ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QString, QHash<int, QString>>& Lines, const QHash<QString, QHash<int, QString>>& Points, const QHash<QString, QHash<int, QString>>& Texts, const QStringList& Variables, QWidget* Parent)
 : QDialog(Parent), lineLayers(Lines), pointLayers(Points), textLayers(Texts), ui(new Ui::ClassDialog)
 {
 	ui->setupUi(this);
@@ -34,6 +34,10 @@ ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QSt
 	ui->Class->model()->sort(0);
 	ui->Class->setCurrentIndex(0);
 
+	ui->Label->addItems(Variables);
+	ui->Label->model()->sort(0);
+	ui->Label->setCurrentIndex(0);
+
 	ui->Style->setValidator(new QIntValidator(0, 10000, this));
 }
 
@@ -44,14 +48,16 @@ ClassDialog::~ClassDialog(void)
 
 void ClassDialog::accept(void)
 {
-	emit onChangeRequest(ui->Class->currentData().toString(),
-					 ui->Line->currentData().toInt(),
-					 ui->Point->currentData().toInt(),
-					 ui->Text->currentData().toInt(),
-					 ui->Symbol->text(),
-					 ui->Style->text().toInt());
-
 	QDialog::accept();
+
+	emit onChangeRequest(
+				ui->classCheck->isChecked() ? ui->Class->currentData().toString() : QString("NULL"),
+				ui->lineCheck->isChecked() ? ui->Line->currentData().toInt() : -1,
+				ui->pointCheck->isChecked() ? ui->Point->currentData().toInt() : -1,
+				ui->textCheck->isChecked() ? ui->Text->currentData().toInt() : -1,
+				ui->symbolCheck->isChecked() ? ui->Symbol->text() : QString("NULL"),
+				ui->styleCheck->isChecked() ? ui->Style->text().toInt() : -1,
+				ui->labelCheck->isChecked() ? ui->Label->currentText() : QString("NULL"));
 }
 
 void ClassDialog::classIndexChanged(int Index)
@@ -93,5 +99,33 @@ void ClassDialog::classIndexChanged(int Index)
 	ui->advancedCheck->setChecked(
 		(Texts.size() && !Texts.values().contains(Label)) ||
 		(Lines.size() && !Lines.values().contains(Label)) ||
-		(Points.size() && !Points.values().contains(Label)));
+				(Points.size() && !Points.values().contains(Label)));
+}
+
+void ClassDialog::classCheckToggled(bool Status)
+{
+	if (!Status) ui->advancedCheck->setChecked(true);
+}
+
+void ClassDialog::dialogParamsChanged(void)
+{
+	const bool anyChecked = ui->classCheck->isChecked() ||
+					    ui->lineCheck->isChecked() ||
+					    ui->pointCheck->isChecked() ||
+					    ui->textCheck->isChecked() ||
+					    ui->symbolCheck->isChecked() ||
+					    ui->styleCheck->isChecked() ||
+					    ui->labelCheck->isChecked();
+
+	const bool styleOK = !ui->styleCheck->isChecked() ||
+					 ui->lineCheck->isChecked() ||
+					 !ui->Style->text().isEmpty();
+
+	const bool symbolOK = !ui->symbolCheck->isChecked() ||
+					  ui->pointCheck->isChecked() ||
+					  !ui->Symbol->text().isEmpty();
+
+	const bool OK = anyChecked && styleOK && symbolOK;
+
+	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(OK);
 }

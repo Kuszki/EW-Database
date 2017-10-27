@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -2620,7 +2620,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onDataCut(Queue.size());
 }
 
-void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style)
+void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style, const QString& Label)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(0); return; }
 
@@ -2630,10 +2630,11 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database),
 			ClassQuery(Database), selectLines(Database), selectTexts(Database);
 
-	const int Type = getItemByField(Tables, Class, &TABLE::Name).Type;
+	const int Type = Class != "NULL" ? getItemByField(Tables, Class, &TABLE::Name).Type : 0;
 	const QSet<int> List = Model->getUids(Items).toSet(); QSet<int> Change;
 
-	if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
+	if (Type == 0) Change = List;
+	else if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
 	{
 		const int UID = Query.value(0).toInt();
 
@@ -2697,8 +2698,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		"UPDATE "
 			"EW_POLYLINE "
 		"SET "
-			"TYP_LINII = ?, "
-			"ID_WARSTWY = ? "
+			"TYP_LINII = COALESCE(?, TYP_LINII), "
+			"ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
 		"WHERE "
 			"ID = ?");
 
@@ -2706,8 +2707,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		"UPDATE "
 			"EW_TEXT "
 		"SET "
-			"TEXT = ?, "
-			"ID_WARSTWY = ? "
+			"TEXT = COALESCE(?, TEXT), "
+			"ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
 		"WHERE "
 			"ID = ?");
 
@@ -2715,13 +2716,14 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		"UPDATE "
 			"EW_TEXT "
 		"SET "
-			"ID_WARSTWY = ? "
+			"TEXT = COALESCE(?, TEXT), "
+			"ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
 		"WHERE "
 			"ID = ?");
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
 
-	if (!Style)
+	if (!Style && Line != -1)
 	{
 		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
 
@@ -2729,7 +2731,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	}
 	else LineStyle = Style;
 
-	if (Symbol.isEmpty())
+	if (Symbol.isEmpty() && Point != -1)
 	{
 		Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
 
@@ -2737,10 +2739,19 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	}
 	else NewSymbol = Symbol;
 
+	const QVariant vClass = Class == "NULL" ? QVariant() : Class;
+	const QVariant vSymbol = Symbol == "NULL" ? QVariant() : NewSymbol;
+	const QVariant vLabel = Label == "NULL" ? QVariant() : QString("${u.%1}").arg(Label);
+
+	const QVariant vStyle = Style == -1 ? QVariant() : LineStyle;
+	const QVariant vLine = Line == -1 ? QVariant() : Line;
+	const QVariant vPoint = Point == -1 ? QVariant() : Point;
+	const QVariant vText = Text == -1 ? QVariant() : Text;
+
 	emit onBeginProgress(tr("Loading elements"));
 	emit onSetupProgress(0, List.size());
 
-	for (const auto& UID : List)
+	for (const auto& UID : Change)
 	{
 		if (isTerminated()) break;
 
@@ -2774,10 +2785,11 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Updating class"));
 	emit onSetupProgress(0, Change.size()); Step = 0;
 
-	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	if (!vClass.isNull()) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Tab = getItemByField(Tables, i.key(), &TABLE::Data);
-		QStringList Fields;
+
+		if (Tab.Name == Class) continue; QStringList Fields;
 
 		for (const auto& Field : Table.Fields)
 		{
@@ -2791,20 +2803,17 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 		for (const auto& Item : i.value()) if (Change.contains(Item))
 		{
-			if (Tab.Name != Class)
-			{
-				Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
-							    "SELECT UIDO, %2 FROM %3 "
-							    "WHERE UIDO = '%4'")
-						 .arg(Table.Data)
-						 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
-						 .arg(i.key())
-						 .arg(Item));
+			Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
+						    "SELECT UIDO, %2 FROM %3 "
+						    "WHERE UIDO = '%4'")
+					 .arg(Table.Data)
+					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+					 .arg(i.key())
+					 .arg(Item));
 
-				Query.exec(QString("DELETE FROM %1 WHERE UIDO = '%2'")
-						 .arg(i.key())
-						 .arg(Item));
-			}
+			Query.exec(QString("DELETE FROM %1 WHERE UIDO = '%2'")
+					 .arg(i.key())
+					 .arg(Item));
 
 			ClassQuery.addBindValue(Class);
 			ClassQuery.addBindValue(Item);
@@ -2818,10 +2827,10 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Updating lines"));
 	emit onSetupProgress(0, Lines.size()); Step = 0;
 
-	for (const auto& ID : Lines)
+	if (!vLine.isNull() || !vStyle.isNull()) for (const auto& ID : Lines)
 	{
-		LineQuery.addBindValue(LineStyle);
-		LineQuery.addBindValue(Line);
+		LineQuery.addBindValue(vStyle);
+		LineQuery.addBindValue(vLine);
 		LineQuery.addBindValue(ID);
 
 		LineQuery.exec();
@@ -2832,10 +2841,10 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Updating symbols"));
 	emit onSetupProgress(0, Symbols.size()); Step = 0;
 
-	for (const auto& ID : Symbols)
+	if (!vSymbol.isNull() || !vPoint.isNull()) for (const auto& ID : Symbols)
 	{
-		SymbolQuery.addBindValue(NewSymbol);
-		SymbolQuery.addBindValue(Point);
+		SymbolQuery.addBindValue(vSymbol);
+		SymbolQuery.addBindValue(vPoint);
 		SymbolQuery.addBindValue(ID);
 
 		SymbolQuery.exec();
@@ -2846,9 +2855,10 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Updating texts"));
 	emit onSetupProgress(0, Texts.size()); Step = 0;
 
-	for (const auto& ID : Texts)
+	if (!vText.isNull() || !vLabel.isNull()) for (const auto& ID : Texts)
 	{
-		LabelQuery.addBindValue(Text);
+		LabelQuery.addBindValue(vLabel);
+		LabelQuery.addBindValue(vText);
 		LabelQuery.addBindValue(ID);
 
 		LabelQuery.exec();
@@ -2860,7 +2870,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size());
 
-	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	if (!vClass.isNull()) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, Class, &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);

@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -471,12 +471,12 @@ void MainWindow::cutData(const QStringList& Points, bool Endings)
 	lockUi(BUSY); emit onCutRequest(Model, Selected, Points, Endings);
 }
 
-void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style)
+void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style, const QString& Label)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text, Symbol, Style);
+	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text, Symbol, Style, Label);
 }
 
 void MainWindow::editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length)
@@ -521,9 +521,10 @@ void MainWindow::relabelData(const QString& Label)
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)
 {
-	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name); allHeaders = Headers;
+	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
 
 	const bool Singletons = ui->actionSingleton->isChecked();
+	allHeaders = Headers; labelCodes = Variables.keys();
 
 	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);
@@ -823,7 +824,7 @@ void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHas
 {
 	lockUi(DONE); if (Classes.isEmpty()) { QMessageBox::critical(this, tr("Set object class"), tr("Selected objects have different types")); return; }
 
-	ClassDialog* Class = new ClassDialog(Classes, Lines, Points, Texts, this); Class->open();
+	ClassDialog* Class = new ClassDialog(Classes, Lines, Points, Texts, labelCodes, this); Class->open();
 
 	connect(Class, &ClassDialog::onChangeRequest, this, &MainWindow::changeClass);
 

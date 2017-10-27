@@ -14,27 +14,10 @@
    <string>Set object class</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="4" column="0">
-    <widget class="QLabel" name="styleLabel">
-     <property name="text">
-      <string>Line style</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QComboBox" name="Class"/>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="pointLabel">
-     <property name="text">
-      <string>Point layer</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
     <widget class="QComboBox" name="Line"/>
    </item>
-   <item row="6" column="0" colspan="2">
+   <item row="9" column="0" colspan="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -50,7 +33,13 @@
    <item row="3" column="1">
     <widget class="QComboBox" name="Text"/>
    </item>
-   <item row="7" column="0">
+   <item row="0" column="1">
+    <widget class="QComboBox" name="Class"/>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="Point"/>
+   </item>
+   <item row="10" column="0">
     <widget class="QCheckBox" name="advancedCheck">
      <property name="text">
       <string>Advanced</string>
@@ -60,49 +49,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QComboBox" name="Point"/>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="classLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Class</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="lineLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Line layer</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="textLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Text layer</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="1">
+   <item row="10" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -112,14 +59,7 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="symbolLabel">
-     <property name="text">
-      <string>Symbol name</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
+   <item row="7" column="1">
     <widget class="QLineEdit" name="Symbol">
      <property name="placeholderText">
       <string>Default for layer</string>
@@ -129,7 +69,27 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="1" column="0">
+    <widget class="QCheckBox" name="lineCheck">
+     <property name="text">
+      <string>Line layer</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QCheckBox" name="classCheck">
+     <property name="text">
+      <string>Class</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
     <widget class="QLineEdit" name="Style">
      <property name="placeholderText">
       <string>Default for layer</string>
@@ -138,6 +98,59 @@
       <bool>true</bool>
      </property>
     </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="pointCheck">
+     <property name="text">
+      <string>Point layer</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QCheckBox" name="styleCheck">
+     <property name="text">
+      <string>Line style</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QCheckBox" name="symbolCheck">
+     <property name="text">
+      <string>Symbol name</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QCheckBox" name="textCheck">
+     <property name="text">
+      <string>Text layer</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QCheckBox" name="labelCheck">
+     <property name="text">
+      <string>Label text</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="Label"/>
    </item>
   </layout>
  </widget>
@@ -194,22 +207,6 @@
   <connection>
    <sender>advancedCheck</sender>
    <signal>toggled(bool)</signal>
-   <receiver>lineLabel</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>81</x>
-     <y>289</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>49</x>
-     <y>58</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>advancedCheck</sender>
-   <signal>toggled(bool)</signal>
    <receiver>Line</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
@@ -220,22 +217,6 @@
     <hint type="destinationlabel">
      <x>211</x>
      <y>58</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>advancedCheck</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>pointLabel</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>38</x>
-     <y>289</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>47</x>
-     <y>86</y>
     </hint>
    </hints>
   </connection>
@@ -258,22 +239,6 @@
   <connection>
    <sender>advancedCheck</sender>
    <signal>toggled(bool)</signal>
-   <receiver>textLabel</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>81</x>
-     <y>289</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>57</x>
-     <y>114</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>advancedCheck</sender>
-   <signal>toggled(bool)</signal>
    <receiver>Text</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
@@ -290,22 +255,6 @@
   <connection>
    <sender>advancedCheck</sender>
    <signal>toggled(bool)</signal>
-   <receiver>styleLabel</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>49</x>
-     <y>277</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>56</x>
-     <y>136</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>advancedCheck</sender>
-   <signal>toggled(bool)</signal>
    <receiver>Style</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
@@ -314,24 +263,8 @@
      <y>272</y>
     </hint>
     <hint type="destinationlabel">
-     <x>139</x>
-     <y>130</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>advancedCheck</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>symbolLabel</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>33</x>
-     <y>276</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>36</x>
-     <y>162</y>
+     <x>242</x>
+     <y>170</y>
     </hint>
    </hints>
   </connection>
@@ -346,13 +279,399 @@
      <y>275</y>
     </hint>
     <hint type="destinationlabel">
+     <x>233</x>
+     <y>198</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>classCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Class</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>43</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>148</x>
+     <y>18</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Line</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>77</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>139</x>
+     <y>48</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pointCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Point</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>76</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>123</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>textCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Text</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>107</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>135</x>
+     <y>108</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>labelCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Label</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>38</x>
+     <y>131</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>149</x>
+     <y>130</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>styleCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Style</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>39</x>
+     <y>158</y>
+    </hint>
+    <hint type="destinationlabel">
      <x>130</x>
+     <y>159</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>symbolCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Symbol</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>71</x>
+     <y>191</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>156</x>
+     <y>188</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>Label</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>63</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>356</x>
+     <y>130</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>symbolCheck</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>54</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>65</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>styleCheck</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>22</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>42</x>
      <y>162</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>labelCheck</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>17</x>
+     <y>280</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>24</x>
+     <y>127</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>textCheck</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>35</x>
+     <y>274</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>75</x>
+     <y>104</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pointCheck</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>53</x>
+     <y>275</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>55</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advancedCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineCheck</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>46</x>
+     <y>276</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>64</x>
+     <y>51</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>classCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>classCheckToggled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>28</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>757</x>
+     <y>97</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>classCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>22</x>
+     <y>17</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>742</x>
+     <y>52</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>93</x>
+     <y>43</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>700</x>
+     <y>63</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pointCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>61</x>
+     <y>71</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>693</x>
+     <y>102</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>textCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>88</x>
+     <y>100</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>806</x>
+     <y>144</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>labelCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>85</x>
+     <y>135</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>841</x>
+     <y>125</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>styleCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>82</x>
+     <y>158</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>712</x>
+     <y>163</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>symbolCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>81</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>731</x>
+     <y>208</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Style</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>377</x>
+     <y>160</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>785</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Symbol</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>ClassDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>323</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>616</x>
+     <y>247</y>
     </hint>
    </hints>
   </connection>
  </connections>
  <slots>
   <slot>classIndexChanged(int)</slot>
+  <slot>classCheckToggled(bool)</slot>
+  <slot>dialogParamsChanged()</slot>
  </slots>
 </ui>
