@@ -96,7 +96,7 @@ void ClassDialog::classIndexChanged(int Index)
 	ui->Point->setEnabled(ui->Point->count());
 	ui->Line->setEnabled(ui->Line->count());
 
-	ui->advancedCheck->setChecked(
+	ui->advancedCheck->setChecked(ui->advancedCheck->isChecked() ||
 		(Texts.size() && !Texts.values().contains(Label)) ||
 		(Lines.size() && !Lines.values().contains(Label)) ||
 				(Points.size() && !Points.values().contains(Label)));
