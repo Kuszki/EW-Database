@@ -57,7 +57,7 @@ void ClassDialog::accept(void)
 				ui->textCheck->isChecked() ? ui->Text->currentData().toInt() : -1,
 				ui->symbolCheck->isChecked() ? ui->Symbol->text() : QString("NULL"),
 				ui->styleCheck->isChecked() ? ui->Style->text().toInt() : -1,
-				ui->labelCheck->isChecked() ? ui->Label->currentText() : QString("NULL"));
+				ui->labelCheck->isChecked() ? QString("${u.%1}").arg(ui->Label->currentText()) : QString("NULL"));
 }
 
 void ClassDialog::classIndexChanged(int Index)

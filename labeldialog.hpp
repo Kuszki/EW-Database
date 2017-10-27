@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -41,12 +41,8 @@ class LabelDialog : public QDialog
 
 	public:
 
-		explicit LabelDialog(QWidget* Parent = nullptr);
+		explicit LabelDialog(const QStringList& Variables, QWidget* Parent = nullptr);
 		virtual ~LabelDialog(void) override;
-
-	private slots:
-
-		void labelTextChanged(const QString& Text);
 
 	public slots:
 

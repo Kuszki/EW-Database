@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -21,10 +21,14 @@
 #include "labeldialog.hpp"
 #include "ui_labeldialog.h"
 
-LabelDialog::LabelDialog(QWidget* Parent)
+LabelDialog::LabelDialog(const QStringList& Variables, QWidget* Parent)
 : QDialog(Parent), ui(new Ui::LabelDialog)
 {
 	ui->setupUi(this);
+
+	ui->textCombo->addItems(Variables);
+	ui->textCombo->model()->sort(0);
+	ui->textCombo->setCurrentIndex(0);
 }
 
 LabelDialog::~LabelDialog(void)
@@ -32,15 +36,11 @@ LabelDialog::~LabelDialog(void)
 	delete ui;
 }
 
-void LabelDialog::labelTextChanged(const QString& Text)
-{
-	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(!Text.isEmpty());
-}
 
 void LabelDialog::accept(void)
 {
 	emit onLabelRequest(
-			ui->textEdit->text(),
+			QString("${u.%1}").arg(ui->textCombo->currentText()),
 			ui->justifySpin->value(),
 			ui->xSpin->value(),
 			ui->ySpin->value(),

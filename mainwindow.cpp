@@ -534,7 +534,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Merge = new MergeDialog(this, Fields, Classes);
 	Cut = new CutDialog(this, Classes);
 	Fit = new HarmonizeDialog(this);
-	Label = new LabelDialog(this);
+	Label = new LabelDialog(labelCodes, this);
 	Text = new TextDialog(this);
 	Insert = new InsertDialog(this);
 	Variable = new VariablesDialog(Variables, this);

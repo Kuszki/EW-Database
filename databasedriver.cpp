@@ -2741,7 +2741,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	const QVariant vClass = Class == "NULL" ? QVariant() : Class;
 	const QVariant vSymbol = Symbol == "NULL" ? QVariant() : NewSymbol;
-	const QVariant vLabel = Label == "NULL" ? QVariant() : QString("${u.%1}").arg(Label);
+	const QVariant vLabel = Label == "NULL" ? QVariant() : Label;
 
 	const QVariant vStyle = Style == -1 ? QVariant() : LineStyle;
 	const QVariant vLine = Line == -1 ? QVariant() : Line;
