@@ -668,6 +668,54 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>classCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineCheck</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>38</x>
+     <y>12</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>40</x>
+     <y>50</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>classCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pointCheck</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>13</x>
+     <y>22</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>19</x>
+     <y>74</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>classCheck</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>textCheck</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>79</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>71</x>
+     <y>99</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>classIndexChanged(int)</slot>

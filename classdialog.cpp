@@ -104,7 +104,13 @@ void ClassDialog::classIndexChanged(int Index)
 
 void ClassDialog::classCheckToggled(bool Status)
 {
-	if (!Status) ui->advancedCheck->setChecked(true);
+	if (!Status)
+	{
+		ui->advancedCheck->setChecked(true);
+		ui->lineCheck->setChecked(false);
+		ui->pointCheck->setChecked(false);
+		ui->textCheck->setChecked(false);
+	}
 }
 
 void ClassDialog::dialogParamsChanged(void)
@@ -117,6 +123,10 @@ void ClassDialog::dialogParamsChanged(void)
 					    ui->styleCheck->isChecked() ||
 					    ui->labelCheck->isChecked();
 
+	const bool layersChecked = ui->lineCheck->isChecked() ||
+						  ui->pointCheck->isChecked() ||
+						  ui->textCheck->isChecked();
+
 	const bool styleOK = !ui->styleCheck->isChecked() ||
 					 ui->lineCheck->isChecked() ||
 					 !ui->Style->text().isEmpty();
@@ -125,7 +135,9 @@ void ClassDialog::dialogParamsChanged(void)
 					  ui->pointCheck->isChecked() ||
 					  !ui->Symbol->text().isEmpty();
 
-	const bool OK = anyChecked && styleOK && symbolOK;
+	const bool logicFalse = layersChecked && !ui->classCheck->isChecked();
+
+	const bool OK = anyChecked && styleOK && symbolOK && !logicFalse;
 
 	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(OK);
 }
