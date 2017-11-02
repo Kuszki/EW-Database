@@ -585,6 +585,9 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset theme="appointment-new"/>
+   </property>
    <property name="text">
     <string>Override modify date</string>
    </property>
