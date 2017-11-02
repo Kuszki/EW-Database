@@ -1051,6 +1051,27 @@ bool DatabaseDriver::hasAllIndexes(const DatabaseDriver::TABLE& Tab, const QList
 	return true;
 }
 
+void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
+{
+	if (!Database.isOpen()) return; QSqlQuery Query(Database);
+
+	switch (Type)
+	{
+		case 0:
+			Query.prepare("UPDATE EW_OBIEKTY SET DTW = CURRENT_TIMESTAMP WHERE UID = ?");
+		break;
+		case 1:
+			Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ?");
+		break;
+		case 2:
+			Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ?");
+		break;
+		default: return;
+	}
+
+	for (const auto& ID : Objects) { Query.addBindValue(ID); Query.exec(); }
+}
+
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
 {
 	if (Database.isOpen()) Database.close();
@@ -1266,6 +1287,8 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 		emit onUpdateProgress(++Step);
 	}
+
+	if (Dateupdate) updateModDate(Tasks.first(), 0);
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating special data"));
@@ -2824,6 +2847,8 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		}
 	}
 
+	if (Dateupdate) updateModDate(Tasks.first(), 0);
+
 	emit onBeginProgress(tr("Updating lines"));
 	emit onSetupProgress(0, Lines.size()); Step = 0;
 
@@ -2870,7 +2895,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size());
 
-	if (!vClass.isNull()) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	if (!vClass.isNull() || Dateupdate) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, Class, &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
@@ -5617,6 +5642,11 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 	Query.addBindValue(Modal);
 
 	return Query.exec();
+}
+
+void DatabaseDriver::setDateOverride(bool Override)
+{
+	QMutexLocker Locker(&Terminator); Dateupdate = Override;
 }
 
 void DatabaseDriver::unterminate(void)

@@ -80,6 +80,7 @@
     <addaction name="separator"/>
     <addaction name="actionInterface"/>
     <addaction name="separator"/>
+    <addaction name="actionDateoverride"/>
     <addaction name="actionSingleton"/>
    </widget>
    <widget class="QMenu" name="menuData">
@@ -578,6 +579,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionDateoverride">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Override modify date</string>
    </property>
   </action>
  </widget>

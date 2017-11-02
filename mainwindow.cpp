@@ -52,6 +52,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	Settings.beginGroup("Interface");
 	ui->actionSingleton->setChecked(Settings.value("singletons").toBool());
+	ui->actionDateoverride->setChecked(Settings.value("override").toBool());
 	Settings.endGroup();
 
 	Settings.beginGroup("Window");
@@ -77,6 +78,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::connectActionClicked);
 	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
+
+	connect(ui->actionDateoverride, &QAction::toggled, Driver, &DatabaseDriver::setDateOverride);
 
 	connect(ui->actionHide, &QAction::triggered, this, &MainWindow::hideActionClicked);
 	connect(ui->actionUnhide, &QAction::triggered, this, &MainWindow::unhideActionClicked);
@@ -163,6 +166,7 @@ MainWindow::~MainWindow(void)
 
 	Settings.beginGroup("Interface");
 	Settings.setValue("singletons", ui->actionSingleton->isChecked());
+	Settings.setValue("override", ui->actionDateoverride->isChecked());
 	Settings.endGroup();
 
 	Settings.beginGroup("Window");
@@ -561,6 +565,8 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 	connect(ui->actionInsert, &QAction::triggered, Insert, &TextDialog::open);
 	connect(ui->actionRelabel, &QAction::triggered, Variable, &VariablesDialog::open);
+
+	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
 	registerSockets(Driver->getDatabasePath());

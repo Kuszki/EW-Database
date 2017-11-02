@@ -91,6 +91,7 @@ class DatabaseDriver : public QObject
 
 		mutable QMutex Terminator;
 		mutable bool Terminated;
+		mutable bool Dateupdate;
 
 		QSqlDatabase Database;
 		QStringList Headers;
@@ -156,6 +157,8 @@ class DatabaseDriver : public QObject
 		int insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
+
+		void updateModDate(const QSet<int>& Objects, int Type = 0);
 
 	public slots:
 
@@ -225,6 +228,8 @@ class DatabaseDriver : public QObject
 		void getClass(RecordModel* Model, const QModelIndexList& Items);
 
 		bool addInterface(const QString& Path, int Type, bool Modal);
+
+		void setDateOverride(bool Override);
 
 		void unterminate(void);
 		void terminate(void);
