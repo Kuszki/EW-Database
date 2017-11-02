@@ -491,7 +491,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 	{
 		auto Process = [this, Radius] (auto i, const auto& Classes, const auto& Objects, auto List, auto Locker) -> void
 		{
-			bool End(false); for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
+			bool End(false); if (!this->isTerminated()) for (auto j = Objects.constBegin(); j != Objects.constEnd(); ++j)
 			{
 				if (!j.value().Filter || i.key() == j.key() || j.value().Geometry.type() != QVariant::PointF ||
 				    (!Classes.contains("*") && !Classes.contains(j.value().Class))) continue;
@@ -523,7 +523,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 					}
 				}
 
-				if (End || this->isTerminated()) return;
+				if (End) return;
 			}
 		};
 
@@ -917,9 +917,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		if (Geometry.contains(10)) QtConcurrent::blockingMap(CountA, [this, &Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
 		{
-			if (this->isTerminated()) return;
-
-			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
+			if (!this->isTerminated()) for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
 				if (Geometry[10].toStringList().contains("*") || Geometry[10].toStringList().contains(i.key()))
 				{
@@ -935,9 +933,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(QHash<int, QHash<int
 
 		if (Geometry.contains(11)) QtConcurrent::blockingMap(CountB, [this, &Points, &Lines, &Geometry, Radius] (QPair<int, int>& Value) -> void
 		{
-			if (this->isTerminated()) return;
-
-			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
+			if (!this->isTerminated()) for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
 			{
 				if (Geometry[11].toStringList().contains("*") || Geometry[11].toStringList().contains(i.key()))
 				{
@@ -4462,17 +4458,48 @@ void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onLabelDelete(Step);
 }
 
-void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label)
+void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int Underline, int Pointer)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelEdit(0); return; }
 
-	const QSet<int> Tasks = Model->getUids(Items).toSet();
-	QSqlQuery selectQuery(Database), updateQuery(Database);
-	QSet<int> Labels;  int Step = 0;
+	struct POINT
+	{
+		int IDE;
+
+		double WX, WY;
+		double DX, DY;
+
+		unsigned J;
+
+		QVariant OX, OY;
+	};
+
+	const QSet<int> Tasks = Model->getUids(Items).toSet(); QHash<int, POINT> Labels; int Step = 0;
+	QSqlQuery selectQuery(Database), updateQuery(Database), pointsQuery(Database);
+
+	pointsQuery.prepare(
+		"SELECT "
+			"O.UID, T.POS_X, T.POS_Y "
+		"FROM "
+			"EW_TEXT T "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"T.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"E.UIDO = O.UID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
+			"E.TYP = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
+			"T.TYP = 4");
 
 	selectQuery.prepare(
 		"SELECT "
-			"O.UID, P.ID "
+			"O.UID, P.ID, P.POS_X, P.POS_Y, P.JUSTYFIKACJA, P.ODN_X, P.ODN_Y "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -4493,7 +4520,9 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 		"UPDATE "
 			"EW_TEXT "
 		"SET "
-			"TEXT = ? "
+			"TEXT = COALESCE(?, TEXT), "
+			"JUSTYFIKACJA = ?, "
+			"ODN_X = ?, ODN_Y = ? "
 		"WHERE "
 			"ID = ?");
 
@@ -4501,22 +4530,64 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 	emit onSetupProgress(0, 0);
 
 	if (selectQuery.exec()) while (selectQuery.next() && !isTerminated())
-		if (Tasks.contains(selectQuery.value(0).toInt()))
+	{
+		const int UIDO = selectQuery.value(0).toInt();
+
+		if (Tasks.contains(UIDO)) Labels.insert(UIDO,
 		{
-			Labels.insert(selectQuery.value(1).toInt());
+			selectQuery.value(1).toInt(), NAN, NAN,
+			selectQuery.value(2).toDouble(),
+			selectQuery.value(3).toDouble(),
+			selectQuery.value(4).toInt(),
+			selectQuery.value(5),
+			selectQuery.value(6),
+		});
+	}
+
+	if (Pointer == 1 && pointsQuery.exec()) while (pointsQuery.next() && !isTerminated())
+	{
+		const int UIDO = pointsQuery.value(0).toInt();
+
+		if (Labels.contains(UIDO))
+		{
+			auto& Label = Labels[UIDO];
+
+			Label.WX = pointsQuery.value(1).toDouble();
+			Label.WY = pointsQuery.value(2).toDouble();
 		}
+	}
 
 	if (isTerminated()) { emit onEndProgress(); emit onLabelEdit(0); return; }
 
 	emit onBeginProgress(tr("Updating texts"));
 	emit onSetupProgress(0, Labels.size());
 
-	for (const auto& ID : Labels)
+	if (Underline || Pointer) QtConcurrent::blockingMap(Labels, [Underline, Pointer] (POINT& Point) -> void
+	{
+		if (Underline == 1) Point.J |= 16;
+		if (Underline == 2) Point.J &= ~16;
+
+		if (Pointer == 1 && !qIsNaN(Point.WX) && !qIsNaN(Point.WY))
+		{
+			Point.OX = Point.WX - Point.DX;
+			Point.OY = Point.WY - Point.DY;
+
+			Point.J |= 32;
+		}
+		else if (Pointer == 2) Point.J &= ~32;
+	});
+
+	const QVariant vLabel = Label.isEmpty() ? QVariant() : Label;
+
+	for (const auto& Item : Labels)
 	{
 		if (isTerminated()) break;
 
-		updateQuery.addBindValue(Label);
-		updateQuery.addBindValue(ID);
+		updateQuery.addBindValue(vLabel);
+		updateQuery.addBindValue(Item.J);
+		updateQuery.addBindValue(Item.OX);
+		updateQuery.addBindValue(Item.OY);
+		updateQuery.addBindValue(Item.IDE);
 
 		updateQuery.exec();
 

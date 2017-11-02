@@ -515,12 +515,12 @@ void MainWindow::insertBreaks(int Mode, double Radius, double Recursive)
 	lockUi(BUSY); emit onInsertRequest(Model, Selected, Mode, Radius, Recursive);
 }
 
-void MainWindow::relabelData(const QString& Label)
+void MainWindow::relabelData(const QString& Label, int Underline, int Pointer)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	lockUi(BUSY); emit onRelabelRequest(Model, Selected, Label);
+	lockUi(BUSY); emit onRelabelRequest(Model, Selected, Label, Underline, Pointer);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)

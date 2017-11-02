@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -29,7 +29,10 @@ VariablesDialog::VariablesDialog(const QHash<QString, QSet<QString>>& Items, QWi
 	for (const auto& Var: Data.keys()) ui->variableCombo->addItem(Var);
 
 	ui->variableCombo->model()->sort(0);
+	ui->variableCombo->insertItem(0, tr("Keep current"));
 	ui->variableCombo->setCurrentIndex(0);
+
+	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(false);
 }
 
 VariablesDialog::~VariablesDialog(void)
@@ -40,8 +43,12 @@ VariablesDialog::~VariablesDialog(void)
 void VariablesDialog::accept(void)
 {
 	const QString Variable = QString("${u.%1}").arg(ui->variableCombo->currentText());
+	const int Underline = ui->underlineCombo->currentIndex();
+	const int Pointer = ui->pointerCombo->currentIndex();
 
-	QDialog::accept(); emit onChangeRequest(Variable);
+	const bool Varchange = ui->variableCombo->currentIndex();
+
+	QDialog::accept(); emit onChangeRequest(Varchange ? Variable : QString(), Underline, Pointer);
 }
 
 void VariablesDialog::variableIndexChanged(int Index)
@@ -56,4 +63,12 @@ void VariablesDialog::variableIndexChanged(int Index)
 	}
 
 	ui->affectsLabel->setText(Items.join('\n'));
+}
+
+void VariablesDialog::dialogParamsChanged(void)
+{
+	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(
+				ui->variableCombo->currentIndex() ||
+				ui->underlineCombo->currentIndex() ||
+				ui->pointerCombo->currentIndex());
 }

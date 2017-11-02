@@ -217,7 +217,8 @@ class DatabaseDriver : public QObject
 
 		void removeLabel(RecordModel* Model, const QModelIndexList& Items);
 
-		void editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label);
+		void editLabel(RecordModel* Model, const QModelIndexList& Items,
+					const QString& Label, int Underline, int Pointer);
 
 		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
 					   int Mode, double Radius, bool Recursive);

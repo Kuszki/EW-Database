@@ -174,7 +174,7 @@ class MainWindow : public QMainWindow
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L);
 		void insertBreaks(int Mode, double Radius, double Recursive);
-		void relabelData(const QString& Label);
+		void relabelData(const QString& Label, int Underline, int Pointer);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -266,7 +266,8 @@ class MainWindow : public QMainWindow
 		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
 						int, double, double, bool, double, double);
 
-		void onRelabelRequest(RecordModel*, const QModelIndexList&, const QString&);
+		void onRelabelRequest(RecordModel*, const QModelIndexList&,
+						  const QString, int, int);
 
 		void onRemovelabelRequest(RecordModel*, const QModelIndexList&);
 

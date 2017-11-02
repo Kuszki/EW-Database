@@ -14,23 +14,92 @@
    <string>Update item label</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="edit-select-all"/>
+   <iconset theme="edit-select-all">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Variable</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="2">
-    <widget class="QComboBox" name="variableCombo"/>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="variableCombo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
    <item row="1" column="0">
+    <widget class="QLabel" name="underlineLabel">
+     <property name="text">
+      <string>Underline</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="underlineCombo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <item>
+      <property name="text">
+       <string>Keep current</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Insert</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="pointerLabel">
+     <property name="text">
+      <string>Pointer</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="pointerCombo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <item>
+      <property name="text">
+       <string>Keep current</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Insert</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
     <widget class="QScrollArea" name="scrollArea">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -46,8 +115,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>376</width>
-        <height>214</height>
+        <width>382</width>
+        <height>171</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -68,8 +137,24 @@
      </widget>
     </widget>
    </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>variableCombo</tabstop>
+  <tabstop>underlineCombo</tabstop>
+  <tabstop>pointerCombo</tabstop>
+  <tabstop>scrollArea</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -120,8 +205,57 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>variableCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>VariablesDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>313</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>619</x>
+     <y>18</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>underlineCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>VariablesDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>375</x>
+     <y>38</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>578</x>
+     <y>44</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pointerCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>VariablesDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>381</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>627</x>
+     <y>82</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>variableIndexChanged(int)</slot>
+  <slot>dialogParamsChanged()</slot>
  </slots>
 </ui>

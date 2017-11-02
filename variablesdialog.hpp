@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -21,6 +21,8 @@
 #ifndef VARIABLESDIALOG_HPP
 #define VARIABLESDIALOG_HPP
 
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include <QDialog>
 
 namespace Ui
@@ -51,10 +53,11 @@ class VariablesDialog : public QDialog
 	private slots:
 
 		void variableIndexChanged(int Index);
+		void dialogParamsChanged(void);
 
 	signals:
 
-		void onChangeRequest(const QString&);
+		void onChangeRequest(const QString&, int, int);
 
 };
 
