@@ -29,7 +29,7 @@ const QStringList DatabaseDriver::Operators =
 };
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
-: Terminated(false), QObject(Parent)
+: QObject(Parent), Terminated(false)
 {
 	QSettings Settings("EW-Database");
 
