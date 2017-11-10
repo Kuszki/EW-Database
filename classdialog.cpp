@@ -24,7 +24,33 @@
 ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QString, QHash<int, QString>>& Lines, const QHash<QString, QHash<int, QString>>& Points, const QHash<QString, QHash<int, QString>>& Texts, const QStringList& Variables, QWidget* Parent)
 : QDialog(Parent), lineLayers(Lines), pointLayers(Points), textLayers(Texts), ui(new Ui::ClassDialog)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); static const QStringList Policy =
+	{
+		tr("Convert surfaces into points"),
+		tr("Convert surfaces into lines"),
+		tr("Convert lines into surfaces"),
+		tr("Convert points into circles")
+	};
+
+	auto Model = new QStandardItemModel(0, 1, this);
+	auto Item = new QStandardItem(tr("Geometry conversion options"));
+
+	int i(0); for (const auto& Text : Policy)
+	{
+		auto Item = new QStandardItem(Text);
+
+		Item->setData(i);
+		Item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+		Item->setCheckState(Qt::Unchecked);
+
+		Model->insertRow(i++, Item);
+	}
+
+	Model->item(3)->setData(qVariantFromValue(ui->radiusSpin), Qt::UserRole);
+	Item->setFlags(Qt::ItemIsEnabled);
+	Model->insertRow(0, Item);
+
+	ui->strategyCombo->setModel(Model);
 
 	for (auto i = Classes.constBegin(); i != Classes.constEnd(); ++i)
 	{
@@ -38,7 +64,11 @@ ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QSt
 	ui->Label->model()->sort(0);
 	ui->Label->setCurrentIndex(0);
 
+	ui->radiusSpin->setVisible(false);
+
 	ui->Style->setValidator(new QIntValidator(0, 10000, this));
+
+	connect(Model, &QStandardItemModel::itemChanged, this, &ClassDialog::geometryActionsChanged);
 }
 
 ClassDialog::~ClassDialog(void)
@@ -48,16 +78,32 @@ ClassDialog::~ClassDialog(void)
 
 void ClassDialog::accept(void)
 {
-	QDialog::accept();
+	int Mask(0); auto M = dynamic_cast<QStandardItemModel*>(ui->strategyCombo->model());
 
-	emit onChangeRequest(
-				ui->classCheck->isChecked() ? ui->Class->currentData().toString() : QString("NULL"),
-				ui->lineCheck->isChecked() ? ui->Line->currentData().toInt() : -1,
-				ui->pointCheck->isChecked() ? ui->Point->currentData().toInt() : -1,
-				ui->textCheck->isChecked() ? ui->Text->currentData().toInt() : -1,
-				ui->symbolCheck->isChecked() ? ui->Symbol->text() : QString("NULL"),
-				ui->styleCheck->isChecked() ? ui->Style->text().toInt() : -1,
-				ui->labelCheck->isChecked() ? QString("${u.%1}").arg(ui->Label->currentText()) : QString("NULL"));
+	for (int i = 1; i < M->rowCount(); ++i)
+		if (M->item(i)->checkState() == Qt::Checked)
+		{
+			Mask |= (1 << (i - 1));
+		}
+
+	QDialog::accept(); emit onChangeRequest(
+			ui->classCheck->isChecked() ? ui->Class->currentData().toString() : QString("NULL"),
+			ui->lineCheck->isChecked() ? ui->Line->currentData().toInt() : -1,
+			ui->pointCheck->isChecked() ? ui->Point->currentData().toInt() : -1,
+			ui->textCheck->isChecked() ? ui->Text->currentData().toInt() : -1,
+			ui->symbolCheck->isChecked() ? ui->Symbol->text() : QString("NULL"),
+			ui->styleCheck->isChecked() ? ui->Style->text().toInt() : -1,
+			ui->labelCheck->isChecked() ? QString("${u.%1}").arg(ui->Label->currentText()) : QString("NULL"),
+			ui->strategyCombo->isEnabled() ? Mask : 0,
+			ui->radiusSpin->value());
+}
+
+void ClassDialog::geometryActionsChanged(QStandardItem* Item)
+{
+	if (auto W = Item->data(Qt::UserRole).value<QWidget*>())
+	{
+		W->setVisible(Item->checkState() == Qt::Checked);
+	}
 }
 
 void ClassDialog::classIndexChanged(int Index)
@@ -95,18 +141,12 @@ void ClassDialog::classIndexChanged(int Index)
 	ui->Text->setEnabled(ui->Text->count());
 	ui->Point->setEnabled(ui->Point->count());
 	ui->Line->setEnabled(ui->Line->count());
-
-	ui->advancedCheck->setChecked(ui->advancedCheck->isChecked() ||
-		(Texts.size() && !Texts.values().contains(Label)) ||
-		(Lines.size() && !Lines.values().contains(Label)) ||
-				(Points.size() && !Points.values().contains(Label)));
 }
 
 void ClassDialog::classCheckToggled(bool Status)
 {
 	if (!Status)
 	{
-		ui->advancedCheck->setChecked(true);
 		ui->lineCheck->setChecked(false);
 		ui->pointCheck->setChecked(false);
 		ui->textCheck->setChecked(false);

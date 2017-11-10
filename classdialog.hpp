@@ -21,6 +21,7 @@
 #ifndef CLASSDIALOG_HPP
 #define CLASSDIALOG_HPP
 
+#include <QStandardItemModel>
 #include <QDialogButtonBox>
 #include <QIntValidator>
 #include <QPushButton>
@@ -62,6 +63,8 @@ class ClassDialog : public QDialog
 
 	private slots:
 
+		void geometryActionsChanged(QStandardItem* Item);
+
 		void classIndexChanged(int Index);
 		void classCheckToggled(bool Status);
 		void dialogParamsChanged(void);
@@ -70,7 +73,8 @@ class ClassDialog : public QDialog
 
 		void onChangeRequest(const QString&, int, int, int,
 						 const QString&, int,
-						 const QString&);
+						 const QString&,
+						 int, double);
 
 };
 

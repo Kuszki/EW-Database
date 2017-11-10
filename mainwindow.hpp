@@ -169,7 +169,8 @@ class MainWindow : public QMainWindow
 		void mergeData(const QList<int>& Fields, const QStringList& Points);
 		void cutData(const QStringList& Points, bool Endings);
 		void changeClass(const QString& Class, int Line, int Point, int Text,
-					  const QString& Symbol, int Style, const QString& Label);
+					  const QString& Symbol, int Style, const QString& Label,
+					  int Actions, double Radius);
 		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L);
@@ -251,7 +252,8 @@ class MainWindow : public QMainWindow
 		void onRefactorRequest(RecordModel*, const QModelIndexList&,
 						   const QString&, int, int, int,
 						   const QString&, int,
-						   const QString&);
+						   const QString&,
+						   int, double);
 
 		void onClassRequest(RecordModel*, const QModelIndexList&);
 

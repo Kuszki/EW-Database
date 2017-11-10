@@ -2639,7 +2639,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 	emit onDataCut(Queue.size());
 }
 
-void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style, const QString& Label)
+void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Items, const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style, const QString& Label, int Actions, double Radius)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataRefactor(0); return; }
 
@@ -2673,6 +2673,54 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		}
 
 		if (OK) Change.insert(UID);
+	}
+
+	if (!Style && Line != -1)
+	{
+		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
+
+		if (Query.exec() && Query.next()) LineStyle = Query.value(0).toInt();
+	}
+	else LineStyle = Style;
+
+	if (Symbol.isEmpty() && Point != -1)
+	{
+		Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
+
+		if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
+	}
+	else NewSymbol = Symbol;
+
+	const QVariant vClass = Class == "NULL" ? QVariant() : Class;
+	const QVariant vSymbol = Symbol == "NULL" ? QVariant() : NewSymbol;
+	const QVariant vLabel = Label == "NULL" ? QVariant() : Label;
+
+	const QVariant vStyle = Style == -1 ? QVariant() : LineStyle;
+	const QVariant vLine = Line == -1 ? QVariant() : Line;
+	const QVariant vPoint = Point == -1 ? QVariant() : Point;
+	const QVariant vText = Text == -1 ? QVariant() : Text;
+
+	emit onBeginProgress(tr("Converting geometry"));
+	emit onSetupProgress(0, 0);
+
+	if (Actions & 0b0001 && !vPoint.isNull())
+	{
+		convertSurfaceToPoint(Change, NewSymbol, vPoint.toInt());
+	}
+
+	if (Actions & 0b0010 && Type & 103)
+	{
+		convertSurfaceToLine(Change);
+	}
+
+	if (Actions & 0b0100 && Type & 357)
+	{
+		convertLineToSurface(Change);
+	}
+
+	if (Actions & 0b1000 && !vLine.isNull() && !vStyle.isNull())
+	{
+		convertPointToSurface(Change, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
 	}
 
 	selectLines.prepare(
@@ -2741,31 +2789,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			"ID = ?");
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
-
-	if (!Style && Line != -1)
-	{
-		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
-
-		if (Query.exec() && Query.next()) LineStyle = Query.value(0).toInt();
-	}
-	else LineStyle = Style;
-
-	if (Symbol.isEmpty() && Point != -1)
-	{
-		Query.prepare("SELECT NAZWA FROM EW_WARSTWA_TEXTOWA WHERE ID = ?"); Query.addBindValue(Point);
-
-		if (Query.exec() && Query.next()) NewSymbol = Query.value(0).toString();
-	}
-	else NewSymbol = Symbol;
-
-	const QVariant vClass = Class == "NULL" ? QVariant() : Class;
-	const QVariant vSymbol = Symbol == "NULL" ? QVariant() : NewSymbol;
-	const QVariant vLabel = Label == "NULL" ? QVariant() : Label;
-
-	const QVariant vStyle = Style == -1 ? QVariant() : LineStyle;
-	const QVariant vLine = Line == -1 ? QVariant() : Line;
-	const QVariant vPoint = Point == -1 ? QVariant() : Point;
-	const QVariant vText = Text == -1 ? QVariant() : Text;
 
 	emit onBeginProgress(tr("Loading elements"));
 	emit onSetupProgress(0, List.size());
@@ -2837,7 +2860,9 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			ClassQuery.addBindValue(Class);
 			ClassQuery.addBindValue(Item);
 
-			ClassQuery.exec();
+			qDebug() << ClassQuery.exec();
+			qDebug() << Class << Item;
+			qDebug() << ClassQuery.lastQuery() << ClassQuery.lastError().text();
 
 			emit onUpdateProgress(++Step);
 		}
@@ -4923,6 +4948,318 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 	return Insert;
 }
 
+void DatabaseDriver::convertSurfaceToPoint(const QSet<int>& Objects, const QString& Symbol, int Layer)
+{
+	if (!Database.isOpen()) return;
+
+	QSqlQuery selectCirclesQuery(Database), selectLinesQuery(Database),
+			insertQuery(Database), deleteQuery(Database),
+			updateQuery(Database), elementsQuery(Database);
+
+	selectCirclesQuery.prepare(
+		"SELECT "
+			"E.IDE, P.OPERAT, "
+			"(P.P0_X + P.P1_X) / 2.0, "
+			"(P.P0_Y + P.P1_Y) / 2.0 "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.UID = ? AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 3 AND "
+			"E.TYP = 0 AND "
+			"P.P1_FLAGS = 4 AND "
+			"P.STAN_ZMIANY = 0");
+
+	selectLinesQuery.prepare(
+		"SELECT "
+			"E.IDE, P.OPERAT, P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.UID = ? AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 3 AND "
+			"E.TYP = 0 AND "
+			"P.P1_FLAGS <> 4 AND "
+			"P.STAN_ZMIANY = 0");
+
+	insertQuery.prepare(
+		"INSERT INTO EW_TEXT "
+			"(ID, ID_WARSTWY, OPERAT, TEXT, POS_X, POS_Y, TYP, KAT, JUSTYFIKACJA, STAN_ZMIANY) "
+		"VALUES "
+			"(?, ?, ?, ?, ?, ?, 4, 0.0, 5, 0)");
+
+	deleteQuery.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 4 WHERE UID = ?");
+	elementsQuery.prepare("DELETE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND UIDO = ? AND IDE = ?");
+
+	emit onSetupProgress(0, Objects.size() * 2); int Step(0);
+
+	for (const auto UID : Objects)
+	{
+		selectCirclesQuery.addBindValue(UID);
+
+		bool OK(false); if (selectCirclesQuery.exec()) while (selectCirclesQuery.next())
+		{
+			const int ID = selectCirclesQuery.value(0).toInt();
+
+			insertQuery.addBindValue(ID);
+			insertQuery.addBindValue(Layer);
+			insertQuery.addBindValue(selectCirclesQuery.value(1));
+			insertQuery.addBindValue(Symbol);
+			insertQuery.addBindValue(selectCirclesQuery.value(2));
+			insertQuery.addBindValue(selectCirclesQuery.value(3));
+
+			if (!insertQuery.exec()) continue; else OK = true;
+
+			deleteQuery.addBindValue(ID); deleteQuery.exec();
+		}
+
+		if (OK) { updateQuery.addBindValue(UID); updateQuery.exec(); }
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (const auto UID : Objects)
+	{
+		QList<int> IDES; QList<QPointF> Polygon; int Opr; double X(0.0), Y(0.0);
+
+		selectLinesQuery.addBindValue(UID);
+
+		if (selectLinesQuery.exec()) while (selectLinesQuery.next())
+		{
+			const QPointF A = QPointF(selectLinesQuery.value(2).toDouble(),
+								 selectLinesQuery.value(3).toDouble());
+
+			const QPointF B = QPointF(selectLinesQuery.value(4).toDouble(),
+								 selectLinesQuery.value(5).toDouble());
+
+			IDES.append(selectLinesQuery.value(0).toInt());
+
+			if (!Polygon.contains(A)) Polygon.append(A);
+			if (!Polygon.contains(B)) Polygon.append(B);
+
+			if (!Opr) Opr = selectLinesQuery.value(1).toInt();
+		}
+
+		emit onUpdateProgress(++Step);
+
+		if (!IDES.size() || !Polygon.size()) continue;
+
+		for (const auto& P : Polygon)
+		{
+			X += P.x() / Polygon.size();
+			Y += P.y() / Polygon.size();
+		}
+
+		insertQuery.addBindValue(IDES.first());
+		insertQuery.addBindValue(Layer);
+		insertQuery.addBindValue(Opr);
+		insertQuery.addBindValue(Symbol);
+		insertQuery.addBindValue(X);
+		insertQuery.addBindValue(Y);
+
+		if (insertQuery.exec())
+		{
+			updateQuery.addBindValue(UID); updateQuery.exec();
+			deleteQuery.addBindValue(IDES.first()); deleteQuery.exec();
+
+			for (int i = 1; i < IDES.size(); ++i)
+			{
+				elementsQuery.addBindValue(UID);
+				elementsQuery.addBindValue(IDES[i]);
+
+				elementsQuery.exec();
+
+				deleteQuery.addBindValue(IDES[i]);
+
+				deleteQuery.exec();
+			}
+		}
+	}
+}
+
+void DatabaseDriver::convertPointToSurface(const QSet<int>& Objects, int Style, int Layer, double Radius)
+{
+	if (!Database.isOpen()) return;
+
+	QSqlQuery selectQuery(Database), insertQuery(Database),
+			deleteQuery(Database), updateQuery(Database);
+
+	selectQuery.prepare(
+		"SELECT "
+			"E.IDE, P.OPERAT, P.POS_X, P.POS_Y "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.UID = ? AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
+			"E.TYP = 0 AND "
+			"P.TYP = 4 AND "
+			"P.STAN_ZMIANY = 0");
+
+	insertQuery.prepare(
+		"INSERT INTO EW_POLYLINE "
+			"(ID, ID_WARSTWY, OPERAT, TYP_LINII, P0_X, P1_X, P0_Y, P1_Y, POINTCOUNT, P1_FLAGS, STAN_ZMIANY) "
+		"VALUES "
+			"(?, ?, ?, ?, ?, ?, ?, ?, 2, 4, 0)");
+
+	deleteQuery.prepare("DELETE FROM EW_TEXT WHERE ID = ?");
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
+
+	emit onSetupProgress(0, Objects.size()); int Step(0);
+
+	for (const auto UID : Objects)
+	{
+		selectQuery.addBindValue(UID);
+
+		bool OK(false); if (selectQuery.exec()) while (selectQuery.next())
+		{
+			const int ID = selectQuery.value(0).toInt();
+
+			insertQuery.addBindValue(ID);
+			insertQuery.addBindValue(Layer);
+			insertQuery.addBindValue(selectQuery.value(1));
+			insertQuery.addBindValue(Style);
+			insertQuery.addBindValue(selectQuery.value(2).toDouble() - Radius / 2.0);
+			insertQuery.addBindValue(selectQuery.value(2).toDouble() + Radius / 2.0);
+			insertQuery.addBindValue(selectQuery.value(3));
+			insertQuery.addBindValue(selectQuery.value(3));
+
+			if (!insertQuery.exec()) continue; else OK = true;
+
+			deleteQuery.addBindValue(ID); deleteQuery.exec();
+		}
+
+		if (OK) { updateQuery.addBindValue(UID); updateQuery.exec(); }
+
+		emit onUpdateProgress(++Step);
+	}
+}
+
+void DatabaseDriver::convertSurfaceToLine(const QSet<int>& Objects)
+{
+	if (!Database.isOpen()) return; auto Tasks = Objects;
+
+	QSqlQuery selectQuery(Database), updateQuery(Database);
+
+	emit onSetupProgress(0, 0);
+
+	selectQuery.prepare(
+		"SELECT DISTINCT "
+			"O.UID "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 3 AND "
+			"E.TYP = 0 AND "
+			"P.P1_FLAGS = 4 AND "
+			"P.STAN_ZMIANY = 0");
+
+	if (selectQuery.exec()) while (selectQuery.next()) Tasks.remove(selectQuery.value(0).toInt());
+
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
+
+	for (const auto UID : Tasks) { updateQuery.addBindValue(UID); updateQuery.exec(); }
+}
+
+void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
+{
+	if (!Database.isOpen()) return;
+
+	QSqlQuery selectQuery(Database), updateQuery(Database);
+
+	selectQuery.prepare(
+		"SELECT "
+			"P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.UID = ? AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 2 AND "
+			"E.TYP = 0 AND "
+			"P.P1_FLAGS <> 4 AND "
+			"P.STAN_ZMIANY = 0");
+
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
+
+	emit onSetupProgress(0, Objects.size()); int Step(0);
+
+	for (const auto& UID : Objects)
+	{
+		selectQuery.addBindValue(UID); QList<QPointF> Points;
+
+		int Size(0); if (selectQuery.exec()) while (selectQuery.next())
+		{
+			const QPointF A = QPointF(selectQuery.value(0).toDouble(),
+								 selectQuery.value(1).toDouble());
+
+			const QPointF B = QPointF(selectQuery.value(2).toDouble(),
+								 selectQuery.value(3).toDouble());
+
+			if (Points.contains(A)) Points.removeOne(A);
+			else Points.append(A);
+
+			if (Points.contains(B)) Points.removeOne(B);
+			else Points.append(B);
+
+			Size += 1;
+		}
+
+		if (Size && Points.isEmpty()) { updateQuery.addBindValue(UID); updateQuery.exec(); }
+
+		emit onUpdateProgress(++Step);
+	}
+}
+
 int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius)
 {
 	struct LINE { int ID; QLineF Line; int Type; bool Changed = false; };
@@ -5848,4 +6185,19 @@ bool isVariantEmpty(const QVariant& Value)
 bool pointComp(const QPointF& A, const QPointF& B, double d)
 {
 	return (qAbs(A.x() - B.x()) <= d) && (qAbs(A.y() - B.y()) <= d);
+}
+
+double getSurface(const QPolygonF& P)
+{
+	double sum(0.0); for (int i = 0; i < P.size(); ++i)
+	{
+		const double yn = (i + 1) == P.size() ? P[0].y() : P[i + 1].y();
+		const double yp = i == 0 ? P.last().y() : P[i - 1].y();
+
+		const double xi = P[i].x();
+
+		sum += xi * (yn - yp);
+	}
+
+	return qAbs(sum / 2.0);
 }

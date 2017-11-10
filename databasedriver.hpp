@@ -154,6 +154,12 @@ class DatabaseDriver : public QObject
 								   const QSet<int>& Tasks, const QString& Class,
 								   double Radius = 0.0);
 
+		void convertSurfaceToPoint(const QSet<int>& Objects, const QString& Symbol, int Layer);
+		void convertPointToSurface(const QSet<int>& Objects, int Style, int Layer, double Radius);
+
+		void convertSurfaceToLine(const QSet<int>& Objects);
+		void convertLineToSurface(const QSet<int>& Objects);
+
 		int insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
@@ -196,7 +202,9 @@ class DatabaseDriver : public QObject
 
 		void refactorData(RecordModel* Model, const QModelIndexList& Items,
 					   const QString& Class, int Line, int Point, int Text,
-					   const QString& Symbol, int Style, const QString& Label);
+					   const QString& Symbol, int Style,
+					   const QString& Label,
+					   int Actions, double Radius);
 
 		void copyData(RecordModel* Model, const QModelIndexList& Items,
 				    const QString& Class, int Line, int Point, int Text,
@@ -308,5 +316,7 @@ bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type:
 bool pointComp(const QPointF& A, const QPointF& B, double d = 0.001);
 
 bool isVariantEmpty(const QVariant& Value);
+
+double getSurface(const QPolygonF& P);
 
 #endif // DATABASEDRIVER_HPP
