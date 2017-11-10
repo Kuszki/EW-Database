@@ -42,6 +42,8 @@ class DatabaseDriver : public QObject
 
 		Q_OBJECT
 
+	public: using SUBOBJECTSTABLE = QList<QPair<QPair<int, QString>, QPair<int, QString>>>;
+
 	public: struct POINT
 	{
 		int IDE;
@@ -85,6 +87,15 @@ class DatabaseDriver : public QObject
 		QList<FIELD> Fields;
 		QList<int> Indexes;
 		QList<int> Headers;
+	};
+
+	public: struct OBJECT
+	{
+		int UID, ID;
+		QString Class;
+		int Type;
+
+		QVariant Geometry;
 	};
 
 	private:
@@ -134,7 +145,7 @@ class DatabaseDriver : public QObject
 										  const QString& Where,
 										  bool Dict, bool View);
 
-		QHash<int, QHash<int, QVariant>> filterData(QHash<int, QHash<int, QVariant>> Data,
+		QHash<int, QHash<int, QVariant>> filterData(const QHash<int, QHash<int, QVariant>>& Data,
 										    const QHash<int, QVariant>& Geometry,
 										    const QString& Limiter, double Radius);
 
@@ -143,8 +154,7 @@ class DatabaseDriver : public QObject
 
 		QHash<int, QSet<int>> joinSurfaces(const QHash<int, QSet<int>>& Geometry,
 									const QList<DatabaseDriver::POINT>& Points,
-									const QSet<int>& Tasks, const QString& Class,
-									double Radius = 0.0);
+									const QSet<int>& Tasks, const QString& Class);
 		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
 								  const QSet<int>& Tasks, const QString& Class,
@@ -159,6 +169,23 @@ class DatabaseDriver : public QObject
 
 		void convertSurfaceToLine(const QSet<int>& Objects);
 		void convertLineToSurface(const QSet<int>& Objects);
+
+		QList<OBJECT> loadGeometry(const QSet<int>& Limiter = QSet<int>(),
+							  const QList<OBJECT>& Loaded = QList<OBJECT>());
+		SUBOBJECTSTABLE loadSubobjects(void);
+
+		QSet<int> filterDataByLength(const QSet<int>& Data, double Minimum, double Maximum);
+		QSet<int> filterDataBySurface(const QSet<int>& Data, double Minimum, double Maximum);
+
+		QSet<int> filterDataByContaining(const QList<OBJECT>& Data, const QList<OBJECT>& Objects,
+								   double Radius = 0.001, bool Not = false);
+		QSet<int> filterDataByEndswith(const QList<OBJECT>& Data, const QList<OBJECT>& Objects,
+								 double Radius = 0.001, bool Not = false);
+
+		QSet<int> filterDataByIsSubobject(const QSet<int>& Data, const QSet<int>& Objects,
+								    const SUBOBJECTSTABLE& Table, bool Not = false);
+		QSet<int> filterDataByHasSubobject(const QSet<int>& Data, const QSet<int>& Objects,
+									const SUBOBJECTSTABLE& Table, bool Not = false);
 
 		int insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius);
 

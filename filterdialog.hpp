@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -58,6 +58,9 @@ class FilterDialog : public QDialog
 
 		QHash<QString, QString> Classes;
 		QHash<QString, QString> Points;
+		QHash<QString, QString> Lines;
+		QHash<QString, QString> Surfaces;
+
 		QList<QSet<int>> Attributes;
 
 		unsigned Above = 0;

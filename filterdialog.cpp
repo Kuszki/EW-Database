@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -168,17 +168,17 @@ QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
 
 			if (!Rules.contains(Rule.first))
 			{
-				Rules.insert(Rule.first, QVariant(Rule.first > 1 ? QVariant::StringList : QVariant::Double));
+				Rules.insert(Rule.first, QVariant(Rule.first > 3 ? QVariant::StringList : QVariant::Double));
 
-				if (Rule.first < 2) Rules[Rule.first] = Rule.first ? DBL_MAX : DBL_MIN;
+				if (Rule.first < 4) Rules[Rule.first] = Rule.second.toDouble();
 			}
 
-			if (Rule.first == 0)
+			if (Rule.first == 0 || Rule.first == 2)
 			{
 				Rules[Rule.first] = qMax(Rules[Rule.first].toDouble(),
 									Rule.second.toDouble());
 			}
-			else if (Rule.first == 1)
+			else if (Rule.first == 1 || Rule.first == 3)
 			{
 				Rules[Rule.first] = qMin(Rules[Rule.first].toDouble(),
 									Rule.second.toDouble());
@@ -315,7 +315,7 @@ void FilterDialog::filterRulesChanged(void)
 
 void FilterDialog::newButtonClicked(void)
 {
-	ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, this));
+	ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, Lines, Surfaces, this));
 }
 
 void FilterDialog::copyButtonClicked(void)
@@ -357,7 +357,7 @@ void FilterDialog::accept(void)
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
 {
-	Classes.clear(); Points.clear(); Attributes.clear(); Above = Common;
+	Classes.clear(); Points.clear(); Lines.clear(); Surfaces.clear(); Attributes.clear(); Above = Common;
 
 	while (auto I = ui->classLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
 	while (auto I = ui->simpleLayout->takeAt(0)) if (auto W = I->widget()) W->deleteLater();
@@ -366,8 +366,11 @@ void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const Q
 	{
 		auto Check = new QCheckBox(Tables[i].Label, this);
 
-		if (Tables[i].Point) Points.insert(Tables[i].Name, Tables[i].Label);
-		else Classes.insert(Tables[i].Name, Tables[i].Label);
+		if (Tables[i].Type & 256) Points.insert(Tables[i].Name, Tables[i].Label);
+		if (Tables[i].Type & 8) Lines.insert(Tables[i].Name, Tables[i].Label);
+		if (Tables[i].Type & 2) Surfaces.insert(Tables[i].Name, Tables[i].Label);
+
+		Classes.insert(Tables[i].Name, Tables[i].Label);
 
 		Check->setToolTip(Tables[i].Name);
 		ui->classLayout->addWidget(Check);

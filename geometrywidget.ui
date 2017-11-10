@@ -37,6 +37,26 @@
      </item>
      <item>
       <property name="text">
+       <string>Surface greater than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Surface less than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Is geometry of</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Is not geometry of</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
        <string>Geometry contains</string>
       </property>
      </item>
@@ -53,6 +73,16 @@
      <item>
       <property name="text">
        <string>Geometry does not ends on</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry touch</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry does not touch</string>
       </property>
      </item>
      <item>
@@ -77,21 +107,6 @@
      </item>
      <item>
       <property name="text">
-       <string>Is geometry of</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Is not geometry of</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Object have multiple relations</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
        <string>Object has point geometry</string>
       </property>
      </item>
@@ -105,10 +120,12 @@
        <string>Object has surface geometry</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Object have multiple relations</string>
+      </property>
+     </item>
     </widget>
-   </item>
-   <item>
-    <widget class="QComboBox" name="lineCombo"/>
    </item>
    <item>
     <widget class="QComboBox" name="pointCombo"/>
