@@ -471,7 +471,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true); QStringList All;
 
-		for (int i = 4; i <= 15; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
+		for (int i = 4; i <= 11; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
 
 		const QString Str = "SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND KOD IN ('%1')";
 
@@ -484,8 +484,8 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	bool loadG(false); for (int i = 0; i <= 11; ++i) loadG = loadG || Geometry.contains(i);
 	bool loadR(false); for (int i = 12; i <= 15; ++i) loadR = loadR || Geometry.contains(i);
 
-	auto Geom = loadG ? loadGeometry(Limit.isEmpty() ? QSet<int>() : (Filtered | Limit)) : QList<OBJECT>();
-	const auto Subs = loadR ? loadSubobjects() : SUBOBJECTSTABLE(); QSet<int> Subsl[4]; QSet<int> Types;
+	auto Geom = loadG ? loadGeometry(Filtered | Limit) : QList<OBJECT>(); QSet<int> Types;
+	const auto Subs = loadR ? loadSubobjects() : SUBOBJECTSTABLE(); QSet<int> Subsl[4];
 	const int originSize = Filtered.size(); QFutureSynchronizer<void> Synch;
 
 	if (Geometry.contains(12)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[0], &Subs, Geometry[12].toStringList()));
@@ -501,7 +501,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 		};
 
 		if (Filtered.contains(Obj.UID)) Obj.Mask |= 0b01;
-		if (Limit.isEmpty() || Limit.contains(Obj.UID)) Obj.Mask |= 0b10;
+		if (Limit.contains(Obj.UID)) Obj.Mask |= 0b10;
 
 		for (int i = 4; i <= 11; ++i) if (Geometry.contains(i))
 		{
