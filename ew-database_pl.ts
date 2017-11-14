@@ -904,6 +904,16 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Geometria nie kończy się na</translation>
     </message>
     <message>
+        <location filename="geometrywidget.ui" line="80"/>
+        <source>Geometry touch</source>
+        <translation>Geometria dotyka</translation>
+    </message>
+    <message>
+        <location filename="geometrywidget.ui" line="85"/>
+        <source>Geometry does not touch</source>
+        <translation>Geometria nie dotyka</translation>
+    </message>
+    <message>
         <location filename="geometrywidget.ui" line="90"/>
         <source>Have subobject</source>
         <translation>Posiada podobiekt</translation>
@@ -926,12 +936,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="geometrywidget.ui" line="50"/>
         <source>Is geometry of</source>
-        <translation>Jest częścią geometrii</translation>
+        <translation>Geometria jest częścią</translation>
     </message>
     <message>
         <location filename="geometrywidget.ui" line="55"/>
         <source>Is not geometry of</source>
-        <translation>Nie jest częścią geometrii</translation>
+        <translation>Geometria nie jest częścią</translation>
     </message>
     <message>
         <source>Object have multiple relations</source>
