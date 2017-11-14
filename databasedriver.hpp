@@ -96,6 +96,8 @@ class DatabaseDriver : public QObject
 		int Type;
 
 		QVariant Geometry;
+
+		unsigned Mask = 0;
 	};
 
 	private:
@@ -170,22 +172,24 @@ class DatabaseDriver : public QObject
 		void convertSurfaceToLine(const QSet<int>& Objects);
 		void convertLineToSurface(const QSet<int>& Objects);
 
-		QList<OBJECT> loadGeometry(const QSet<int>& Limiter = QSet<int>(),
-							  const QList<OBJECT>& Loaded = QList<OBJECT>());
+		QList<OBJECT> loadGeometry(const QSet<int>& Limiter = QSet<int>());
 		SUBOBJECTSTABLE loadSubobjects(void);
 
-		QSet<int> filterDataByLength(const QSet<int>& Data, double Minimum, double Maximum);
-		QSet<int> filterDataBySurface(const QSet<int>& Data, double Minimum, double Maximum);
+		QSet<int> filterDataByLength(const QList<OBJECT>& Data, double Minimum, double Maximum, int Count = 0);
+		QSet<int> filterDataBySurface(const QList<OBJECT>& Data, double Minimum, double Maximum, int Count = 0);
 
-		QSet<int> filterDataByContaining(const QList<OBJECT>& Data, const QList<OBJECT>& Objects,
-								   double Radius = 0.001, bool Not = false);
-		QSet<int> filterDataByEndswith(const QList<OBJECT>& Data, const QList<OBJECT>& Objects,
-								 double Radius = 0.001, bool Not = false);
+		QSet<int> filterDataByIspartof(const QList<OBJECT>& Data, double Radius = 0.001, bool Not = false, int Count = 0);
+		QSet<int> filterDataByContaining(const QList<OBJECT>& Data, double Radius = 0.001, bool Not = false, int Count = 0);
+		QSet<int> filterDataByEndswith(const QList<OBJECT>& Data, double Radius = 0.001, bool Not = false, int Count = 0);
+		QSet<int> filterDataByIsnear(const QList<OBJECT>& Data, double Radius = 0.001, bool Not = false, int Count = 0);
 
 		QSet<int> filterDataByIsSubobject(const QSet<int>& Data, const QSet<int>& Objects,
 								    const SUBOBJECTSTABLE& Table, bool Not = false);
 		QSet<int> filterDataByHasSubobject(const QSet<int>& Data, const QSet<int>& Objects,
 									const SUBOBJECTSTABLE& Table, bool Not = false);
+
+		QSet<int> filterDataByHasGeoemetry(const QSet<int>& Data, const QSet<int>& Types);
+		QSet<int> filterDataByHasMulrel(const QSet<int>& Data);
 
 		int insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius);
 

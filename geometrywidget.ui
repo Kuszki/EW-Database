@@ -122,7 +122,12 @@
      </item>
      <item>
       <property name="text">
-       <string>Object have multiple relations</string>
+       <string>Object has circle geometry</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object has multiple relations</string>
       </property>
      </item>
     </widget>

@@ -433,15 +433,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 {
 	if (!Database.isOpen()) return Data; QSet<int> Filtered = Data.keys().toSet(); QHash<int, QHash<int, QVariant>> Res;
 
-	const auto createLimitList = [] (QList<OBJECT>* Current, const QList<OBJECT>* All, const QStringList& Classes)
-	{
-		for (const auto& Object : *All) if (Classes.contains("*") || Classes.contains(Object.Class))
-		{
-			Current->append(Object);
-		}
-	};
-
-	const auto createSubsListIs = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes)
+	const auto createSubsListIs = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes) -> void
 	{
 		for (const auto& Object : *All) if (Classes.contains("*") || Classes.contains(Object.first.second))
 		{
@@ -449,13 +441,16 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 		}
 	};
 
-	const auto createSubsListHas = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes)
+	const auto createSubsListHas = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes) -> void
 	{
 		for (const auto& Object : *All) if (Classes.contains("*") || Classes.contains(Object.second.second))
 		{
 			Current->insert(Object.second.first);
 		}
 	};
+
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, 0);
 
 	QFile File(Limiter); QTextStream Stream(&File); QSet<int> Limit;
 
@@ -472,35 +467,64 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 			if (Query.exec() && Query.next()) Limit.insert(Query.value(0).toInt());
 		}
 	}
-
-	bool loadG(false); for (int i = 4; i <= 11; ++i) loadG = loadG || Geometry.contains(i);
-	bool loadR(false); for (int i = 12; i <= 15; ++i) loadR = loadR || Geometry.contains(i);
-
-	const auto Current = loadG ? loadGeometry(Data.keys().toSet()) : QList<OBJECT>();
-	const auto Pool = loadG ? loadGeometry(Limit, Current) : QList<OBJECT>();
-	const auto Subs = loadR ? loadSubobjects() : SUBOBJECTSTABLE();
-
-	QFutureSynchronizer<void> Synchronizer; QHash<int, QList<OBJECT>> Limits; QSet<int> Subsl[4];
-
-	if (loadG) for (int i = 4; i <= 11; ++i) if (Geometry.contains(i)) Limits.insert(i, QList<OBJECT>());
-
-	for (auto i = Limits.begin(); i != Limits.end(); ++i)
+	else
 	{
-		Synchronizer.addFuture(QtConcurrent::run(createLimitList, &i.value(), &Pool, Geometry[i.key()].toStringList()));
+		QSqlQuery Query(Database); Query.setForwardOnly(true); QStringList All;
+
+		for (int i = 4; i <= 15; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
+
+		const QString Str = "SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND KOD IN ('%1')";
+
+		if (Query.exec(Str.arg(All.join("', '")))) while (Query.next())
+		{
+			Limit.insert(Query.value(0).toInt());
+		}
 	}
 
-	if (Geometry.contains(12)) Synchronizer.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[0], &Subs, Geometry[12].toStringList()));
-	if (Geometry.contains(13)) Synchronizer.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[1], &Subs, Geometry[13].toStringList()));
+	bool loadG(false); for (int i = 0; i <= 11; ++i) loadG = loadG || Geometry.contains(i);
+	bool loadR(false); for (int i = 12; i <= 15; ++i) loadR = loadR || Geometry.contains(i);
 
-	if (Geometry.contains(14)) Synchronizer.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[2], &Subs, Geometry[14].toStringList()));
-	if (Geometry.contains(15)) Synchronizer.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[3], &Subs, Geometry[15].toStringList()));
+	auto Geom = loadG ? loadGeometry(Limit.isEmpty() ? QSet<int>() : (Filtered | Limit)) : QList<OBJECT>();
+	const auto Subs = loadR ? loadSubobjects() : SUBOBJECTSTABLE(); QSet<int> Subsl[4]; QSet<int> Types;
+	const int originSize = Filtered.size(); QFutureSynchronizer<void> Synch;
+
+	if (Geometry.contains(12)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[0], &Subs, Geometry[12].toStringList()));
+	if (Geometry.contains(13)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[1], &Subs, Geometry[13].toStringList()));
+	if (Geometry.contains(14)) Synch.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[2], &Subs, Geometry[14].toStringList()));
+	if (Geometry.contains(15)) Synch.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[3], &Subs, Geometry[15].toStringList()));
+
+	if (loadG) Synch.addFuture(QtConcurrent::map(Geom, [&Geometry, &Filtered, &Limit] (OBJECT& Obj) -> void
+	{
+		const auto hasClass = [] (const QVariant& V, const QString& C) -> bool
+		{
+			const auto L = V.toStringList(); return L.contains(C) || L.contains("*");
+		};
+
+		if (Filtered.contains(Obj.UID)) Obj.Mask |= 0b01;
+		if (Limit.isEmpty() || Limit.contains(Obj.UID)) Obj.Mask |= 0b10;
+
+		for (int i = 4; i <= 11; ++i) if (Geometry.contains(i))
+		{
+			if (hasClass(Geometry[i], Obj.Class))
+			{
+				Obj.Mask |= (1 << i);
+			}
+		}
+	}));
+
+	if (Geometry.contains(100)) for (const auto& ID : Geometry[100].toList()) Types.insert(ID.toInt());
+
+	Synch.waitForFinished();
+
+	emit onBeginProgress(tr("Applying filters"));
+	emit onSetupProgress(0, 0);
 
 	if (Geometry.contains(0) || Geometry.contains(1))
 	{
 		const double Min = Geometry.contains(0) ? Geometry[0].toDouble() : 0.0;
 		const double Max = Geometry.contains(1) ? Geometry[1].toDouble() : INFINITY;
 
-		Filtered = filterDataByLength(Filtered, Min, Max);
+		Filtered = Filtered.intersect(filterDataByLength(Geom, Min, Max, originSize));
 	}
 
 	if (Geometry.contains(2) || Geometry.contains(3))
@@ -508,22 +532,30 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 		const double Min = Geometry.contains(2) ? Geometry[2].toDouble() : 0.0;
 		const double Max = Geometry.contains(3) ? Geometry[3].toDouble() : INFINITY;
 
-		Filtered = filterDataBySurface(Filtered, Min, Max);
+		Filtered = Filtered.intersect(filterDataBySurface(Geom, Min, Max, originSize));
 	}
 
-	Synchronizer.waitForFinished();
+	if (Geometry.contains(4)) Filtered = Filtered.intersect(filterDataByIspartof(Geom, Radius, false, originSize));
+	if (Geometry.contains(5)) Filtered = Filtered.intersect(filterDataByIspartof(Geom, Radius, true, originSize));
 
-	if (Geometry.contains(6)) Filtered = Filtered.intersect(filterDataByContaining(Current, Limits[6], Radius, false));
-	if (Geometry.contains(7)) Filtered = Filtered.intersect(filterDataByContaining(Current, Limits[7], Radius, true));
+	if (Geometry.contains(6)) Filtered = Filtered.intersect(filterDataByContaining(Geom, Radius, false, originSize));
+	if (Geometry.contains(7)) Filtered = Filtered.intersect(filterDataByContaining(Geom, Radius, true, originSize));
 
-	if (Geometry.contains(8)) Filtered = Filtered.intersect(filterDataByEndswith(Current, Limits[8], Radius, false));
-	if (Geometry.contains(9)) Filtered = Filtered.intersect(filterDataByEndswith(Current, Limits[9], Radius, true));
+	if (Geometry.contains(8)) Filtered = Filtered.intersect(filterDataByEndswith(Geom, Radius, false, originSize));
+	if (Geometry.contains(9)) Filtered = Filtered.intersect(filterDataByEndswith(Geom, Radius, true, originSize));
+
+	if (Geometry.contains(10)) Filtered = Filtered.intersect(filterDataByIsnear(Geom, Radius, false, originSize));
+	if (Geometry.contains(11)) Filtered = Filtered.intersect(filterDataByIsnear(Geom, Radius, true, originSize));
 
 	if (Geometry.contains(12)) Filtered = Filtered.intersect(filterDataByHasSubobject(Filtered, Subsl[0], Subs, false));
 	if (Geometry.contains(13)) Filtered = Filtered.intersect(filterDataByHasSubobject(Filtered, Subsl[1], Subs, true));
 
 	if (Geometry.contains(14)) Filtered = Filtered.intersect(filterDataByIsSubobject(Filtered, Subsl[2], Subs, false));
 	if (Geometry.contains(15)) Filtered = Filtered.intersect(filterDataByIsSubobject(Filtered, Subsl[3], Subs, true));
+
+	if (Geometry.contains(20)) Filtered = Filtered.intersect(filterDataByHasMulrel(Filtered));
+
+	if (Geometry.contains(100)) Filtered = Filtered.intersect(filterDataByHasGeoemetry(Filtered, Types));
 
 	for (const auto& UID : Filtered) Res.insert(UID, Data[UID]); return Res;
 }
@@ -4780,17 +4812,17 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 	}
 }
 
-QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limiter, const QList<DatabaseDriver::OBJECT>& Loaded)
+QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limiter)
 {
-	if (!Database.isOpen()) return QList<OBJECT>(); QList<OBJECT> Objects = Loaded;
+	if (!Database.isOpen()) return QList<OBJECT>(); QHash<int, OBJECT> Objects;
 
-	QSet<int> Used; for (const auto& O : Loaded) Used.insert(O.UID);
+	QSqlQuery selectPoint(Database), selectLine(Database); emit onSetupProgress(0, 0);
 
-	QSqlQuery selectPoint(Database), selectLine(Database);
+	selectPoint.setForwardOnly(true); selectLine.setForwardOnly(true);
 
 	selectPoint.prepare(
 		"SELECT "
-			"P.POS_X, P.POS_Y "
+			"O.UID, O.ID, O.KOD, P.POS_X, P.POS_Y "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -4802,13 +4834,14 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
-			"O.UID = ? AND "
+			"O.STATUS = 0 AND "
 			"P.STAN_ZMIANY = 0 AND "
 			"P.TYP = 4 AND "
 			"E.TYP = 0");
 
 	selectLine.prepare(
 		"SELECT "
+			"O.UID, O.ID, O.KOD, O.RODZAJ, "
 			"P.P1_FLAGS, P.P0_X, P.P0_Y, "
 			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
 			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
@@ -4823,87 +4856,76 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 		"ON "
 			"E.IDE = P.ID "
 		"WHERE "
-			"O.UID = ? AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0 "
 		"ORDER BY "
+			"E.UIDO ASCENDING,"
 			"E.N ASCENDING");
 
-	if (Limiter.isEmpty())
+	if (selectPoint.exec()) while (selectPoint.next() && !isTerminated())
 	{
-		QSqlQuery Query(Database); Query.setForwardOnly(true);
+		const int UID = selectPoint.value(0).toInt();
 
-		Query.prepare("SELECT UID, ID, KOD, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0");
-
-		if (Query.exec()) while (Query.next() && !isTerminated())
+		if (Limiter.isEmpty() || Limiter.contains(UID))
 		{
-			if (Used.contains(Query.value(0).toInt())) continue;
-
-			Objects.append(
+			Objects.insert(UID,
 			{
-				Query.value(0).toInt(),
-				Query.value(1).toInt(),
-				Query.value(2).toString(),
-				Query.value(3).toInt()
-			});
-		}
-	}
-	else
-	{
-		QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-		Query.prepare("SELECT ID, KOD, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0 AND UID = ?");
-
-		for (const auto& UID : Limiter) if (!isTerminated())
-		{
-			Query.addBindValue(UID);
-
-			if (Query.exec() && Query.next()) Objects.append(
-			{
-				UID,
-				Query.value(0).toInt(),
-				Query.value(1).toString(),
-				Query.value(2).toInt()
+				UID, selectPoint.value(1).toInt(),
+				selectPoint.value(2).toString(), 4,
+				QPointF(selectPoint.value(3).toDouble(),
+					   selectPoint.value(4).toDouble())
 			});
 		}
 	}
 
-	emit onSetupProgress(0, Objects.size()); int Step(0);
-
-	for (auto& Obj : Objects)
+	if (selectLine.exec()) while (selectLine.next() && !isTerminated())
 	{
-		if (!Used.contains(Obj.UID) && !isTerminated()) switch (Obj.Type)
-		{
-			case 2:
-			{
-				selectLine.addBindValue(Obj.UID); QVariantList List;
+		const int UID = selectLine.value(0).toInt();
 
-				if (selectLine.exec()) while (selectLine.next())
+		if (Limiter.isEmpty() || Limiter.contains(UID))
+		{
+			const int Type = selectLine.value(3).toInt();
+
+			if (!Objects.contains(UID)) Objects.insert(UID,
+			{
+				UID, selectLine.value(1).toInt(),
+				selectLine.value(2).toString(), Type,
+				(Type == 2) ? QVariant(QVariant::List) :
+				(Type == 3) ? QVariant(QVariant::PolygonF) :
+				QVariant()
+			});
+
+			OBJECT& Obj = Objects[UID];
+
+			switch (Type)
+			{
+				case 2:
 				{
-					if (selectLine.value(0).toInt() == 4) continue;
+					if (selectLine.value(4).toInt() != 4)
+					{
+						QVariantList List = Obj.Geometry.toList();
 
-					List.append(QLineF(selectLine.value(1).toDouble(),
-								    selectLine.value(2).toDouble(),
-								    selectLine.value(3).toDouble(),
-								    selectLine.value(4).toDouble()));
+						List.append(QLineF(selectLine.value(5).toDouble(),
+									    selectLine.value(6).toDouble(),
+									    selectLine.value(7).toDouble(),
+									    selectLine.value(8).toDouble()));
+
+						Obj.Geometry = List;
+					}
 				}
-
-				Obj.Geometry = List;
-			}
-			break;
-			case 3:
-			{
-				selectLine.addBindValue(Obj.UID); QPolygonF Polygon;
-
-				if (selectLine.exec()) while (selectLine.next())
+				break;
+				case 3:
 				{
-					const QPointF A(selectLine.value(1).toDouble(),
-								 selectLine.value(2).toDouble());
+					QPolygonF Polygon = Obj.Geometry.value<QPolygonF>();
 
-					const QPointF B(selectLine.value(3).toDouble(),
-								 selectLine.value(4).toDouble());
+					const QPointF A(selectLine.value(5).toDouble(),
+								 selectLine.value(6).toDouble());
 
-					if (selectLine.value(0).toInt() == 4)
+					const QPointF B(selectLine.value(7).toDouble(),
+								 selectLine.value(8).toDouble());
+
+					if (selectLine.value(4).toInt() == 4)
 					{
 						Obj.Geometry = QLineF(A, B);
 					}
@@ -4930,28 +4952,15 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 							Polygon.push_front(A);
 						}
 					}
-				}
 
-				if (!Polygon.isEmpty()) Obj.Geometry = Polygon;
-			}
-			break;
-			case 4:
-			{
-				selectPoint.addBindValue(Obj.UID);
-
-				if (selectPoint.exec() && selectPoint.next())
-				{
-					Obj.Geometry = QPointF(selectPoint.value(0).toDouble(),
-									   selectPoint.value(1).toDouble());
+					if (!Polygon.isEmpty()) Obj.Geometry = Polygon;
 				}
+				break;
 			}
-			break;
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
-	return Objects;
+	return Objects.values();
 }
 
 DatabaseDriver::SUBOBJECTSTABLE DatabaseDriver::loadSubobjects(void)
@@ -4993,152 +5002,181 @@ DatabaseDriver::SUBOBJECTSTABLE DatabaseDriver::loadSubobjects(void)
 	return List;
 }
 
-QSet<int> DatabaseDriver::filterDataByLength(const QSet<int>& Data, double Minimum, double Maximum)
+QSet<int> DatabaseDriver::filterDataByLength(const QList<OBJECT>& Data, double Minimum, double Maximum, int Count)
 {
-	if (!Database.isOpen()) return Data; QSet<int> Filtered;
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-	emit onSetupProgress(0, Data.size()); int Step(0);
-
-	Query.prepare(
-		"SELECT "
-			"P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"E.TYP = 0 AND "
-			"P.P1_FLAGS <> 4 AND "
-			"P.STAN_ZMIANY = 0");
-
-	for (const auto& UID : Data) if (!isTerminated())
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const OBJECT& Object) -> void
 	{
-		Query.addBindValue(UID); double Length(0.0);
+		if (!(Object.Mask & 0b1)) return; double L(0.0);
 
-		if (Query.exec()) while (Query.next())
+		if (Object.Geometry.type() == QVariant::PolygonF)
 		{
-			const QLineF Line(Query.value(0).toDouble(),
-						   Query.value(1).toDouble(),
-						   Query.value(2).toDouble(),
-						   Query.value(3).toDouble());
+			const auto P = Object.Geometry.value<QPolygonF>();
 
-			Length += Line.length();
-		}
-
-		if (Length >= Minimum && Length <= Maximum)
-		{
-			Filtered.insert(UID);
-		}
-	}
-
-	return Filtered;
-}
-
-QSet<int> DatabaseDriver::filterDataBySurface(const QSet<int>& Data, double Minimum, double Maximum)
-{
-	if (!Database.isOpen()) return Data; QSet<int> Filtered;
-
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-	emit onSetupProgress(0, Data.size()); int Step(0);
-
-	Query.prepare(
-		"SELECT "
-			"P.P1_FLAGS, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.RODZAJ = 3 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 "
-		"ORDER BY "
-			"E.N ASCENDING");
-
-	for (const auto& UID : Data) if (!isTerminated())
-	{
-		Query.addBindValue(UID); QPolygonF Polygon; double Surface(0.0);
-
-		if (Query.exec()) while (Query.next())
-		{
-			const QPointF A(Query.value(1).toDouble(),
-						 Query.value(2).toDouble());
-
-			const QPointF B(Query.value(3).toDouble(),
-						 Query.value(4).toDouble());
-
-			if (Query.value(0).toInt() == 4)
+			for (int i = 1; i < P.size(); ++i)
 			{
-				const double r = A.x() - B.x();
-
-				Surface += M_PI * r * r;
+				L += QLineF(P[i - 1], P[i]).length();
 			}
-			else
+		}
+		else if (Object.Geometry.type() == QVariant::List)
+		{
+			for (const auto& P : Object.Geometry.toList())
 			{
-				if (Polygon.isEmpty())
-				{
-					Polygon.append(A); Polygon.append(B);
-				}
-				else if (Polygon.last() == A)
-				{
-					Polygon.push_back(B);
-				}
-				else if (Polygon.last() == B)
-				{
-					Polygon.push_back(A);
-				}
-				else if (Polygon.first() == A)
-				{
-					Polygon.push_front(B);
-				}
-				else if (Polygon.first() == B)
-				{
-					Polygon.push_front(A);
-				}
+				L += P.toLineF().length();
 			}
 		}
 
-		if (!Polygon.isEmpty()) Surface += getSurface(Polygon);
-
-		if (Surface >= Minimum && Surface <= Maximum)
+		if (L >= Minimum && L <= Maximum)
 		{
-			Filtered.insert(UID);
+			Synchronizer.lock();
+			Filtered.insert(Object.UID);
+			Synchronizer.unlock();
 		}
 
+		QMutexLocker Locker(&Synchronizer);
 		emit onUpdateProgress(++Step);
-	}
+	});
 
 	return Filtered;
 }
 
-QSet<int> DatabaseDriver::filterDataByContaining(const QList<DatabaseDriver::OBJECT>& Data, const QList<DatabaseDriver::OBJECT>& Objects, double Radius, bool Not)
+QSet<int> DatabaseDriver::filterDataBySurface(const QList<OBJECT>& Data, double Minimum, double Maximum, int Count)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Data.size());
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Objects, &Step, &Filtered, Radius] (const OBJECT& Object) -> void
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const OBJECT& Object) -> void
 	{
-		if (!this->isTerminated()) for (const auto& Other : Objects)
+		if (!(Object.Mask & 0b1)) return; double L(0.0);
+
+		if (Object.Geometry.type() == QVariant::PolygonF)
+		{
+			L += getSurface(Object.Geometry.value<QPolygonF>());
+		}
+
+		if (L >= Minimum && L <= Maximum)
+		{
+			Synchronizer.lock();
+			Filtered.insert(Object.UID);
+			Synchronizer.unlock();
+		}
+
+		QMutexLocker Locker(&Synchronizer);
+		emit onUpdateProgress(++Step);
+	});
+
+	return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByIspartof(const QList<DatabaseDriver::OBJECT>& Data, double Radius, bool Not, int Count)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
+
+	const unsigned Mask = (Not ? (1 << 5) : (1 << 4)) | 0b10;
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Data, &Step, &Filtered, Radius, Mask] (const OBJECT& Object) -> void
+	{
+		if (!(Object.Mask & 0b1)) return; const QPointF OtherPoint = Object.Geometry.toPointF();
+
+		if (!this->isTerminated()) if (Object.Geometry.type() == QVariant::PointF) for (const auto& Other : Data)
+		{
+			if (Object.UID == Other.UID || (Other.Mask & Mask) != Mask) continue;
+
+			if (Other.Geometry.type() == QVariant::PointF)
+			{
+				const QLineF Distance(OtherPoint, Other.Geometry.toPointF());
+
+				if (Distance.length() <= Radius)
+				{
+					QMutexLocker Locker(&Synchronizer);
+
+					emit onUpdateProgress(++Step);
+					Filtered.insert(Object.UID); return;
+				}
+			}
+			else if (Other.Geometry.type() == QVariant::LineF)
+			{
+				const QLineF Circle = Other.Geometry.toLineF();
+				const QPointF& P = OtherPoint;
+
+				const double R = qAbs(Circle.x1() - Circle.x2());
+				const double X = (Circle.x1() + Circle.x2()) / 2.0;
+				const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+				if ((R + Radius) >= qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)))
+				{
+					QMutexLocker Locker(&Synchronizer);
+
+					emit onUpdateProgress(++Step);
+					Filtered.insert(Object.UID); return;
+				}
+			}
+			else if (Other.Geometry.type() == QVariant::PolygonF)
+			{
+				const QPolygonF Polygon = Other.Geometry.value<QPolygonF>(); bool OK(false);
+
+				if (Polygon.containsPoint(OtherPoint, Qt::OddEvenFill)) OK = true;
+				else for (const auto& ThisPoint : Polygon)
+				{
+					const QLineF Distance(ThisPoint, OtherPoint);
+
+					OK = OK || (Distance.length() <= Radius);
+				}
+
+				if (OK)
+				{
+					QMutexLocker Locker(&Synchronizer);
+
+					emit onUpdateProgress(++Step);
+					Filtered.insert(Object.UID); return;
+				}
+			}
+			else for (const auto& Part : Other.Geometry.toList())
+			{
+				const QLineF Segment = Part.toLineF();
+
+				const QLineF DistanceA(OtherPoint, Segment.p1());
+				const QLineF DistanceB(OtherPoint, Segment.p2());
+
+				if (DistanceA.length() <= Radius || DistanceB.length() <= Radius)
+				{
+					QMutexLocker Locker(&Synchronizer);
+
+					emit onUpdateProgress(++Step);
+					Filtered.insert(Object.UID); return;
+				}
+			}
+		}
+
+		QMutexLocker Locker(&Synchronizer); emit onUpdateProgress(++Step);
+	});
+
+	if (Not)
+	{
+		QSet<int> Return;
+
+		for (const auto& Obj : Data) if (Obj.Mask & 0b1)
+			if (!Filtered.contains(Obj.UID))
+			{
+				Return.insert(Obj.UID);
+			}
+
+		return Return;
+	}
+	else return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByContaining(const QList<DatabaseDriver::OBJECT>& Data, double Radius, bool Not, int Count)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
+
+	const unsigned Mask = (Not ? (1 << 7) : (1 << 6)) | 0b10;
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Data, &Step, &Filtered, Radius, Mask] (const OBJECT& Object) -> void
+	{
+		if (!(Object.Mask & 0b1)) return;
+
+		if (!this->isTerminated()) for (const auto& Other : Data) if ((Other.Mask & Mask) == Mask)
 		{
 			if (Object.UID == Other.UID || Other.Geometry.type() != QVariant::PointF) continue;
 
@@ -5218,7 +5256,7 @@ QSet<int> DatabaseDriver::filterDataByContaining(const QList<DatabaseDriver::OBJ
 	{
 		QSet<int> Return;
 
-		for (const auto& Obj : Objects)
+		for (const auto& Obj : Data) if (Obj.Mask & 0b1)
 			if (!Filtered.contains(Obj.UID))
 			{
 				Return.insert(Obj.UID);
@@ -5229,13 +5267,17 @@ QSet<int> DatabaseDriver::filterDataByContaining(const QList<DatabaseDriver::OBJ
 	else return Filtered;
 }
 
-QSet<int> DatabaseDriver::filterDataByEndswith(const QList<DatabaseDriver::OBJECT>& Data, const QList<DatabaseDriver::OBJECT>& Objects, double Radius, bool Not)
+QSet<int> DatabaseDriver::filterDataByEndswith(const QList<DatabaseDriver::OBJECT>& Data, double Radius, bool Not, int Count)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Data.size());
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Objects, &Step, &Filtered, Radius] (const OBJECT& Object) -> void
+	const unsigned Mask = (Not ? (1 << 9) : (1 << 8)) | 0b10;
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Data, &Step, &Filtered, Radius, Mask] (const OBJECT& Object) -> void
 	{
-		QList<QPointF> Endings; for (const auto& Part : Object.Geometry.toList())
+		if (!(Object.Mask & 0b1)) return; QList<QPointF> Endings;
+
+		for (const auto& Part : Object.Geometry.toList())
 		{
 			const QLineF P = Part.toLineF();
 
@@ -5246,7 +5288,7 @@ QSet<int> DatabaseDriver::filterDataByEndswith(const QList<DatabaseDriver::OBJEC
 			else Endings.append(P.p2());
 		}
 
-		if (!this->isTerminated()) if (Object.Geometry.type() == QVariant::List) for (const auto& Other : Objects)
+		if (!this->isTerminated()) if (Object.Geometry.type() == QVariant::List) for (const auto& Other : Data) if ((Other.Mask & Mask) == Mask)
 		{
 			if (Object.UID == Other.UID || Other.Geometry.type() != QVariant::PointF) continue;
 
@@ -5271,7 +5313,238 @@ QSet<int> DatabaseDriver::filterDataByEndswith(const QList<DatabaseDriver::OBJEC
 	{
 		QSet<int> Return;
 
-		for (const auto& Obj : Objects)
+		for (const auto& Obj : Data) if (Obj.Mask & 0b1)
+			if (!Filtered.contains(Obj.UID))
+			{
+				Return.insert(Obj.UID);
+			}
+
+		return Return;
+	}
+	else return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>& Data, double Radius, bool Not, int Count)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
+
+	const unsigned Mask = (Not ? (1 << 11) : (1 << 10)) | 0b10;
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Data, &Step, &Filtered, Radius, Mask] (const OBJECT& Object) -> void
+	{
+		static const auto pdistance = [] (const QLineF& L, const QPointF& P) -> double
+		{
+			const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+			const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+			const double l = L.length();
+
+			if ((a * a <= l * l + b * b) &&
+			    (b * b <= a * a + l * l))
+			{
+				const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+				const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+				return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+			}
+			else return INFINITY;
+		};
+
+		static const auto ldistance = [pdistance] (const QLineF& A, const QLineF& B) -> double
+		{
+			if (A.intersect(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
+
+			return qMin
+			(
+				qMin(pdistance(A, B.p1()), pdistance(A, B.p2())),
+				qMin(pdistance(B, A.p1()), pdistance(B, A.p2()))
+			);
+		};
+
+		if (!(Object.Mask & 0b1)) return;
+
+		if (!this->isTerminated()) for (const auto& Other : Data) if ((Other.Mask & Mask) == Mask)
+		{
+			if (Object.UID == Other.UID) continue; bool OK(false);
+
+			if (Object.Geometry.type() == QVariant::PointF)
+			{
+				const QPointF ThisPoint = Object.Geometry.toPointF();
+
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					OK = QLineF(ThisPoint, Other.Geometry.toPointF()).length() <= Radius;
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF Circle = Other.Geometry.toLineF();
+					const QPointF& P = ThisPoint;
+
+					const double R = qAbs(Circle.x1() - Circle.x2());
+					const double X = (Circle.x1() + Circle.x2()) / 2.0;
+					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+					OK = (R + Radius) >= qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2));
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF P = Other.Geometry.value<QPolygonF>();
+
+					for (int i = 1; i < P.size(); ++i)
+					{
+						OK = OK || (pdistance(QLineF(P[i - 1], P[i]), ThisPoint) <= Radius);
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					OK = OK || (pdistance(Part.toLineF(), ThisPoint) <= Radius);
+				}
+			}
+			else if (Object.Geometry.type() == QVariant::LineF)
+			{
+				const QLineF Circle = Object.Geometry.toLineF();
+
+				const double R = qAbs(Circle.x1() - Circle.x2());
+				const double X = (Circle.x1() + Circle.x2()) / 2.0;
+				const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+				const QPointF ThisPoint = QPointF(X, Y);
+
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					const QPointF P = Other.Geometry.toPointF();
+
+					OK = (R + Radius) >= qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2));
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF OtherCircle = Other.Geometry.toLineF();
+
+					const double OR = qAbs(OtherCircle.x1() - OtherCircle.x2());
+					const double OX = (OtherCircle.x1() + OtherCircle.x2()) / 2.0;
+					const double OY = (OtherCircle.y1() + OtherCircle.y2()) / 2.0;
+
+					OK = (R + OR + Radius) >= QLineF(X, Y, OX, OY).length();
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF P = Other.Geometry.value<QPolygonF>();
+
+					for (int i = 1; i < P.size(); ++i)
+					{
+						OK = OK || (pdistance(QLineF(P[i - 1], P[i]), ThisPoint) <= (Radius + R));
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					OK = OK || (pdistance(Part.toLineF(), ThisPoint) <= (Radius + R));
+				}
+			}
+			else if (Object.Geometry.type() == QVariant::PolygonF)
+			{
+				const QPolygonF Polygon = Object.Geometry.value<QPolygonF>();
+
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					const QPointF P = Other.Geometry.toPointF();
+
+					for (int i = 1; i < Polygon.size(); ++i)
+					{
+						OK = OK || (pdistance(QLineF(Polygon[i - 1], Polygon[i]), P) <= Radius);
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF Circle = Other.Geometry.toLineF();
+
+					const double R = qAbs(Circle.x1() - Circle.x2());
+					const double X = (Circle.x1() + Circle.x2()) / 2.0;
+					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+					const QPointF Point = QPointF(X, Y);
+
+					for (int i = 1; i < Polygon.size(); ++i)
+					{
+						OK = OK || (pdistance(QLineF(Polygon[i - 1], Polygon[i]), Point) <= (Radius + R));
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
+
+					for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
+					{
+						OK = OK || (ldistance(QLineF(Polygon[i - 1], Polygon[i]), QLineF(OP[j - 1], OP[j])) <= Radius);
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					for (int i = 1; i < Polygon.size(); ++i)
+					{
+						OK = OK || (ldistance(QLineF(Polygon[i - 1], Polygon[i]), Part.toLineF()) <= Radius);
+					}
+				}
+			}
+			else if (Object.Geometry.type() == QVariant::List)
+			{
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					const QPointF Point = Other.Geometry.toPointF();
+
+					for (const auto& Part : Object.Geometry.toList())
+					{
+						OK = OK || (pdistance(Part.toLineF(), Point) <= Radius);
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF Circle = Other.Geometry.toLineF();
+
+					const double R = qAbs(Circle.x1() - Circle.x2());
+					const double X = (Circle.x1() + Circle.x2()) / 2.0;
+					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+					const QPointF Point = QPointF(X, Y);
+
+					for (const auto& Part : Object.Geometry.toList())
+					{
+						OK = OK || (pdistance(Part.toLineF(), Point) <= (Radius + R));
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
+
+					for (const auto& Part : Object.Geometry.toList()) for (int j = 1; j < OP.size(); ++j)
+					{
+						OK = OK || (ldistance(Part.toLineF(), QLineF(OP[j - 1], OP[j])) <= Radius);
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					for (const auto& This : Object.Geometry.toList())
+					{
+						OK = OK || (ldistance(This.toLineF(), Part.toLineF()) <= Radius);
+					}
+				}
+			}
+
+			if (OK)
+			{
+				QMutexLocker Locker(&Synchronizer);
+
+				emit onUpdateProgress(++Step);
+				Filtered.insert(Object.UID); return;
+			}
+		}
+
+		QMutexLocker Locker(&Synchronizer); emit onUpdateProgress(++Step);
+	});
+
+	if (Not)
+	{
+		QSet<int> Return;
+
+		for (const auto& Obj : Data) if (Obj.Mask & 0b1)
 			if (!Filtered.contains(Obj.UID))
 			{
 				Return.insert(Obj.UID);
@@ -5284,13 +5557,11 @@ QSet<int> DatabaseDriver::filterDataByEndswith(const QList<DatabaseDriver::OBJEC
 
 QSet<int> DatabaseDriver::filterDataByIsSubobject(const QSet<int>& Data, const QSet<int>& Objects, const SUBOBJECTSTABLE& Table, bool Not)
 {
-	if (!Database.isOpen()) return Data; QSet<int> Filtered;
-
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	emit onSetupProgress(0, Table.size()); int Step(0); QSet<int> Filtered;
 
 	for (const auto& R : Table) if (Objects.contains(R.first.first))
 	{
-		Filtered.insert(R.second.first);
+		Filtered.insert(R.second.first); emit onUpdateProgress(++Step);
 	}
 
 	if (Not) return QSet<int>(Data).subtract(Filtered);
@@ -5299,17 +5570,86 @@ QSet<int> DatabaseDriver::filterDataByIsSubobject(const QSet<int>& Data, const Q
 
 QSet<int> DatabaseDriver::filterDataByHasSubobject(const QSet<int>& Data, const QSet<int>& Objects, const DatabaseDriver::SUBOBJECTSTABLE& Table, bool Not)
 {
-	if (!Database.isOpen()) return Data; QSet<int> Filtered;
-
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	emit onSetupProgress(0, Table.size()); int Step(0); QSet<int> Filtered;
 
 	for (const auto& R : Table) if (Objects.contains(R.second.first))
 	{
-		Filtered.insert(R.first.first);
+		Filtered.insert(R.first.first); emit onUpdateProgress(++Step);
 	}
 
 	if (Not) return QSet<int>(Data).subtract(Filtered);
 	else return Filtered.intersect(Data);
+}
+
+QSet<int> DatabaseDriver::filterDataByHasGeoemetry(const QSet<int>& Data, const QSet<int>& Types)
+{
+	static const QSet<int> Common = { 2, 3, 4 }; QSet<int> Filtered;
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	emit onSetupProgress(0, 0);
+
+	Query.prepare("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0");
+
+	if (Common.intersects(Types)) if (Query.exec()) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+		const int Type = Query.value(1).toInt();
+
+		if (Types.contains(Type)) Filtered.insert(UID);
+	}
+
+	if (!Types.contains(100)) return QSet<int>(Data).intersect(Filtered);
+
+	Query.prepare("SELECT DISTINCT O.UID FROM EW_OBIEKTY O "
+			    "INNER JOIN EW_OB_ELEMENTY E ON O.UID = E.UIDO "
+			    "INNER JOIN EW_POLYLINE P ON E.IDE = P.ID "
+			    "WHERE "
+			    "O.STATUS = 0 AND E.TYP = 0 AND "
+			    "P.STAN_ZMIANY = 0 AND P.P1_FLAGS = 4");
+
+	if (Query.exec()) while (Query.next())
+	{
+		Filtered.insert(Query.value(0).toInt());
+	}
+
+	return QSet<int>(Data).intersect(Filtered);
+}
+
+QSet<int> DatabaseDriver::filterDataByHasMulrel(const QSet<int>& Data)
+{
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	emit onSetupProgress(0, 0); QSet<int> Filtered;
+
+	Query.prepare(
+		"SELECT "
+			"S.UID "
+		"FROM "
+			"EW_OBIEKTY S "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"S.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY D "
+		"ON "
+			"D.UID = E.UIDO "
+		"WHERE "
+			"S.STATUS = 0 AND "
+			"E.TYP = 1 AND "
+			"D.STATUS = 0 "
+		"GROUP BY "
+			"S.UID "
+		"HAVING "
+			"COUNT(D.UID) > 1");
+
+	if (Query.exec()) while (Query.next())
+	{
+		Filtered.insert(Query.value(0).toInt());
+	}
+
+	return QSet<int>(Data).intersect(Filtered);
 }
 
 int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius)

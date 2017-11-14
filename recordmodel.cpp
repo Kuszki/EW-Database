@@ -1,4 +1,4 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -191,8 +191,7 @@ void RecordModel::GroupObject::sortChilds(const RecordModel::SortObject& Functor
 	Synchronizer.addFuture(QtConcurrent::run(Sort, Childs.begin(), Childs.end(), Functor));
 }
 
-RecordModel::SortObject::SortObject(int Column, bool Ascending)
-: Index(Column), Mode(Ascending) {}
+RecordModel::SortObject::SortObject(int Column, bool Ascending) : Index(Column), Mode(Ascending) {}
 
 bool RecordModel::SortObject::operator () (RecordModel::RecordObject* First, RecordModel::RecordObject* Second) const
 {
@@ -207,10 +206,12 @@ bool RecordModel::SortObject::operator () (RecordModel::RecordObject* First, Rec
 }
 
 RecordModel::RecordModel(const QStringList& Head, QObject* Parent)
-	: QAbstractItemModel(Parent), Header(Head), Locker(QMutex::Recursive) {}
+: QAbstractItemModel(Parent), Header(Head), Locker(QMutex::Recursive) {}
 
 RecordModel::~RecordModel(void)
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	for (auto& Object : Objects) delete Object;
 }
 
@@ -370,7 +371,7 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 
 	beginResetModel();
 
-	if (!Root) __gnu_parallel::sort(Objects.begin(), Objects.end(), Sort);
+	if (!Root) std::stable_sort(Objects.begin(), Objects.end(), Sort);
 	else
 	{
 		QFutureSynchronizer<void> Synchronizer;
@@ -481,6 +482,8 @@ QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
 
 QList<int> RecordModel::getUids(void) const
 {
+	QMutexLocker Synchronizer(&Locker);
+
 	QList<int> Uids; Uids.reserve(Objects.size());
 
 	for (const auto& O : Objects) Uids.append(O->getUid());
@@ -596,7 +599,14 @@ bool RecordModel::isGrouped(void) const
 
 bool RecordModel::exists(int Index) const
 {
-	for (const auto& Item : Objects) if (Item->getUid() == Index) return true; return false;
+	QMutexLocker Synchronizer(&Locker);
+
+	for (const auto& Item : Objects)
+	{
+		if (Item->getUid() == Index) return true;
+	}
+
+	return false;
 }
 
 QModelIndex RecordModel::index(int Index) const
