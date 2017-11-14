@@ -118,7 +118,8 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			"O.KOD, O.OPIS, O.DANE_DOD, O.OPCJE, "
 			"F.NAZWA, F.TYTUL, F.TYP, "
 			"D.WARTOSC, D.OPIS, "
-			"BIN_AND(O.OPCJE, 266) "
+			"BIN_AND(O.OPCJE, 266),"
+			"S.WYPELNIENIE "
 		"FROM "
 			"EW_OB_OPISY O "
 		"INNER JOIN "
@@ -159,7 +160,8 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 		{
 			TYPE(Query.value(6).toInt()),
 			Field,
-			Query.value(5).toString()
+			Query.value(5).toString(),
+			Query.value(10).toInt() == 2
 		});
 
 		auto& Fieldref = getItemByField(Tabref.Fields, Field, &FIELD::Name);
@@ -189,7 +191,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 
 	Query.prepare(
 		"SELECT "
-			"D.NAZWA, D.TYTUL, D.TYP "
+			"D.NAZWA, D.TYTUL, D.TYP, D.WYPELNIENIE "
 		"FROM "
 			"EW_OB_DDSTR D "
 		"WHERE "
@@ -206,6 +208,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 			TYPE(Query.value(2).toInt()),
 			QString("EW_DATA.%1").arg(Query.value(0).toString()),
 			Query.value(1).toString(),
+			Query.value(3).toInt() == 2,
 			loadDict(Data, Table)
 		});
 

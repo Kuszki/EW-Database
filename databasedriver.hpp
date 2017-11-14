@@ -72,6 +72,8 @@ class DatabaseDriver : public QObject
 		QString Name;
 		QString Label;
 
+		bool Missing;
+
 		QMap<QVariant, QString> Dict;
 	};
 
