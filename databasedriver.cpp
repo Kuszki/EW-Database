@@ -3379,8 +3379,8 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 	{
 		Lines.append(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble(),
+			Query.value(0).toInt(),
+			Query.value(1).toInt(),
 			Query.value(2).toDouble(),
 			Query.value(3).toDouble(),
 			Query.value(4).toDouble(),
@@ -3430,7 +3430,7 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			Query.value(2).toDouble(),
 			Query.value(3).toDouble(),
 			0.0,
-			Query.value(4).toDouble()
+			Query.value(4).toUInt()
 		});
 	}
 
@@ -4155,7 +4155,7 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 			selectQuery.value(1).toInt(), NAN, NAN,
 			selectQuery.value(2).toDouble(),
 			selectQuery.value(3).toDouble(),
-			selectQuery.value(4).toInt(),
+			selectQuery.value(4).toUInt(),
 			selectQuery.value(5),
 			selectQuery.value(6),
 		});
@@ -4633,7 +4633,7 @@ void DatabaseDriver::convertSurfaceToPoint(const QSet<int>& Objects, const QStri
 
 	for (const auto UID : Objects) if (!Used.contains(UID))
 	{
-		QList<int> IDES; QList<QPointF> Polygon; int Opr; double X(0.0), Y(0.0);
+		QList<int> IDES; QList<QPointF> Polygon; int Opr(0); double X(0.0), Y(0.0);
 
 		selectLinesQuery.addBindValue(UID);
 
@@ -5389,7 +5389,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 			else return INFINITY;
 		};
 
-		static const auto ldistance = [pdistance] (const QLineF& A, const QLineF& B) -> double
+		static const auto ldistance = [&pdistance] (const QLineF& A, const QLineF& B) -> double
 		{
 			if (A.intersect(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
 
