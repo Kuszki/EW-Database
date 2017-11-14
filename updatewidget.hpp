@@ -24,11 +24,13 @@
 #include <QStandardItemModel>
 #include <QDoubleSpinBox>
 #include <QDateTimeEdit>
+#include <QActionGroup>
 #include <QListWidget>
 #include <QComboBox>
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QWidget>
+#include <QMenu>
 
 #include "databasedriver.hpp"
 
@@ -47,6 +49,9 @@ class UpdateWidget : public QWidget
 		QWidget* Widget = nullptr;
 		Ui::UpdateWidget* ui;
 
+		QActionGroup* Group = nullptr;
+		QMenu* Menu = nullptr;
+
 		QVariant Default;
 		int Index = 0;
 
@@ -59,9 +64,13 @@ class UpdateWidget : public QWidget
 		QVariant getValue(void) const;
 		QString getLabel(void) const;
 
+		int getNullreason(void) const;
+
 		int getIndex(void) const;
 
 	private slots:
+
+		void menuRequested(const QPoint& Pos);
 
 		void textChanged(const QString& Text);
 

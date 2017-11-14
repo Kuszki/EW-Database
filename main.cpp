@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 	qRegisterMetaType<QMap<QString,QString>>("QMap<QString,QString>");
 	qRegisterMetaType<QList<QStringList>>("QList<QStringList>");
 	qRegisterMetaType<QModelIndexList>("QModelIndexList");
+	qRegisterMetaType<QHash<int,int>>("QHash<int,int>");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<QList<int>>("QList<int>");
 

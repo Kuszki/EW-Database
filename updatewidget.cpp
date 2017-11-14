@@ -24,9 +24,27 @@
 UpdateWidget::UpdateWidget(int ID, const DatabaseDriver::FIELD& Field, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::UpdateWidget)
 {
+	Group = new QActionGroup(this); Menu = new QMenu(this);
+
+	int i(0); for (const auto& Title : DatabaseDriver::nullReasons())
+	{
+		QAction* A = new QAction(Title, this);
+
+		A->setCheckable(true);
+		A->setData(i++);
+
+		Group->addAction(A);
+		Menu->addAction(A);
+
+		if (i == 1) Menu->addSeparator();
+	}
+
+	Group->actions().first()->setChecked(true); Group->setExclusive(true);
+
 	ui->setupUi(this); setParameters(ID, Field); toggleWidget();
 
 	connect(ui->Field, &QCheckBox::toggled, this, &UpdateWidget::onStatusChanged);
+	connect(ui->nullButton, &QToolButton::customContextMenuRequested, this, &UpdateWidget::menuRequested);
 }
 
 UpdateWidget::~UpdateWidget(void)
@@ -38,8 +56,20 @@ QString UpdateWidget::getAssigment(void) const
 {
 	const QVariant Value = getValue();
 
-	if (Value.isNull()) return QString("%1 = NULL").arg(objectName());
-	else return QString("%1 = '%2'").arg(objectName(), Value.toString());
+	if (!Value.isNull()) return QString("%1 = '%2'").arg(objectName(), Value.toString());
+	else
+	{
+		if (ui->nullButton->contextMenuPolicy() == Qt::NoContextMenu)
+		{
+			return QString("%1 = NULL").arg(objectName());
+		}
+		else
+		{
+			const int Reason = Group->checkedAction()->data().toInt();
+
+			return QString("%1 = NULL, %1_V = '%2'").arg(objectName()).arg(Reason);
+		}
+	}
 }
 
 QVariant UpdateWidget::getValue(void) const
@@ -99,9 +129,19 @@ QString UpdateWidget::getLabel(void) const
 	return ui->Field->text();
 }
 
+int UpdateWidget::getNullreason(void) const
+{
+	return Group->checkedAction()->data().toInt();
+}
+
 int UpdateWidget::getIndex(void) const
 {
 	return Index;
+}
+
+void UpdateWidget::menuRequested(const QPoint& Pos)
+{
+	Menu->popup(ui->nullButton->mapToGlobal(Pos));
 }
 
 void UpdateWidget::textChanged(const QString& Text)
@@ -135,6 +175,8 @@ void UpdateWidget::resetIndex(void)
 void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 {
 	ui->Field->setText(Field.Label); ui->Field->setToolTip(Field.Name); Index = ID;
+
+	ui->nullButton->setContextMenuPolicy(Field.Missing ? Qt::CustomContextMenu : Qt::NoContextMenu);
 
 	if (Widget) Widget->deleteLater(); Widget = nullptr;
 

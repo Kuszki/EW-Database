@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -628,12 +628,12 @@ void MainWindow::updateColumns(const QList<int>& Columns)
 	}
 }
 
-void MainWindow::updateValues(const QHash<int, QVariant>& Values)
+void MainWindow::updateValues(const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel();
 
-	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values, true);
+	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values, Reasons, true);
 }
 
 void MainWindow::loadData(RecordModel* Model)

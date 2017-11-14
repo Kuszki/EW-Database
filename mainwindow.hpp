@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -153,7 +153,8 @@ class MainWindow : public QMainWindow
 
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
-		void updateValues(const QHash<int, QVariant>& Values);
+		void updateValues(const QHash<int, QVariant>& Values,
+					   const QHash<int, int>& Reasons);
 		void refreshData(const QString& Where, const QList<int>& Used,
 					  const QHash<int, QVariant>& Geometry,
 					  const QString& Limiter, double Radius, int Mode);
@@ -233,7 +234,8 @@ class MainWindow : public QMainWindow
 		void onEditRequest(RecordModel*, const QModelIndexList&);
 		void onRemoveRequest(RecordModel*, const QModelIndexList&);
 		void onUpdateRequest(RecordModel*, const QModelIndexList&,
-						 const QHash<int, QVariant>&, bool);
+						 const QHash<int, QVariant>&,
+						 const QHash<int, int>&, bool);
 		void onBatchRequest(RecordModel*, const QModelIndexList&,
 						const QList<QPair<int, BatchWidget::FUNCTION>>&,
 						const QList<QStringList>&);

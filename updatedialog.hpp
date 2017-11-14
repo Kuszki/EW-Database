@@ -55,6 +55,7 @@ class UpdateDialog : public QDialog
 		virtual ~UpdateDialog(void) override;
 
 		QHash<int, QVariant> getUpdatedValues(void) const;
+		QHash<int, int> getNullReasons(void) const;
 
 		bool isDataValid(void) const;
 
@@ -88,7 +89,8 @@ class UpdateDialog : public QDialog
 
 	signals:
 
-		void onValuesUpdate(const QHash<int, QVariant>&);
+		void onValuesUpdate(const QHash<int, QVariant>&,
+						const QHash<int, int>&);
 
 };
 

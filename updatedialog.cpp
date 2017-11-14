@@ -48,6 +48,17 @@ QHash<int, QVariant> UpdateDialog::getUpdatedValues(void) const
 	return List;
 }
 
+QHash<int, int> UpdateDialog::getNullReasons(void) const
+{
+	QHash<int, int> List;
+
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+		if (auto W = qobject_cast<UpdateWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+			if (W->isChecked() && W->getValue().isNull()) List.insert(W->getIndex(), W->getNullreason());
+
+	return List;
+}
+
 bool UpdateDialog::isDataValid(void) const
 {
 	for (const auto& W : Status) if (W->isChecked()) return false; return true;
@@ -113,7 +124,7 @@ void UpdateDialog::dataCheckProgress(bool OK)
 
 void UpdateDialog::accept(void)
 {
-	emit onValuesUpdate(getUpdatedValues()); QDialog::accept();
+	QDialog::accept(); emit onValuesUpdate(getUpdatedValues(), getNullReasons());
 }
 
 void UpdateDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, bool Singletons)

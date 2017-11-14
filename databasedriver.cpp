@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -57,6 +57,19 @@ QString DatabaseDriver::getDatabasePath(void) const
 bool DatabaseDriver::isTerminated(void) const
 {
 	QMutexLocker Locker(&Terminator); return Terminated;
+}
+
+QStringList DatabaseDriver::nullReasons(void)
+{
+	return
+	{
+		tr("Default", "nilreason"),
+		tr("Inapplicable", "nilreason"),
+		tr("Missing", "nilreason"),
+		tr("Template", "nilreason"),
+		tr("Unknown", "nilreason"),
+		tr("Withheld", "nilreason")
+	};
 }
 
 QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
@@ -809,13 +822,14 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QHash<int, QVariant>& Values, bool Emit)
+void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons, bool Emit)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(Model); return; }
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 1);
-	const QSet<int> Used = Values.keys().toSet(); int Step = 0; QStringList All;
-	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	const QSet<int> Used = Values.keys().toSet(); const QSet<int> Nills = Reasons.keys().toSet();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; QStringList All;
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
 	{
@@ -847,23 +861,30 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating special data"));
-	emit onSetupProgress(0, Tasks.first().size());
+	emit onSetupProgress(0, Tasks.first().size() * 2);
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 
-		QStringList Names, Updates;
+		QStringList fieldsNames, fieldsUpdates, nullsUpdates;
 
 		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
 		{
-			Names.append(QString(Fields[Index].Name).remove("EW_DATA."));
+			fieldsNames.append(QString(Fields[Index].Name).remove("EW_DATA."));
 
-			if (Values[Index].isNull()) Updates.append("NULL");
-			else Updates.append(QString("'%1'").arg(Values[Index].toString()));
+			if (Values[Index].isNull()) fieldsUpdates.append("NULL");
+			else fieldsUpdates.append(QString("'%1'").arg(Values[Index].toString()));
 		}
 
-		if (!Updates.isEmpty()) for (const auto& Index : i.value())
+		for (const auto& Index : Nills) if (Table.Indexes.contains(Index))
+		{
+			const QString Name = QString("%1_V").arg(Fields[Index].Name);
+
+			nullsUpdates.append(QString("%1 = '%2'").arg(Name).arg(Reasons[Index]));
+		}
+
+		if (!fieldsUpdates.isEmpty()) for (const auto& Index : i.value())
 		{
 			if (isTerminated()) break;
 
@@ -871,12 +892,28 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
 				"VALUES (%3, %4) MATCHING (UIDO)")
 					 .arg(Table.Data)
-					 .arg(Names.join(", "))
+					 .arg(fieldsNames.join(", "))
 					 .arg(Index)
-					 .arg(Updates.join(", ")));
+					 .arg(fieldsUpdates.join(", ")));
 
 			emit onUpdateProgress(++Step);
 		}
+		else emit onUpdateProgress(Step += i.value().size());
+
+		if (!nullsUpdates.isEmpty()) for (const auto& Index : i.value())
+		{
+			if (isTerminated()) break;
+
+			Query.exec(QString(
+				"UPDATE %1 EW_DATA SET %2 "
+				"WHERE EW_DATA.UIDO = '%3'")
+					 .arg(Table.Data)
+					 .arg(nullsUpdates.join(", "))
+					 .arg(Index));
+
+			emit onUpdateProgress(++Step);
+		}
+		else emit onUpdateProgress(Step += i.value().size());
 	}
 
 	emit onEndProgress(); Step = 0;
@@ -1087,7 +1124,7 @@ void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items,
 
 		if (!isTerminated() && Filtered.size() && Updates.size())
 		{
-			updateData(Model, Filtered, Updates, false); Changes += Filtered.size();
+			updateData(Model, Filtered, Updates, QHash<int, int>(), false); Changes += Filtered.size();
 		}
 	}
 
@@ -2423,7 +2460,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		}
 	}
 
-	if (Dateupdate) updateModDate(Tasks.first(), 0);
+	if (Dateupdate) { ClassQuery.clear(); updateModDate(Tasks.first(), 0); }
 
 	emit onBeginProgress(tr("Updating lines"));
 	emit onSetupProgress(0, Lines.size()); Step = 0;

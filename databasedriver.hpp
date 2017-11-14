@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -129,6 +129,8 @@ class DatabaseDriver : public QObject
 
 		bool isTerminated(void) const;
 
+		static QStringList nullReasons(void);
+
 	protected:
 
 		QList<FIELD> loadCommon(bool Emit = false);
@@ -213,7 +215,9 @@ class DatabaseDriver : public QObject
 					 int Mode, const RecordModel* Current = nullptr,
 					 const QModelIndexList& Items = QModelIndexList());
 		void updateData(RecordModel* Model, const QModelIndexList& Items,
-					 const QHash<int, QVariant>& Values, bool Emit = true);
+					 const QHash<int, QVariant>& Values,
+					 const QHash<int, int>& Reasons,
+					 bool Emit = true);
 		void removeData(RecordModel* Model, const QModelIndexList& Items);
 
 		void execBatch(RecordModel* Model, const QModelIndexList& Items,
