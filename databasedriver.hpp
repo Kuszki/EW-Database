@@ -263,7 +263,7 @@ class DatabaseDriver : public QObject
 		void removeLabel(RecordModel* Model, const QModelIndexList& Items);
 
 		void editLabel(RecordModel* Model, const QModelIndexList& Items,
-					const QString& Label, int Underline, int Pointer);
+					const QString& Label, int Underline, int Pointer, double Rotation);
 
 		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
 					   int Mode, double Radius, bool Recursive);

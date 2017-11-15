@@ -4077,7 +4077,7 @@ void DatabaseDriver::removeLabel(RecordModel* Model, const QModelIndexList& Item
 	emit onLabelDelete(Step);
 }
 
-void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int Underline, int Pointer)
+void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label, int Underline, int Pointer, double Rotation)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelEdit(0); return; }
 
@@ -4141,7 +4141,8 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 		"SET "
 			"TEXT = COALESCE(?, TEXT), "
 			"JUSTYFIKACJA = ?, "
-			"ODN_X = ?, ODN_Y = ? "
+			"ODN_X = ?, ODN_Y = ?, "
+			"KAT = COALESCE(?, KAT) "
 		"WHERE "
 			"ID = ?");
 
@@ -4197,6 +4198,7 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 	});
 
 	const QVariant vLabel = Label.isEmpty() ? QVariant() : Label;
+	const QVariant vRotation = qIsNaN(Rotation) ? QVariant() : Rotation;
 
 	for (const auto& Item : Labels)
 	{
@@ -4206,6 +4208,7 @@ void DatabaseDriver::editLabel(RecordModel* Model, const QModelIndexList& Items,
 		updateQuery.addBindValue(Item.J);
 		updateQuery.addBindValue(Item.OX);
 		updateQuery.addBindValue(Item.OY);
+		updateQuery.addBindValue(vRotation);
 		updateQuery.addBindValue(Item.IDE);
 
 		updateQuery.exec();

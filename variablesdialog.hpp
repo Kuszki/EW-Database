@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -57,7 +57,7 @@ class VariablesDialog : public QDialog
 
 	signals:
 
-		void onChangeRequest(const QString&, int, int);
+		void onChangeRequest(const QString&, int, int, double);
 
 };
 

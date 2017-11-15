@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -48,7 +48,11 @@ void VariablesDialog::accept(void)
 
 	const bool Varchange = ui->variableCombo->currentIndex();
 
-	QDialog::accept(); emit onChangeRequest(Varchange ? Variable : QString(), Underline, Pointer);
+	const double Rotation = ui->rotationSpin->value();
+
+	QDialog::accept(); emit onChangeRequest(Varchange ? Variable : QString(),
+									Underline, Pointer,
+									Rotation != -1 ? Rotation : NAN);
 }
 
 void VariablesDialog::variableIndexChanged(int Index)
@@ -70,5 +74,6 @@ void VariablesDialog::dialogParamsChanged(void)
 	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(
 				ui->variableCombo->currentIndex() ||
 				ui->underlineCombo->currentIndex() ||
-				ui->pointerCombo->currentIndex());
+				ui->pointerCombo->currentIndex() ||
+				ui->rotationSpin->value() != -1.0);
 }

@@ -19,7 +19,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="variableLabel">
      <property name="text">
       <string>Variable</string>
      </property>
@@ -99,7 +99,7 @@
      </item>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2">
+   <item row="4" column="0" colspan="2">
     <widget class="QScrollArea" name="scrollArea">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -116,7 +116,7 @@
         <x>0</x>
         <y>0</y>
         <width>382</width>
-        <height>171</height>
+        <height>142</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -137,13 +137,42 @@
      </widget>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
+   <item row="5" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="rotationLabel">
+     <property name="text">
+      <string>Rotation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QDoubleSpinBox" name="rotationSpin">
+     <property name="specialValueText">
+      <string>Keep current</string>
+     </property>
+     <property name="suffix">
+      <string>°</string>
+     </property>
+     <property name="decimals">
+      <number>0</number>
+     </property>
+     <property name="minimum">
+      <double>-1.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>360.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>-1.000000000000000</double>
      </property>
     </widget>
    </item>
@@ -250,6 +279,22 @@
     <hint type="destinationlabel">
      <x>627</x>
      <y>82</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotationSpin</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>VariablesDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>352</x>
+     <y>103</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>670</x>
+     <y>106</y>
     </hint>
    </hints>
   </connection>
