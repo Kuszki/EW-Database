@@ -4858,9 +4858,11 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 {
 	if (!Database.isOpen()) return QList<OBJECT>(); QHash<int, OBJECT> Objects;
 
-	QSqlQuery selectPoint(Database), selectLine(Database); emit onSetupProgress(0, 0);
+	QSqlQuery selectPoint(Database), selectLine(Database);
 
 	selectPoint.setForwardOnly(true); selectLine.setForwardOnly(true);
+
+	emit onSetupProgress(0, Limiter.size()); int Step(0);
 
 	selectPoint.prepare(
 		"SELECT "
@@ -4918,6 +4920,8 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 				QPointF(selectPoint.value(3).toDouble(),
 					   selectPoint.value(4).toDouble())
 			});
+
+			emit onUpdateProgress(++Step);
 		}
 	}
 
@@ -4929,14 +4933,19 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 		{
 			const int Type = selectLine.value(3).toInt();
 
-			if (!Objects.contains(UID)) Objects.insert(UID,
+			if (!Objects.contains(UID))
 			{
-				UID, selectLine.value(1).toInt(),
-				selectLine.value(2).toString(), Type,
-				(Type == 2) ? QVariant(QVariant::List) :
-				(Type == 3) ? QVariant(QVariant::PolygonF) :
-				QVariant()
-			});
+				Objects.insert(UID,
+				{
+					UID, selectLine.value(1).toInt(),
+					selectLine.value(2).toString(), Type,
+					(Type == 2) ? QVariant(QVariant::List) :
+					(Type == 3) ? QVariant(QVariant::PolygonF) :
+					QVariant()
+				});
+
+				emit onUpdateProgress(++Step);
+			}
 
 			OBJECT& Obj = Objects[UID];
 
