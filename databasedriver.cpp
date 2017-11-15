@@ -2456,11 +2456,13 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			ClassQuery.addBindValue(Class);
 			ClassQuery.addBindValue(Item);
 
+			ClassQuery.exec();
+
 			emit onUpdateProgress(++Step);
 		}
 	}
 
-	if (Dateupdate) { ClassQuery.clear(); updateModDate(Tasks.first(), 0); }
+	if (Dateupdate) { ClassQuery.finish(); updateModDate(Tasks.first(), 0); }
 
 	emit onBeginProgress(tr("Updating lines"));
 	emit onSetupProgress(0, Lines.size()); Step = 0;
@@ -2861,8 +2863,8 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 			if (OK)
 			{
-				if (!Points) Lines.append({ pX1, pY1, pX2, pY2 });
-				else Sources.append({ pX1, pY1 });
+				if (Points) Sources.append({ pX1, pY1 });
+				else Lines.append({ pX1, pY1, pX2, pY2 });
 			}
 		}
 		else continue;
