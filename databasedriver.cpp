@@ -489,9 +489,11 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 
 		for (int i = 4; i <= 11; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
 
-		const QString Str = "SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND KOD IN ('%1')";
+		const int loadAll = All.contains("*"); QString Classes = All.toSet().toList().join("', '");
 
-		if (Query.exec(Str.arg(All.join("', '")))) while (Query.next())
+		const QString Str = "SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND (1 = '%1' OR KOD IN ('%2'))";
+
+		if (Query.exec(Str.arg(loadAll).arg(Classes))) while (Query.next())
 		{
 			Limit.insert(Query.value(0).toInt());
 		}
