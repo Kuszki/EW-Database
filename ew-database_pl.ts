@@ -1006,7 +1006,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="geometrywidget.ui" line="130"/>
         <source>Object has multiple relations</source>
-        <translation>Posiada wieloktorne relacje</translation>
+        <translation>Obiekt posiada wieloktorne relacje</translation>
     </message>
     <message>
         <location filename="geometrywidget.ui" line="144"/>
