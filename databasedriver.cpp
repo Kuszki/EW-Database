@@ -5153,7 +5153,7 @@ QSet<int> DatabaseDriver::filterDataByIspartof(const QList<DatabaseDriver::OBJEC
 				const QLineF Circle = Other.Geometry.toLineF();
 				const QPointF& P = OtherPoint;
 
-				const double R = qAbs(Circle.x1() - Circle.x2());
+				const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
 				const double X = (Circle.x1() + Circle.x2()) / 2.0;
 				const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
@@ -5252,7 +5252,7 @@ QSet<int> DatabaseDriver::filterDataByContaining(const QList<DatabaseDriver::OBJ
 				const QLineF Circle = Object.Geometry.toLineF();
 				const QPointF P = Other.Geometry.toPointF();
 
-				const double R = qAbs(Circle.x1() - Circle.x2());
+				const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
 				const double X = (Circle.x1() + Circle.x2()) / 2.0;
 				const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
@@ -5433,7 +5433,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 					const QLineF Circle = Other.Geometry.toLineF();
 					const QPointF& P = ThisPoint;
 
-					const double R = qAbs(Circle.x1() - Circle.x2());
+					const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
 					const double X = (Circle.x1() + Circle.x2()) / 2.0;
 					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
@@ -5457,7 +5457,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 			{
 				const QLineF Circle = Object.Geometry.toLineF();
 
-				const double R = qAbs(Circle.x1() - Circle.x2());
+				const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
 				const double X = (Circle.x1() + Circle.x2()) / 2.0;
 				const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
@@ -5473,7 +5473,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QLineF OtherCircle = Other.Geometry.toLineF();
 
-					const double OR = qAbs(OtherCircle.x1() - OtherCircle.x2());
+					const double OR = qAbs(OtherCircle.x1() - OtherCircle.x2()) / 2.0;
 					const double OX = (OtherCircle.x1() + OtherCircle.x2()) / 2.0;
 					const double OY = (OtherCircle.y1() + OtherCircle.y2()) / 2.0;
 
@@ -5510,7 +5510,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QLineF Circle = Other.Geometry.toLineF();
 
-					const double R = qAbs(Circle.x1() - Circle.x2());
+					const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
 					const double X = (Circle.x1() + Circle.x2()) / 2.0;
 					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
@@ -5553,7 +5553,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QLineF Circle = Other.Geometry.toLineF();
 
-					const double R = qAbs(Circle.x1() - Circle.x2());
+					const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
 					const double X = (Circle.x1() + Circle.x2()) / 2.0;
 					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
