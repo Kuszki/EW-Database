@@ -863,7 +863,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating special data"));
-	emit onSetupProgress(0, Tasks.first().size() * 2);
+	emit onSetupProgress(0, Tasks.first().size());
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
@@ -886,6 +886,12 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 			nullsUpdates.append(QString("%1 = '%2'").arg(Name).arg(Reasons[Index]));
 		}
 
+		const QString FIELDS = fieldsNames.join(", ");
+		const QString UPDATES = fieldsUpdates.join(", ");
+		const QString REASONS = nullsUpdates.join(", ");
+
+		const bool NULLS = !nullsUpdates.isEmpty();
+
 		if (!fieldsUpdates.isEmpty()) for (const auto& Index : i.value())
 		{
 			if (isTerminated()) break;
@@ -894,23 +900,15 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
 				"VALUES (%3, %4) MATCHING (UIDO)")
 					 .arg(Table.Data)
-					 .arg(fieldsNames.join(", "))
+					 .arg(FIELDS)
 					 .arg(Index)
-					 .arg(fieldsUpdates.join(", ")));
+					 .arg(UPDATES));
 
-			emit onUpdateProgress(++Step);
-		}
-		else emit onUpdateProgress(Step += i.value().size());
-
-		if (!nullsUpdates.isEmpty()) for (const auto& Index : i.value())
-		{
-			if (isTerminated()) break;
-
-			Query.exec(QString(
+			if (NULLS) Query.exec(QString(
 				"UPDATE %1 EW_DATA SET %2 "
 				"WHERE EW_DATA.UIDO = '%3'")
 					 .arg(Table.Data)
-					 .arg(nullsUpdates.join(", "))
+					 .arg(REASONS)
 					 .arg(Index));
 
 			emit onUpdateProgress(++Step);
