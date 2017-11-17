@@ -5443,7 +5443,9 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QPolygonF P = Other.Geometry.value<QPolygonF>();
 
-					for (int i = 1; i < P.size(); ++i)
+					OK = P.containsPoint(ThisPoint, Qt::OddEvenFill);
+
+					if (!OK) for (int i = 1; i < P.size(); ++i)
 					{
 						OK = OK || (pdistance(QLineF(P[i - 1], P[i]), ThisPoint) <= Radius);
 					}
@@ -5483,7 +5485,9 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QPolygonF P = Other.Geometry.value<QPolygonF>();
 
-					for (int i = 1; i < P.size(); ++i)
+					OK = P.containsPoint(ThisPoint, Qt::OddEvenFill);
+
+					if (!OK) for (int i = 1; i < P.size(); ++i)
 					{
 						OK = OK || (pdistance(QLineF(P[i - 1], P[i]), ThisPoint) <= (Radius + R));
 					}
@@ -5501,7 +5505,9 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QPointF P = Other.Geometry.toPointF();
 
-					for (int i = 1; i < Polygon.size(); ++i)
+					OK = Polygon.containsPoint(P, Qt::OddEvenFill);
+
+					if (!OK) for (int i = 1; i < Polygon.size(); ++i)
 					{
 						OK = OK || (pdistance(QLineF(Polygon[i - 1], Polygon[i]), P) <= Radius);
 					}
@@ -5516,7 +5522,9 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 
 					const QPointF Point = QPointF(X, Y);
 
-					for (int i = 1; i < Polygon.size(); ++i)
+					OK = Polygon.containsPoint(Point, Qt::OddEvenFill);
+
+					if (!OK) for (int i = 1; i < Polygon.size(); ++i)
 					{
 						OK = OK || (pdistance(QLineF(Polygon[i - 1], Polygon[i]), Point) <= (Radius + R));
 					}
@@ -5525,16 +5533,23 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 				{
 					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
 
-					for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
+					for (const auto& C : OP) OK = OK || Polygon.containsPoint(C, Qt::OddEvenFill);
+
+					if (!OK) for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
 					{
 						OK = OK || (ldistance(QLineF(Polygon[i - 1], Polygon[i]), QLineF(OP[j - 1], OP[j])) <= Radius);
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
 				{
-					for (int i = 1; i < Polygon.size(); ++i)
+					const QLineF Line = Part.toLineF();
+
+					OK = OK || Polygon.containsPoint(Line.p1(), Qt::OddEvenFill);
+					OK = OK || Polygon.containsPoint(Line.p2(), Qt::OddEvenFill);
+
+					if (!OK) for (int i = 1; i < Polygon.size(); ++i)
 					{
-						OK = OK || (ldistance(QLineF(Polygon[i - 1], Polygon[i]), Part.toLineF()) <= Radius);
+						OK = OK || (ldistance(QLineF(Polygon[i - 1], Polygon[i]), Line) <= Radius);
 					}
 				}
 			}
@@ -5561,7 +5576,11 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 
 					for (const auto& Part : Object.Geometry.toList())
 					{
-						OK = OK || (pdistance(Part.toLineF(), Point) <= (Radius + R));
+						const QLineF Line = Part.toLineF();
+
+						OK = OK || (pdistance(Line, Point) <= (Radius + R));
+						OK = OK || (QLineF(Line.p1(), Point).length() <= (Radius + R));
+						OK = OK || (QLineF(Line.p2(), Point).length() <= (Radius + R));
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
@@ -5571,6 +5590,14 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 					for (const auto& Part : Object.Geometry.toList()) for (int j = 1; j < OP.size(); ++j)
 					{
 						OK = OK || (ldistance(Part.toLineF(), QLineF(OP[j - 1], OP[j])) <= Radius);
+					}
+
+					if (!OK) for (const auto& Part : Object.Geometry.toList())
+					{
+						const QLineF Line = Part.toLineF();
+
+						OK = OK || OP.containsPoint(Line.p1(), Qt::OddEvenFill);
+						OK = OK || OP.containsPoint(Line.p2(), Qt::OddEvenFill);
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
