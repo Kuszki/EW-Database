@@ -127,7 +127,7 @@ class RecordModel : public QAbstractItemModel
 	private:
 
 		QHash<RecordObject*, GroupObject*> Parents;
-		QList<RecordObject*> Objects;
+		QVector<RecordObject*> Objects;
 
 		GroupObject* Root = nullptr;
 

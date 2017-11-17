@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -371,7 +371,7 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 
 	beginResetModel();
 
-	if (!Root) std::stable_sort(Objects.begin(), Objects.end(), Sort);
+	if (!Root) __gnu_parallel::sort(Objects.begin(), Objects.end(), Sort);
 	else
 	{
 		QFutureSynchronizer<void> Synchronizer;
@@ -848,7 +848,7 @@ void RecordModel::addItem(int ID, const QHash<int, QVariant>& Attributes)
 		const int Count = Objects.size() + 1;
 
 		beginInsertRows(QModelIndex(), Count, Count);
-		Objects.insert(ID, Object);
+		Objects.append(Object);
 		endInsertRows();
 	}
 
@@ -870,7 +870,7 @@ void RecordModel::addItems(const QHash<int, QHash<int, QVariant>>& Items)
 
 		for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
 		{
-			Objects.insert(i.key(), new RecordObject(i.key(), i.value()));
+			Objects.append(new RecordObject(i.key(), i.value()));
 		}
 
 		endInsertRows();
