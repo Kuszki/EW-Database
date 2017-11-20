@@ -66,7 +66,7 @@ void GroupDialog::searchEdited(const QString& Search)
 
 void GroupDialog::accept(void)
 {
-	emit onGroupsUpdate(getEnabledGroupsIndexes()); QDialog::accept();
+	QDialog::accept(); emit onGroupsUpdate(getEnabledGroupsIndexes());
 }
 
 void GroupDialog::setAttributes(QStringList Attributes)

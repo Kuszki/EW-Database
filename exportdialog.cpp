@@ -106,7 +106,7 @@ void ExportDialog::itemCheckChanged(bool Checked)
 
 void ExportDialog::accept(void)
 {
-	emit onExportRequest(getEnabledColumnsIndexes(), ui->typeCombo->currentIndex(), ui->headerCheck->isChecked()); QDialog::accept();
+	QDialog::accept(); emit onExportRequest(getEnabledColumnsIndexes(), ui->typeCombo->currentIndex(), ui->headerCheck->isChecked());
 }
 
 void ExportDialog::setAttributes(const QStringList& Headers)

@@ -106,7 +106,7 @@ void ColumnsDialog::searchTextEdited(const QString& Search)
 
 void ColumnsDialog::accept(void)
 {
-	emit onColumnsUpdate(getEnabledColumnsIndexes()); QDialog::accept();
+	QDialog::accept(); emit onColumnsUpdate(getEnabledColumnsIndexes());
 }
 
 void ColumnsDialog::setAttributes(const QStringList& Headers, int Common)

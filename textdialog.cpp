@@ -44,11 +44,11 @@ void TextDialog::CheckStatusChanged(void)
 
 void TextDialog::accept(void)
 {
+	QDialog::accept();
+
 	emit onEditRequest(ui->Move->isChecked(),
 				    ui->Justify->isChecked(),
 				    ui->Rotate->isChecked(),
 				    ui->Sort->isChecked(),
 				    ui->Length->value());
-
-	QDialog::accept();
 }

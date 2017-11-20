@@ -69,7 +69,7 @@ void CutDialog::fieldButtonChecked(bool Enabled)
 
 void CutDialog::accept(void)
 {
-	emit onClassesUpdate(getSelectedClasses(), isEndingsChecked()); QDialog::accept();
+	QDialog::accept(); emit onClassesUpdate(getSelectedClasses(), isEndingsChecked());
 }
 
 void CutDialog::setFields(const QList<DatabaseDriver::TABLE>& Tables)

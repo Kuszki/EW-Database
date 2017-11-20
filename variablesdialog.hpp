@@ -25,6 +25,8 @@
 #include <QPushButton>
 #include <QDialog>
 
+#include <QtConcurrent>
+
 namespace Ui
 {
 	class VariablesDialog;

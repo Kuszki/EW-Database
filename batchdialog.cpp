@@ -49,7 +49,7 @@ void BatchDialog::accept(void)
 {
 	QList<QStringList> Data = Values; if (ui->headerCheck->isChecked()) Data.removeFirst();
 
-	emit onBatchRequest(getFunctions(), Data); QDialog::accept();
+	QDialog::accept(); emit onBatchRequest(getFunctions(), Data);
 }
 
 void BatchDialog::setParameters(const QStringList& Fields, const QList<QStringList>& Data)

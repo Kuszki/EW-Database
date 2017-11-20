@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -39,6 +39,8 @@ LabelDialog::~LabelDialog(void)
 
 void LabelDialog::accept(void)
 {
+	QDialog::accept();
+
 	emit onLabelRequest(
 			QString("${u.%1}").arg(ui->textCombo->currentText()),
 			ui->justifySpin->value(),
@@ -48,5 +50,4 @@ void LabelDialog::accept(void)
 			ui->limiterSpin->value(),
 			ui->repeatSpin->value());
 
-	QDialog::accept();
 }
