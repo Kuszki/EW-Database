@@ -858,6 +858,8 @@ void RecordModel::addItems(const QHash<int, QHash<int, QVariant>>& Items)
 {
 	QMutexLocker Synchronizer(&Locker);
 
+	Objects.reserve(Objects.size() + Items.size());
+
 	if (Root) for (auto i = Items.constBegin(); i != Items.constEnd(); ++i)
 	{
 		appendItem(new RecordObject(i.key(), i.value()));
