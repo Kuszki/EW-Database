@@ -5840,7 +5840,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	}
 
 	emit onBeginProgress(tr("Loading lines"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, 0);
 
 	if (Objects.exec()) while (Objects.next() && !isTerminated())
 	{
@@ -5877,8 +5877,6 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 			{
 				Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
 			});
-
-			emit onUpdateProgress(++Step);
 		}
 	}
 
