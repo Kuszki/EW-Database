@@ -5884,7 +5884,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	if (Mode & 0x2) for (const auto& E : Ends) Breaks.removeAll(E);
 
 	emit onBeginProgress(tr("Loading elements"));
-	emit onSetupProgress(0, Tasks.size()); Step = 0;
+	emit onSetupProgress(0, 0); Step = 0;
 
 	if (Elements.exec()) while (Elements.next() && !isTerminated())
 	{
@@ -5899,8 +5899,6 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 				Elements.value(1).toInt(),
 				Elements.value(2).toInt()
 			});
-
-			emit onUpdateProgress(++Step);
 		}
 	}
 
