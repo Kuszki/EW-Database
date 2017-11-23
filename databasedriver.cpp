@@ -6638,7 +6638,8 @@ bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type:
 
 bool isVariantEmpty(const QVariant& Value)
 {
-	switch (Value.type())
+	if (Value.isNull()) return true;
+	else switch (Value.type())
 	{
 		case QVariant::Int: return Value == QVariant(int(0));
 		case QVariant::Double: return Value == QVariant(double(0.0));
