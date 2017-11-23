@@ -25,7 +25,7 @@
 #include <QPushButton>
 #include <QDialog>
 
-#include <QtConcurrent>
+#include <QtCore>
 
 namespace Ui
 {
