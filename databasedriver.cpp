@@ -1100,20 +1100,23 @@ void DatabaseDriver::execBatch(RecordModel* Model, const QModelIndexList& Items,
 			{
 				if (F.second == BatchWidget::UPDATE)
 				{
-					const int Column = Table.Headers.indexOf(F.first);
-
-					if (Column != -1 && !Updates.contains(Table.Indexes[Column]))
+					if (F.first < Common.size())
 					{
-						const int Ufid = Table.Indexes[Column];
-
-						if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Rules[Col]);
-						else if (Ufid < Common.size())
+						if (F.first >= 0 && !Updates.contains(F.first) && Common[F.first].Type != READONLY)
 						{
-							if (Common[Ufid].Type != READONLY) Updates.insert(Ufid, getDataByDict(Rules[Col], Common[Ufid].Dict, Common[Ufid].Type));
+							if (Common[F.first].Dict.isEmpty()) Updates.insert(F.first, Rules[Col]);
+							else Updates.insert(F.first, getDataByDict(Rules[Col], Common[F.first].Dict, Common[F.first].Type));
 						}
-						else
+					}
+					else
+					{
+						const int Column = Table.Headers.indexOf(F.first);
+						const int Ufid = Table.Indexes.value(Column);
+
+						if (Column != -1 && !Updates.contains(Ufid) && Fields[Ufid].Type != READONLY)
 						{
-							if (Fields[Ufid].Type != READONLY) Updates.insert(Ufid, getDataByDict(Rules[Col], Fields[Ufid].Dict, Fields[Ufid].Type));
+							if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Rules[Col]);
+							else Updates.insert(Ufid, getDataByDict(Rules[Col], Fields[Ufid].Dict, Fields[Ufid].Type));
 						}
 					}
 				}
