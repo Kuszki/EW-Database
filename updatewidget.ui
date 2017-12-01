@@ -75,6 +75,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>Field</tabstop>
+  <tabstop>nullButton</tabstop>
+  <tabstop>undoButton</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

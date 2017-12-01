@@ -123,6 +123,15 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>Type</tabstop>
+  <tabstop>Radius</tabstop>
+  <tabstop>Join</tabstop>
+  <tabstop>Point</tabstop>
+  <tabstop>Line</tabstop>
+  <tabstop>Circle</tabstop>
+  <tabstop>replaceCheck</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

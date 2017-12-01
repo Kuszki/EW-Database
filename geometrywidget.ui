@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>529</width>
+    <width>535</width>
     <height>30</height>
    </rect>
   </property>
@@ -161,6 +161,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>typeCombo</tabstop>
+  <tabstop>pointCombo</tabstop>
+  <tabstop>classCombo</tabstop>
+  <tabstop>sizeSpin</tabstop>
+  <tabstop>removeButton</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
