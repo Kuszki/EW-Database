@@ -1360,7 +1360,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 			Insert = joinPoints(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 		case 2:
-			Insert = joinSurfaces(Geometry, Points, Tasks[Join], Join);
+			Insert = joinSurfaces(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 	}
 
@@ -4239,7 +4239,7 @@ void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Ite
 	emit onPointInsert(Count);
 }
 
-QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class)
+QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
 
@@ -4359,8 +4359,25 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		}
 	}
 
-	if (!isTerminated()) QtConcurrent::blockingMap(Parts, [this, &Insert, &Used, &Geometry, &Points, &Locker, SORT] (QList<PART>& List) -> void
+	if (!isTerminated()) QtConcurrent::blockingMap(Parts, [this, &Insert, &Used, &Geometry, &Points, &Locker, Radius, SORT] (QList<PART>& List) -> void
 	{
+		static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
+		{
+			const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+			const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+			const double l = L.length();
+
+			if ((a * a <= l * l + b * b) &&
+			    (b * b <= a * a + l * l))
+			{
+				const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+				const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+				return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+			}
+			else return INFINITY;
+		};
+
 		if (this->isTerminated()) return;
 
 		const int ID = List.first().ID; const QPolygonF Polygon = SORT(List);
@@ -4384,9 +4401,21 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 					Locker.unlock();
 				}
 
-				bool OK(false); for (const auto& E : Polygon) if (QLineF(E, QPointF(P.X, P.Y)).length() < 0.05) OK = true;
+				bool OK(false); const QPointF Point = QPointF(P.X, P.Y);
 
-				if (OK || Polygon.containsPoint(QPointF(P.X, P.Y), Qt::OddEvenFill))
+				if (!OK) for (int k = 1; k < Polygon.size(); ++k)
+				{
+					const QLineF Part(Polygon[k - 1], Polygon[k]);
+
+					OK = OK || (distance(Part, Point) <= Radius);
+				}
+
+				if (!OK) for (const auto& E : Polygon)
+				{
+					OK = OK || (QLineF(E, Point).length() <= Radius);
+				}
+
+				if (OK || Polygon.containsPoint(Point, Qt::OddEvenFill))
 				{
 					Locker.lock();
 

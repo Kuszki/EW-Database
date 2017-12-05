@@ -160,7 +160,8 @@ class DatabaseDriver : public QObject
 
 		QHash<int, QSet<int>> joinSurfaces(const QHash<int, QSet<int>>& Geometry,
 									const QList<DatabaseDriver::POINT>& Points,
-									const QSet<int>& Tasks, const QString& Class);
+									const QSet<int>& Tasks, const QString& Class,
+									double Radius = 0.0);
 		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
 								  const QList<DatabaseDriver::POINT>& Points,
 								  const QSet<int>& Tasks, const QString& Class,
