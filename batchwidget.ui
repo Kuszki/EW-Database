@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>25</height>
+    <height>28</height>
    </rect>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
@@ -66,6 +66,10 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>Field</tabstop>
+  <tabstop>Function</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

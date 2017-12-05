@@ -14,7 +14,8 @@
    <string>Insert breakpoints</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="list-add"/>
+   <iconset theme="list-add">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0" colspan="2">
@@ -96,6 +97,14 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>endsCheck</tabstop>
+  <tabstop>breaksCheck</tabstop>
+  <tabstop>intersectCheck</tabstop>
+  <tabstop>symbolCheck</tabstop>
+  <tabstop>recursiveCheck</tabstop>
+  <tabstop>radiusSpin</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

@@ -171,6 +171,24 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>classCheck</tabstop>
+  <tabstop>Class</tabstop>
+  <tabstop>lineCheck</tabstop>
+  <tabstop>Line</tabstop>
+  <tabstop>pointCheck</tabstop>
+  <tabstop>Point</tabstop>
+  <tabstop>textCheck</tabstop>
+  <tabstop>Text</tabstop>
+  <tabstop>labelCheck</tabstop>
+  <tabstop>Label</tabstop>
+  <tabstop>styleCheck</tabstop>
+  <tabstop>Style</tabstop>
+  <tabstop>symbolCheck</tabstop>
+  <tabstop>Symbol</tabstop>
+  <tabstop>strategyCombo</tabstop>
+  <tabstop>radiusSpin</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

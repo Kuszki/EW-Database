@@ -84,6 +84,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>Move</tabstop>
+  <tabstop>Justify</tabstop>
+  <tabstop>Rotate</tabstop>
+  <tabstop>Sort</tabstop>
+  <tabstop>Length</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

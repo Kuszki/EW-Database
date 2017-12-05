@@ -59,7 +59,7 @@
         <x>0</x>
         <y>0</y>
         <width>582</width>
-        <height>453</height>
+        <height>448</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
@@ -94,6 +94,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>searchEdit</tabstop>
+  <tabstop>allButton</tabstop>
+  <tabstop>filterBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

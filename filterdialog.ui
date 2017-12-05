@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1166</width>
-            <height>433</height>
+            <width>1159</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1166</width>
-            <height>433</height>
+            <width>1159</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1166</width>
-            <height>433</height>
+            <width>1159</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -315,7 +315,18 @@
  </widget>
  <tabstops>
   <tabstop>tabWidget</tabstop>
+  <tabstop>classScrool</tabstop>
   <tabstop>simpleScrool</tabstop>
+  <tabstop>geometryScrool</tabstop>
+  <tabstop>simpleSearch</tabstop>
+  <tabstop>copyButton</tabstop>
+  <tabstop>classSearch</tabstop>
+  <tabstop>selectButton</tabstop>
+  <tabstop>unselectButton</tabstop>
+  <tabstop>radiusSpin</tabstop>
+  <tabstop>limiterCheck</tabstop>
+  <tabstop>operatorBox</tabstop>
+  <tabstop>newButton</tabstop>
  </tabstops>
  <resources/>
  <connections>
