@@ -4256,47 +4256,6 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		}
 	};
 
-	const auto SORT = [] (const QList<PART>& List) -> QPolygonF
-	{
-		QPolygonF Polygon; QSet<int> Used; bool Continue = true;
-
-		if (!List.isEmpty()) while (Continue)
-		{
-			const int LastSize = Polygon.size();
-
-			for (int i = 0; i < List.size(); ++i) if (List[i].R == 0.0)
-			{
-				if (Polygon.isEmpty())
-				{
-					Polygon.append(
-					{
-						List.first().X1, List.first().Y1
-					});
-
-					Used.insert(i);
-				}
-				else if (!Used.contains(i))
-				{
-					const QPointF A = { List[i].X1, List[i].Y1 };
-					const QPointF B = { List[i].X2, List[i].Y2 };
-
-					const int ThisSize = Polygon.size();
-
-					if (Polygon.last() == A) Polygon.append(B);
-					else if (Polygon.last() == B) Polygon.append(A);
-					else if (Polygon.first() == A) Polygon.insert(0, B);
-					else if (Polygon.first() == B) Polygon.insert(0, A);
-
-					if (ThisSize != Polygon.size()) Used.insert(i);
-				}
-			}
-
-			Continue = LastSize != Polygon.size();
-		}
-
-		return Polygon;
-	};
-
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<int, QSet<int>> Insert; QSet<int> Used;
 	QMutex Locker; QMap<int, QList<PART>> Parts;
@@ -4359,8 +4318,49 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		}
 	}
 
-	if (!isTerminated()) QtConcurrent::blockingMap(Parts, [this, &Insert, &Used, &Geometry, &Points, &Locker, Radius, SORT] (QList<PART>& List) -> void
+	if (!isTerminated()) QtConcurrent::blockingMap(Parts, [this, &Insert, &Used, &Geometry, &Points, &Locker, Radius] (QList<PART>& List) -> void
 	{
+		const auto polygon = [] (const QList<PART>& List) -> QPolygonF
+		{
+			QPolygonF Polygon; QSet<int> Used; bool Continue = true;
+
+			if (!List.isEmpty()) while (Continue)
+			{
+				const int LastSize = Polygon.size();
+
+				for (int i = 0; i < List.size(); ++i) if (List[i].R == 0.0)
+				{
+					if (Polygon.isEmpty())
+					{
+						Polygon.append(
+						{
+							List.first().X1, List.first().Y1
+						});
+
+						Used.insert(i);
+					}
+					else if (!Used.contains(i))
+					{
+						const QPointF A = { List[i].X1, List[i].Y1 };
+						const QPointF B = { List[i].X2, List[i].Y2 };
+
+						const int ThisSize = Polygon.size();
+
+						if (Polygon.last() == A) Polygon.append(B);
+						else if (Polygon.last() == B) Polygon.append(A);
+						else if (Polygon.first() == A) Polygon.insert(0, B);
+						else if (Polygon.first() == B) Polygon.insert(0, A);
+
+						if (ThisSize != Polygon.size()) Used.insert(i);
+					}
+				}
+
+				Continue = LastSize != Polygon.size();
+			}
+
+			return Polygon;
+		};
+
 		static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
 		{
 			const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
@@ -4380,7 +4380,8 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 		if (this->isTerminated()) return;
 
-		const int ID = List.first().ID; const QPolygonF Polygon = SORT(List);
+		const int ID = List.first().ID;
+		const QPolygonF Polygon = polygon(List);
 
 		for (const auto& P : Points)
 		{
@@ -4388,20 +4389,12 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 			if (Calc)
 			{
-				for (const auto& G : List) if ((G.R != 0.0) && ((G.R + Radius) >= qSqrt(qPow(P.X - G.X1, 2) + qPow(P.Y - G.Y1, 2))))
-				{
-					Locker.lock();
-
-					if (!Used.contains(P.IDE) && !Geometry[G.ID].contains(P.IDE))
-					{
-						Insert[G.ID].insert(P.IDE);
-						Used.insert(P.IDE);
-					}
-
-					Locker.unlock();
-				}
-
 				bool OK(false); const QPointF Point = QPointF(P.X, P.Y);
+
+				for (const auto& G : List) if (G.R != 0.0)
+				{
+					OK = OK || (G.R + Radius) >= QLineF(Point, QPointF(G.X1, G.Y1)).length();
+				}
 
 				if (!OK) for (int k = 1; k < Polygon.size(); ++k)
 				{
