@@ -4385,41 +4385,36 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 		for (const auto& P : Points)
 		{
-			Locker.lock(); const bool Calc = !Used.contains(P.IDE); Locker.unlock();
+			bool OK(false); const QPointF Point = QPointF(P.X, P.Y);
 
-			if (Calc)
+			for (const auto& G : List) if (G.R != 0.0)
 			{
-				bool OK(false); const QPointF Point = QPointF(P.X, P.Y);
+				OK = OK || (G.R + Radius) >= QLineF(Point, QPointF(G.X1, G.Y1)).length();
+			}
 
-				for (const auto& G : List) if (G.R != 0.0)
+			if (!OK) for (int k = 1; k < Polygon.size(); ++k)
+			{
+				const QLineF Part(Polygon[k - 1], Polygon[k]);
+
+				OK = OK || (distance(Part, Point) <= Radius);
+			}
+
+			if (!OK) for (const auto& E : Polygon)
+			{
+				OK = OK || (QLineF(E, Point).length() <= Radius);
+			}
+
+			if (OK || Polygon.containsPoint(Point, Qt::OddEvenFill))
+			{
+				Locker.lock();
+
+				if (!Used.contains(P.IDE) && !Geometry[ID].contains(P.IDE))
 				{
-					OK = OK || (G.R + Radius) >= QLineF(Point, QPointF(G.X1, G.Y1)).length();
+					Insert[ID].insert(P.IDE);
+					Used.insert(P.IDE);
 				}
 
-				if (!OK) for (int k = 1; k < Polygon.size(); ++k)
-				{
-					const QLineF Part(Polygon[k - 1], Polygon[k]);
-
-					OK = OK || (distance(Part, Point) <= Radius);
-				}
-
-				if (!OK) for (const auto& E : Polygon)
-				{
-					OK = OK || (QLineF(E, Point).length() <= Radius);
-				}
-
-				if (OK || Polygon.containsPoint(Point, Qt::OddEvenFill))
-				{
-					Locker.lock();
-
-					if (!Used.contains(P.IDE) && !Geometry[ID].contains(P.IDE))
-					{
-						Insert[ID].insert(P.IDE);
-						Used.insert(P.IDE);
-					}
-
-					Locker.unlock();
-				}
+				Locker.unlock();
 			}
 		}
 	});
