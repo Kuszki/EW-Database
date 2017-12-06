@@ -86,8 +86,6 @@ void JoinDialog::typeIndexChanged(int Index)
 	ui->Line->setVisible(Index == 0);
 	ui->Point->setVisible(Index == 1);
 	ui->Circle->setVisible(Index == 2);
-
-	ui->Radius->setVisible(Index != 2);
 }
 
 void JoinDialog::targetNameChanged(void)
