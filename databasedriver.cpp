@@ -4388,7 +4388,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 
 			if (Calc)
 			{
-				for (const auto& G : List) if ((G.R != 0.0) && (G.R >= qSqrt(qPow(P.X - G.X1, 2) + qPow(P.Y - G.Y1, 2))))
+				for (const auto& G : List) if ((G.R != 0.0) && ((G.R + Radius) >= qSqrt(qPow(P.X - G.X1, 2) + qPow(P.Y - G.Y1, 2))))
 				{
 					Locker.lock();
 
