@@ -449,19 +449,19 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 {
 	if (!Database.isOpen()) return Data; QSet<int> Filtered = Data.keys().toSet(); QHash<int, QHash<int, QVariant>> Res;
 
-	const auto createSubsListIs = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes) -> void
+	const auto createSubsListIs = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes, const QSet<int>& Limit) -> void
 	{
 		for (const auto& Object : *All) if (Classes.contains("*") || Classes.contains(Object.first.second))
 		{
-			Current->insert(Object.first.first);
+			if (Limit.contains(Object.first.first)) Current->insert(Object.first.first);
 		}
 	};
 
-	const auto createSubsListHas = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes) -> void
+	const auto createSubsListHas = [] (QSet<int>* Current, const SUBOBJECTSTABLE* All, const QStringList& Classes, const QSet<int>& Limit) -> void
 	{
 		for (const auto& Object : *All) if (Classes.contains("*") || Classes.contains(Object.second.second))
 		{
-			Current->insert(Object.second.first);
+			if (Limit.contains(Object.second.first)) Current->insert(Object.second.first);
 		}
 	};
 
@@ -506,10 +506,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	const auto Subs = loadR ? loadSubobjects() : SUBOBJECTSTABLE(); QSet<int> Subsl[4];
 	const int originSize = Filtered.size(); QFutureSynchronizer<void> Synch;
 
-	if (Geometry.contains(12)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[0], &Subs, Geometry[12].toStringList()));
-	if (Geometry.contains(13)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[1], &Subs, Geometry[13].toStringList()));
-	if (Geometry.contains(14)) Synch.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[2], &Subs, Geometry[14].toStringList()));
-	if (Geometry.contains(15)) Synch.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[3], &Subs, Geometry[15].toStringList()));
+	if (Geometry.contains(12)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[0], &Subs, Geometry[12].toStringList(), Limit));
+	if (Geometry.contains(13)) Synch.addFuture(QtConcurrent::run(createSubsListHas, &Subsl[1], &Subs, Geometry[13].toStringList(), Limit));
+	if (Geometry.contains(14)) Synch.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[2], &Subs, Geometry[14].toStringList(), Limit));
+	if (Geometry.contains(15)) Synch.addFuture(QtConcurrent::run(createSubsListIs, &Subsl[3], &Subs, Geometry[15].toStringList(), Limit));
 
 	if (loadG) Synch.addFuture(QtConcurrent::map(Geom, [&Geometry, &Filtered, &Limit] (OBJECT& Obj) -> void
 	{
