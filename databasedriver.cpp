@@ -487,7 +487,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true); QStringList All;
 
-		for (int i = 4; i <= 11; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
+		for (int i = 4; i <= 15; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
 
 		const int loadAll = All.contains("*"); QString Classes = All.toSet().toList().join("', '");
 
