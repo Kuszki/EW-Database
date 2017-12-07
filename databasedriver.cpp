@@ -5554,6 +5554,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
 
 					for (const auto& C : OP) OK = OK || Polygon.containsPoint(C, Qt::OddEvenFill);
+					for (const auto& C : Polygon) OK = OK || OP.containsPoint(C, Qt::OddEvenFill);
 
 					if (!OK) for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
 					{
