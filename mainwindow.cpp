@@ -656,12 +656,12 @@ void MainWindow::loadData(RecordModel* Model)
 	}
 }
 
-void MainWindow::removeData(RecordModel* Model)
+void MainWindow::removeData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data removed"));
 }
 
-void MainWindow::updateData(RecordModel* Model)
+void MainWindow::updateData(void)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data updated"));
 }

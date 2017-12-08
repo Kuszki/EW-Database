@@ -198,10 +198,11 @@ class MainWindow : public QMainWindow
 					const QList<QStringList>& Data);
 
 		void loadData(RecordModel* Model);
-		void removeData(RecordModel* Model);
-		void updateData(RecordModel* Model);
 
+		void removeData(void);
+		void updateData(void);
 		void groupData(void);
+
 		void joinData(int Count);
 		void textEdit(int Count);
 		void labelInsert(int Count);
