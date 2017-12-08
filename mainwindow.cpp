@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	Settings.beginGroup("Window");
 	restoreGeometry(Settings.value("geometry").toByteArray());
 	restoreState(Settings.value("state").toByteArray());
+	headerState = Settings.value("header").toByteArray();
 	Settings.endGroup();
 
 	connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadActionClicked);
@@ -162,6 +163,10 @@ MainWindow::MainWindow(QWidget* Parent)
 
 MainWindow::~MainWindow(void)
 {
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (Model) headerState = ui->Data->header()->saveState();
+
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Interface");
@@ -172,6 +177,7 @@ MainWindow::~MainWindow(void)
 	Settings.beginGroup("Window");
 	Settings.setValue("state", saveState());
 	Settings.setValue("geometry", saveGeometry());
+	Settings.setValue("header", headerState);
 	Settings.endGroup();
 
 	Settings.beginGroup("Sockets");
@@ -1005,7 +1011,13 @@ void MainWindow::updateView(RecordModel* Model)
 	auto Selection = ui->Data->selectionModel();
 	auto Old = ui->Data->model();
 
+	if (dynamic_cast<RecordModel*>(Old))
+	{
+		headerState = ui->Data->header()->saveState();
+	}
+
 	ui->Data->setModel(Model);
+	ui->Data->header()->restoreState(headerState);
 
 	delete Selection; Old->deleteLater();
 

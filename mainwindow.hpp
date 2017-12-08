@@ -105,6 +105,7 @@ class MainWindow : public QMainWindow
 		QStringList allHeaders;
 		QString dbPath;
 
+		QByteArray headerState;
 		QSet<int> hiddenRows;
 
 	private:
