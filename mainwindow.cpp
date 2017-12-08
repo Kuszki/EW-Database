@@ -765,8 +765,13 @@ void MainWindow::readDatagram(void)
 					Selection->select(Index, Actions[Action - 1] | QItemSelectionModel::Rows);
 				}
 				else
-				{
+				{					
 					ui->Data->setRowHidden(Index.row(), Index.parent(), Action == 5);
+
+					if (Action == 5)
+					{
+						Selection->select(Index, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+					}
 				}
 
 				ui->Data->scrollTo(Index, QAbstractItemView::PositionAtCenter);
