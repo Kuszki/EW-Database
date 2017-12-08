@@ -628,24 +628,13 @@ QModelIndex RecordModel::find(int Index, QVariant Data) const
 
 	if (Objects.isEmpty() || Header.size() <= Index) return QModelIndex();
 
-	QMutex Mutex; QModelIndex Item; bool Found(false);
-
-	QtConcurrent::blockingMap(Objects, [this, &Mutex, &Found, &Item, Index, Data] (RecordObject* Object)
+	for (const auto& Object : Objects) if (Object->getField(Index) == Data)
 	{
-		if (!Found && Object->getField(Index) == Data)
-		{
-			Mutex.lock();
+		return Root ? createIndex(Parents[Object]->getIndex(Object), 0, Object) :
+				    createIndex(Objects.indexOf(Object), 0, Object);
+	}
 
-			Item = Root ? createIndex(Parents[Object]->getIndex(Object), 0, Object) :
-					    createIndex(Objects.indexOf(Object), 0, Object);
-
-			Found = true;
-
-			Mutex.unlock();
-		}
-	});
-
-	return Item;
+	return QModelIndex();
 }
 
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)
