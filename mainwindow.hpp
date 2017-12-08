@@ -105,11 +105,14 @@ class MainWindow : public QMainWindow
 		QStringList allHeaders;
 		QString dbPath;
 
+		QSet<int> hiddenRows;
+
 	private:
 
 		void lockUi(STATUS Status);
 
 		void updateView(RecordModel* Model);
+		void updateHidden(void);
 
 		void registerSockets(const QString& Database);
 		void freeSockets(void);

@@ -293,7 +293,7 @@ void MainWindow::loadActionClicked(void)
 
 		while (!Stream.atEnd()) List << Stream.readLine().trimmed();
 
-		lockUi(BUSY); emit onLoadRequest(List);
+		lockUi(BUSY); hiddenRows.clear(); emit onLoadRequest(List);
 	}
 }
 
@@ -316,10 +316,12 @@ void MainWindow::classActionClicked(void)
 void MainWindow::hideActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	for (const auto Item : Selected)
 	{
 		ui->Data->setRowHidden(Item.row(), Item.parent(), true);
+		hiddenRows.insert(Model->getUid(Item));
 	}
 
 	ui->Data->selectionModel()->clearSelection();
@@ -332,6 +334,8 @@ void MainWindow::unhideActionClicked(void)
 		ui->Data->setRowHidden(i, QModelIndex(), false);
 		unhideAll(ui->Data, ui->Data->model()->index(i, 0));
 	}
+
+	hiddenRows.clear();
 }
 
 void MainWindow::batchActionClicked(void)
@@ -427,7 +431,7 @@ void MainWindow::selectionChanged(void)
 
 void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius, int Mode)
 {
-	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model()); hiddenRows.clear();
 	const auto Selected = Model ? ui->Data->selectionModel()->selectedRows() : QModelIndexList();
 
 	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter, Radius, Mode, Model, Selected);
@@ -645,7 +649,11 @@ void MainWindow::loadData(RecordModel* Model)
 	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupByInt);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::groupData);
 
-	if (Groupby.isEmpty()) lockUi(DONE); else updateGroups(Groupby);
+	if (!Groupby.isEmpty()) updateGroups(Groupby);
+	else
+	{
+		updateHidden(); lockUi(DONE);
+	}
 }
 
 void MainWindow::removeData(RecordModel* Model)
@@ -772,6 +780,9 @@ void MainWindow::readDatagram(void)
 					{
 						Selection->select(Index, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
 					}
+
+					if (Action == 5) hiddenRows.insert(Model->getUid(Index));
+					else hiddenRows.remove(Model->getUid(Index));
 				}
 
 				ui->Data->scrollTo(Index, QAbstractItemView::PositionAtCenter);
@@ -1001,6 +1012,25 @@ void MainWindow::updateView(RecordModel* Model)
 	connect(ui->Data->selectionModel(),
 		   &QItemSelectionModel::selectionChanged,
 		   this, &MainWindow::selectionChanged);
+
+	connect(ui->Data->model(),
+		   &QAbstractItemModel::modelReset,
+		   this, &MainWindow::updateHidden);
+}
+
+void MainWindow::updateHidden(void)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (Model->rowCount()) for (const auto& UID : hiddenRows)
+	{
+		const auto Index = Model->index(UID);
+
+		if (Index.isValid())
+		{
+			ui->Data->setRowHidden(Index.row(), Index.parent(), true);
+		}
+	}
 }
 
 void MainWindow::registerSockets(const QString& Database)

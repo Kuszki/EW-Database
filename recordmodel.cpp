@@ -814,10 +814,6 @@ void RecordModel::groupByStr(const QStringList& Groupby)
 
 	if (Root) { Parents.clear(); delete Root; Root = nullptr; }
 
-	endResetModel();
-
-	beginResetModel();
-
 	if (!Groups.isEmpty()) { groupItems(); removeEmpty(Root, false); }
 
 	endResetModel();
