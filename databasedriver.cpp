@@ -2438,7 +2438,10 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			{
 				const auto& B = getItemByField(Tab.Fields, Field.Name, &FIELD::Name);
 
-				if (Field == B) Fields.append(Field.Name);
+				if (Field.Type == B.Type && Field.Name == B.Name && Field.Dict == B.Dict)
+				{
+					Fields.append(Field.Name);
+				}
 			}
 		}
 
@@ -4477,7 +4480,6 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 
 		if (Tasks.contains(UID))
 		{
-
 			for (const auto P : Points) if (!Used.contains(P.IDE))
 			{
 				const double X1 = Query.value(1).toDouble();
