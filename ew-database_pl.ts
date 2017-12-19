@@ -2013,7 +2013,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="redactionwidget.ui" line="46"/>
         <source>Label angle greater than</source>
-        <translation>Kąt obrotu wtykiety większy od</translation>
+        <translation>Kąt obrotu etykiety większy od</translation>
     </message>
     <message>
         <location filename="redactionwidget.ui" line="51"/>
