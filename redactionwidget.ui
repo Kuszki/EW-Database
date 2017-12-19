@@ -150,14 +150,11 @@
    <item>
     <widget class="QToolButton" name="removeButton">
      <property name="text">
-      <string>X</string>
+      <string>Delete</string>
      </property>
      <property name="icon">
       <iconset theme="list-remove">
        <normaloff>.</normaloff>.</iconset>
-     </property>
-     <property name="toolButtonStyle">
-      <enum>Qt::ToolButtonTextOnly</enum>
      </property>
     </widget>
    </item>
