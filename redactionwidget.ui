@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RedactionWidget</class>
+ <widget class="QWidget" name="RedactionWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>550</width>
+    <height>23</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QComboBox" name="typeCombo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <item>
+      <property name="text">
+       <string>Symbol angle greater than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Symbol angle less than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Label angle greater than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Label angle less than</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Label have atributes</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Label do not have atributes</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object have symbol</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object do not have symbol</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object have linestyle</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object do not have linestyle</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object have label</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Object do not have label</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="formatCombo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <item>
+      <property name="text">
+       <string>Stress</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Overline</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Reference</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="symbolEdit">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="valueSpin">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="suffix">
+      <string>°</string>
+     </property>
+     <property name="minimum">
+      <double>-360.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>360.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="removeButton">
+     <property name="text">
+      <string>X</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-remove">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextOnly</enum>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>typeCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>RedactionWidget</receiver>
+   <slot>typeChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>97</x>
+     <y>21</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>106</x>
+     <y>201</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>removeButton</sender>
+   <signal>clicked()</signal>
+   <receiver>RedactionWidget</receiver>
+   <slot>deleteLater()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>530</x>
+     <y>21</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>541</x>
+     <y>184</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>typeChanged(int)</slot>
+ </slots>
+</ui>

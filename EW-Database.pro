@@ -51,7 +51,8 @@ SOURCES		+=	main.cpp \
 				labeldialog.cpp \
 				harmonizedialog.cpp \
 				insertdialog.cpp \
-				variablesdialog.cpp
+				variablesdialog.cpp \
+				redactionwidget.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -78,7 +79,8 @@ HEADERS		+=	mainwindow.hpp \
 				labeldialog.hpp \
 				harmonizedialog.hpp \
 				insertdialog.hpp \
-				variablesdialog.hpp
+				variablesdialog.hpp \
+				redactionwidget.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -101,7 +103,8 @@ FORMS		+=	mainwindow.ui \
 				labeldialog.ui \
 				harmonizedialog.ui \
 				insertdialog.ui \
-				variablesdialog.ui
+				variablesdialog.ui \
+				redactionwidget.ui
 
 LIBS			+=	-fopenmp
 

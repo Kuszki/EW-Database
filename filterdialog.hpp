@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -34,6 +34,7 @@
 
 #include "databasedriver.hpp"
 #include "geometrywidget.hpp"
+#include "redactionwidget.hpp"
 #include "filterwidget.hpp"
 
 namespace Ui
@@ -55,6 +56,7 @@ class FilterDialog : public QDialog
 		QAction* resetClass;
 		QAction* resetFields;
 		QAction* resetGeometry;
+		QAction* resetRedaction;
 
 		QHash<QString, QString> Classes;
 		QHash<QString, QString> Points;
@@ -79,6 +81,7 @@ class FilterDialog : public QDialog
 
 		QList<int> getUsedFields(void) const;
 		QHash<int, QVariant> getGeometryRules(void) const;
+		QHash<int, QVariant> getRedactionRules(void) const;
 		QHash<QString, QVariant> getFieldsRules(void) const;
 
 		double getRadius(void) const;
@@ -105,11 +108,16 @@ class FilterDialog : public QDialog
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common = 0, bool Singletons = false);
+		void setFields(const QList<DatabaseDriver::FIELD>& Fields,
+					const QList<DatabaseDriver::TABLE>& Tables,
+					unsigned Common = 0, bool Singletons = false);
 
 	signals:
 
-		void onFiltersUpdate(const QString&, const QList<int>&, const QHash<int, QVariant>&, const QString&, double, int);
+		void onFiltersUpdate(const QString&, const QList<int>&,
+						 const QHash<int, QVariant>&,
+						 const QHash<int, QVariant>&,
+						 const QString&, double, int);
 
 };
 

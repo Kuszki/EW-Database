@@ -102,6 +102,16 @@ class DatabaseDriver : public QObject
 		unsigned Mask = 0;
 	};
 
+	public: struct REDACTION
+	{
+		int UID, ID, Type;
+
+		QVariant Format;
+
+		double Angle;
+		int Just;
+	};
+
 	private:
 
 		mutable QMutex Terminator;
@@ -153,6 +163,7 @@ class DatabaseDriver : public QObject
 
 		QHash<int, QHash<int, QVariant>> filterData(const QHash<int, QHash<int, QVariant>>& Data,
 										    const QHash<int, QVariant>& Geometry,
+										    const QHash<int, QVariant>& Redaction,
 										    const QString& Limiter, double Radius);
 
 		QList<int> getUsedFields(const QString& Filter) const;
@@ -178,6 +189,7 @@ class DatabaseDriver : public QObject
 		void convertLineToSurface(const QSet<int>& Objects);
 
 		QList<OBJECT> loadGeometry(const QSet<int>& Limiter = QSet<int>());
+		QList<REDACTION> loadRedaction(const QSet<int>& Limiter = QSet<int>());
 		SUBOBJECTSTABLE loadSubobjects(void);
 
 		QSet<int> filterDataByLength(const QList<OBJECT>& Data, double Minimum, double Maximum, int Count = 0);
@@ -192,6 +204,15 @@ class DatabaseDriver : public QObject
 								    const SUBOBJECTSTABLE& Table, bool Not = false);
 		QSet<int> filterDataByHasSubobject(const QSet<int>& Data, const QSet<int>& Objects,
 									const SUBOBJECTSTABLE& Table, bool Not = false);
+
+		QSet<int> filterDataBySymbolAngle(const QList<REDACTION>& Data, double Minimum, double Maximum);
+		QSet<int> filterDataByLabelAngle(const QList<REDACTION>& Data, double Minimum, double Maximum);
+
+		QSet<int> filterDataBySymbolText(const QList<REDACTION>& Data, const QStringList& Text, bool Not = false);
+		QSet<int> filterDataByLabelText(const QList<REDACTION>& Data, const QStringList& Text, bool Not = false);
+		QSet<int> filterDataByLineStyle(const QList<REDACTION>& Data, const QStringList& Style, bool Not = false);
+
+		QSet<int> filterDataByLabelStyle(const QList<REDACTION>& Data, int Style, bool Not = false);
 
 		QSet<int> filterDataByHasGeoemetry(const QSet<int>& Data, const QSet<int>& Types);
 		QSet<int> filterDataByHasMulrel(const QSet<int>& Data);
@@ -212,6 +233,7 @@ class DatabaseDriver : public QObject
 		void loadList(const QStringList& Filter);
 		void reloadData(const QString& Filter, QList<int> Used,
 					 const QHash<int, QVariant>& Geometry,
+					 const QHash<int, QVariant>& Redaction,
 					 const QString& Limiter, double Radius,
 					 int Mode, const RecordModel* Current = nullptr,
 					 const QModelIndexList& Items = QModelIndexList());

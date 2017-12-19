@@ -244,7 +244,9 @@ void MainWindow::removelabActionClicked()
 
 void MainWindow::refreshActionClicked(void)
 {
-	refreshData(Filter->getFilterRules(), Filter->getUsedFields(), Filter->getGeometryRules(), Filter->getLimiterFile(), Filter->getRadius(), 0);
+	refreshData(Filter->getFilterRules(), Filter->getUsedFields(),
+			  Filter->getGeometryRules(), Filter->getRedactionRules(),
+			  Filter->getLimiterFile(), Filter->getRadius(), 0);
 }
 
 void MainWindow::editActionClicked(void)
@@ -435,12 +437,12 @@ void MainWindow::selectionChanged(void)
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius, int Mode)
+void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius, int Mode)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model()); hiddenRows.clear();
 	const auto Selected = Model ? ui->Data->selectionModel()->selectedRows() : QModelIndexList();
 
-	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Limiter, Radius, Mode, Model, Selected);
+	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Redaction, Limiter, Radius, Mode, Model, Selected);
 }
 
 void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)

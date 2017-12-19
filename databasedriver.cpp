@@ -445,7 +445,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	return List;
 }
 
-QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHash<int, QVariant>>& Data, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius)
+QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHash<int, QVariant>>& Data, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius)
 {
 	if (!Database.isOpen()) return Data; QSet<int> Filtered = Data.keys().toSet(); QHash<int, QHash<int, QVariant>> Res;
 
@@ -502,6 +502,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	bool loadG(false); for (int i = 0; i <= 11; ++i) loadG = loadG || Geometry.contains(i);
 	bool loadR(false); for (int i = 12; i <= 15; ++i) loadR = loadR || Geometry.contains(i);
 
+	auto Redact = Redaction.isEmpty() ? QList<REDACTION>() : loadRedaction(Filtered);
 	auto Geom = loadG ? loadGeometry(Filtered | Limit) : QList<OBJECT>(); QSet<int> Types;
 	const auto Subs = loadR ? loadSubobjects() : SUBOBJECTSTABLE(); QSet<int> Subsl[4];
 	const int originSize = Filtered.size(); QFutureSynchronizer<void> Synch;
@@ -574,6 +575,34 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	if (Geometry.contains(20)) Filtered = Filtered.intersect(filterDataByHasMulrel(Filtered));
 
 	if (Geometry.contains(100)) Filtered = Filtered.intersect(filterDataByHasGeoemetry(Filtered, Types));
+
+	if (Redaction.contains(0) || Redaction.contains(1))
+	{
+		const double Min = Redaction.contains(0) ? Redaction[0].toDouble() : 0.0;
+		const double Max = Redaction.contains(1) ? Redaction[1].toDouble() : INFINITY;
+
+		Filtered = Filtered.intersect(filterDataBySymbolAngle(Redact, Min, Max));
+	}
+
+	if (Redaction.contains(2) || Redaction.contains(3))
+	{
+		const double Min = Redaction.contains(2) ? Redaction[2].toDouble() : 0.0;
+		const double Max = Redaction.contains(3) ? Redaction[3].toDouble() : INFINITY;
+
+		Filtered = Filtered.intersect(filterDataByLabelAngle(Redact, Min, Max));
+	}
+
+	if (Redaction.contains(4)) Filtered = Filtered.intersect((filterDataByLabelStyle(Redact, Redaction[4].toInt(), false)));
+	if (Redaction.contains(5)) Filtered = Filtered.intersect((filterDataByLabelStyle(Redact, Redaction[5].toInt(), true)));
+
+	if (Redaction.contains(6)) Filtered = Filtered.intersect((filterDataBySymbolText(Redact, Redaction[6].toStringList(), false)));
+	if (Redaction.contains(7)) Filtered = Filtered.intersect((filterDataBySymbolText(Redact, Redaction[7].toStringList(), true)));
+
+	if (Redaction.contains(8)) Filtered = Filtered.intersect((filterDataByLineStyle(Redact, Redaction[8].toStringList(), false)));
+	if (Redaction.contains(9)) Filtered = Filtered.intersect((filterDataByLineStyle(Redact, Redaction[9].toStringList(), true)));
+
+	if (Redaction.contains(10)) Filtered = Filtered.intersect((filterDataByLabelText(Redact, Redaction[10].toStringList(), false)));
+	if (Redaction.contains(11)) Filtered = Filtered.intersect((filterDataByLabelText(Redact, Redaction[11].toStringList(), true)));
 
 	for (const auto& UID : Filtered) Res.insert(UID, Data[UID]); return Res;
 }
@@ -728,7 +757,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QString& Limiter, double Radius, int Mode, const RecordModel* Current, const QModelIndexList& Items)
+void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius, int Mode, const RecordModel* Current, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -757,9 +786,9 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onBeginProgress(tr("Applying geometry filters"));
 	emit onSetupProgress(0, 0);
 
-	if (!Geometry.isEmpty() && !isTerminated())
+	if (!isTerminated() && (!Geometry.isEmpty() || !Redaction.isEmpty()))
 	{
-		List = filterData(List, Geometry, Limiter, Radius);
+		List = filterData(List, Geometry, Redaction, Limiter, Radius);
 	}
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataLoad(Model); return; }
@@ -5039,6 +5068,90 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 	return Objects.values();
 }
 
+QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& Limiter)
+{
+	if (!Database.isOpen()) return QList<REDACTION>(); QList<REDACTION> List;
+
+	QSqlQuery selectPoint(Database), selectLine(Database);
+
+	selectPoint.setForwardOnly(true); selectLine.setForwardOnly(true);
+
+	emit onSetupProgress(0, Limiter.size()); int Step(0);
+
+	selectPoint.prepare(
+		"SELECT "
+			"O.UID, O.ID, P.TYP, P.TEXT, P.KAT, P.JUSTYFIKACJA "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_TEXT P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0");
+
+	selectLine.prepare(
+		"SELECT "
+			"O.UID, O.ID, P.TYP_LINII "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0");
+
+	if (selectPoint.exec()) while (selectPoint.next() && !isTerminated())
+	{
+		const int UID = selectPoint.value(0).toInt();
+
+		if (Limiter.isEmpty() || Limiter.contains(UID))
+		{
+			List.append(
+			{
+				UID, selectPoint.value(1).toInt(),
+				selectPoint.value(2).toInt(),
+				selectPoint.value(3).toString(),
+				selectPoint.value(4).toDouble(),
+				selectPoint.value(5).toInt()
+			});
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	if (selectLine.exec()) while (selectLine.next() && !isTerminated())
+	{
+		const int UID = selectLine.value(0).toInt();
+
+		if (Limiter.isEmpty() || Limiter.contains(UID))
+		{
+			List.append(
+			{
+				UID, selectLine.value(1).toInt(), 0,
+				selectLine.value(2).toInt(), 0.0, 0
+			});
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	return List;
+}
+
 DatabaseDriver::SUBOBJECTSTABLE DatabaseDriver::loadSubobjects(void)
 {
 	if (!Database.isOpen()) return SUBOBJECTSTABLE(); SUBOBJECTSTABLE List;
@@ -5683,6 +5796,181 @@ QSet<int> DatabaseDriver::filterDataByHasSubobject(const QSet<int>& Data, const 
 
 	if (Not) return QSet<int>(Data).subtract(Filtered);
 	else return Filtered.intersect(Data);
+}
+
+QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::REDACTION>& Data, double Minimum, double Maximum)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const REDACTION& Object) -> void
+	{
+		if (Object.Type == 4 && Object.Angle >= Minimum && Object.Angle <= Maximum)
+		{
+			Synchronizer.lock(); Filtered.insert(Object.UID); Synchronizer.unlock();
+		}
+	});
+
+	return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::REDACTION>& Data, double Minimum, double Maximum)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const REDACTION& Object) -> void
+	{
+		if (Object.Type == 6 && Object.Angle >= Minimum && Object.Angle <= Maximum)
+		{
+			Synchronizer.lock(); Filtered.insert(Object.UID); Synchronizer.unlock();
+		}
+	});
+
+	return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataBySymbolText(const QList<DatabaseDriver::REDACTION>& Data, const QStringList& Text, bool Not)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+
+	const bool Any = Text.isEmpty() || Text.contains(QString());
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, &Text, Any] (const REDACTION& Object) -> void
+	{
+		if (Object.Type != 4) return; bool OK = Any;
+
+		const QString Current = Object.Format.toString();
+
+		for (const auto& Txt : Text) if (!OK)
+		{
+			OK = OK || Current.contains(Txt, Qt::CaseInsensitive);
+		}
+
+		if (OK)
+		{
+			Synchronizer.lock();
+			Filtered.insert(Object.UID);
+			Synchronizer.unlock();
+		}
+	});
+
+	if (Not)
+	{
+		QSet<int> Return;
+
+		for (const auto& Obj : Data)
+			if (!Filtered.contains(Obj.UID))
+			{
+				Return.insert(Obj.UID);
+			}
+
+		return Return;
+	}
+	else return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByLabelText(const QList<DatabaseDriver::REDACTION>& Data, const QStringList& Text, bool Not)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+
+	const bool Any = Text.isEmpty() || Text.contains(QString());
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, &Text, Any] (const REDACTION& Object) -> void
+	{
+		if (Object.Type != 6) return; bool OK = Any;
+
+		const QString Current = Object.Format.toString();
+
+		for (const auto& Txt : Text) if (!OK)
+		{
+			OK = OK || Current.contains(Txt, Qt::CaseInsensitive);
+		}
+
+		if (OK)
+		{
+			Synchronizer.lock();
+			Filtered.insert(Object.UID);
+			Synchronizer.unlock();
+		}
+	});
+
+	if (Not)
+	{
+		QSet<int> Return;
+
+		for (const auto& Obj : Data)
+			if (!Filtered.contains(Obj.UID))
+			{
+				Return.insert(Obj.UID);
+			}
+
+		return Return;
+	}
+	else return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByLineStyle(const QList<DatabaseDriver::REDACTION>& Data, const QStringList& Style, bool Not)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+
+	const bool Any = Style.isEmpty() || Style.contains(QString()); QSet<int> List;
+
+	bool Number(false); for (const auto& Txt : Style)
+	{
+		const int n = Txt.toInt(&Number); if (Number) List.insert(n);
+	}
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, &List, Any] (const REDACTION& Object) -> void
+	{
+		if (Object.Type != 0) return; const int Current = Object.Format.toInt();
+
+		if (Any || List.contains(Current))
+		{
+			Synchronizer.lock();
+			Filtered.insert(Object.UID);
+			Synchronizer.unlock();
+		}
+	});
+
+	if (Not)
+	{
+		QSet<int> Return;
+
+		for (const auto& Obj : Data)
+			if (!Filtered.contains(Obj.UID))
+			{
+				Return.insert(Obj.UID);
+			}
+
+		return Return;
+	}
+	else return Filtered;
+}
+
+QSet<int> DatabaseDriver::filterDataByLabelStyle(const QList<DatabaseDriver::REDACTION>& Data, int Style, bool Not)
+{
+	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Style] (const REDACTION& Object) -> void
+	{
+		if (Object.Type == 6 && (Object.Just & Style) == Style)
+		{
+			Synchronizer.lock(); Filtered.insert(Object.UID); Synchronizer.unlock();
+		}
+	});
+
+	if (Not)
+	{
+		QSet<int> Return;
+
+		for (const auto& Obj : Data)
+			if (!Filtered.contains(Obj.UID))
+			{
+				Return.insert(Obj.UID);
+			}
+
+		return Return;
+	}
+	else return Filtered;
 }
 
 QSet<int> DatabaseDriver::filterDataByHasGeoemetry(const QSet<int>& Data, const QSet<int>& Types)

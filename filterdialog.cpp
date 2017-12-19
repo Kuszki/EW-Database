@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -31,10 +31,12 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	resetClass = new QAction(tr("Reset class list"), this);
 	resetFields = new QAction(tr("Reset fields list"), this);
 	resetGeometry = new QAction(tr("Reset geometry filters"), this);
+	resetRedaction = new QAction(tr("Reset redaction filters"), this);
 
 	resetClass->setCheckable(true); resetMenu->addAction(resetClass);
 	resetFields->setCheckable(true); resetMenu->addAction(resetFields);
 	resetGeometry->setCheckable(true); resetMenu->addAction(resetGeometry);
+	resetRedaction->setCheckable(true); resetMenu->addAction(resetRedaction);
 
 	QMenu* saveMenu = new QMenu(this);
 
@@ -63,6 +65,7 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	resetClass->setChecked(Settings.value("class", true).toBool());
 	resetFields->setChecked(Settings.value("fields", true).toBool());
 	resetGeometry->setChecked(Settings.value("geometry", true).toBool());
+	resetRedaction->setChecked(Settings.value("redaction", true).toBool());
 	Settings.endGroup();
 
 	QToolButton* Button = new QToolButton(this);
@@ -86,6 +89,7 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	ui->classLayout->setAlignment(Qt::AlignTop);
 	ui->simpleLayout->setAlignment(Qt::AlignTop);
 	ui->geometryLayout->setAlignment(Qt::AlignTop);
+	ui->redactionLayout->setAlignment(Qt::AlignTop);
 
 	ui->rightSpacer->changeSize(ui->copyButton->sizeHint().width(), 0);
 
@@ -100,6 +104,7 @@ FilterDialog::~FilterDialog(void)
 	Settings.setValue("class", resetClass->isChecked());
 	Settings.setValue("fields", resetFields->isChecked());
 	Settings.setValue("geometry", resetGeometry->isChecked());
+	Settings.setValue("redaction", resetRedaction->isChecked());
 	Settings.endGroup();
 
 	delete ui;
@@ -192,6 +197,49 @@ QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
 	return Rules;
 }
 
+QHash<int, QVariant> FilterDialog::getRedactionRules(void) const
+{
+	QHash<int, QVariant> Rules;
+
+	for (int i = 0; i < ui->redactionLayout->count(); ++i)
+		if (auto W = dynamic_cast<RedactionWidget*>(ui->redactionLayout->itemAt(i)->widget()))
+		{
+			const QPair<int, QVariant> Rule = W->getCondition();
+
+			if (!Rules.contains(Rule.first)) switch (Rule.second.type())
+			{
+				case QVariant::Double:
+				case QVariant::Int:
+					Rules.insert(Rule.first, Rule.second);
+				break;
+				case QVariant::String:
+					Rules[Rule.first] = QStringList() << Rule.second.toString();
+				break;
+			}
+
+			if (Rule.first == 0 || Rule.first == 2)
+			{
+				Rules[Rule.first] = qMax(Rules[Rule.first].toDouble(),
+									Rule.second.toDouble());
+			}
+			else if (Rule.first == 1 || Rule.first == 3)
+			{
+				Rules[Rule.first] = qMin(Rules[Rule.first].toDouble(),
+									Rule.second.toDouble());
+			}
+			else if (Rule.second.type() == QVariant::Int)
+			{
+				Rules[Rule.first] = Rules[Rule.first].toInt() | Rule.second.toInt();
+			}
+			else if (!Rules[Rule.first].toStringList().contains(Rule.second.toString()))
+			{
+				Rules[Rule.first] = Rules[Rule.first].toStringList() << Rule.second.toString();
+			}
+		}
+
+	return Rules;
+}
+
 QHash<QString, QVariant> FilterDialog::getFieldsRules(void) const
 {
 	QHash<QString, QVariant> Rules;
@@ -254,6 +302,12 @@ void FilterDialog::resetButtonClicked(void)
 		{
 			W->deleteLater();
 		}
+
+	if (resetRedaction->isChecked()) for (int i = 0; i < ui->redactionLayout->count(); ++i)
+		if (auto W = qobject_cast<RedactionWidget*>(ui->redactionLayout->itemAt(i)->widget()))
+		{
+			W->deleteLater();
+		}
 }
 
 void FilterDialog::limiterBoxChecked(bool Checked)
@@ -300,6 +354,8 @@ void FilterDialog::filterRulesChanged(void)
 {
 	const int Index = ui->tabWidget->currentIndex();
 
+	ui->newButton->setVisible(Index == 2 || Index == 3);
+
 	ui->classSearch->setVisible(Index == 0);
 	ui->selectButton->setVisible(Index == 0);
 	ui->unselectButton->setVisible(Index == 0);
@@ -308,14 +364,22 @@ void FilterDialog::filterRulesChanged(void)
 	ui->simpleSearch->setVisible(Index == 1);
 	ui->operatorBox->setVisible(Index == 1);
 
-	ui->newButton->setVisible(Index == 2);
 	ui->limiterCheck->setVisible(Index == 2);
 	ui->radiusSpin->setVisible(Index == 2);
 }
 
 void FilterDialog::newButtonClicked(void)
 {
-	ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, Lines, Surfaces, this));
+	const int Index = ui->tabWidget->currentIndex();
+
+	if (Index == 2)
+	{
+		ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, Lines, Surfaces, this));
+	}
+	else
+	{
+		ui->redactionLayout->addWidget(new RedactionWidget(this));
+	}
 }
 
 void FilterDialog::copyButtonClicked(void)
@@ -351,8 +415,8 @@ void FilterDialog::unselectButtonClicked(void)
 
 void FilterDialog::accept(void)
 {
-	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), Limiter,
-									ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
+	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), getRedactionRules(),
+									Limiter, ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
 }
 
 void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)

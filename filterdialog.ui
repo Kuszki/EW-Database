@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1159</width>
-            <height>427</height>
+            <width>1166</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1159</width>
-            <height>427</height>
+            <width>1166</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,11 +112,42 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1159</width>
-            <height>427</height>
+            <width>1166</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="redactionTab">
+      <attribute name="title">
+       <string>Redaction</string>
+      </attribute>
+      <layout class="QGridLayout" name="redactionScroolLayout">
+       <item row="0" column="0">
+        <widget class="QScrollArea" name="redactionScrool">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="redactionAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1166</width>
+            <height>433</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="redactionLayout"/>
          </widget>
         </widget>
        </item>
