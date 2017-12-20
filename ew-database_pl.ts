@@ -2082,8 +2082,8 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     </message>
     <message>
         <location filename="redactionwidget.ui" line="153"/>
-        <source>X</source>
-        <translation type="unfinished"></translation>
+        <source>Delete</source>
+        <translation>Usuń</translation>
     </message>
     <message>
         <location filename="redactionwidget.cpp" line="66"/>
