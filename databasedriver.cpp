@@ -1683,7 +1683,10 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 		for (const auto& Index : k.value()) if (Merges.contains(Index))
 		{
-			QList<PART> Parts, Sorted, Labels; QSet<int> Taken; bool Continue = true; int n = 0;
+			QList<PART> Parts, Sorted, Labels; QSet<int> Taken;
+			bool Continue = true; int n = 0;
+
+			Parts.append(Geometries[Index]);
 
 			for (const auto& Part : Merges[Index])
 			{
