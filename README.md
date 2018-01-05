@@ -15,11 +15,9 @@ Edycja baz danych programu EW-Mapa
 ## Filtrowanie obiektów
 
 - Filtrowanie na podstawie kodu obiektu
-
 - Filtrowanie na podstawie atrybutów
 	- Operatory `=`, `<>`, `>=`, `>`, `<=`, `<`, `BETWEEN`, `LIKE`, `NOT LIKE`, `IN`, `NOT IN`, `IS NULL`, `IS NOT NULL`
 	- Możliwość wyboru operatorów logicznych `AND` lub `OR`
-
 - Filtrowanie na podstawie geometrii
 	- Na podstawie długości elementów
 	- Na podstawie powierzchni elementów
@@ -36,7 +34,6 @@ Edycja baz danych programu EW-Mapa
 	- Możliwość ustalenia kodów obiektów dla każdego z warunków
 	- Możliwość negacji każdego z warunków
 	- Możliwość zadania promienia poszukiwań
-
 - Filtrowanie na podstawie elementów redakcji
 	- Na podstawie kątu obrotu symbolu
 	- Na podstawie kątu obrotu etykiety
@@ -44,7 +41,6 @@ Edycja baz danych programu EW-Mapa
 	- Na podstawie rodzaju i istnienia symbolu
 	- Na podstawie rodzaju i istnienia etykiety
 	- Na podstawie stylu i istnienia linii
-	
 - Możliwość zastosowania filtrów do wybranej listy obiektów
 	- Iloczyn z wynikiem działania filtra
 	- Różnica z wynikiem działania filtra
