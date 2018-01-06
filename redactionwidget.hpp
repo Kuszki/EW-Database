@@ -26,6 +26,8 @@
 #include <QWidget>
 #include <QPair>
 
+#include <QtCore>
+
 namespace Ui
 {
 	class RedactionWidget;
