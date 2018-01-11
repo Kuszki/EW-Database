@@ -736,7 +736,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onBeginProgress(tr("Querying database"));
 	emit onSetupProgress(0, Tables.size());
 
-	RecordModel* Model = new RecordModel(Headers, this); Step = 0;
+	RecordModel* Model = new RecordModel(Headers); Step = 0;
 
 	if (!isTerminated()) for (const auto& Table : Tables)
 	{
@@ -753,6 +753,12 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 		emit onUpdateProgress(++Step);
 	}
 
+	if (sender())
+	{
+		Model->moveToThread(sender()->thread());
+		Model->setParent(sender());
+	}
+
 	emit onEndProgress();
 	emit onDataLoad(Model);
 }
@@ -766,7 +772,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onBeginProgress(tr("Querying database"));
 	emit onSetupProgress(0, Tables.size());
 
-	RecordModel* Model = new RecordModel(Headers, this); int Step = 0;
+	RecordModel* Model = new RecordModel(Headers); int Step = 0;
 	QHash<int, QHash<int, QVariant>> List; QSet<int> Loaded;
 
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
@@ -847,6 +853,12 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		{
 			Model->addItems(List);
 		}
+	}
+
+	if (sender())
+	{
+		Model->moveToThread(sender()->thread());
+		Model->setParent(sender());
 	}
 
 	emit onEndProgress();
@@ -5845,7 +5857,7 @@ QSet<int> DatabaseDriver::filterDataBySymbolText(const QList<DatabaseDriver::RED
 
 		for (const auto& Txt : Text) if (!OK)
 		{
-			OK = OK || Current.contains(Txt, Qt::CaseInsensitive);
+			OK = OK || !Current.compare(Txt, Qt::CaseInsensitive);
 		}
 
 		if (OK)
@@ -5885,7 +5897,7 @@ QSet<int> DatabaseDriver::filterDataByLabelText(const QList<DatabaseDriver::REDA
 
 		for (const auto& Txt : Text) if (!OK)
 		{
-			OK = OK || Current.contains(Txt, Qt::CaseInsensitive);
+			OK = OK || !Current.compare(Txt, Qt::CaseInsensitive);
 		}
 
 		if (OK)

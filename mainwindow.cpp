@@ -650,18 +650,21 @@ void MainWindow::updateValues(const QHash<int, QVariant>& Values, const QHash<in
 
 void MainWindow::loadData(RecordModel* Model)
 {
-	updateView(Model); updateColumns(Columns->getEnabledColumnsIndexes());
-
 	const auto Groupby = Groups->getEnabledGroupsIndexes();
+
+	if (!Groupby.isEmpty()) Model->groupByInt(Groupby);
+
+	updateView(Model);
+	updateColumns(Columns->getEnabledColumnsIndexes());
+	updateHidden();
+
+	if (!Groupby.size()) ui->Data->setTreePosition(-1);
+	else ui->Data->setTreePosition(Groupby.first());
 
 	connect(this, &MainWindow::onGroupRequest, Model, &RecordModel::groupByInt);
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::groupData);
 
-	if (!Groupby.isEmpty()) updateGroups(Groupby);
-	else
-	{
-		updateHidden(); lockUi(DONE);
-	}
+	lockUi(DONE); ui->statusBar->showMessage(tr("Data loaded"));
 }
 
 void MainWindow::removeData(void)
@@ -781,7 +784,7 @@ void MainWindow::readDatagram(void)
 					Selection->select(Index, Actions[Action - 1] | QItemSelectionModel::Rows);
 				}
 				else
-				{					
+				{
 					ui->Data->setRowHidden(Index.row(), Index.parent(), Action == 5);
 
 					if (Action == 5)
