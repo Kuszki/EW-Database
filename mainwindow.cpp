@@ -1016,6 +1016,8 @@ void MainWindow::updateView(RecordModel* Model)
 	auto Selection = ui->Data->selectionModel();
 	auto Old = ui->Data->model();
 
+	if (Model) Model->setParent(this);
+
 	if (dynamic_cast<RecordModel*>(Old))
 	{
 		headerState = ui->Data->header()->saveState();

@@ -753,11 +753,7 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 		emit onUpdateProgress(++Step);
 	}
 
-	if (sender())
-	{
-		Model->moveToThread(sender()->thread());
-		Model->setParent(sender());
-	}
+	if (sender()) Model->moveToThread(sender()->thread());
 
 	emit onEndProgress();
 	emit onDataLoad(Model);
@@ -855,11 +851,7 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 		}
 	}
 
-	if (sender())
-	{
-		Model->moveToThread(sender()->thread());
-		Model->setParent(sender());
-	}
+	if (sender()) Model->moveToThread(sender()->thread());
 
 	emit onEndProgress();
 	emit onDataLoad(Model);
@@ -2346,22 +2338,22 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	emit onBeginProgress(tr("Converting geometry"));
 	emit onSetupProgress(0, 0);
 
-	if (Actions & 0b0001 && !vPoint.isNull())
+	if (Actions & 0b0001 && Type & 256 && !vPoint.isNull())
 	{
 		convertSurfaceToPoint(Change, NewSymbol, vPoint.toInt());
 	}
 
-	if (Actions & 0b0010 && Type & 103)
+	if (Actions & 0b0010 && Type & 8)
 	{
 		convertSurfaceToLine(Change);
 	}
 
-	if (Actions & 0b0100 && Type & 357)
+	if (Actions & 0b0100 && Type & 2)
 	{
 		convertLineToSurface(Change);
 	}
 
-	if (Actions & 0b1000 && !vLine.isNull() && !vStyle.isNull())
+	if (Actions & 0b1000 && Type & 2 && !vLine.isNull() && !vStyle.isNull())
 	{
 		convertPointToSurface(Change, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
 	}
@@ -4871,9 +4863,9 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 
 	selectQuery.prepare(
 		"SELECT "
-			"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
-			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 3), "
-			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 3) "
+			"P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
