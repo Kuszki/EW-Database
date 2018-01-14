@@ -4871,9 +4871,9 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 
 	selectQuery.prepare(
 		"SELECT "
-			"P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+			"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
+			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 3), "
+			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 3) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
