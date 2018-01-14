@@ -4852,12 +4852,20 @@ void DatabaseDriver::convertSurfaceToLine(const QSet<int>& Objects)
 
 	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
 
-	for (const auto UID : Tasks) { updateQuery.addBindValue(UID); updateQuery.exec(); }
+	emit onSetupProgress(0, Tasks.size()); int Step(0);
+
+	for (const auto UID : Tasks)
+	{
+		updateQuery.addBindValue(UID);
+		updateQuery.exec();
+
+		emit onUpdateProgress(++Step);
+	}
 }
 
 void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 {
-	if (!Database.isOpen()) return;
+	if (!Database.isOpen()) return; QSet<int> Updates; int Step(0);
 
 	QSqlQuery selectQuery(Database), updateQuery(Database);
 
@@ -4886,7 +4894,7 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 
 	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
 
-	emit onSetupProgress(0, Objects.size()); int Step(0);
+	emit onSetupProgress(0, Objects.size()); Step = 0;
 
 	for (const auto& UID : Objects)
 	{
@@ -4909,7 +4917,17 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 			Size += 1;
 		}
 
-		if (Size && Points.isEmpty()) { updateQuery.addBindValue(UID); updateQuery.exec(); }
+		if (Size && Points.isEmpty()) Updates.insert(UID);
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onSetupProgress(0, Updates.size()); Step = 0;
+
+	for (const auto& UID : Updates)
+	{
+		updateQuery.addBindValue(UID);
+		updateQuery.exec();
 
 		emit onUpdateProgress(++Step);
 	}
