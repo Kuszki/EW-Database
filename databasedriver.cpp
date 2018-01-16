@@ -6541,17 +6541,13 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onClassReady(QHash<QString, QString>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>()); return; }
 
-	QSqlQuery Query(Database), QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database),
+	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database),
 			QueryE(Database), QueryF(Database), QueryG(Database), QueryH(Database);
 
 	QHash<QString, QHash<int, QString>> Lines, Points, Texts;
-	QHash<QString, QString> Classes; int Step = 0;
+	QHash<QString, QString> Classes;
 
-	const QSet<int> Tasks = Model->getUids(Items).toSet();
-
-	const int Mask = 8 | 2 | 256; int Type = 0;
-
-	Query.prepare("SELECT O.RODZAJ FROM EW_OBIEKTY O WHERE O.UID = ? AND O.STATUS = 0");
+	const int Type = 8 | 2 | 256; int Step = 0;
 
 	QueryA.prepare(
 		"SELECT "
@@ -6712,29 +6708,6 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 			"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
 		"ORDER BY "
 			"G.NAZWA_L");
-
-	emit onBeginProgress(tr("Preparing classes"));
-	emit onSetupProgress(0, 0); Step = 0;
-
-	for (const auto& UID : Tasks)
-	{
-		Query.addBindValue(UID);
-
-		if (Query.exec() && Query.next()) switch (Query.value(0).toInt())
-		{
-			case 2:
-				Type |= 8;
-			break;
-			case 3:
-				Type |= 2;
-			break;
-			case 4:
-				Type |= 256;
-			break;
-		}
-
-		if (Type == Mask) break;
-	}
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Selecting layers data"));
