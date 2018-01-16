@@ -4850,9 +4850,9 @@ void DatabaseDriver::convertSurfaceToLine(const QSet<int>& Objects)
 
 	if (selectQuery.exec()) while (selectQuery.next()) Tasks.remove(selectQuery.value(0).toInt());
 
-	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
-
 	emit onSetupProgress(0, Tasks.size()); int Step(0);
+
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
 
 	for (const auto UID : Tasks)
 	{
@@ -4892,8 +4892,6 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 			"P.P1_FLAGS <> 4 AND "
 			"P.STAN_ZMIANY = 0");
 
-	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
-
 	emit onSetupProgress(0, Objects.size()); Step = 0;
 
 	for (const auto& UID : Objects)
@@ -4923,6 +4921,8 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 	}
 
 	emit onSetupProgress(0, Updates.size()); Step = 0;
+
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
 
 	for (const auto& UID : Updates)
 	{
