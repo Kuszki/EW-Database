@@ -2287,29 +2287,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	const int Type = Class != "NULL" ? getItemByField(Tables, Class, &TABLE::Name).Type : 0;
 	const QSet<int> List = Model->getUids(Items).toSet(); QSet<int> Change;
 
-	if (Type == 0) Change = List;
-	else if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
-	{
-		const int UID = Query.value(0).toInt();
-
-		if (!List.contains(UID)) continue;
-
-		bool OK(false); switch (Query.value(1).toInt())
-		{
-			case 2:
-				OK = (Type & 8);
-			break;
-			case 3:
-				OK = (Type & 2);
-			break;
-			case 4:
-				OK = (Type & 256);
-			break;
-		}
-
-		if (OK) Change.insert(UID);
-	}
-
 	if (!Style && Line != -1)
 	{
 		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
@@ -2340,22 +2317,45 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	if (Actions & 0b0001 && Type & 256 && !vPoint.isNull())
 	{
-		convertSurfaceToPoint(Change, NewSymbol, vPoint.toInt());
+		convertSurfaceToPoint(List, NewSymbol, vPoint.toInt());
 	}
 
 	if (Actions & 0b0010 && Type & 8)
 	{
-		convertSurfaceToLine(Change);
+		convertSurfaceToLine(List);
 	}
 
 	if (Actions & 0b0100 && Type & 2)
 	{
-		convertLineToSurface(Change);
+		convertLineToSurface(List);
 	}
 
 	if (Actions & 0b1000 && Type & 2 && !vLine.isNull() && !vStyle.isNull())
 	{
-		convertPointToSurface(Change, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
+		convertPointToSurface(List, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
+	}
+
+	if (Type == 0) Change = List;
+	else if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+
+		if (!List.contains(UID)) continue;
+
+		bool OK(false); switch (Query.value(1).toInt())
+		{
+			case 2:
+				OK = (Type & 8);
+			break;
+			case 3:
+				OK = (Type & 2);
+			break;
+			case 4:
+				OK = (Type & 256);
+			break;
+		}
+
+		if (OK) Change.insert(UID);
 	}
 
 	selectLines.prepare(
