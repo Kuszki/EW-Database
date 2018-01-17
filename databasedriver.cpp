@@ -2293,29 +2293,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 	const int Type = Class != "NULL" ? getItemByField(Tables, Class, &TABLE::Name).Type : 0;
 	const QSet<int> List = Model->getUids(Items).toSet(); QSet<int> Change;
 
-	if (Type == 0) Change = List;
-	else if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
-	{
-		const int UID = Query.value(0).toInt();
-
-		if (!List.contains(UID)) continue;
-
-		bool OK(false); switch (Query.value(1).toInt())
-		{
-			case 2:
-				OK = (Type & 8);
-			break;
-			case 3:
-				OK = (Type & 2);
-			break;
-			case 4:
-				OK = (Type & 256);
-			break;
-		}
-
-		if (OK) Change.insert(UID);
-	}
-
 	if (!Style && Line != -1)
 	{
 		Query.prepare("SELECT TYP_LINII FROM EW_WARSTWA_LINIOWA WHERE ID = ?"); Query.addBindValue(Line);
@@ -2346,22 +2323,45 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 
 	if (Actions & 0b0001 && Type & 256 && !vPoint.isNull())
 	{
-		convertSurfaceToPoint(Change, NewSymbol, vPoint.toInt());
+		convertSurfaceToPoint(List, NewSymbol, vPoint.toInt());
 	}
 
 	if (Actions & 0b0010 && Type & 8)
 	{
-		convertSurfaceToLine(Change);
+		convertSurfaceToLine(List);
 	}
 
 	if (Actions & 0b0100 && Type & 2)
 	{
-		convertLineToSurface(Change);
+		convertLineToSurface(List);
 	}
 
 	if (Actions & 0b1000 && Type & 2 && !vLine.isNull() && !vStyle.isNull())
 	{
-		convertPointToSurface(Change, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
+		convertPointToSurface(List, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
+	}
+
+	if (Type == 0) Change = List;
+	else if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
+	{
+		const int UID = Query.value(0).toInt();
+
+		if (!List.contains(UID)) continue;
+
+		bool OK(false); switch (Query.value(1).toInt())
+		{
+			case 2:
+				OK = (Type & 8);
+			break;
+			case 3:
+				OK = (Type & 2);
+			break;
+			case 4:
+				OK = (Type & 256);
+			break;
+		}
+
+		if (OK) Change.insert(UID);
 	}
 
 	selectLines.prepare(
@@ -4856,9 +4856,9 @@ void DatabaseDriver::convertSurfaceToLine(const QSet<int>& Objects)
 
 	if (selectQuery.exec()) while (selectQuery.next()) Tasks.remove(selectQuery.value(0).toInt());
 
-	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
-
 	emit onSetupProgress(0, Tasks.size()); int Step(0);
+
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
 
 	for (const auto UID : Tasks)
 	{
@@ -4898,8 +4898,6 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 			"P.P1_FLAGS <> 4 AND "
 			"P.STAN_ZMIANY = 0");
 
-	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
-
 	emit onSetupProgress(0, Objects.size()); Step = 0;
 
 	for (const auto& UID : Objects)
@@ -4929,6 +4927,8 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 	}
 
 	emit onSetupProgress(0, Updates.size()); Step = 0;
+
+	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
 
 	for (const auto& UID : Updates)
 	{
@@ -6547,17 +6547,13 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onClassReady(QHash<QString, QString>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>()); return; }
 
-	QSqlQuery Query(Database), QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database),
+	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database),
 			QueryE(Database), QueryF(Database), QueryG(Database), QueryH(Database);
 
 	QHash<QString, QHash<int, QString>> Lines, Points, Texts;
-	QHash<QString, QString> Classes; int Step = 0;
+	QHash<QString, QString> Classes;
 
-	const QSet<int> Tasks = Model->getUids(Items).toSet();
-
-	const int Mask = 8 | 2 | 256; int Type = 0;
-
-	Query.prepare("SELECT O.RODZAJ FROM EW_OBIEKTY O WHERE O.UID = ? AND O.STATUS = 0");
+	const int Type = 8 | 2 | 256; int Step = 0;
 
 	QueryA.prepare(
 		"SELECT "
@@ -6718,29 +6714,6 @@ void DatabaseDriver::getClass(RecordModel* Model, const QModelIndexList& Items)
 			"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
 		"ORDER BY "
 			"G.NAZWA_L");
-
-	emit onBeginProgress(tr("Preparing classes"));
-	emit onSetupProgress(0, 0); Step = 0;
-
-	for (const auto& UID : Tasks)
-	{
-		Query.addBindValue(UID);
-
-		if (Query.exec() && Query.next()) switch (Query.value(0).toInt())
-		{
-			case 2:
-				Type |= 8;
-			break;
-			case 3:
-				Type |= 2;
-			break;
-			case 4:
-				Type |= 256;
-			break;
-		}
-
-		if (Type == Mask) break;
-	}
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Selecting layers data"));
