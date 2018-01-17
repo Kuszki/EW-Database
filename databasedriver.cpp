@@ -361,7 +361,7 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 
 	Query.prepare(
 		"SELECT "
-			"O.UID, D.KOD, D.DANE_DOD "
+			"D.KOD, D.DANE_DOD "
 		"FROM "
 			"EW_OB_OPISY D "
 		"INNER JOIN "
@@ -369,18 +369,24 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 		"ON "
 			"D.KOD = O.KOD "
 		"WHERE "
-			"O.STATUS = 0");
+			"O.STATUS = 0 AND "
+			"O.UID = ?");
 
-	if (Query.exec()) while (Query.next() && !isTerminated()) if (Indexes.contains(Query.value(0).toInt()))
+	for (const auto& ID : Indexes) if (!isTerminated())
 	{
-		const QString Table = Query.value(Index + 1).toString();
-		const int ID = Query.value(0).toInt();
+		Query.addBindValue(ID); Query.exec();
 
-		if (!List.contains(Table)) List.insert(Table, QSet<int>());
+		if (Query.next())
+		{
+			const QString Table = Query.value(Index).toString();
+			const int ID = Query.value(0).toInt();
 
-		List[Table].insert(ID);
+			if (!List.contains(Table)) List.insert(Table, QSet<int>());
 
-		if (Common) List["EW_OBIEKTY"].insert(ID);
+			List[Table].insert(ID);
+
+			if (Common) List["EW_OBIEKTY"].insert(ID);
+		}
 
 		emit onUpdateProgress(++Step);
 	}
