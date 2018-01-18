@@ -2405,6 +2405,9 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		convertPointToSurface(List, vStyle.toInt(), vLine.toInt(), Radius > 0.0 ? Radius : 0.8);
 	}
 
+	emit onBeginProgress(tr("Loading elements"));
+	emit onSetupProgress(0, List.size());
+
 	if (Type == 0) Change = List;
 	else if (Query.exec("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0")) while (Query.next())
 	{
@@ -2494,9 +2497,6 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 			"ID = ?");
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
-
-	emit onBeginProgress(tr("Loading elements"));
-	emit onSetupProgress(0, List.size());
 
 	for (const auto& UID : Change)
 	{
