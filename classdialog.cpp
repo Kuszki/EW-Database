@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -130,17 +130,13 @@ void ClassDialog::classIndexChanged(int Index)
 		ui->Line->addItem(i.value(), i.key());
 	}
 
-	ui->Text->model()->sort(0);
-	ui->Point->model()->sort(0);
-	ui->Line->model()->sort(0);
+	ui->Text->model()->sort(0); ui->Text->setCurrentText(Label);
+	ui->Point->model()->sort(0); ui->Point->setCurrentText(Label);
+	ui->Line->model()->sort(0); ui->Line->setCurrentText(Label);
 
-	ui->Text->setCurrentText(Label);
-	ui->Point->setCurrentText(Label);
-	ui->Line->setCurrentText(Label);
-
-	ui->Text->setEnabled(ui->Text->count());
-	ui->Point->setEnabled(ui->Point->count());
-	ui->Line->setEnabled(ui->Line->count());
+	ui->Text->setEnabled(ui->textCheck->isChecked() && ui->Text->count());
+	ui->Point->setEnabled(ui->pointCheck->isChecked() && ui->Point->count());
+	ui->Line->setEnabled(ui->lineCheck->isChecked() && ui->Line->count());
 }
 
 void ClassDialog::classCheckToggled(bool Status)

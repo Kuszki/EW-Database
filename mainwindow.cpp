@@ -831,12 +831,18 @@ void MainWindow::readRequest(void)
 
 void MainWindow::prepareMerge(const QList<int>& Used)
 {
-	lockUi(DONE); Merge->setActive(Used); Merge->open();
+	lockUi(DONE); ui->statusBar->showMessage(tr("Job done"));
+
+	if (!Used.isEmpty()) { Merge->open();  Merge->setActive(Used); }
+	else ui->statusBar->showMessage(tr("Unable to prepare dialog data"));
 }
 
 void MainWindow::prepareEdit(const QList<QHash<int, QVariant>>& Values, const QList<int>& Used)
 {
-	lockUi(DONE); Update->setPrepared(Values, Used); Update->open();
+	lockUi(DONE); ui->statusBar->showMessage(tr("Job done"));
+
+	if (!Values.isEmpty()) { Update->setPrepared(Values, Used); Update->open(); }
+	else ui->statusBar->showMessage(tr("Unable to prepare dialog data"));
 }
 
 void MainWindow::prepareJoin(const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Circles)

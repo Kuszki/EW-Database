@@ -35,6 +35,7 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 
 	Settings.beginGroup("Database");
 	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
+	maxBindedSize = Settings.value("binded", 2500).toUInt();
 	Settings.endGroup();
 }
 
@@ -354,12 +355,21 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QMap<QString, QSet<int>> List; int Step = 0;
 
+	const auto append = [&] (const QString& Table, int ID) -> void
+	{
+		if (!List.contains(Table)) List.insert(Table, QSet<int>());
+
+		if (Common) List["EW_OBIEKTY"].insert(ID); List[Table].insert(ID);
+	};
+
 	emit onBeginProgress(tr("Preparing queries"));
 	emit onSetupProgress(0, Indexes.size());
 
 	if (Common) List.insert("EW_OBIEKTY", QSet<int>());
 
-	Query.prepare(
+	const bool isBinded = Indexes.size() < maxBindedSize;
+
+	if (isBinded) Query.prepare(
 		"SELECT "
 			"D.KOD, D.DANE_DOD "
 		"FROM "
@@ -371,24 +381,41 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 		"WHERE "
 			"O.STATUS = 0 AND "
 			"O.UID = ?");
+	else Query.prepare(
+		"SELECT "
+			"O.UID, D.KOD, D.DANE_DOD "
+		"FROM "
+			"EW_OB_OPISY D "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"D.KOD = O.KOD "
+		"WHERE "
+			"O.STATUS = 0");
 
-	for (const auto& ID : Indexes) if (!isTerminated())
+	if (isBinded) for (const auto& ID : Indexes)
 	{
+		if (isTerminated()) break;
+
 		Query.addBindValue(ID); Query.exec();
 
 		if (Query.next())
 		{
-			const QString Table = Query.value(Index).toString();
-			const int ID = Query.value(0).toInt();
-
-			if (!List.contains(Table)) List.insert(Table, QSet<int>());
-
-			List[Table].insert(ID);
-
-			if (Common) List["EW_OBIEKTY"].insert(ID);
+			append(Query.value(Index).toString(), ID);
 		}
 
 		emit onUpdateProgress(++Step);
+	}
+	else if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		const int ID = Query.value(0).toInt();
+
+		if (Indexes.contains(ID))
+		{
+			append(Query.value(Index + 1).toString(), ID);
+
+			emit onUpdateProgress(++Step);
+		}
 	}
 
 	emit onEndProgress(); return List;
@@ -407,29 +434,10 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	for (const auto& Field : Common) Attribs.append(Field.Name);
 	for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
 
-	QString Exec = QString(
-		"SELECT "
-			"EW_OBIEKTY.UID, %1 "
-		"FROM "
-			"EW_OBIEKTY "
-		"LEFT JOIN "
-			"%2 EW_DATA "
-		"ON "
-			"EW_OBIEKTY.UID = EW_DATA.UIDO "
-		"WHERE "
-			"EW_OBIEKTY.KOD = '%3' AND "
-			"EW_OBIEKTY.STATUS = 0")
-				.arg(Attribs.join(", "))
-				.arg(Table.Data)
-				.arg(Table.Name);
-
-	if (!Where.isEmpty()) Exec.append(QString(" AND (%1)").arg(Where));
-
-	if (Query.exec(Exec)) while (Query.next() && !isTerminated()) if (Filter.isEmpty() || Filter.contains(Query.value(0).toInt()))
+	const auto append = [&] (QSqlQuery& Query, int Index) -> void
 	{
-		QHash<int, QVariant> Values; int i = 1;
-
-		const int Index = Query.value(0).toInt();
+		const int Size = Common.size() + qMax(Table.Headers.size(), Table.Indexes.size());
+		static QHash<int, QVariant> Values; int i = 1; Values.reserve(Size);
 
 		for (int j = 0; j < Common.size(); ++j)
 		{
@@ -445,7 +453,63 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 			Values.insert(Table.Indexes[j], GET(Query.value(i++), Table.Fields[j].Dict, Table.Fields[j].Type));
 		}
 
-		if (!Values.isEmpty()) List.insert(Index, Values);
+		if (!Values.isEmpty()) List.insert(Index, Values); Values.clear();
+	};
+
+	const QString ExecA = QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, %1 "
+		"FROM "
+			"EW_OBIEKTY "
+		"LEFT JOIN "
+			"%2 EW_DATA "
+		"ON "
+			"EW_OBIEKTY.UID = EW_DATA.UIDO "
+		"WHERE "
+			"EW_OBIEKTY.KOD = '%3' AND "
+			"EW_OBIEKTY.STATUS = 0")
+				.arg(Attribs.join(", "))
+				.arg(Table.Data)
+				.arg(Table.Name);
+
+	const QString ExecB = QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, %1 "
+		"FROM "
+			"EW_OBIEKTY "
+		"LEFT JOIN "
+			"%2 EW_DATA "
+		"ON "
+			"EW_OBIEKTY.UID = EW_DATA.UIDO "
+		"WHERE "
+			"EW_OBIEKTY.UID = ? AND "
+			"EW_OBIEKTY.STATUS = 0")
+				.arg(Attribs.join(", "))
+				.arg(Table.Data);
+
+	const bool isBinded = Filter.size() < maxBindedSize;
+	const bool isEmpty = Filter.isEmpty();
+
+	QString Exec = (isBinded && !isEmpty) ? ExecB : ExecA;
+
+	if (!Where.isEmpty()) Exec.append(QString(" AND (%1)").arg(Where));
+
+	if (!Query.prepare(Exec)) return QHash<int, QHash<int, QVariant>>();
+
+	if (isBinded && !isEmpty) for (const auto& Index : Filter)
+	{
+		if (isTerminated()) break;
+
+		Query.addBindValue(Index); Query.exec();
+
+		if (Query.next()) append(Query, Index);
+	}
+	else if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		const int Index = Query.value(0).toInt();
+		const bool Insert = isEmpty || Filter.contains(Index);
+
+		if (Insert) append(Query, Index);
 	}
 
 	return List;
