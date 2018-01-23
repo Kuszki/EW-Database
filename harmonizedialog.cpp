@@ -42,7 +42,8 @@ void HarmonizeDialog::accept(void)
 				   ui->x2Spin->value() - 1,
 				   ui->y2Spin->value() - 1,
 				   ui->distanceSpin->value(),
-				   ui->lengthSpin->value());
+				   ui->lengthSpin->value(),
+				   ui->endingsCheck->isChecked());
 }
 
 void HarmonizeDialog::open(const QString& Path)

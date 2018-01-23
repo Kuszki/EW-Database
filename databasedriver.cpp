@@ -2888,7 +2888,7 @@ void DatabaseDriver::copyData(RecordModel* Model, const QModelIndexList& Items, 
 	emit onDataCopy(Change.size());
 }
 
-void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path, bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length)
+void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path, bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length, bool Endings)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataFit(0); return; }
 
@@ -3069,7 +3069,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		}
 	});
 
-	if (!Sources.isEmpty()) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, Radius] (DATA& Object) -> void
+	if (!Sources.isEmpty()) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, Radius, Endings] (DATA& Object) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3077,6 +3077,11 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 		{
 			QPointF Final1, Final2; double h1 = NAN, h2 = NAN;
 			const QLineF& L = Object.Lines[i]; QLineF Current = L;
+
+			const bool isEnd = Object.Points.contains(L.p1()) ||
+						    Object.Points.contains(L.p2());
+
+			if (Endings && !isEnd) continue;
 
 			for (const auto& P : Sources)
 			{
@@ -3097,12 +3102,18 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 			if (!qIsNaN(h1) && Final1 != Current.p1())
 			{
-				Current.setP1(Final1);
+				if (!Endings || Object.Points.contains(Current.p1()))
+				{
+					Current.setP1(Final1);
+				}
 			}
 
 			if (!qIsNaN(h2) && Final2 != Current.p2())
 			{
-				Current.setP2(Final2);
+				if (!Endings || Object.Points.contains(Current.p2()))
+				{
+					Current.setP2(Final2);
+				}
 			}
 
 			if (Current != L)
@@ -4924,7 +4935,7 @@ void DatabaseDriver::convertSurfaceToLine(const QSet<int>& Objects)
 
 	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 2 WHERE UID = ? AND RODZAJ = 3");
 
-	for (const auto UID : Tasks)
+	for (const auto UID : Tasks) if (!isTerminated())
 	{
 		updateQuery.addBindValue(UID);
 		updateQuery.exec();
@@ -4964,7 +4975,7 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 
 	emit onSetupProgress(0, Objects.size()); Step = 0;
 
-	for (const auto& UID : Objects)
+	for (const auto& UID : Objects) if (!isTerminated())
 	{
 		selectQuery.addBindValue(UID); QList<QPointF> Points;
 
@@ -4994,7 +5005,7 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 
 	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
 
-	for (const auto& UID : Updates)
+	for (const auto& UID : Updates) if (!isTerminated())
 	{
 		updateQuery.addBindValue(UID);
 		updateQuery.exec();

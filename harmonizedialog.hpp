@@ -67,7 +67,7 @@ class HarmonizeDialog : public QDialog
 
 		void onFitRequest(const QString&, bool,
 					   int, int, int, int,
-					   double, double);
+					   double, double, bool);
 
 };
 

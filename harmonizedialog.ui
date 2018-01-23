@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>250</width>
-    <height>296</height>
+    <width>300</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,18 +18,29 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="7" column="0" colspan="2">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+   <item row="0" column="0">
+    <widget class="QLabel" name="sourceLabel">
+     <property name="text">
+      <string>Source type</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
+     <property name="buddy">
+      <cstring>sourceCombo</cstring>
      </property>
-    </spacer>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="sourceCombo">
+     <item>
+      <property name="text">
+       <string>Lines</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Points</string>
+      </property>
+     </item>
+    </widget>
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="x1Label">
@@ -54,6 +65,16 @@
      </property>
     </widget>
    </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="y1Label">
+     <property name="text">
+      <string>Y1 index</string>
+     </property>
+     <property name="buddy">
+      <cstring>y1Spin</cstring>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="1">
     <widget class="QSpinBox" name="y1Spin">
      <property name="minimum">
@@ -67,23 +88,13 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="y2Label">
+   <item row="3" column="0">
+    <widget class="QLabel" name="x2Label">
      <property name="text">
-      <string>Y2 index</string>
+      <string>X2 index</string>
      </property>
      <property name="buddy">
-      <cstring>y2Spin</cstring>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="y1Label">
-     <property name="text">
-      <string>Y1 index</string>
-     </property>
-     <property name="buddy">
-      <cstring>y1Spin</cstring>
+      <cstring>x2Spin</cstring>
      </property>
     </widget>
    </item>
@@ -100,13 +111,36 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="x2Label">
+   <item row="4" column="0">
+    <widget class="QLabel" name="y2Label">
      <property name="text">
-      <string>X2 index</string>
+      <string>Y2 index</string>
      </property>
      <property name="buddy">
-      <cstring>x2Spin</cstring>
+      <cstring>y2Spin</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="y2Spin">
+     <property name="minimum">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <number>9</number>
+     </property>
+     <property name="value">
+      <number>4</number>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="distanceLabel">
+     <property name="text">
+      <string>Distance</string>
+     </property>
+     <property name="buddy">
+      <cstring>distanceSpin</cstring>
      </property>
     </widget>
    </item>
@@ -158,62 +192,39 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <widget class="QSpinBox" name="y2Spin">
-     <property name="minimum">
-      <number>1</number>
+   <item row="7" column="0" colspan="2">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="maximum">
-      <number>9</number>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
      </property>
-     <property name="value">
-      <number>4</number>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="distanceLabel">
-     <property name="text">
-      <string>Distance</string>
-     </property>
-     <property name="buddy">
-      <cstring>distanceSpin</cstring>
-     </property>
-    </widget>
+    </spacer>
    </item>
    <item row="8" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QComboBox" name="sourceCombo">
+    <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <property name="text">
-       <string>Lines</string>
-      </property>
+      <widget class="QCheckBox" name="endingsCheck">
+       <property name="text">
+        <string>Endings only</string>
+       </property>
+      </widget>
      </item>
      <item>
-      <property name="text">
-       <string>Points</string>
-      </property>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
      </item>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="sourceLabel">
-     <property name="text">
-      <string>Source type</string>
-     </property>
-     <property name="buddy">
-      <cstring>sourceCombo</cstring>
-     </property>
-    </widget>
+    </layout>
    </item>
   </layout>
  </widget>
