@@ -2176,6 +2176,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 		"WHERE "
 			"O.STATUS = 0 AND "
 			"O.RODZAJ = 2 AND "
+			"T.TYP = 6 AND "
 			"E.TYP = 0 AND "
 			"T.STAN_ZMIANY = 0");
 
