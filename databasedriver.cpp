@@ -3101,6 +3101,12 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 				}
 			}
 
+			if (!qIsNaN(h1) && !qIsNaN(h2) && Final1 == Final2)
+			{
+				if (h1 < h2) Final2 = Current.p2();
+				else Final1 = Current.p1();
+			}
+
 			if (!qIsNaN(h1) && Final1 != Current.p1())
 			{
 				if (!Endings || Object.Points.contains(Current.p1()))
@@ -3117,7 +3123,7 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 				}
 			}
 
-			if (Current != L)
+			if (Current != L && Current.p1() != Current.p2())
 			{
 				Synchronizer.lock();
 				lUpdates.append({ Object.Indexes[i], Current, QPointF(), true });
@@ -4558,7 +4564,7 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Views.size());
 
-	for (auto i = Views.constBegin() + 1; i != Views.constEnd(); ++i)
+	if (Action) for (auto i = Views.constBegin() + 1; i != Views.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
