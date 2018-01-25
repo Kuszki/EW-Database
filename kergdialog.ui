@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>120</height>
+    <height>124</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Edit KERG</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="appointment-new"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">

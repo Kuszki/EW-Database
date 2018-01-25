@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -183,8 +183,6 @@
    <addaction name="actionDelete"/>
    <addaction name="actionRefactor"/>
    <addaction name="actionBatch"/>
-   <addaction name="actionRestore"/>
-   <addaction name="actionHistory"/>
   </widget>
   <widget class="QToolBar" name="geometryTool">
    <property name="windowTitle">
@@ -245,6 +243,20 @@
    </attribute>
    <addaction name="actionUnhide"/>
    <addaction name="actionHide"/>
+  </widget>
+  <widget class="QToolBar" name="kergsTool">
+   <property name="windowTitle">
+    <string>Jobs</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionRestore"/>
+   <addaction name="actionKerg"/>
+   <addaction name="actionHistory"/>
   </widget>
   <action name="actionConnect">
    <property name="icon">
@@ -595,6 +607,9 @@
    </property>
   </action>
   <action name="actionKerg">
+   <property name="icon">
+    <iconset theme="appointment-new"/>
+   </property>
    <property name="text">
     <string>Update job</string>
    </property>
