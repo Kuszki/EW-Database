@@ -52,6 +52,8 @@ KergDialog::KergDialog(QWidget* Parent)
 
 	ui->optionsCombo->setModel(Model);
 
+	actionIndexChanged(ui->actionCombo->currentIndex());
+
 	connect(Model, &QStandardItemModel::itemChanged, this, &KergDialog::elementsActionsChanged);
 }
 

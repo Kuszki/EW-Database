@@ -4399,7 +4399,7 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 
 				if (Data.size() < 2 || !Mapping.contains(Data[0])) continue;
 
-				const QDate Date = QDate::fromString(Data[1]);
+				const QDate Date = QDate::fromString(Data[1], Qt::SystemLocaleShortDate);
 
 				if (Date.isValid()) Dates[Mapping[Data[0]]] = Date;
 			}
@@ -4412,8 +4412,8 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 	if (Action == 1)
 	{
 		Query.prepare(
-			"SELECT "
-				"O.UID, COALESCE(L.OPERAT, T.OPERAT, 0), COALESCE(T.TYP, 0) "
+			"SELECT DISTINCT "
+				"O.UID, COALESCE(P.OPERAT, T.OPERAT, 0), COALESCE(T.TYP, 0) "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -4427,9 +4427,9 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 			"LEFT JOIN "
 				"EW_TEXT T "
 			"ON "
-				"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+				"(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
 			"WHERE "
-				"COALESCE(L.OPERAT, T.OPERAT, 0) <> 0 AND "
+				"COALESCE(P.OPERAT, T.OPERAT, 0) <> 0 AND "
 				"O.STATUS = 0 AND E.TYP = 0");
 
 		if (Query.exec()) while (Query.next())
@@ -4517,26 +4517,26 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 		{
 			if (Elements & 0x1)
 			{
-				Query.bindValue(":uid", UID);
-				Query.exec();
+				lineQuery.bindValue(":uid", UID);
+				lineQuery.exec();
 
-				Count += Query.numRowsAffected();
+				Count += lineQuery.numRowsAffected();
 			}
 
 			if (Elements & 0x2)
 			{
-				Query.bindValue(":uid", UID);
-				Query.exec();
+				symbolQuery.bindValue(":uid", UID);
+				symbolQuery.exec();
 
-				Count += Query.numRowsAffected();
+				Count += symbolQuery.numRowsAffected();
 			}
 
 			if (Elements & 0x4)
 			{
-				Query.bindValue(":uid", UID);
-				Query.exec();
+				textQuery.bindValue(":uid", UID);
+				textQuery.exec();
 
-				Count += Query.numRowsAffected();
+				Count += textQuery.numRowsAffected();
 			}
 
 			emit onUpdateProgress(++Step);
@@ -4548,6 +4548,22 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 		Query.addBindValue(i.key());
 
 		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	const QMap<QString, QSet<int>> Views = Action ? getClassGroups(Model->getUids(Items).toSet(), true, 0) :
+										   QMap<QString, QSet<int>>();
+
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Views.size());
+
+	for (auto i = Views.constBegin() + 1; i != Views.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
 
 		emit onUpdateProgress(++Step);
 	}
