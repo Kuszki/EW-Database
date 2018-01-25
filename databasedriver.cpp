@@ -4360,6 +4360,202 @@ void DatabaseDriver::insertPoints(RecordModel* Model, const QModelIndexList& Ite
 	emit onPointInsert(Count);
 }
 
+void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Items, const QString& Path, int Action, int Elements)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onKergUpdate(0); return; }
+
+	const QSet<int> Tasks = Model->getUids(Items).toSet();
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	QHash<QString, int> Mapping; QHash<int, QSet<int>> Kergs;
+	QHash<int, QDate> Dates; QHash<int, int> Updates;
+	QMutex Synchronizer; QSet<int> Uids; int Step(0);
+
+	emit onBeginProgress(tr("Loading jobs"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare("SELECT UID, NUMER FROM EW_OPERATY");
+
+	if (Query.exec()) while (Query.next()) Mapping.insert
+	(
+		Query.value(1).toString(),
+		Query.value(0).toInt()
+	);
+
+	if (Action == 1)
+	{
+		QFile File(Path); File.open(QFile::ReadOnly | QFile::Text);
+
+		if (File.isOpen())
+		{
+			const QString Extension = QFileInfo(Path).suffix();
+
+			QRegExp Separator = (Extension == "csv") ? QRegExp("\\s*,\\s*") : QRegExp("\\s+");
+
+			while (!File.atEnd())
+			{
+				const QString Line = File.readLine().trimmed(); if (Line.isEmpty()) continue;
+				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
+
+				if (Data.size() < 2 || !Mapping.contains(Data[0])) continue;
+
+				const QDate Date = QDate::fromString(Data[1]);
+
+				if (Date.isValid()) Dates[Mapping[Data[0]]] = Date;
+			}
+		}
+	}
+
+	emit onBeginProgress(tr("Loading elements"));
+	emit onSetupProgress(0, 0);
+
+	if (Action == 1)
+	{
+		Query.prepare(
+			"SELECT "
+				"O.UID, COALESCE(L.OPERAT, T.OPERAT, 0), COALESCE(T.TYP, 0) "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"LEFT JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+			"LEFT JOIN "
+				"EW_TEXT T "
+			"ON "
+				"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+			"WHERE "
+				"COALESCE(L.OPERAT, T.OPERAT, 0) <> 0 AND "
+				"O.STATUS = 0 AND E.TYP = 0");
+
+		if (Query.exec()) while (Query.next())
+		{
+			const int UID = Query.value(0).toInt();
+			const int OP = Query.value(1).toInt();
+
+			if (!Tasks.contains(UID)) continue;
+
+			const int Type = Query.value(2).toInt();
+			bool OK = false;
+
+			OK = OK || (Type == 0 && (Elements & 0x1));
+			OK = OK || (Type == 4 && (Elements & 0x2));
+			OK = OK || (Type == 6 && (Elements & 0x4));
+
+			if (OK) Kergs[UID].insert(OP);
+		}
+
+		for (const auto& UID : Kergs.keys()) Uids.insert(UID);
+	}
+
+	QtConcurrent::blockingMap(Uids, [&Updates, &Dates, &Kergs, &Synchronizer] (const int& UID) -> void
+	{
+		int Finall(0); QDate Current;
+
+		for (const auto& OP : Kergs[UID])
+		{
+			const QDate Date = Dates.value(OP);
+
+			if (Current.isNull() || Date > Current)
+			{
+				Current = Date; Finall = OP;
+			}
+		}
+
+		if (Finall)
+		{
+			Synchronizer.lock();
+			Updates.insert(UID, Finall);
+			Synchronizer.unlock();
+		}
+	});
+
+	emit onBeginProgress(tr("Updating elements")); int Count(0);
+	emit onSetupProgress(0, Action ? Updates.size() : Tasks.size());
+
+	Query.prepare("UPDATE EW_OBIEKTY SET OPERAT = ? WHERE UID = ?");
+
+	if (Action == 0)
+	{
+		QSqlQuery lineQuery(Database), symbolQuery(Database), textQuery(Database);
+
+		lineQuery.prepare(
+			"UPDATE EW_POLYLINE P SET P.OPERAT = "
+			"("
+				"SELECT FIRST 1 O.OPERAT FROM EW_OBIEKTY O WHERE O.UID = :uid"
+			") WHERE "
+			"P.STAN_ZMIANY = 0 AND P.ID IN "
+			"("
+				"SELECT E.IDE FROM EW_OB_ELEMENTY E WHERE E.TYP = 0 AND E.UIDO = :uid"
+			")");
+
+		symbolQuery.prepare(
+			"UPDATE EW_TEXT P SET P.OPERAT = "
+			"("
+				"SELECT FIRST 1 O.OPERAT FROM EW_OBIEKTY O WHERE O.UID = :uid"
+			") WHERE "
+			"P.TYP = 4 AND P.STAN_ZMIANY = 0 AND P.ID IN "
+			"("
+				"SELECT E.IDE FROM EW_OB_ELEMENTY E WHERE E.TYP = 0 AND E.UIDO = :uid"
+			")");
+
+		textQuery.prepare(
+			"UPDATE EW_TEXT P SET P.OPERAT = "
+			"("
+				"SELECT FIRST 1 O.OPERAT FROM EW_OBIEKTY O WHERE O.UID = :uid"
+			") WHERE "
+			"P.TYP = 6 AND P.STAN_ZMIANY = 0 AND P.ID IN "
+			"("
+				"SELECT E.IDE FROM EW_OB_ELEMENTY E WHERE E.TYP = 0 AND E.UIDO = :uid"
+			")");
+
+		for (const auto& UID : Tasks)
+		{
+			if (Elements & 0x1)
+			{
+				Query.bindValue(":uid", UID);
+				Query.exec();
+
+				Count += Query.numRowsAffected();
+			}
+
+			if (Elements & 0x2)
+			{
+				Query.bindValue(":uid", UID);
+				Query.exec();
+
+				Count += Query.numRowsAffected();
+			}
+
+			if (Elements & 0x4)
+			{
+				Query.bindValue(":uid", UID);
+				Query.exec();
+
+				Count += Query.numRowsAffected();
+			}
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+	else for (auto i = Updates.constBegin(); i != Updates.constEnd(); ++i)
+	{
+		Query.addBindValue(i.value());
+		Query.addBindValue(i.key());
+
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onKergUpdate(Action ? Updates.size() : Count);
+}
+
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();

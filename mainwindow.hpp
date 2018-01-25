@@ -48,6 +48,7 @@
 #include "mergedialog.hpp"
 #include "batchdialog.hpp"
 #include "labeldialog.hpp"
+#include "kergdialog.hpp"
 #include "joindialog.hpp"
 #include "textdialog.hpp"
 #include "cutdialog.hpp"
@@ -97,6 +98,7 @@ class MainWindow : public QMainWindow
 		LabelDialog* Label;
 		TextDialog* Text;
 		CutDialog* Cut;
+		KergDialog* Kerg;
 
 		QThread Thread;
 
@@ -199,6 +201,8 @@ class MainWindow : public QMainWindow
 		void execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles,
 					const QList<QStringList>& Data);
 
+		void updateKerg(const QString& Path, int Action, int Elements);
+
 		void loadData(RecordModel* Model);
 
 		void removeData(void);
@@ -216,6 +220,7 @@ class MainWindow : public QMainWindow
 
 		void restoreJob(int Count);
 		void removeHistory(int Count);
+		void updatedKerg(int Count);
 
 		void dataMerged(int Count);
 		void dataCutted(int Count);
@@ -285,9 +290,11 @@ class MainWindow : public QMainWindow
 		void onFitRequest(RecordModel*, const QModelIndexList&, const QString&,
 					   bool, int, int, int, int, double, double, bool);
 
-		void onGroupRequest(const QList<int>&);
-
 		void onInsertRequest(RecordModel*, const QModelIndexList&, int, double, bool);
+
+		void onKergRequest(RecordModel*, const QModelIndexList&, const QString&, int, int);
+
+		void onGroupRequest(const QList<int>&);
 
 };
 

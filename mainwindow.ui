@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -98,6 +98,7 @@
     <addaction name="actionBatch"/>
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
+    <addaction name="actionKerg"/>
     <addaction name="actionHistory"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -586,10 +587,19 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="appointment-new"/>
+    <iconset theme="appointment-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Override modify date</string>
+   </property>
+  </action>
+  <action name="actionKerg">
+   <property name="text">
+    <string>Update job</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
  </widget>

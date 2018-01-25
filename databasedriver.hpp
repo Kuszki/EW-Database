@@ -293,6 +293,9 @@ class DatabaseDriver : public QObject
 		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
 					   int Mode, double Radius, bool Recursive);
 
+		void updateKergs(RecordModel* Model, const QModelIndexList& Items,
+					  const QString& Path, int Action, int Elements);
+
 		void getCommon(RecordModel* Model, const QModelIndexList& Items);
 		void getPreset(RecordModel* Model, const QModelIndexList& Items);
 		void getJoins(RecordModel* Model, const QModelIndexList& Items);
@@ -347,6 +350,7 @@ class DatabaseDriver : public QObject
 
 		void onJobsRestore(int);
 		void onHistoryRemove(int);
+		void onKergUpdate(int);
 
 		void onDataMerge(int);
 		void onDataCut(int);

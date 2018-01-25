@@ -111,6 +111,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
 	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
 	connect(Driver, &DatabaseDriver::onLabelEdit, this, &MainWindow::labelEdit);
+	connect(Driver, &DatabaseDriver::onKergUpdate, this, &MainWindow::updatedKerg);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -138,6 +139,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onRestoreRequest, Driver, &DatabaseDriver::restoreJob);
 	connect(this, &MainWindow::onHistoryRequest, Driver, &DatabaseDriver::removeHistory);
+	connect(this, &MainWindow::onKergRequest, Driver, &DatabaseDriver::updateKergs);
 
 	connect(this, &MainWindow::onClassRequest, Driver, &DatabaseDriver::getClass);
 	connect(this, &MainWindow::onRefactorRequest, Driver, &DatabaseDriver::refactorData);
@@ -429,6 +431,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionText->setEnabled(Count > 0);
 	ui->actionLabel->setEnabled(Count > 0);
 	ui->actionRelabel->setEnabled(Count > 0);
+	ui->actionKerg->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 1);
@@ -553,6 +556,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Label = new LabelDialog(labelCodes, this);
 	Text = new TextDialog(this);
 	Insert = new InsertDialog(this);
+	Kerg = new KergDialog(this);
 	Variable = new VariablesDialog(Variables, this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
@@ -565,6 +569,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Label, &LabelDialog::onLabelRequest, this, &MainWindow::insertLabel);
 	connect(Text, &TextDialog::onEditRequest, this, &MainWindow::editText);
 	connect(Fit, &HarmonizeDialog::onFitRequest, this, &MainWindow::fitData);
+	connect(Kerg, &KergDialog::onUpdateRequest, this, &MainWindow::updateKerg);
 	connect(Insert, &InsertDialog::onInsertRequest, this, &MainWindow::insertBreaks);
 	connect(Variable, &VariablesDialog::onChangeRequest, this, &MainWindow::relabelData);
 
@@ -576,6 +581,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionLabel, &QAction::triggered, Label, &LabelDialog::open);
 	connect(ui->actionText, &QAction::triggered, Text, &TextDialog::open);
 	connect(ui->actionInsert, &QAction::triggered, Insert, &TextDialog::open);
+	connect(ui->actionKerg, &QAction::triggered, Kerg, &KergDialog::open);
 	connect(ui->actionRelabel, &QAction::triggered, Variable, &VariablesDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
@@ -600,6 +606,7 @@ void MainWindow::databaseDisconnected(void)
 	Fit->deleteLater();
 	Label->deleteLater();
 	Text->deleteLater();
+	Kerg->deleteLater();
 	Insert->deleteLater();
 	Variable->deleteLater();
 
@@ -725,6 +732,11 @@ void MainWindow::restoreJob(int Count)
 void MainWindow::removeHistory(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n historic object(s)", nullptr, Count));
+}
+
+void MainWindow::updatedKerg(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Updated %n object(s)", nullptr, Count));
 }
 
 void MainWindow::dataMerged(int Count)
@@ -917,6 +929,14 @@ void MainWindow::execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles
 	lockUi(BUSY); emit onBatchRequest(Model, Selection->selectedRows(), Roles, Data);
 }
 
+void MainWindow::updateKerg(const QString& Path, int Action, int Elements)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel();
+
+	lockUi(BUSY); emit onKergRequest(Model, Selection->selectedRows(), Path, Action, Elements);
+}
+
 void MainWindow::lockUi(MainWindow::STATUS Status)
 {
 	switch (Status)
@@ -960,6 +980,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLabel->setEnabled(false);
 			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
+			ui->actionKerg->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
@@ -988,6 +1009,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLabel->setEnabled(false);
 			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
+			ui->actionKerg->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
