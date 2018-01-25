@@ -295,7 +295,8 @@ void MainWindow::historyActionClicked(void)
 
 void MainWindow::loadActionClicked(void)
 {
-	const QString Path = QFileDialog::getOpenFileName(this, tr("Select file to load list"));
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Select file to load list"),
+											tr("Text files (*.txt);;All files (*.*)"));
 
 	QFile File(Path); if (File.open(QFile::ReadOnly | QFile::Text))
 	{
@@ -350,7 +351,8 @@ void MainWindow::unhideActionClicked(void)
 
 void MainWindow::batchActionClicked(void)
 {
-	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(), tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty())
 	{
@@ -885,7 +887,8 @@ void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHas
 
 void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 {
-	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"));
+	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"),
+											tr("Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty())
 	{
