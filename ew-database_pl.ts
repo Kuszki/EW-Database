@@ -1521,7 +1521,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="mainwindow.ui" line="387"/>
         <source>Restore job</source>
-        <translation>Przywróć KERG</translation>
+        <translation>Przywróć operat</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="390"/>
