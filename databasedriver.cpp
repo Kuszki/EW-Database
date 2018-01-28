@@ -4518,16 +4518,16 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 			if (Tasks.contains(UID)) switch (Typ)
 			{
 				case 0:
-					if (Action & 0x1) Lines.insert(Query.value(2).toInt(),
-											 Query.value(1).toInt());
+					if (Action & 0x1) Lines.insert(selectQuery.value(2).toInt(),
+											 selectQuery.value(1).toInt());
 				break;
 				case 4:
-					if (Action & 0x2) Texts.insert(Query.value(2).toInt(),
-											 Query.value(1).toInt());
+					if (Action & 0x2) Texts.insert(selectQuery.value(2).toInt(),
+											 selectQuery.value(1).toInt());
 				break;
 				case 6:
-					if (Action & 0x4) Texts.insert(Query.value(2).toInt(),
-											 Query.value(1).toInt());
+					if (Action & 0x4) Texts.insert(selectQuery.value(2).toInt(),
+											 selectQuery.value(1).toInt());
 				break;
 			}
 		}
