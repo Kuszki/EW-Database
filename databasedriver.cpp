@@ -4481,69 +4481,76 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 	});
 
 	emit onBeginProgress(tr("Updating elements")); int Count(0);
-	emit onSetupProgress(0, Action ? Updates.size() : Tasks.size());
+	emit onSetupProgress(0, Action ? Updates.size() : 0);
 
 	Query.prepare("UPDATE EW_OBIEKTY SET OPERAT = ? WHERE UID = ?");
 
 	if (Action == 0)
 	{
-		QSqlQuery lineQuery(Database), symbolQuery(Database), textQuery(Database);
+		QMap<int, int> Lines, Texts; QSqlQuery selectQuery(Database);
+		QSqlQuery lineQuery(Database), textQuery(Database);
 
-		lineQuery.prepare(
-			"UPDATE EW_POLYLINE P SET P.OPERAT = "
-			"("
-				"SELECT FIRST 1 O.OPERAT FROM EW_OBIEKTY O WHERE O.UID = :uid"
-			") WHERE "
-			"P.STAN_ZMIANY = 0 AND P.ID IN "
-			"("
-				"SELECT E.IDE FROM EW_OB_ELEMENTY E WHERE E.TYP = 0 AND E.UIDO = :uid"
-			")");
+		selectQuery.prepare(
+			"SELECT "
+				"O.UID, O.OPERAT, COALESCE(P.UID, T.UID), COALESCE(T.TYP, 0) "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"LEFT JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+			"LEFT JOIN "
+				"EW_TEXT T "
+			"ON "
+				"(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
+			"WHERE "
+				"O.STATUS = 0 AND E.TYP = 0");
 
-		symbolQuery.prepare(
-			"UPDATE EW_TEXT P SET P.OPERAT = "
-			"("
-				"SELECT FIRST 1 O.OPERAT FROM EW_OBIEKTY O WHERE O.UID = :uid"
-			") WHERE "
-			"P.TYP = 4 AND P.STAN_ZMIANY = 0 AND P.ID IN "
-			"("
-				"SELECT E.IDE FROM EW_OB_ELEMENTY E WHERE E.TYP = 0 AND E.UIDO = :uid"
-			")");
-
-		textQuery.prepare(
-			"UPDATE EW_TEXT P SET P.OPERAT = "
-			"("
-				"SELECT FIRST 1 O.OPERAT FROM EW_OBIEKTY O WHERE O.UID = :uid"
-			") WHERE "
-			"P.TYP = 6 AND P.STAN_ZMIANY = 0 AND P.ID IN "
-			"("
-				"SELECT E.IDE FROM EW_OB_ELEMENTY E WHERE E.TYP = 0 AND E.UIDO = :uid"
-			")");
-
-		for (const auto& UID : Tasks)
+		if (selectQuery.exec()) while (selectQuery.next())
 		{
-			if (Elements & 0x1)
+			const int UID = selectQuery.value(0).toInt();
+			const int Typ = selectQuery.value(3).toInt();
+
+			if (Tasks.contains(UID)) switch (Typ)
 			{
-				lineQuery.bindValue(":uid", UID);
-				lineQuery.exec();
-
-				Count += lineQuery.numRowsAffected();
+				case 0:
+					if (Action & 0x1) Lines.insert(Query.value(2).toInt(),
+											 Query.value(1).toInt());
+				break;
+				case 4:
+					if (Action & 0x2) Texts.insert(Query.value(2).toInt(),
+											 Query.value(1).toInt());
+				break;
+				case 6:
+					if (Action & 0x4) Texts.insert(Query.value(2).toInt(),
+											 Query.value(1).toInt());
+				break;
 			}
+		}
 
-			if (Elements & 0x2)
-			{
-				symbolQuery.bindValue(":uid", UID);
-				symbolQuery.exec();
+		lineQuery.prepare("UPDATE EW_POLYLINE P SET P.OPERAT = ? WHERE P.UID = ?");
+		textQuery.prepare("UPDATE EW_TEXT P SET P.OPERAT = ? WHERE P.UID = ?");
 
-				Count += symbolQuery.numRowsAffected();
-			}
+		emit onSetupProgress(0, Count = Lines.size() + Texts.size());
 
-			if (Elements & 0x4)
-			{
-				textQuery.bindValue(":uid", UID);
-				textQuery.exec();
+		for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
+		{
+			lineQuery.addBindValue(i.value());
+			lineQuery.addBindValue(i.key());
+			lineQuery.exec();
 
-				Count += textQuery.numRowsAffected();
-			}
+			emit onUpdateProgress(++Step);
+		}
+
+		for (auto i = Texts.constBegin(); i != Texts.constEnd(); ++i)
+		{
+			textQuery.addBindValue(i.value());
+			textQuery.addBindValue(i.key());
+			textQuery.exec();
 
 			emit onUpdateProgress(++Step);
 		}
