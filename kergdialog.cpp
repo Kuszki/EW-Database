@@ -106,7 +106,7 @@ void KergDialog::dialogParamsChanged(void)
 
 void KergDialog::openButtonClicked(void)
 {
-	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"),
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
 											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty()) ui->sourceEdit->setText(Path); dialogParamsChanged();
