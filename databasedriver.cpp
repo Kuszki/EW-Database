@@ -4441,7 +4441,7 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 				"COALESCE(P.OPERAT, T.OPERAT, 0) <> 0 AND "
 				"O.STATUS = 0 AND E.TYP = 0");
 
-		if (Query.exec()) while (Query.next())
+		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
 			const int UID = Query.value(0).toInt();
 			const int OP = Query.value(1).toInt();
@@ -4513,7 +4513,7 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 			"WHERE "
 				"O.STATUS = 0 AND E.TYP = 0");
 
-		if (selectQuery.exec()) while (selectQuery.next())
+		if (selectQuery.exec()) while (selectQuery.next() && !isTerminated())
 		{
 			const int UID = selectQuery.value(0).toInt();
 			const int Typ = selectQuery.value(3).toInt();
@@ -4540,32 +4540,39 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 
 		emit onSetupProgress(0, Count = Lines.size() + Texts.size());
 
-		for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
+		if (!isTerminated())
 		{
-			lineQuery.addBindValue(i.value());
-			lineQuery.addBindValue(i.key());
-			lineQuery.exec();
+			for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
+			{
+				lineQuery.addBindValue(i.value());
+				lineQuery.addBindValue(i.key());
+				lineQuery.exec();
 
-			emit onUpdateProgress(++Step);
-		}
+				emit onUpdateProgress(++Step);
+			}
 
-		for (auto i = Texts.constBegin(); i != Texts.constEnd(); ++i)
-		{
-			textQuery.addBindValue(i.value());
-			textQuery.addBindValue(i.key());
-			textQuery.exec();
+			for (auto i = Texts.constBegin(); i != Texts.constEnd(); ++i)
+			{
+				textQuery.addBindValue(i.value());
+				textQuery.addBindValue(i.key());
+				textQuery.exec();
 
-			emit onUpdateProgress(++Step);
+				emit onUpdateProgress(++Step);
+			}
 		}
 	}
-	else for (auto i = Updates.constBegin(); i != Updates.constEnd(); ++i)
+	else if (!isTerminated())
 	{
-		Query.addBindValue(i.value());
-		Query.addBindValue(i.key());
+		for (auto i = Updates.constBegin(); i != Updates.constEnd(); ++i)
+		{
+			Query.addBindValue(i.value());
+			Query.addBindValue(i.key());
 
-		Query.exec();
+			Query.exec();
 
-		emit onUpdateProgress(++Step);
+			emit onUpdateProgress(++Step);
+
+		}
 	}
 
 	const QMap<QString, QSet<int>> Views = Action ? getClassGroups(Model->getUids(Items).toSet(), true, 0) :
