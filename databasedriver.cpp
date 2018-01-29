@@ -1534,6 +1534,21 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 	struct PART { int ID, Type; double X1, Y1, X2, Y2; bool Text; };
 
+	const auto appendCount = [] (const QPointF& P, QList<QPointF>& Ends, QList<QPointF>& Cuts, QList<int>& Counts)
+	{
+		const int Index = Ends.indexOf(P);
+
+		if (Index == -1)
+		{
+			Ends.append(P);
+			Counts.append(1);
+		}
+		else if (++Counts[Index] == 3)
+		{
+			Cuts.append(P);
+		}
+	};
+
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Model->getUids(Items).toSet(), true, 0);
 	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QList<int> Counts; QList<QPointF> Ends;
 	QHash<int, QSet<int>> Merges; QList<QPointF> Cuts; int Step = 0; QSet<int> Merged;
@@ -1546,8 +1561,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	{
 		Query.prepare(QString(
 			"SELECT "
-				"ROUND(T.POS_X, 3), "
-				"ROUND(T.POS_Y, 3), "
+				"ROUND(T.POS_X, 5), "
+				"ROUND(T.POS_Y, 5), "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1575,8 +1590,8 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 		Query.prepare(QString(
 			"SELECT "
-				"ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
-				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
+				"ROUND((P.P0_X + P.P1_X) / 2.0, 5), "
+				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 5) "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -1610,10 +1625,10 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	Query.prepare(
 		"SELECT "
 			"O.UID, "
-			"ROUND(P.P0_X, 3), "
-			"ROUND(P.P0_Y, 3), "
-			"ROUND(P.P1_X, 3), "
-			"ROUND(P.P1_Y, 3), "
+			"ROUND(P.P0_X, 5), "
+			"ROUND(P.P0_Y, 5), "
+			"ROUND(P.P1_X, 5), "
+			"ROUND(P.P1_Y, 5), "
 			"E.IDE, E.TYP, "
 			"IIF(P.ID IS NULL, 1, 0) "
 		"FROM "
@@ -1667,27 +1682,15 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 				Query.value(4).toDouble(),
 				Query.value(7).toBool()
 			});
+
+			appendCount(PointA, Ends, Cuts, Counts);
+			appendCount(PointB, Ends, Cuts, Counts);
 		}
 	}
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Merging objects"));
 	emit onSetupProgress(0, Tasks.first().size());
-
-	for (const auto& Item : Geometry) for (const auto& Point : Item)
-	{
-		const int Index = Ends.indexOf(Point);
-
-		if (Index == -1)
-		{
-			Ends.append(Point);
-			Counts.append(1);
-		}
-		else if (++Counts[Index] == 3)
-		{
-			Cuts.append(Point);
-		}
-	}
 
 	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
 	{
