@@ -564,7 +564,7 @@ bool RecordModel::removeItem(const QModelIndex& Index)
 	{
 		const int Row = Objects.indexOf(Object);
 
-		beginRemoveRows(parent(Index), Row, Row);
+		beginRemoveRows(QModelIndex(), Row, Row);
 
 		Objects.removeOne(Object); delete Object;
 
