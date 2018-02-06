@@ -116,6 +116,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
 
+	connect(Driver, &DatabaseDriver::onRowsUpdate, this, &MainWindow::updateRows);
+	connect(Driver, &DatabaseDriver::onRowsRemove, this, &MainWindow::removeRows);
+
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
 	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
@@ -674,6 +677,23 @@ void MainWindow::loadData(RecordModel* Model)
 	connect(Model, &RecordModel::onGroupComplete, this, &MainWindow::groupData);
 
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data loaded"));
+}
+
+void MainWindow::removeRows(const QModelIndexList& List)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (Model) for (const auto& Index : List) Model->removeItem(Index);
+}
+
+void MainWindow::updateRows(const QHash<int, QHash<int, QVariant>>& Data)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (Model) for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+	{
+		Model->setData(i.key(), i.value());
+	}
 }
 
 void MainWindow::removeData(void)

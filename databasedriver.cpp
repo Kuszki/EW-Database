@@ -1028,9 +1028,7 @@ void DatabaseDriver::updateData(RecordModel* Model, const QModelIndexList& Items
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
-
-		emit onUpdateProgress(++Step);
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	if (!Emit) return;
@@ -1166,7 +1164,7 @@ void DatabaseDriver::removeData(RecordModel* Model, const QModelIndexList& Items
 		emit onUpdateProgress(++Step);
 	}
 
-	for (const auto Item : Items) emit onRowRemove(Item);
+	emit onRowsRemove(Items);
 
 	emit onEndProgress();
 	emit onDataRemove(Model);
@@ -1519,9 +1517,7 @@ void DatabaseDriver::joinData(RecordModel* Model, const QModelIndexList& Items, 
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
-
-		emit onUpdateProgress(++Step);
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -1894,7 +1890,14 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 		}
 	}
 
-	for (const auto& Item : Merged) emit onRowRemove(Model->index(Item));
+	QModelIndexList Removes;
+
+	for (const auto& Item : Merged)
+	{
+		Removes.append(Model->index(Item));
+	}
+
+	emit onRowsRemove(Removes);
 
 	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating view"));
@@ -1903,14 +1906,9 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		const auto Data = loadData(Table, i.value(), QString(), true, true);
+		const auto Data = loadData(Table, i.value() & Merged, QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j)
-		{
-			if (!Merged.contains(j.key())) emit onRowUpdate(j.key(), j.value());
-		}
-
-		emit onUpdateProgress(++Step);
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -2631,9 +2629,7 @@ void DatabaseDriver::refactorData(RecordModel* Model, const QModelIndexList& Ite
 		const auto& Table = getItemByField(Tables, Class, &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
-
-		emit onUpdateProgress(++Step);
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -3341,9 +3337,7 @@ void DatabaseDriver::restoreJob(RecordModel* Model, const QModelIndexList& Items
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
-
-		emit onUpdateProgress(++Step);
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
@@ -4586,9 +4580,7 @@ void DatabaseDriver::updateKergs(RecordModel* Model, const QModelIndexList& Item
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
 		const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) emit onRowUpdate(j.key(), j.value());
-
-		emit onUpdateProgress(++Step);
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();

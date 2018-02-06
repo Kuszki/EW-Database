@@ -345,6 +345,9 @@ class DatabaseDriver : public QObject
 					   const QHash<QString, QHash<int, QString>>&,
 					   const QHash<QString, QHash<int, QString>>&);
 
+		void onRowsUpdate(const QHash<int, QHash<int, QVariant>>&);
+		void onRowsRemove(const QModelIndexList&);
+
 		void onRowUpdate(int, const QHash<int, QVariant>&);
 		void onRowRemove(const QModelIndex&);
 

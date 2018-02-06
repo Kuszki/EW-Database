@@ -205,6 +205,9 @@ class MainWindow : public QMainWindow
 
 		void loadData(RecordModel* Model);
 
+		void removeRows(const QModelIndexList& List);
+		void updateRows(const QHash<int, QHash<int, QVariant>>& Data);
+
 		void removeData(void);
 		void updateData(void);
 		void groupData(void);
