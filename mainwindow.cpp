@@ -683,17 +683,25 @@ void MainWindow::removeRows(const QModelIndexList& List)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
+	ui->Data->setUpdatesEnabled(false);
+
 	if (Model) for (const auto& Index : List) Model->removeItem(Index);
+
+	ui->Data->setUpdatesEnabled(true);
 }
 
 void MainWindow::updateRows(const QHash<int, QHash<int, QVariant>>& Data)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
+	ui->Data->setUpdatesEnabled(false);
+
 	if (Model) for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
 	{
 		Model->setData(i.key(), i.value());
 	}
+
+	ui->Data->setUpdatesEnabled(true);
 }
 
 void MainWindow::removeData(void)
