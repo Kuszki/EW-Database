@@ -112,7 +112,7 @@ class DatabaseDriver : public QObject
 		int Just;
 	};
 
-	private:
+	protected:
 
 		mutable QMutex Terminator;
 		mutable bool Terminated;
