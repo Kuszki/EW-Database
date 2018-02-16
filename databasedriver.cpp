@@ -7226,7 +7226,7 @@ QVariant getDataByDict(QVariant Value, const QMap<QVariant, QString>& Dict, Data
 		return Mask;
 	}
 
-	if (Dict.isEmpty()) return Value;
+	if (Dict.isEmpty() || Dict.keys().contains(Value)) return Value;
 
 	for (auto i = Dict.constBegin(); i != Dict.constEnd(); ++i)
 	{
