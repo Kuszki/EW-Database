@@ -425,8 +425,12 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 {
 	if (!Database.isOpen()) return QHash<int, QHash<int, QVariant>>();
 
-	QVariant (*GET)(QVariant, const QMap<QVariant, QString>&, TYPE);
-	GET = Dict ? getDataFromDict : [] (auto Value, const auto&, auto) { return Value; };
+	QVariant (*GET)(const QVariant&, const QMap<QVariant, QString>&, TYPE);
+	GET = Dict ? getDataFromDict :
+	[] (const auto& Value, const auto&, auto) -> auto
+	{
+		return Value;
+	};
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<int, QHash<int, QVariant>> List; QStringList Attribs;
@@ -7176,7 +7180,7 @@ bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE&
 	);
 }
 
-QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
+QVariant getDataFromDict(const QVariant& Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
 {
 	if (!Value.isValid()) return QVariant();
 
@@ -7203,7 +7207,7 @@ QVariant getDataFromDict(QVariant Value, const QMap<QVariant, QString>& Dict, Da
 	else return DatabaseDriver::tr("Unknown");
 }
 
-QVariant getDataByDict(QVariant Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
+QVariant getDataByDict(const QVariant& Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type)
 {
 	if (!Value.isValid() || Value.toString() == "NULL") return QVariant();
 
