@@ -615,7 +615,12 @@ QModelIndex RecordModel::index(int Index) const
 
 	for (const auto& Item : Objects) if (Item->getUid() == Index)
 	{
-		if (Root) return createIndex(Parents[Item]->getIndex(Item), 0, Item);
+		if (Root)
+		{
+			const auto Parent = Parents.value(Item, nullptr);
+
+			if (Parent) return createIndex(Parent->getIndex(Item), 0, Item);
+		}
 		else return createIndex(Objects.indexOf(Item), 0, Item);
 	}
 
