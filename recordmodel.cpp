@@ -242,7 +242,7 @@ QModelIndex RecordModel::parent(const QModelIndex& Index) const
 
 	if (auto Group = dynamic_cast<GroupObject*>(Object))
 	{
-		if (auto Parent = Group->getParent())
+		if (auto Parent = Group->getParent()) if (Parent != Root)
 		{
 			return createIndex(Parent->getIndex(), 0, Parent);
 		}
