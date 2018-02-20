@@ -6116,7 +6116,12 @@ QSet<int> DatabaseDriver::filterDataByIsSubobject(const QSet<int>& Data, const Q
 
 	for (const auto& R : Table) if (Objects.contains(R.first.first))
 	{
-		Filtered.insert(R.second.first); emit onUpdateProgress(++Step);
+		Filtered.insert(R.second.first);
+
+		if (!(++Step % 1000))
+		{
+			emit onUpdateProgress(Step);
+		}
 	}
 
 	if (Not) return QSet<int>(Data).subtract(Filtered);
@@ -6129,7 +6134,12 @@ QSet<int> DatabaseDriver::filterDataByHasSubobject(const QSet<int>& Data, const 
 
 	for (const auto& R : Table) if (Objects.contains(R.second.first))
 	{
-		Filtered.insert(R.first.first); emit onUpdateProgress(++Step);
+		Filtered.insert(R.first.first);
+
+		if (!(++Step % 1000))
+		{
+			emit onUpdateProgress(Step);
+		}
 	}
 
 	if (Not) return QSet<int>(Data).subtract(Filtered);
