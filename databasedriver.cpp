@@ -2033,7 +2033,7 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 
 	if (Endings)
 	{
-		QHash<int, QList<QPointF>> Geometry;
+		QList<int> Counter; QList<QPointF> Breaks;
 
 		Query.prepare(
 			"SELECT "
@@ -2056,31 +2056,24 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 				"O.STATUS = 0 AND "
 				"O.RODZAJ = 2 AND "
 				"E.TYP = 0 AND "
-				"P.STAN_ZMIANY = 0 "
-			"ORDER BY "
-				"O.UID, E.N ASC");
+				"P.STAN_ZMIANY = 0");
 
 		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
-			const int ID = Query.value(0).toInt();
-
-			if (Tasks.first().contains(ID))
+			if (Tasks.first().contains(Query.value(0).toInt()))
 			{
 				const QPointF PointA(Query.value(1).toDouble(), Query.value(2).toDouble());
 				const QPointF PointB(Query.value(3).toDouble(), Query.value(4).toDouble());
 
-				if (!Geometry.contains(ID)) Geometry.insert(ID, QList<QPointF>());
+				const int PosA = Breaks.indexOf(PointA);
+				const int PosB = Breaks.indexOf(PointB);
 
-				if (!Geometry[ID].contains(PointA)) Geometry[ID].append(PointA);
-				else Geometry[ID].removeOne(PointA);
-				if (!Geometry[ID].contains(PointB)) Geometry[ID].append(PointB);
-				else Geometry[ID].removeOne(PointB);
+				if (PosA == -1) { Breaks.append(PointA); Counter.append(1); }
+				else if (++Counter[PosA] == 3) Cuts.append(PointA);
+
+				if (PosB == -1) { Breaks.append(PointB); Counter.append(1); }
+				else if (++Counter[PosB] == 3) Cuts.append(PointB);
 			}
-		}
-
-		for (const auto& Line : Geometry) if (Line.size() == 2)
-		{
-			Cuts.append(Line.first()); Cuts.append(Line.last());
 		}
 	}
 
@@ -6618,8 +6611,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 				const QLineF NewA(Part.Line.p1(), P);
 				const QLineF NewB(P, Part.Line.p2());
 
-				if (NewA.length() >= Radius &&
-				    NewB.length() >= Radius)
+				if (NewA.length() >= 2.5 * Radius &&
+				    NewB.length() >= 2.5 * Radius)
 				{
 					const INSERT Insert = { 0, Part.ID, NewA };
 
