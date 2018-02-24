@@ -74,7 +74,10 @@ void MergeDialog::allButtonChecked(bool Enabled)
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 		if (auto W = dynamic_cast<QCheckBox*>(ui->fieldsLayout->itemAt(i)->widget()))
 		{
-			W->setEnabled(Enabled || Active.contains(W->property("ID").toInt()));
+			const bool OK = Active.contains(W->property("ID").toInt());
+
+			W->setEnabled(Enabled || OK);
+			W->setVisible(Enabled || OK);
 		}
 }
 

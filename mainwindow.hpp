@@ -179,7 +179,7 @@ class MainWindow : public QMainWindow
 		void changeClass(const QString& Class, int Line, int Point, int Text,
 					  const QString& Symbol, int Style, const QString& Label,
 					  int Actions, double Radius);
-		void editText(bool Move, bool Justify, bool Rotate, bool Sort, double Length);
+		void editText(bool Move, int Justify, bool Rotate, bool Sort, double Length);
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L, bool E);
 		void insertBreaks(int Mode, double Radius, double Recursive);
@@ -280,7 +280,7 @@ class MainWindow : public QMainWindow
 		void onHistoryRequest(RecordModel*, const QModelIndexList&);
 
 		void onTextRequest(RecordModel*, const QModelIndexList&,
-					    bool, bool, bool, bool, double);
+					    bool, int, bool, bool, double);
 
 		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
 						int, double, double, bool, double, double);

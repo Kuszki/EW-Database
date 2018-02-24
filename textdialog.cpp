@@ -35,10 +35,9 @@ TextDialog::~TextDialog(void)
 void TextDialog::CheckStatusChanged(void)
 {
 	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(
-		ui->Justify->isChecked() ||
+		ui->Justify->currentIndex() ||
 		ui->Move->isChecked());
 
-	ui->Rotate->setEnabled(ui->Justify->isChecked());
 	ui->Sort->setEnabled(ui->Rotate->isChecked());
 }
 
@@ -47,7 +46,7 @@ void TextDialog::accept(void)
 	QDialog::accept();
 
 	emit onEditRequest(ui->Move->isChecked(),
-				    ui->Justify->isChecked(),
+				    ui->Justify->currentIndex(),
 				    ui->Rotate->isChecked(),
 				    ui->Sort->isChecked(),
 				    ui->Length->value());

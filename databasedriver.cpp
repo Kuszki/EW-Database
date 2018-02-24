@@ -1700,52 +1700,55 @@ void DatabaseDriver::mergeData(RecordModel* Model, const QModelIndexList& Items,
 
 		auto Data = loadData(Table, k.value(), QString(), false, false);
 
-		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) if (!Used.contains(i.key()) && Geometry[i.key()].size() == 2)
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
 		{
-			QPointF& P1 = Geometry[i.key()].first();
-			QPointF& P2 = Geometry[i.key()].last();
-			QSet<int> Parts; bool Continue = true;
-			const auto D1 = Data[i.key()];
-
-			Used.insert(i.key()); while (Continue)
+			if (!Used.contains(i.key()) && Geometry[i.key()].size() == 2)
 			{
-				const int oldSize = Parts.size();
+				QPointF& P1 = Geometry[i.key()].first();
+				QPointF& P2 = Geometry[i.key()].last();
+				QSet<int> Parts; bool Continue = true;
+				const auto D1 = Data[i.key()];
 
-				for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) if (!Used.contains(j.key()) && Geometry[j.key()].size() == 2)
+				Used.insert(i.key()); while (Continue)
 				{
-					const QPointF& L1 = Geometry[j.key()].first();
-					const QPointF& L2 = Geometry[j.key()].last();
-					const auto& D2 = Data[j.key()];
+					const int oldSize = Parts.size();
 
-					int T(0); if (P1 == L1 && !Cuts.contains(P1)) T = 1;
-					else if (P1 == L2 && !Cuts.contains(P1)) T = 2;
-					else if (P2 == L1 && !Cuts.contains(P2)) T = 3;
-					else if (P2 == L2 && !Cuts.contains(P2)) T = 4;
-
-					if (T) for (const auto& Field : Values) if (D1[Field] != D2[Field]) T = 0;
-
-					switch (T)
+					for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) if (!Used.contains(j.key()) && Geometry[j.key()].size() == 2)
 					{
-						case 1: P1 = L2; break;
-						case 2: P1 = L1; break;
-						case 3: P2 = L2; break;
-						case 4: P2 = L1; break;
+						const QPointF& L1 = Geometry[j.key()].first();
+						const QPointF& L2 = Geometry[j.key()].last();
+						const auto& D2 = Data[j.key()];
+
+						int T(0); if (P1 == L1 && !Cuts.contains(P1)) T = 1;
+						else if (P1 == L2 && !Cuts.contains(P1)) T = 2;
+						else if (P2 == L1 && !Cuts.contains(P2)) T = 3;
+						else if (P2 == L2 && !Cuts.contains(P2)) T = 4;
+
+						if (T) for (const auto& Field : Values) if (D1[Field] != D2[Field]) T = 0;
+
+						switch (T)
+						{
+							case 1: P1 = L2; break;
+							case 2: P1 = L1; break;
+							case 3: P2 = L2; break;
+							case 4: P2 = L1; break;
+						}
+
+						if (T)
+						{
+							Parts.insert(j.key());
+							Used.insert(j.key());
+						}
 					}
 
-					if (T)
-					{
-						Parts.insert(j.key());
-						Used.insert(j.key());
-					}
+					Continue = oldSize != Parts.size();
 				}
 
-				Continue = oldSize != Parts.size();
+				if (!Parts.isEmpty()) { Parts.insert(i.key()); Merges.insert(i.key(), Parts); }
 			}
 
-			if (!Parts.isEmpty()) { Parts.insert(i.key()); Merges.insert(i.key(), Parts); }
+			emit onUpdateProgress(++Step);
 		}
-
-		emit onUpdateProgress(++Step);
 	}
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataMerge(0); return; }
@@ -3387,7 +3390,7 @@ void DatabaseDriver::removeHistory(RecordModel* Model, const QModelIndexList& It
 	emit onHistoryRemove(Count);
 }
 
-void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, bool Justify, bool Rotate, bool Sort, double Length)
+void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, bool Move, int Justify, bool Rotate, bool Sort, double Length)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(0); return; }
 
@@ -3496,7 +3499,6 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 			"E.UIDO = O.UID "
 		"WHERE "
 			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
 			"E.TYP = 0 AND "
 			"P.STAN_ZMIANY = 0 AND "
 			"P.P1_FLAGS = 0");
@@ -3682,6 +3684,9 @@ void DatabaseDriver::editText(RecordModel* Model, const QModelIndexList& Items, 
 				{
 					if (lengthB < lengthA) Point.J = 4; else Point.J = 6;
 				}
+
+				if (Justify == 1) Point.J += 3;
+				if (Justify == 3) Point.J -= 3;
 
 				while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
 				while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;

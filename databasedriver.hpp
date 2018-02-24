@@ -280,7 +280,7 @@ class DatabaseDriver : public QObject
 		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
 
 		void editText(RecordModel* Model, const QModelIndexList& Items,
-				    bool Move, bool Justify, bool Rotate, bool Sort, double Length);
+				    bool Move, int Justify, bool Rotate, bool Sort, double Length);
 
 		void insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label,
 					  int J, double X, double Y, bool P, double L, double R);
