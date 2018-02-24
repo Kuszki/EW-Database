@@ -18,31 +18,7 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="1">
-    <widget class="QToolButton" name="allButton">
-     <property name="text">
-      <string>Show all</string>
-     </property>
-     <property name="icon">
-      <iconset theme="list-add">
-       <normaloff>.</normaloff>.</iconset>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLineEdit" name="searchEdit">
-     <property name="placeholderText">
-      <string>Search</string>
-     </property>
-     <property name="clearButtonEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0" colspan="5">
+   <item row="0" column="0" colspan="4">
     <widget class="QScrollArea" name="scrollArea">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
@@ -66,20 +42,10 @@
      </widget>
     </widget>
    </item>
-   <item row="1" column="3">
+   <item row="1" column="0">
     <widget class="QComboBox" name="filterBox"/>
    </item>
-   <item row="1" column="4">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="2">
+   <item row="1" column="1">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -92,13 +58,34 @@
      </property>
     </spacer>
    </item>
+   <item row="1" column="2">
+    <widget class="QToolButton" name="allButton">
+     <property name="text">
+      <string>Show all</string>
+     </property>
+     <property name="icon">
+      <iconset theme="list-add">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
   <tabstop>scrollArea</tabstop>
-  <tabstop>searchEdit</tabstop>
-  <tabstop>allButton</tabstop>
-  <tabstop>filterBox</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -147,22 +134,6 @@
     <hint type="destinationlabel">
      <x>355</x>
      <y>597</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>searchEdit</sender>
-   <signal>textChanged(QString)</signal>
-   <receiver>MergeDialog</receiver>
-   <slot>searchBoxEdited(QString)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>260</x>
-     <y>477</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>256</x>
-     <y>581</y>
     </hint>
    </hints>
   </connection>

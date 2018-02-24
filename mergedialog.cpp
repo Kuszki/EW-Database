@@ -76,8 +76,6 @@ void MergeDialog::allButtonChecked(bool Enabled)
 		{
 			W->setEnabled(Enabled || Active.contains(W->property("ID").toInt()));
 		}
-
-	searchBoxEdited(ui->searchEdit->text());
 }
 
 void MergeDialog::accept(void)
