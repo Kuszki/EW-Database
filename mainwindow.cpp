@@ -419,6 +419,8 @@ void MainWindow::fitActionClicked(void)
 
 void MainWindow::selectionChanged(void)
 {
+	if (!ui->Data->updatesEnabled()) return;
+
 	const int Count = ui->Data->selectionModel()->selectedRows().count();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	const int From = Model ? Model->totalCount() : 0;
@@ -688,6 +690,8 @@ void MainWindow::removeRows(const QModelIndexList& List)
 	if (Model) for (const auto& Index : List) Model->removeItem(Index);
 
 	if (List.size() > 10) ui->Data->setUpdatesEnabled(true);
+
+	if (List.size()) selectionChanged();
 }
 
 void MainWindow::updateRows(const QHash<int, QHash<int, QVariant>>& Data)
