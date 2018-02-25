@@ -359,13 +359,13 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 	{
 		if (!List.contains(Table)) List.insert(Table, QSet<int>());
 
-		if (Common) List["EW_OBIEKTY"].insert(ID); List[Table].insert(ID);
+		if (Common) List[QString()].insert(ID); List[Table].insert(ID);
 	};
 
 	emit onBeginProgress(tr("Preparing queries"));
 	emit onSetupProgress(0, Indexes.size());
 
-	if (Common) List.insert("EW_OBIEKTY", QSet<int>());
+	if (Common) List.insert(QString(), QSet<int>());
 
 	const bool isBinded = Indexes.size() < maxBindedSize;
 
