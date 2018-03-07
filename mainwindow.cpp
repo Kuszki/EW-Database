@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->setupUi(this); lockUi(DISCONNECTED);
 
 	Terminator = new QPushButton(QIcon::fromTheme("process-stop"), tr("Stop"), this);
+
+	Color = new QSpinBox(this);
 	Selector = new QComboBox(this);
 	Progress = new QProgressBar(this);
 	Driver = new DatabaseDriver(nullptr);
@@ -43,6 +45,12 @@ MainWindow::MainWindow(QWidget* Parent)
 				    << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
 
+	Color->setRange(0, 14);
+	Color->setPrefix(tr("Color "));
+	Color->setSpecialValueText(tr("Default color"));
+	Color->setLayoutDirection(Qt::LeftToRight);
+
+	ui->supportTool->insertWidget(ui->actionUnhide, Color);
 	ui->supportTool->insertWidget(ui->actionUnhide, Selector);
 	ui->supportTool->insertSeparator(ui->actionUnhide);
 	ui->statusBar->addPermanentWidget(Progress);
@@ -53,6 +61,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	Settings.beginGroup("Interface");
 	ui->actionSingleton->setChecked(Settings.value("singletons").toBool());
 	ui->actionDateoverride->setChecked(Settings.value("override").toBool());
+	Color->setValue(Settings.value("color", 0).toInt());
 	Settings.endGroup();
 
 	Settings.beginGroup("Window");
@@ -177,6 +186,7 @@ MainWindow::~MainWindow(void)
 	Settings.beginGroup("Interface");
 	Settings.setValue("singletons", ui->actionSingleton->isChecked());
 	Settings.setValue("override", ui->actionDateoverride->isChecked());
+	Settings.setValue("color", Color->value());
 	Settings.endGroup();
 
 	Settings.beginGroup("Window");
@@ -858,12 +868,13 @@ void MainWindow::readRequest(void)
 	Array.resize(Marker->pendingDatagramSize());
 	Marker->readDatagram(Array.data(), Array.size());
 
+	const QString Format = QString("%1 13\n").arg(Color->value());
 	const int Port = QString::fromUtf8(Array).toInt();
 
 	if (Model) for (const auto& Index : Selected)
 	{
 		QString Data = QString()
-			.append("11 13\n")
+			.append(Format)
 			.append(Codes.value(Model->fieldData(Index, 0).toString()))
 			.append(";")
 			.append(Model->fieldData(Index, 2).toString())

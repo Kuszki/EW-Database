@@ -83,6 +83,7 @@ class MainWindow : public QMainWindow
 		QPushButton* Terminator;
 		QProgressBar* Progress;
 		QComboBox* Selector;
+		QSpinBox* Color;
 
 		DatabaseDriver* Driver;
 
