@@ -610,7 +610,8 @@
   </action>
   <action name="actionKerg">
    <property name="icon">
-    <iconset theme="appointment-new"/>
+    <iconset theme="appointment-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Update job</string>
