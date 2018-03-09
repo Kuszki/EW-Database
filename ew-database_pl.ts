@@ -107,12 +107,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Warstwa punktowa</translation>
     </message>
     <message>
-        <location filename="classdialog.ui" line="147"/>
+        <location filename="classdialog.ui" line="151"/>
         <source>Default radius</source>
         <translation>Domyślna średnica</translation>
     </message>
     <message>
-        <location filename="classdialog.ui" line="150"/>
+        <location filename="classdialog.ui" line="154"/>
         <source> m</source>
         <translation></translation>
     </message>
@@ -142,7 +142,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Nowy kod</translation>
     </message>
     <message>
-        <location filename="classdialog.ui" line="132"/>
+        <location filename="classdialog.ui" line="136"/>
         <source>Text layer</source>
         <translation>Warstwa opisowa</translation>
     </message>
@@ -2044,7 +2044,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <source>Updated %n object(s)</source>
         <translation>
             <numerusform>Zmieniono %n obiekt</numerusform>
-            <numerusform>Zmieniono %n obieky</numerusform>
+            <numerusform>Zmieniono %n obiekty</numerusform>
             <numerusform>Zmieniono %n obiektów</numerusform>
         </translation>
     </message>
