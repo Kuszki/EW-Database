@@ -86,6 +86,10 @@ void ClassDialog::accept(void)
 			Mask |= (1 << (i - 1));
 		}
 
+	const QString Text = ui->Label->currentText();
+	const int Index = ui->Label->findText(Text);
+	const QString Label = Index == -1 ? Text : QString("${u.%1}").arg(Text);
+
 	QDialog::accept(); emit onChangeRequest(
 			ui->classCheck->isChecked() ? ui->Class->currentData().toString() : QString("NULL"),
 			ui->lineCheck->isChecked() ? ui->Line->currentData().toInt() : -1,
@@ -93,7 +97,7 @@ void ClassDialog::accept(void)
 			ui->textCheck->isChecked() ? ui->Text->currentData().toInt() : -1,
 			ui->symbolCheck->isChecked() ? ui->Symbol->text() : QString("NULL"),
 			ui->styleCheck->isChecked() ? ui->Style->text().toInt() : -1,
-			ui->labelCheck->isChecked() ? QString("${u.%1}").arg(ui->Label->currentText()) : QString("NULL"),
+			ui->labelCheck->isChecked() ? Label : QString("NULL"),
 			ui->strategyCombo->isEnabled() ? Mask : 0,
 			ui->radiusSpin->value());
 }
