@@ -5573,6 +5573,15 @@ QSet<int> DatabaseDriver::filterDataBySurface(const QList<OBJECT>& Data, double 
 			L += getSurface(Object.Geometry.value<QPolygonF>());
 		}
 
+		if (Object.Geometry.type() == QVariant::LineF)
+		{
+			const QLineF Circle = Object.Geometry.toLineF();
+
+			const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
+
+			L += M_PI * R * R;
+		}
+
 		if (L >= Minimum && L <= Maximum)
 		{
 			Synchronizer.lock();
