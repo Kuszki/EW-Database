@@ -133,6 +133,18 @@ RecordModel::RecordObject* RecordModel::GroupObject::takeChild(int Index)
 	if (Childs.size() > Index) return Childs.takeAt(Index); else return nullptr;
 }
 
+QVector<RecordModel::GroupObject*> RecordModel::GroupObject::allGroups()
+{
+	QVector<GroupObject*> List;
+
+	for (const auto Child : Childs) if (auto C = dynamic_cast<GroupObject*>(Child))
+	{
+		List.append(C); List.append(C->allGroups());
+	}
+
+	return List;
+}
+
 QVector<RecordModel::RecordObject*> RecordModel::GroupObject::getChilds(void)
 {
 	return Childs;
@@ -240,11 +252,14 @@ QModelIndex RecordModel::parent(const QModelIndex& Index) const
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
-	if (auto Group = dynamic_cast<GroupObject*>(Object))
+	if (Roots.contains((GroupObject*) Object))
 	{
-		if (auto Parent = Group->getParent()) if (Parent != Root)
+		if (auto Group = dynamic_cast<GroupObject*>(Object))
 		{
-			return createIndex(Parent->getIndex(), 0, Parent);
+			if (auto Parent = Group->getParent()) if (Parent != Root)
+			{
+				return createIndex(Parent->getIndex(), 0, Parent);
+			}
 		}
 	}
 	else if (auto Parent = Parents.value(Object, nullptr))
@@ -353,6 +368,8 @@ bool RecordModel::setData(const QModelIndex& Index, const QVariant& Value, int R
 		Objects.removeOne(Object);
 		Parents.remove(Object);
 
+		Roots = Parents.values().toSet();
+
 		endRemoveRows();
 
 		removeEmpty(Parent->getParent());
@@ -418,6 +435,8 @@ bool RecordModel::setData(const QModelIndex& Index, const QHash<int, QVariant>& 
 		Parent->takeChild(Object);
 		Objects.removeOne(Object);
 		Parents.remove(Object);
+
+		Roots = Parents.values().toSet();
 
 		endRemoveRows();
 
@@ -664,6 +683,7 @@ RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVari
 			{
 				Parents.insert(Object, Child);
 				Child->addChild(Object);
+				Roots.insert(Child);
 			}
 		}
 	}
@@ -718,6 +738,7 @@ RecordModel::GroupObject* RecordModel::appendItem(RecordModel::RecordObject* Obj
 	Parents.insert(Object, Current);
 	Objects.append(Object);
 	Current->addChild(Object);
+	Roots.insert(Current);
 
 	endInsertRows();
 
@@ -779,7 +800,10 @@ void RecordModel::groupItems(void)
 
 	QList<QPair<int, QList<QVariant>>> Indexes;
 
-	if (Root) delete Root; Parents.clear();
+	if (Root) delete Root;
+
+	Parents.clear();
+	Roots.clear();
 
 	for (const auto& Group : Groups)
 	{
@@ -817,7 +841,7 @@ void RecordModel::groupByStr(const QStringList& Groupby)
 
 	beginResetModel();
 
-	if (Root) { Parents.clear(); delete Root; Root = nullptr; }
+	if (Root) { Roots.clear(); Parents.clear(); delete Root; Root = nullptr; }
 
 	if (!Groups.isEmpty()) { groupItems(); removeEmpty(Root, false); }
 

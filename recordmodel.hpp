@@ -104,6 +104,7 @@ class RecordModel : public QAbstractItemModel
 			RecordObject* takeChild(RecordObject* Object);
 			RecordObject* takeChild(int Index);
 
+			QVector<GroupObject*> allGroups(void);
 			QVector<RecordObject*> getChilds(void);
 
 			GroupObject* getParent(void) const;
@@ -128,6 +129,7 @@ class RecordModel : public QAbstractItemModel
 
 		QHash<RecordObject*, GroupObject*> Parents;
 		QVector<RecordObject*> Objects;
+		QSet<GroupObject*> Roots;
 
 		GroupObject* Root = nullptr;
 

@@ -652,7 +652,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 
 	if (Redaction.contains(0) || Redaction.contains(1))
 	{
-		const double Min = Redaction.contains(0) ? Redaction[0].toDouble() : 0.0;
+		const double Min = Redaction.contains(0) ? Redaction[0].toDouble() : -INFINITY;
 		const double Max = Redaction.contains(1) ? Redaction[1].toDouble() : INFINITY;
 
 		Filtered = Filtered.intersect(filterDataBySymbolAngle(Redact, Min, Max));
@@ -660,7 +660,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 
 	if (Redaction.contains(2) || Redaction.contains(3))
 	{
-		const double Min = Redaction.contains(2) ? Redaction[2].toDouble() : 0.0;
+		const double Min = Redaction.contains(2) ? Redaction[2].toDouble() : -INFINITY;
 		const double Max = Redaction.contains(3) ? Redaction[3].toDouble() : INFINITY;
 
 		Filtered = Filtered.intersect(filterDataByLabelAngle(Redact, Min, Max));
