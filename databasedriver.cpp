@@ -3177,6 +3177,10 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 
 		for (const auto& L : Lines)
 		{
+			QLineF Dummy(Symbol.Point, { 0, 0 });
+			Dummy.setAngle(L.angle() + 90);
+			QPointF Intersect;
+
 			const double Rad1 = QLineF(Symbol.Point, L.p1()).length();
 
 			if (Rad1 <= Radius && (qIsNaN(h) || Rad1 < h))
@@ -3189,6 +3193,15 @@ void DatabaseDriver::fitData(RecordModel* Model, const QModelIndexList& Items, c
 			if (Rad2 <= Radius && (qIsNaN(h) || Rad2 < h))
 			{
 				Final = L.p2(); h = Rad2;
+			}
+
+			if (Dummy.intersect(L, &Intersect) != QLineF::BoundedIntersection) continue;
+
+			const double Rad3 = QLineF(Symbol.Point, Intersect).length();
+
+			if (Rad3 <= Radius && (qIsNaN(h) || 2*Rad3 < h))
+			{
+				Final = Intersect; h = Rad3;
 			}
 		}
 
