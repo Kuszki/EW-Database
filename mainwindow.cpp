@@ -70,7 +70,6 @@ MainWindow::MainWindow(QWidget* Parent)
 	headerState = Settings.value("header").toByteArray();
 	Settings.endGroup();
 
-	connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadActionClicked);
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
 	connect(ui->actionDeletelab, &QAction::triggered, this, &MainWindow::removelabActionClicked);
 	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
@@ -303,21 +302,6 @@ void MainWindow::historyActionClicked(void)
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onHistoryRequest(Model, Selected);
-	}
-}
-
-void MainWindow::loadActionClicked(void)
-{
-	const QString Path = QFileDialog::getOpenFileName(this, tr("Select file to load list"), QString(),
-											tr("Text files (*.txt);;All files (*.*)"));
-
-	QFile File(Path); if (File.open(QFile::ReadOnly | QFile::Text))
-	{
-		QTextStream Stream(&File); QStringList List;
-
-		while (!Stream.atEnd()) List << Stream.readLine().trimmed();
-
-		lockUi(BUSY); hiddenRows.clear(); emit onLoadRequest(List);
 	}
 }
 
@@ -575,6 +559,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Insert = new InsertDialog(this);
 	Kerg = new KergDialog(this);
 	Variable = new VariablesDialog(Variables, this);
+	Loader = new SelectorDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -589,6 +574,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Kerg, &KergDialog::onUpdateRequest, this, &MainWindow::updateKerg);
 	connect(Insert, &InsertDialog::onInsertRequest, this, &MainWindow::insertBreaks);
 	connect(Variable, &VariablesDialog::onChangeRequest, this, &MainWindow::relabelData);
+	connect(Loader, &SelectorDialog::onDataAccepted, this, &MainWindow::loadRequest);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -600,6 +586,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionInsert, &QAction::triggered, Insert, &TextDialog::open);
 	connect(ui->actionKerg, &QAction::triggered, Kerg, &KergDialog::open);
 	connect(ui->actionRelabel, &QAction::triggered, Variable, &VariablesDialog::open);
+	connect(ui->actionLoad, &QAction::triggered, Loader, &SelectorDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
@@ -981,6 +968,18 @@ void MainWindow::updateKerg(const QString& Path, int Action, int Elements)
 	auto Selection = ui->Data->selectionModel();
 
 	lockUi(BUSY); emit onKergRequest(Model, Selection->selectedRows(), Path, Action, Elements);
+}
+
+void MainWindow::loadRequest(const QString& Path, int Action)
+{
+	QFile File(Path); if (File.open(QFile::ReadOnly | QFile::Text))
+	{
+		QTextStream Stream(&File); QStringList List;
+
+		while (!Stream.atEnd()) List << Stream.readLine().trimmed().remove(QRegExp("\\s+.*"));
+
+		lockUi(BUSY); hiddenRows.clear(); emit onLoadRequest(List, Action);
+	}
 }
 
 void MainWindow::lockUi(MainWindow::STATUS Status)

@@ -232,7 +232,7 @@ class DatabaseDriver : public QObject
 
 		bool closeDatabase(void);
 
-		void loadList(const QStringList& Filter);
+		void loadList(const QStringList& Filter, int Index);
 		void reloadData(const QString& Filter, QList<int> Used,
 					 const QHash<int, QVariant>& Geometry,
 					 const QHash<int, QVariant>& Redaction,

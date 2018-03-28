@@ -53,7 +53,8 @@ SOURCES		+=	main.cpp \
 				insertdialog.cpp \
 				variablesdialog.cpp \
 				redactionwidget.cpp \
-				kergdialog.cpp
+				kergdialog.cpp \
+				selectordialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -82,7 +83,8 @@ HEADERS		+=	mainwindow.hpp \
 				insertdialog.hpp \
 				variablesdialog.hpp \
 				redactionwidget.hpp \
-				kergdialog.hpp
+				kergdialog.hpp \
+				selectordialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -107,7 +109,8 @@ FORMS		+=	mainwindow.ui \
 				insertdialog.ui \
 				variablesdialog.ui \
 				redactionwidget.ui \
-				kergdialog.ui
+				kergdialog.ui \
+				selectordialog.ui
 
 LIBS			+=	-fopenmp
 

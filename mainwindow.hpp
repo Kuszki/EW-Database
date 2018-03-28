@@ -36,6 +36,7 @@
 
 #include "variablesdialog.hpp"
 #include "harmonizedialog.hpp"
+#include "selectordialog.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
 #include "insertdialog.hpp"
@@ -87,6 +88,7 @@ class MainWindow : public QMainWindow
 
 		DatabaseDriver* Driver;
 
+		SelectorDialog* Loader;
 		VariablesDialog* Variable;
 		HarmonizeDialog* Fit;
 		ColumnsDialog* Columns;
@@ -138,7 +140,6 @@ class MainWindow : public QMainWindow
 		void joinActionClicked(void);
 		void restoreActionClicked(void);
 		void historyActionClicked(void);
-		void loadActionClicked(void);
 		void mergeActionClicked(void);
 		void classActionClicked(void);
 		void hideActionClicked(void);
@@ -204,6 +205,8 @@ class MainWindow : public QMainWindow
 
 		void updateKerg(const QString& Path, int Action, int Elements);
 
+		void loadRequest(const QString& Path, int Action);
+
 		void loadData(RecordModel* Model);
 
 		void removeRows(const QModelIndexList& List);
@@ -239,7 +242,7 @@ class MainWindow : public QMainWindow
 
 	signals:
 
-		void onLoadRequest(const QStringList&);
+		void onLoadRequest(const QStringList&, int);
 		void onReloadRequest(const QString&, const QList<int>&,
 						 const QHash<int, QVariant>&,
 						 const QHash<int, QVariant>&,

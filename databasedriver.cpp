@@ -788,7 +788,7 @@ bool DatabaseDriver::closeDatabase(void)
 	}
 }
 
-void DatabaseDriver::loadList(const QStringList& Filter)
+void DatabaseDriver::loadList(const QStringList& Filter, int Index)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
@@ -800,12 +800,14 @@ void DatabaseDriver::loadList(const QStringList& Filter)
 	emit onBeginProgress(tr("Preparing objects list"));
 	emit onSetupProgress(0, Hash.size());
 
-	Query.prepare("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0");
+	Query.prepare("SELECT O.UID, O.NUMER, O.IIP, K.NUMER FROM EW_OBIEKTY O "
+			    "LEFT JOIN EW_OPERATY K ON O.OPERAT = K.UID WHERE O.STATUS = 0");
 
-	if (Query.exec()) while (Query.next() && !isTerminated()) if (Hash.contains(Query.value(1).toString()))
-	{
-		UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
-	}
+	if (Query.exec()) while (Query.next() && !isTerminated())
+		if (Hash.contains(Query.value(Index).toString()))
+		{
+			UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
+		}
 
 	emit onBeginProgress(tr("Querying database"));
 	emit onSetupProgress(0, Tables.size());
