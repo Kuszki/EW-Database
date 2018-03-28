@@ -270,7 +270,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="databasedriver.cpp" line="83"/>
         <source>Job name</source>
-        <translation>KERG</translation>
+        <translation>Operat</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="82"/>
@@ -1208,7 +1208,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="joindialog.ui" line="104"/>
         <source>Replace source</source>
-        <translation>Nadpisz KERG</translation>
+        <translation>Nadpisz operat</translation>
     </message>
     <message>
         <location filename="joindialog.cpp" line="107"/>
