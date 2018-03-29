@@ -749,10 +749,12 @@ bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, co
 {
 	if (Database.isOpen()) Database.close();
 
-	Database.setHostName(Server);
+	Database.setHostName(Server.section(':', 0, 0));
 	Database.setDatabaseName(Base);
 	Database.setUserName(User);
 	Database.setPassword(Pass);
+
+	if (Server.contains(':')) Database.setPort(Server.section(':', 1).toInt());
 
 	if (Database.open())
 	{
