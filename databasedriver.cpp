@@ -1959,6 +1959,12 @@ void DatabaseDriver::cutData(RecordModel* Model, const QModelIndexList& Items, c
 
 					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
 				}
+				else
+				{
+					const double h = qMin(a, b);
+
+					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
+				}
 			}
 		};
 
