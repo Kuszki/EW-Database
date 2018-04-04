@@ -5548,7 +5548,15 @@ QSet<int> DatabaseDriver::filterDataByLength(const QList<OBJECT>& Data, double M
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const OBJECT& Object) -> void
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+
+	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
+	{
+		if (Minimum <= Maximum) return vA(L); else return vB(L);
+	};
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const OBJECT& Object) -> void
 	{
 		if (!(Object.Mask & 0b1)) return; double L(0.0);
 
@@ -5569,7 +5577,7 @@ QSet<int> DatabaseDriver::filterDataByLength(const QList<OBJECT>& Data, double M
 			}
 		}
 
-		if (L >= Minimum && L <= Maximum)
+		if (isOK(L))
 		{
 			Synchronizer.lock();
 			Filtered.insert(Object.UID);
@@ -5587,7 +5595,15 @@ QSet<int> DatabaseDriver::filterDataBySurface(const QList<OBJECT>& Data, double 
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const OBJECT& Object) -> void
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+
+	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
+	{
+		if (Minimum <= Maximum) return vA(L); else return vB(L);
+	};
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const OBJECT& Object) -> void
 	{
 		if (!(Object.Mask & 0b1)) return; double L(0.0);
 
@@ -5605,7 +5621,7 @@ QSet<int> DatabaseDriver::filterDataBySurface(const QList<OBJECT>& Data, double 
 			L += M_PI * R * R;
 		}
 
-		if (L >= Minimum && L <= Maximum)
+		if (isOK(L))
 		{
 			Synchronizer.lock();
 			Filtered.insert(Object.UID);
@@ -6174,9 +6190,17 @@ QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::RE
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const REDACTION& Object) -> void
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+
+	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
-		if (Object.Type == 4 && Object.Angle >= Minimum && Object.Angle <= Maximum)
+		if (Minimum <= Maximum) return vA(L); else return vB(L);
+	};
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const REDACTION& Object) -> void
+	{
+		if (Object.Type == 4 && isOK(Object.Angle))
 		{
 			Synchronizer.lock(); Filtered.insert(Object.UID); Synchronizer.unlock();
 		}
@@ -6189,9 +6213,17 @@ QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::RED
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Minimum, Maximum] (const REDACTION& Object) -> void
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+
+	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
-		if (Object.Type == 6 && Object.Angle >= Minimum && Object.Angle <= Maximum)
+		if (Minimum <= Maximum) return vA(L); else return vB(L);
+	};
+
+	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const REDACTION& Object) -> void
+	{
+		if (Object.Type == 6 && isOK(Object.Angle))
 		{
 			Synchronizer.lock(); Filtered.insert(Object.UID); Synchronizer.unlock();
 		}
