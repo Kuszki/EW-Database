@@ -6617,9 +6617,6 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		}
 	}
 
-	emit onBeginProgress(tr("Computing geometry"));
-	emit onSetupProgress(0, 0);
-
 	if (Mode & 0x4) QtConcurrent::blockingMap(Lines, [this, &Lines, &Intersect, &Synchronizer] (LINE& Part) -> void
 	{
 		if (this->isTerminated()) return;
@@ -6650,7 +6647,10 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	if (Mode & 0x4) pointCuts.append(Intersect);
 	if (Mode & 0x8) pointCuts.append(Points);
 
-	QtConcurrent::blockingMap(Lines, [this, &pointCuts, &Inserts, &Origins, &Synchronizer, Radius] (LINE& Part) -> void
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, Lines.size()); Step = 0;
+
+	QtConcurrent::blockingMap(Lines, [this, &pointCuts, &Inserts, &Origins, &Synchronizer, &Step, Radius] (LINE& Part) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -6692,6 +6692,10 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 				if (Part.Changed) return;
 			}
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
 	if (isTerminated()) return 0;
