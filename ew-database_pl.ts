@@ -1177,7 +1177,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="joindialog.ui" line="14"/>
         <source>Join items</source>
-        <translation>Połacz obiekty</translation>
+        <translation>Połącz obiekty</translation>
     </message>
     <message>
         <location filename="joindialog.ui" line="27"/>
