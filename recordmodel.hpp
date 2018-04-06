@@ -107,6 +107,8 @@ class RecordModel : public QAbstractItemModel
 			QVector<GroupObject*> allGroups(void);
 			QVector<RecordObject*> getChilds(void);
 
+			QSet<int> allUids(void);
+
 			GroupObject* getParent(void) const;
 			RecordObject* getChild(int Index);
 
@@ -135,6 +137,8 @@ class RecordModel : public QAbstractItemModel
 
 		QStringList Header;
 		QStringList Groups;
+
+		bool selectGroups = false;
 
 		mutable QMutex Locker;
 
@@ -171,9 +175,9 @@ class RecordModel : public QAbstractItemModel
 
 		QModelIndexList getIndexes(const QModelIndex& Parent = QModelIndex()) const;
 
-		QList<int> getUids(const QModelIndexList& Selection) const;
+		QSet<int> getUids(const QModelIndexList& Selection) const;
 
-		QList<int> getUids(void) const;
+		QSet<int> getUids(void) const;
 
 		int getUid(const QModelIndex& Index) const;
 
@@ -190,6 +194,8 @@ class RecordModel : public QAbstractItemModel
 		QModelIndex index(int Index) const;
 
 		QModelIndex find(int Index, QVariant Data) const;
+
+		void setGroupsSelectable(bool Selectable);
 
 	protected:
 

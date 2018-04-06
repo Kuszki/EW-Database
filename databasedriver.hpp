@@ -238,68 +238,60 @@ class DatabaseDriver : public QObject
 					 const QHash<int, QVariant>& Redaction,
 					 const QString& Limiter, double Radius,
 					 int Mode, const RecordModel* Current = nullptr,
-					 const QModelIndexList& Items = QModelIndexList());
-		void updateData(RecordModel* Model, const QModelIndexList& Items,
+					 const QSet<int>& Items = QSet<int>());
+		void updateData(const QSet<int>& Items,
 					 const QHash<int, QVariant>& Values,
 					 const QHash<int, int>& Reasons,
 					 bool Emit = true);
-		void removeData(RecordModel* Model, const QModelIndexList& Items);
+		void removeData(const QSet<int>& Items);
 
-		void execBatch(RecordModel* Model, const QModelIndexList& Items,
+		void execBatch(const QSet<int>& Items,
 					const QList<QPair<int, BatchWidget::FUNCTION>>& Functions,
 					const QList<QStringList>& Values);
 
-		void splitData(RecordModel* Model, const QModelIndexList& Items,
-					const QString& Point, const QString& From, int Type);
+		void splitData(const QSet<int>& Items, const QString& Point, const QString& From, int Type);
 
-		void joinData(RecordModel* Model, const QModelIndexList& Items,
-				    const QString& Point, const QString& Join,
+		void joinData(const QSet<int>& Items, const QString& Point, const QString& Join,
 				    bool Override, int Type, double Radius);
 
-		void mergeData(RecordModel* Model, const QModelIndexList& Items,
-					const QList<int>& Values, const QStringList& Points);
+		void mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points);
 
-		void cutData(RecordModel* Model, const QModelIndexList& Items,
-				   const QStringList& Points, bool Endings);
+		void cutData(const QSet<int>& Items, const QStringList& Points, bool Endings);
 
-		void refactorData(RecordModel* Model, const QModelIndexList& Items,
-					   const QString& Class, int Line, int Point, int Text,
-					   const QString& Symbol, int Style,
-					   const QString& Label,
-					   int Actions, double Radius);
+		void refactorData(const QSet<int>& Items, const QString& Class, int Line, int Point, int Text,
+					   const QString& Symbol, int Style, const QString& Label, int Actions, double Radius);
 
-		void copyData(RecordModel* Model, const QModelIndexList& Items,
-				    const QString& Class, int Line, int Point, int Text,
+		void copyData(const QSet<int>& Items, const QString& Class,
+				    int Line, int Point, int Text,
 				    const QString& Symbol, int Style);
 
-		void fitData(RecordModel* Model, const QModelIndexList& Items, const QString& Path,
-				   bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length, bool Endings);
+		void fitData(const QSet<int>& Items, const QString& Path,
+				   bool Points, int X1, int Y1, int X2, int Y2,
+				   double Radius, double Length, bool Endings);
 
-		void restoreJob(RecordModel* Model, const QModelIndexList& Items);
+		void restoreJob(const QSet<int>& Items);
 
-		void removeHistory(RecordModel* Model, const QModelIndexList& Items);
+		void removeHistory(const QSet<int>& Items);
 
-		void editText(RecordModel* Model, const QModelIndexList& Items,
-				    bool Move, int Justify, bool Rotate, bool Sort, double Length);
+		void editText(const QSet<int>& Items, bool Move, int Justify,
+				    bool Rotate, bool Sort, double Length);
 
-		void insertLabel(RecordModel* Model, const QModelIndexList& Items, const QString& Label,
+		void insertLabel(const QSet<int>& Items, const QString& Label,
 					  int J, double X, double Y, bool P, double L, double R);
 
-		void removeLabel(RecordModel* Model, const QModelIndexList& Items);
+		void removeLabel(const QSet<int>& Items);
 
-		void editLabel(RecordModel* Model, const QModelIndexList& Items,
-					const QString& Label, int Underline, int Pointer, double Rotation);
+		void editLabel(const QSet<int>& Items, const QString& Label,
+					int Underline, int Pointer, double Rotation);
 
-		void insertPoints(RecordModel* Model, const QModelIndexList& Items,
-					   int Mode, double Radius, bool Recursive);
+		void insertPoints(const QSet<int>& Items, int Mode, double Radius, bool Recursive);
 
-		void updateKergs(RecordModel* Model, const QModelIndexList& Items,
-					  const QString& Path, int Action, int Elements);
+		void updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements);
 
-		void getCommon(RecordModel* Model, const QModelIndexList& Items);
-		void getPreset(RecordModel* Model, const QModelIndexList& Items);
-		void getJoins(RecordModel* Model, const QModelIndexList& Items);
-		void getClass(RecordModel* Model, const QModelIndexList& Items);
+		void getCommon(const QSet<int>& Items);
+		void getPreset(const QSet<int>& Items);
+		void getJoins(const QSet<int>& Items);
+		void getClass(const QSet<int>& Items);
 
 		bool addInterface(const QString& Path, int Type, bool Modal);
 
@@ -324,8 +316,8 @@ class DatabaseDriver : public QObject
 		void onEndProgress(void);
 
 		void onDataLoad(RecordModel*);
-		void onDataRemove(RecordModel*);
-		void onDataUpdate(RecordModel*);
+		void onDataRemove(void);
+		void onDataUpdate(void);
 		void onDataJoin(int);
 		void onDataSplit(int);
 		void onDataRefactor(int);
@@ -346,10 +338,10 @@ class DatabaseDriver : public QObject
 					   const QHash<QString, QHash<int, QString>>&);
 
 		void onRowsUpdate(const QHash<int, QHash<int, QVariant>>&);
-		void onRowsRemove(const QModelIndexList&);
+		void onRowsRemove(const QSet<int>&);
 
 		void onRowUpdate(int, const QHash<int, QVariant>&);
-		void onRowRemove(const QModelIndex&);
+		void onRowRemove(int);
 
 		void onJobsRestore(int);
 		void onHistoryRemove(int);

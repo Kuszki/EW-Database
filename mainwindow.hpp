@@ -148,6 +148,8 @@ class MainWindow : public QMainWindow
 		void interfaceActionClicked(void);
 		void fitActionClicked(void);
 
+		void selectionActionToggled(bool Allow);
+
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,
@@ -169,7 +171,7 @@ class MainWindow : public QMainWindow
 					  const QString& Limiter, double Radius, int Mode);
 
 		void updateRow(int Index, const QHash<int, QVariant>& Data);
-		void removeRow(const QModelIndex& Index);
+		void removeRow(int Index);
 
 		void connectData(const QString& Point, const QString& Line,
 					  bool Override, int Type, double Radius);
@@ -209,7 +211,7 @@ class MainWindow : public QMainWindow
 
 		void loadData(RecordModel* Model);
 
-		void removeRows(const QModelIndexList& List);
+		void removeRows(const QSet<int>& List);
 		void updateRows(const QHash<int, QHash<int, QVariant>>& Data);
 
 		void removeData(void);
@@ -247,59 +249,43 @@ class MainWindow : public QMainWindow
 						 const QHash<int, QVariant>&,
 						 const QHash<int, QVariant>&,
 						 const QString&, double, int,
-						 RecordModel*, const QModelIndexList&);
+						 RecordModel*, const QSet<int>&);
 
-		void onCommonRequest(RecordModel*, const QModelIndexList&);
-		void onEditRequest(RecordModel*, const QModelIndexList&);
-		void onRemoveRequest(RecordModel*, const QModelIndexList&);
-		void onUpdateRequest(RecordModel*, const QModelIndexList&,
-						 const QHash<int, QVariant>&,
-						 const QHash<int, int>&, bool);
-		void onBatchRequest(RecordModel*, const QModelIndexList&,
-						const QList<QPair<int, BatchWidget::FUNCTION>>&,
-						const QList<QStringList>&);
+		void onCommonRequest(const QSet<int>&);
+		void onEditRequest(const QSet<int>&);
+		void onRemoveRequest(const QSet<int>&);
+		void onUpdateRequest(const QSet<int>&, const QHash<int, QVariant>&, const QHash<int, int>&, bool);
+		void onBatchRequest(const QSet<int>&, const QList<QPair<int, BatchWidget::FUNCTION>>&, const QList<QStringList>&);
 
-		void onJoinRequest(RecordModel*, const QModelIndexList&,
-					    const QString&, const QString&,
-					    bool, int, double);
-		void onSplitRequest(RecordModel*, const QModelIndexList&,
-						const QString&, const QString&, int);
+		void onJoinRequest(const QSet<int>&, const QString&, const QString&, bool, int, double);
+		void onSplitRequest(const QSet<int>&, const QString&, const QString&, int);
 
-		void onMergeRequest(RecordModel*, const QModelIndexList&,
-						const QList<int>&, const QStringList&);
-		void onCutRequest(RecordModel*, const QModelIndexList&,
-					   const QStringList&, bool);
+		void onMergeRequest(const QSet<int>&, const QList<int>&, const QStringList&);
+		void onCutRequest(const QSet<int>&, const QStringList&, bool);
 
-		void onRefactorRequest(RecordModel*, const QModelIndexList&,
-						   const QString&, int, int, int,
-						   const QString&, int,
-						   const QString&,
-						   int, double);
+		void onRefactorRequest(const QSet<int>&, const QString&, int, int, int,
+						   const QString&, int, const QString&, int, double);
 
-		void onClassRequest(RecordModel*, const QModelIndexList&);
+		void onClassRequest(const QSet<int>&);
 
-		void onListRequest(RecordModel*, const QModelIndexList&);
+		void onListRequest(const QSet<int>&);
 
-		void onRestoreRequest(RecordModel*, const QModelIndexList&);
-		void onHistoryRequest(RecordModel*, const QModelIndexList&);
+		void onRestoreRequest(const QSet<int>&);
+		void onHistoryRequest(const QSet<int>&);
 
-		void onTextRequest(RecordModel*, const QModelIndexList&,
-					    bool, int, bool, bool, double);
+		void onTextRequest(const QSet<int>&, bool, int, bool, bool, double);
 
-		void onLabelRequest(RecordModel*, const QModelIndexList&, const QString&,
-						int, double, double, bool, double, double);
+		void onLabelRequest(const QSet<int>&, const QString&, int, double, double, bool, double, double);
 
-		void onRelabelRequest(RecordModel*, const QModelIndexList&,
-						  const QString, int, int, double);
+		void onRelabelRequest(const QSet<int>&, const QString, int, int, double);
 
-		void onRemovelabelRequest(RecordModel*, const QModelIndexList&);
+		void onRemovelabelRequest(const QSet<int>&);
 
-		void onFitRequest(RecordModel*, const QModelIndexList&, const QString&,
-					   bool, int, int, int, int, double, double, bool);
+		void onFitRequest(const QSet<int>&, const QString&, bool, int, int, int, int, double, double, bool);
 
-		void onInsertRequest(RecordModel*, const QModelIndexList&, int, double, bool);
+		void onInsertRequest(const QSet<int>&, int, double, bool);
 
-		void onKergRequest(RecordModel*, const QModelIndexList&, const QString&, int, int);
+		void onKergRequest(const QSet<int>&, const QString&, int, int);
 
 		void onGroupRequest(const QList<int>&);
 

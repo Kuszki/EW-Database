@@ -133,7 +133,7 @@ RecordModel::RecordObject* RecordModel::GroupObject::takeChild(int Index)
 	if (Childs.size() > Index) return Childs.takeAt(Index); else return nullptr;
 }
 
-QVector<RecordModel::GroupObject*> RecordModel::GroupObject::allGroups()
+QVector<RecordModel::GroupObject*> RecordModel::GroupObject::allGroups(void)
 {
 	QVector<GroupObject*> List;
 
@@ -148,6 +148,23 @@ QVector<RecordModel::GroupObject*> RecordModel::GroupObject::allGroups()
 QVector<RecordModel::RecordObject*> RecordModel::GroupObject::getChilds(void)
 {
 	return Childs;
+}
+
+QSet<int> RecordModel::GroupObject::allUids(void)
+{
+	QSet<int> List;
+
+	for (const auto Child : Childs)
+		if (auto C = dynamic_cast<GroupObject*>(Child))
+		{
+			List |= C->allUids();
+		}
+		else
+		{
+			List.insert(Child->getUid());
+		}
+
+	return List;
 }
 
 RecordModel::GroupObject* RecordModel::GroupObject::getParent(void) const
@@ -332,14 +349,16 @@ QVariant RecordModel::data(const QModelIndex &Index, int Role) const
 }
 
 Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
-{
+{	
 	QMutexLocker Synchronizer(&Locker);
 
 	if (!Index.isValid()) return Qt::ItemFlags(0);
 
 	RecordObject* Object = (RecordObject*) Index.internalPointer();
 
-	if (dynamic_cast<GroupObject*>(Object)) return Qt::ItemIsEnabled;
+	const auto groupFlag = selectGroups ?  Qt::ItemIsSelectable : Qt::NoItemFlags;
+
+	if (dynamic_cast<GroupObject*>(Object)) return Qt::ItemIsEnabled | groupFlag;
 	else return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
@@ -483,29 +502,31 @@ QModelIndexList RecordModel::getIndexes(const QModelIndex& Parent) const
 	return List;
 }
 
-QList<int> RecordModel::getUids(const QModelIndexList& Selection) const
+QSet<int> RecordModel::getUids(const QModelIndexList& Selection) const
 {
-	QMutexLocker Synchronizer(&Locker); QList<int> List;
+	QMutexLocker Synchronizer(&Locker); QSet<int> List;
 
 	for (const auto& Index : Selection)
 	{
 		RecordObject* Object = (RecordObject*) Index.internalPointer();
 
-		if (dynamic_cast<GroupObject*>(Object)) continue;
-
-		List.append(Object->getUid());
+		if (auto G = dynamic_cast<GroupObject*>(Object))
+		{
+			List |= G->allUids();
+		}
+		else List.insert(Object->getUid());
 	}
 
 	return List;
 }
 
-QList<int> RecordModel::getUids(void) const
+QSet<int> RecordModel::getUids(void) const
 {
 	QMutexLocker Synchronizer(&Locker);
 
-	QList<int> Uids; Uids.reserve(Objects.size());
+	QSet<int> Uids; Uids.reserve(Objects.size());
 
-	for (const auto& O : Objects) Uids.append(O->getUid());
+	for (const auto& O : Objects) Uids.insert(O->getUid());
 
 	return Uids;
 }
@@ -659,6 +680,11 @@ QModelIndex RecordModel::find(int Index, QVariant Data) const
 	}
 
 	return QModelIndex();
+}
+
+void RecordModel::setGroupsSelectable(bool Selectable)
+{
+	selectGroups = Selectable;
 }
 
 RecordModel::GroupObject* RecordModel::createGroups(QList<QPair<int, QList<QVariant>>>::ConstIterator From, QList<QPair<int, QList<QVariant>>>::ConstIterator To, RecordModel::GroupObject* Parent)

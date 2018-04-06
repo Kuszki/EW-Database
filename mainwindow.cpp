@@ -60,6 +60,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	Settings.beginGroup("Interface");
 	ui->actionSingleton->setChecked(Settings.value("singletons").toBool());
+	ui->actionSelection->setChecked(Settings.value("groupselect").toBool());
 	ui->actionDateoverride->setChecked(Settings.value("override").toBool());
 	Color->setValue(Settings.value("color", 0).toInt());
 	Settings.endGroup();
@@ -89,6 +90,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
 
 	connect(ui->actionDateoverride, &QAction::toggled, Driver, &DatabaseDriver::setDateOverride);
+	connect(ui->actionSelection, &QAction::toggled, this, &MainWindow::selectionActionToggled);
 
 	connect(ui->actionHide, &QAction::triggered, this, &MainWindow::hideActionClicked);
 	connect(ui->actionUnhide, &QAction::triggered, this, &MainWindow::unhideActionClicked);
@@ -184,6 +186,7 @@ MainWindow::~MainWindow(void)
 
 	Settings.beginGroup("Interface");
 	Settings.setValue("singletons", ui->actionSingleton->isChecked());
+	Settings.setValue("groupselect", ui->actionSelection->isChecked());
 	Settings.setValue("override", ui->actionDateoverride->isChecked());
 	Settings.setValue("color", Color->value());
 	Settings.endGroup();
@@ -239,20 +242,21 @@ void MainWindow::deleteActionClicked(void)
 	{
 		ui->Data->selectionModel()->clearSelection();
 
-		lockUi(BUSY); emit onRemoveRequest(Model, Selected);
+		lockUi(BUSY); emit onRemoveRequest(Model->getUids(Selected).subtract(hiddenRows));
 	}
 }
 
-void MainWindow::removelabActionClicked()
+void MainWindow::removelabActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Delete %n object(s) labels", nullptr, Selected.count()),
 						 tr("Are you sure to delete selected items labels?"),
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
-		lockUi(BUSY); emit onRemovelabelRequest(Model, Selected);
+		lockUi(BUSY); emit onRemovelabelRequest(Set);
 	}
 }
 
@@ -267,28 +271,31 @@ void MainWindow::editActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onEditRequest(Model, Selected);
+	lockUi(BUSY); emit onEditRequest(Set);
 }
 
 void MainWindow::joinActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onListRequest(Model, Selected);
+	lockUi(BUSY); emit onListRequest(Set);
 }
 
 void MainWindow::restoreActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Restore %n object(s) oryginal job name", nullptr, Selected.count()),
 						 tr("Are you sure to restore selected items first job name?"),
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
-		lockUi(BUSY); emit onRestoreRequest(Model, Selected);
+		lockUi(BUSY); emit onRestoreRequest(Set);
 	}
 }
 
@@ -296,12 +303,13 @@ void MainWindow::historyActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Delete %n object(s) history", nullptr, Selected.count()),
 						 tr("Are you sure to delete selected items history?"),
 						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
-		lockUi(BUSY); emit onHistoryRequest(Model, Selected);
+		lockUi(BUSY); emit onHistoryRequest(Set);
 	}
 }
 
@@ -309,16 +317,18 @@ void MainWindow::mergeActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onCommonRequest(Model, Selected);
+	lockUi(BUSY); emit onCommonRequest(Set);
 }
 
 void MainWindow::classActionClicked(void)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onClassRequest(Model, Selected);
+	lockUi(BUSY); emit onClassRequest(Set);
 }
 
 void MainWindow::hideActionClicked(void)
@@ -329,7 +339,7 @@ void MainWindow::hideActionClicked(void)
 	for (const auto Item : Selected)
 	{
 		ui->Data->setRowHidden(Item.row(), Item.parent(), true);
-		hiddenRows.insert(Model->getUid(Item));
+		hiddenRows.insert(Model->getUid(Item)); // TODO fixme
 	}
 
 	ui->Data->selectionModel()->clearSelection();
@@ -411,12 +421,29 @@ void MainWindow::fitActionClicked(void)
 	if (!Path.isEmpty()) Fit->open(Path);
 }
 
+void MainWindow::selectionActionToggled(bool Allow)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (Model)
+	{
+		ui->Data->selectionModel()->clearSelection();
+
+		Model->setGroupsSelectable(Allow);
+
+		ui->Data->update(); // TODO testme
+	}
+}
+
 void MainWindow::selectionChanged(void)
 {
 	if (!ui->Data->updatesEnabled()) return;
 
-	const int Count = ui->Data->selectionModel()->selectedRows().count();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel()->selectedRows();
+
+	auto Count = Model->getUids(Selection).subtract(hiddenRows).size();
+
 	const int From = Model ? Model->totalCount() : 0;
 
 	ui->actionDelete->setEnabled(Count > 0);
@@ -445,8 +472,9 @@ void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model()); hiddenRows.clear();
 	const auto Selected = Model ? ui->Data->selectionModel()->selectedRows() : QModelIndexList();
+	const auto Set = Model ? Model->getUids(Selected).subtract(hiddenRows) : QSet<int>();
 
-	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Redaction, Limiter, Radius, Mode, Model, Selected);
+	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Redaction, Limiter, Radius, Mode, Model, Set);
 }
 
 void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)
@@ -454,7 +482,7 @@ void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)
 	dynamic_cast<RecordModel*>(ui->Data->model())->setData(Index, Data);
 }
 
-void MainWindow::removeRow(const QModelIndex& Index)
+void MainWindow::removeRow(int Index)
 {
 	dynamic_cast<RecordModel*>(ui->Data->model())->removeItem(Index);
 }
@@ -463,80 +491,90 @@ void MainWindow::connectData(const QString& Point, const QString& Line, bool Ove
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onJoinRequest(Model, Selected, Point, Line, Override, Type, Radius);
+	lockUi(BUSY); emit onJoinRequest(Set, Point, Line, Override, Type, Radius);
 }
 
 void MainWindow::disconnectData(const QString& Point, const QString& Line, int Type)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onSplitRequest(Model, Selected, Point, Line, Type);
+	lockUi(BUSY); emit onSplitRequest(Set, Point, Line, Type);
 }
 
 void MainWindow::mergeData(const QList<int>& Fields, const QStringList& Points)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onMergeRequest(Model, Selected, Fields, Points);
+	lockUi(BUSY); emit onMergeRequest(Set, Fields, Points);
 }
 
 void MainWindow::cutData(const QStringList& Points, bool Endings)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onCutRequest(Model, Selected, Points, Endings);
+	lockUi(BUSY); emit onCutRequest(Set, Points, Endings);
 }
 
 void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text, const QString& Symbol, int Style, const QString& Label, int Actions, double Radius)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onRefactorRequest(Model, Selected, Class, Line, Point, Text, Symbol, Style, Label, Actions, Radius);
+	lockUi(BUSY); emit onRefactorRequest(Set, Class, Line, Point, Text, Symbol, Style, Label, Actions, Radius);
 }
 
 void MainWindow::editText(bool Move, int Justify, bool Rotate, bool Sort, double Length)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onTextRequest(Model, Selected, Move, Justify, Rotate, Sort, Length);
+	lockUi(BUSY); emit onTextRequest(Set, Move, Justify, Rotate, Sort, Length);
 }
 
 void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onLabelRequest(Model, Selected, Text, J, X, Y, P, L, R);
+	lockUi(BUSY); emit onLabelRequest(Set, Text, J, X, Y, P, L, R);
 }
 
 void MainWindow::fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L, bool E)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onFitRequest(Model, Selected, File, Points, X1, Y1, X2, Y2, R, L, E);
+	lockUi(BUSY); emit onFitRequest(Set, File, Points, X1, Y1, X2, Y2, R, L, E);
 }
 
 void MainWindow::insertBreaks(int Mode, double Radius, double Recursive)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onInsertRequest(Model, Selected, Mode, Radius, Recursive);
+	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius, Recursive);
 }
 
 void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onRelabelRequest(Model, Selected, Label, Underline, Pointer, Rotation);
+	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)
@@ -654,9 +692,10 @@ void MainWindow::updateColumns(const QList<int>& Columns)
 void MainWindow::updateValues(const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-	auto Selection = ui->Data->selectionModel();
+	auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onUpdateRequest(Model, Selection->selectedRows(), Values, Reasons, true);
+	lockUi(BUSY); emit onUpdateRequest(Set, Values, Reasons, true);
 }
 
 void MainWindow::loadData(RecordModel* Model)
@@ -678,7 +717,7 @@ void MainWindow::loadData(RecordModel* Model)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Data loaded"));
 }
 
-void MainWindow::removeRows(const QModelIndexList& List)
+void MainWindow::removeRows(const QSet<int>& List)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
@@ -957,17 +996,18 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 void MainWindow::execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles, const QList<QStringList>& Data)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-	auto Selection = ui->Data->selectionModel();
+	auto Selected = ui->Data->selectionModel()->selectedRows();
 
-	lockUi(BUSY); emit onBatchRequest(Model, Selection->selectedRows(), Roles, Data);
+	lockUi(BUSY); emit onBatchRequest(Model->getUids(Selected).subtract(hiddenRows), Roles, Data);
 }
 
 void MainWindow::updateKerg(const QString& Path, int Action, int Elements)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-	auto Selection = ui->Data->selectionModel();
+	auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onKergRequest(Model, Selection->selectedRows(), Path, Action, Elements);
+	lockUi(BUSY); emit onKergRequest(Set, Path, Action, Elements);
 }
 
 void MainWindow::loadRequest(const QString& Path, int Action)
@@ -1086,10 +1126,16 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 
 void MainWindow::updateView(RecordModel* Model)
 {
+	const bool GS = ui->actionSelection->isChecked();
+
 	auto Selection = ui->Data->selectionModel();
 	auto Old = ui->Data->model();
 
-	if (Model) Model->setParent(this);
+	if (Model)
+	{
+		Model->setGroupsSelectable(GS);
+		Model->setParent(this);
+	}
 
 	if (dynamic_cast<RecordModel*>(Old))
 	{

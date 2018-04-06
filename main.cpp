@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
 	qRegisterMetaType<QHash<int,int>>("QHash<int,int>");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<QList<int>>("QList<int>");
+	qRegisterMetaType<QSet<int>>("QSet<int>");
 
 	a.setApplicationName("EW-Database");
 	a.setOrganizationName("Łukasz \"Kuszki\" Dróżdż");
