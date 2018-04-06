@@ -82,6 +82,7 @@
     <addaction name="separator"/>
     <addaction name="actionDateoverride"/>
     <addaction name="actionSelection"/>
+    <addaction name="separator"/>
     <addaction name="actionSingleton"/>
    </widget>
    <widget class="QMenu" name="menuData">

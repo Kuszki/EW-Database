@@ -339,8 +339,9 @@ void MainWindow::hideActionClicked(void)
 	for (const auto Item : Selected)
 	{
 		ui->Data->setRowHidden(Item.row(), Item.parent(), true);
-		hiddenRows.insert(Model->getUid(Item)); // TODO fixme
 	}
+
+	hiddenRows |= Model->getUids(Selected);
 
 	ui->Data->selectionModel()->clearSelection();
 }
@@ -431,7 +432,7 @@ void MainWindow::selectionActionToggled(bool Allow)
 
 		Model->setGroupsSelectable(Allow);
 
-		ui->Data->update(); // TODO testme
+		ui->Data->update();
 	}
 }
 
