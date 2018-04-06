@@ -337,9 +337,14 @@ void MainWindow::hideActionClicked(void)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	for (const auto Item : Selected)
-	{
-		ui->Data->setRowHidden(Item.row(), Item.parent(), true);
-	}
+		if (Model->getUid(Item) != -1)
+		{
+			ui->Data->setRowHidden(Item.row(), Item.parent(), true);
+		}
+		else for (const auto Row : Model->getIndexes(Item))
+		{
+			ui->Data->setRowHidden(Row.row(), Row.parent(), true);
+		}
 
 	hiddenRows |= Model->getUids(Selected);
 
@@ -1161,7 +1166,7 @@ void MainWindow::updateHidden(void)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	if (Model->rowCount()) for (const auto& UID : hiddenRows)
+	for (const auto& UID : hiddenRows)
 	{
 		const auto Index = Model->index(UID);
 
