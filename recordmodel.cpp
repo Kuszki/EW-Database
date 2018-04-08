@@ -121,9 +121,7 @@ RecordModel::RecordObject* RecordModel::GroupObject::takeChild(RecordModel::Reco
 {
 	if (Childs.contains(Object))
 	{
-		Childs.removeOne(Object);
-
-		return Object;
+		Childs.removeOne(Object); return Object;
 	}
 	else return nullptr;
 }
@@ -204,7 +202,7 @@ int RecordModel::GroupObject::getColumn(void) const
 
 int RecordModel::GroupObject::getIndex(void) const
 {
-	if (Root) return Root->Childs.indexOf((GroupObject*) this); else	return 0;
+	if (Root) return Root->Childs.indexOf((RecordObject*) this); else return 0;
 }
 
 int RecordModel::GroupObject::childIndex(RecordObject* Object) const
@@ -330,10 +328,10 @@ QVariant RecordModel::headerData(int Section, Qt::Orientation Orientation, int R
 {
 	QMutexLocker Synchronizer(&Locker);
 
-	if (Orientation != Qt::Horizontal || Section > Header.size()) return QVariant();
+	if (Orientation != Qt::Horizontal) return QVariant();
 
 	if (Role != Qt::DisplayRole) return QVariant();
-	else return Header[Section];
+	else return Header.value(Section);
 }
 
 QVariant RecordModel::data(const QModelIndex &Index, int Role) const
@@ -349,7 +347,7 @@ QVariant RecordModel::data(const QModelIndex &Index, int Role) const
 }
 
 Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
-{	
+{
 	QMutexLocker Synchronizer(&Locker);
 
 	if (!Index.isValid()) return Qt::ItemFlags(0);
@@ -358,7 +356,7 @@ Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
 
 	const auto groupFlag = selectGroups ?  Qt::ItemIsSelectable : Qt::NoItemFlags;
 
-	if (dynamic_cast<GroupObject*>(Object)) return Qt::ItemIsEnabled | groupFlag;
+	if (Roots.contains((GroupObject*) Object)) return Qt::ItemIsEnabled | groupFlag;
 	else return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
@@ -809,8 +807,8 @@ void RecordModel::removeEmpty(RecordModel::GroupObject* Parent, bool Emit)
 			{
 				auto Delete = P; P = P->getParent();
 
-				auto From = createIndex(P->getIndex(), 0, P);
-				int Row = Delete->getIndex();
+				From = createIndex(P->getIndex(), 0, P);
+				Row = Delete->getIndex();
 
 				if (Emit) beginRemoveRows(From, Row, Row);
 				P->removeChild(Delete);

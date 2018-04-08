@@ -747,6 +747,9 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
 {
+	static int defaultPort = 0;
+
+	if (!defaultPort) defaultPort = Database.port();
 	if (Database.isOpen()) Database.close();
 
 	Database.setHostName(Server.section(':', 0, 0));
@@ -755,6 +758,7 @@ bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, co
 	Database.setPassword(Pass);
 
 	if (Server.contains(':')) Database.setPort(Server.section(':', 1).toInt());
+	else Database.setPort(defaultPort);
 
 	if (Database.open())
 	{
