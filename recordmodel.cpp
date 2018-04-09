@@ -405,7 +405,7 @@ void RecordModel::sort(int Column, Qt::SortOrder Order)
 
 	beginResetModel();
 
-	if (!Root) __gnu_parallel::sort(Objects.begin(), Objects.end(), Sort);
+	if (!Root) std::stable_sort(Objects.begin(), Objects.end(), Sort);
 	else
 	{
 		QFutureSynchronizer<void> Synchronizer;
