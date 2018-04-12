@@ -356,7 +356,7 @@ Qt::ItemFlags RecordModel::flags(const QModelIndex& Index) const
 
 	const auto groupFlag = selectGroups ?  Qt::ItemIsSelectable : Qt::NoItemFlags;
 
-	if (Roots.contains((GroupObject*) Object)) return Qt::ItemIsEnabled | groupFlag;
+	if (!Objects.contains(Object)) return Qt::ItemIsEnabled | groupFlag;
 	else return Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 

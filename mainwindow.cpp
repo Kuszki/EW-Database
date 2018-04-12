@@ -657,6 +657,7 @@ void MainWindow::databaseDisconnected(void)
 	Kerg->deleteLater();
 	Insert->deleteLater();
 	Variable->deleteLater();
+	Loader->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();
@@ -903,13 +904,15 @@ void MainWindow::readRequest(void)
 	const QString Format = QString("%1 13\n").arg(Color->value());
 	const int Port = QString::fromUtf8(Array).toInt();
 
-	if (Model) for (const auto& Index : Selected)
+	if (Model) for (const auto& Index : Model->getUids(Selected))
 	{
+		const auto Mid = Model->index(Index);
+
 		QString Data = QString()
 			.append(Format)
-			.append(Codes.value(Model->fieldData(Index, 0).toString()))
+			.append(Codes.value(Model->fieldData(Mid, 0).toString()))
 			.append(";")
-			.append(Model->fieldData(Index, 2).toString())
+			.append(Model->fieldData(Mid, 2).toString())
 			.append("\n");
 
 		Sender.writeDatagram(Data.toUtf8(), QHostAddress::LocalHost, Port);
