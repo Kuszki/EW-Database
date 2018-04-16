@@ -550,7 +550,7 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 
 	QFile File(Path); if (!File.open(QFile::WriteOnly | QFile::Text)) return false;
 
-	QTextStream Stream(&File);
+	QTextStream Stream(&File); const auto UIDS = getUids(List);
 
 	if (Names) for (const auto& ID : Columns)
 	{
@@ -560,10 +560,8 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 		else Stream << '\n';
 	}
 
-	for (const auto& Index : List)
+	for (const auto Object : Objects) if (UIDS.contains(Object->getUid()))
 	{
-		RecordObject* Object = (RecordObject*) Index.internalPointer();
-
 		for (const auto& ID : Columns)
 		{
 			Stream << Object->getField(ID).toString();
