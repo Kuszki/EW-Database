@@ -416,6 +416,8 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 
 			emit onUpdateProgress(++Step);
 		}
+
+		if (Step == Indexes.size()) break;
 	}
 
 	emit onEndProgress(); return List;
@@ -794,14 +796,14 @@ bool DatabaseDriver::closeDatabase(void)
 	}
 }
 
-void DatabaseDriver::loadList(const QStringList& Filter, int Index)
+void DatabaseDriver::loadList(const QStringList& Filter, int Index, int Action, const RecordModel* Current, const QSet<int>& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataLoad(nullptr); return; }
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	QSet<int> UIDS; UIDS.reserve(Filter.size()); int Step = 0;
-	const QSet<QString> Hash = Filter.toSet();
+	const QSet<QString> Hash = Filter.toSet(); QSet<int> Load;
 
 	emit onBeginProgress(tr("Preparing objects list"));
 	emit onSetupProgress(0, Hash.size());
@@ -809,14 +811,19 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index)
 	Query.prepare("SELECT O.UID, O.NUMER, O.IIP, K.NUMER FROM EW_OBIEKTY O "
 			    "LEFT JOIN EW_OPERATY K ON O.OPERAT = K.UID WHERE O.STATUS = 0");
 
-	if (Query.exec()) while (Query.next() && !isTerminated())
+	if (Query.exec()) while (Query.next() && !isTerminated() && UIDS.size() != Hash.size())
 		if (Hash.contains(Query.value(Index).toString()))
 		{
 			UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
 		}
 
+	if (Action == 0) Load = UIDS;
+	else if (Action == 1) Load = UIDS & Items;
+	else if (Action == 2) Load = UIDS + Items;
+	else if (Action == 3) Load = Items - UIDS;
+
 	emit onBeginProgress(tr("Querying database"));
-	emit onSetupProgress(0, Tables.size());
+	emit onSetupProgress(0, Tables.size()); Step = 0;
 
 	RecordModel* Model = new RecordModel(Headers); Step = 0;
 
@@ -824,13 +831,12 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index)
 	{
 		if (isTerminated()) break;
 
-		auto Data = loadData(Table, QSet<int>(), QString(), true, true);
+		auto Data = loadData(Table, Load, QString(), true, true);
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
-			if (UIDS.contains(i.key()))
-			{
-				Model->addItem(i.key(), i.value());
-			}
+		{
+			Model->addItem(i.key(), i.value());
+		}
 
 		emit onUpdateProgress(++Step);
 	}

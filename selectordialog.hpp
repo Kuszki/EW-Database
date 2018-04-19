@@ -22,9 +22,14 @@
 #define SELECTORDIALOG_HPP
 
 #include <QDialogButtonBox>
+#include <QActionGroup>
+#include <QToolButton>
 #include <QFileDialog>
 #include <QPushButton>
+#include <QClipboard>
+#include <QMimeData>
 #include <QDialog>
+#include <QMenu>
 
 namespace Ui
 {
@@ -40,6 +45,9 @@ class SelectorDialog : public QDialog
 
 		Ui::SelectorDialog* ui;
 
+		QActionGroup* saveMode;
+		QToolButton* Save;
+
 	public:
 
 		explicit SelectorDialog(QWidget* Parent = nullptr);
@@ -47,15 +55,21 @@ class SelectorDialog : public QDialog
 
 	private slots:
 
+		void actionIndexChanged(int Index);
+
 		void openButtonClicked(void);
+		void refreshButtonClicked(void);
+
+		void listEditChanged(void);
 
 	public slots:
 
 		virtual void accept(void) override;
+		virtual void open(void) override;
 
 	signals:
 
-		void onDataAccepted(const QString&, int);
+		void onDataAccepted(const QStringList&, int, int);
 
 };
 

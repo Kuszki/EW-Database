@@ -1019,16 +1019,13 @@ void MainWindow::updateKerg(const QString& Path, int Action, int Elements)
 	lockUi(BUSY); emit onKergRequest(Set, Path, Action, Elements);
 }
 
-void MainWindow::loadRequest(const QString& Path, int Action)
+void MainWindow::loadRequest(const QStringList& List, int Field, int Action)
 {
-	QFile File(Path); if (File.open(QFile::ReadOnly | QFile::Text))
-	{
-		QTextStream Stream(&File); QStringList List;
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model()); hiddenRows.clear();
+	const auto Selected = Model ? ui->Data->selectionModel()->selectedRows() : QModelIndexList();
+	const auto Set = Model ? Model->getUids(Selected).subtract(hiddenRows) : QSet<int>();
 
-		while (!Stream.atEnd()) List << Stream.readLine().trimmed().remove(QRegExp("\\s+.*"));
-
-		lockUi(BUSY); hiddenRows.clear(); emit onLoadRequest(List, Action);
-	}
+	lockUi(BUSY); hiddenRows.clear(); emit onLoadRequest(List, Field, Action, Model, Set);
 }
 
 void MainWindow::lockUi(MainWindow::STATUS Status)

@@ -175,9 +175,7 @@ class MainWindow : public QMainWindow
 
 		void connectData(const QString& Point, const QString& Line,
 					  bool Override, int Type, double Radius);
-		void disconnectData(const QString& Point,
-						const QString& Line,
-						int Type);
+		void disconnectData(const QString& Point, const QString& Line, int Type);
 		void mergeData(const QList<int>& Fields, const QStringList& Points);
 		void cutData(const QStringList& Points, bool Endings);
 		void changeClass(const QString& Class, int Line, int Point, int Text,
@@ -207,7 +205,7 @@ class MainWindow : public QMainWindow
 
 		void updateKerg(const QString& Path, int Action, int Elements);
 
-		void loadRequest(const QString& Path, int Action);
+		void loadRequest(const QStringList& List, int Field, int Action);
 
 		void loadData(RecordModel* Model);
 
@@ -244,7 +242,8 @@ class MainWindow : public QMainWindow
 
 	signals:
 
-		void onLoadRequest(const QStringList&, int);
+		void onLoadRequest(const QStringList&, int, int,
+					    RecordModel*, const QSet<int>&);
 		void onReloadRequest(const QString&, const QList<int>&,
 						 const QHash<int, QVariant>&,
 						 const QHash<int, QVariant>&,
