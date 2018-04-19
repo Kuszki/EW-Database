@@ -50,8 +50,7 @@
       <string>Refresh</string>
      </property>
      <property name="icon">
-      <iconset theme="refresh">
-       <normaloff>.</normaloff>.</iconset>
+      <iconset theme="reload"/>
      </property>
     </widget>
    </item>
