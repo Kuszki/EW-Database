@@ -5555,8 +5555,8 @@ QSet<int> DatabaseDriver::filterDataByLength(const QList<OBJECT>& Data, double M
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
-	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L > Minimum && L < Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L > Maximum && L < Minimum); };
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
@@ -5602,8 +5602,8 @@ QSet<int> DatabaseDriver::filterDataBySurface(const QList<OBJECT>& Data, double 
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, Count ? Count : Data.size());
 
-	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
-	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L > Minimum && L < Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L > Maximum && L < Minimum); };
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
@@ -6197,8 +6197,8 @@ QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::RE
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
 
-	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
-	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L > Minimum && L < Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L > Maximum && L < Minimum); };
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
@@ -6220,8 +6220,8 @@ QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::RED
 {
 	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
 
-	const auto vA = [Minimum, Maximum] (double L) -> bool { return L >= Minimum && L <= Maximum; };
-	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L >= Maximum && L <= Minimum); };
+	const auto vA = [Minimum, Maximum] (double L) -> bool { return L > Minimum && L < Maximum; };
+	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L > Maximum && L < Minimum); };
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
