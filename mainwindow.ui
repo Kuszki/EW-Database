@@ -97,8 +97,8 @@
     <addaction name="actionEdit"/>
     <addaction name="actionDelete"/>
     <addaction name="actionRefactor"/>
-    <addaction name="actionBatch"/>
     <addaction name="actionCopyfields"/>
+    <addaction name="actionBatch"/>
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionKerg"/>
@@ -185,8 +185,8 @@
    <addaction name="actionEdit"/>
    <addaction name="actionDelete"/>
    <addaction name="actionRefactor"/>
-   <addaction name="actionBatch"/>
    <addaction name="actionCopyfields"/>
+   <addaction name="actionBatch"/>
   </widget>
   <widget class="QToolBar" name="kergsTool">
    <property name="windowTitle">
@@ -637,7 +637,7 @@
   <action name="actionCopyfields">
    <property name="icon">
     <iconset theme="edit-copy">
-	<normaloff>.</normaloff>.</iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Copy fields</string>
