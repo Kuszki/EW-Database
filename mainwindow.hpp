@@ -34,6 +34,7 @@
 
 #include "databasedriver.hpp"
 
+#include "copyfieldsdialog.hpp"
 #include "variablesdialog.hpp"
 #include "harmonizedialog.hpp"
 #include "selectordialog.hpp"
@@ -88,6 +89,7 @@ class MainWindow : public QMainWindow
 
 		DatabaseDriver* Driver;
 
+		CopyfieldsDialog* Copyfields;
 		SelectorDialog* Loader;
 		VariablesDialog* Variable;
 		HarmonizeDialog* Fit;
@@ -200,8 +202,9 @@ class MainWindow : public QMainWindow
 
 		void saveData(const QList<int>& Fields, int Type, bool Header);
 
-		void execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles,
+		void execBatch(const QList<BatchWidget::RECORD>& Roles,
 					const QList<QStringList>& Data);
+		void execCopy(const QList<CopyfieldsWidget::RECORD>& Roles, bool Nulls);
 
 		void updateKerg(const QString& Path, int Action, int Elements);
 
@@ -254,7 +257,8 @@ class MainWindow : public QMainWindow
 		void onEditRequest(const QSet<int>&);
 		void onRemoveRequest(const QSet<int>&);
 		void onUpdateRequest(const QSet<int>&, const QHash<int, QVariant>&, const QHash<int, int>&, bool);
-		void onBatchRequest(const QSet<int>&, const QList<QPair<int, BatchWidget::FUNCTION>>&, const QList<QStringList>&);
+		void onBatchRequest(const QSet<int>&, const QList<BatchWidget::RECORD>&, const QList<QStringList>&);
+		void onCopyfieldsRequest(const QSet<int>&, const QList<CopyfieldsWidget::RECORD>&, bool);
 
 		void onJoinRequest(const QSet<int>&, const QString&, const QString&, bool, int, double);
 		void onSplitRequest(const QSet<int>&, const QString&, const QString&, int);

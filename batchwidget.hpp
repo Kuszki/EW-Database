@@ -40,6 +40,10 @@ class BatchWidget : public QWidget
 		UPDATE
 	};
 
+	public:
+
+		using RECORD = QPair<int, FUNCTION>;
+
 	private:
 
 		Ui::BatchWidget* ui;
@@ -53,7 +57,8 @@ class BatchWidget : public QWidget
 						 QWidget* Parent = nullptr);
 		virtual ~BatchWidget(void) override;
 
-		FUNCTION getFunction(void) const;
+		RECORD getFunction(void) const;
+		FUNCTION getAction(void) const;
 
 		int getField(void) const;
 		int getIndex(void) const;	

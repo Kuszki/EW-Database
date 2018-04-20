@@ -488,10 +488,12 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 		"ON "
 			"EW_OBIEKTY.UID = EW_DATA.UIDO "
 		"WHERE "
+			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.UID = ? AND "
 			"EW_OBIEKTY.STATUS = 0")
 				.arg(Attribs.join(", "))
-				.arg(Table.Data);
+				.arg(Table.Data)
+				.arg(Table.Name);
 
 	const bool isBinded = Filter.size() < maxBindedSize;
 	const bool isEmpty = Filter.isEmpty();
@@ -681,6 +683,185 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::filterData(const QHash<int, QHa
 	if (Redaction.contains(11)) Filtered = Filtered.intersect((filterDataByLabelText(Redact, Redaction[11].toStringList(), true)));
 
 	for (const auto& UID : Filtered) Res.insert(UID, Data[UID]); return Res;
+}
+
+void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasklist, const QSet<int>& Items, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons, bool Emit)
+{
+	const bool Signals = signalsBlocked(); if (!Emit) blockSignals(true);
+
+	const auto Tasks = Tasklist.isEmpty() ? getClassGroups(Items, true, 1) : Tasklist;
+
+	const QSet<int> Used = Values.keys().toSet(); const QSet<int> Nills = Reasons.keys().toSet();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; QStringList All;
+
+	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
+	{
+		if (Values[i].isNull()) All.append(QString("%1 = NULL").arg(Fields[i].Name));
+		else All.append(QString("%1 = '%2'").arg(Fields[i].Name).arg(Values[i].toString()));
+	}
+
+	emit onBeginProgress(tr("Updating common data"));
+	emit onSetupProgress(0, Tasks.first().size());
+
+	if (!All.isEmpty()) for (const auto& Index : Tasks.first())
+	{
+		if (isTerminated()) break;
+
+		Query.exec(QString(
+			"UPDATE "
+				"EW_OBIEKTY "
+			"SET "
+				"%1 "
+			"WHERE "
+				"UID = '%2'")
+				 .arg(All.join(", "))
+				 .arg(Index));
+
+		emit onUpdateProgress(++Step);
+	}
+
+	if (Dateupdate) updateModDate(Tasks.first(), 0);
+
+	emit onEndProgress(); Step = 0;
+	emit onBeginProgress(tr("Updating special data"));
+	emit onSetupProgress(0, Tasks.first().size());
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+
+		QStringList fieldsNames, fieldsUpdates, nullsUpdates;
+
+		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
+		{
+			fieldsNames.append(QString(Fields[Index].Name).remove("EW_DATA."));
+
+			if (Values[Index].isNull()) fieldsUpdates.append("NULL");
+			else fieldsUpdates.append(QString("'%1'").arg(Values[Index].toString()));
+		}
+
+		for (const auto& Index : Nills) if (Table.Indexes.contains(Index))
+		{
+			const QString Name = QString("%1_V").arg(Fields[Index].Name);
+
+			nullsUpdates.append(QString("%1 = '%2'").arg(Name).arg(Reasons[Index]));
+		}
+
+		const QString FIELDS = fieldsNames.join(", ");
+		const QString UPDATES = fieldsUpdates.join(", ");
+		const QString REASONS = nullsUpdates.join(", ");
+
+		const bool NULLS = !nullsUpdates.isEmpty();
+
+		if (!fieldsUpdates.isEmpty()) for (const auto& Index : i.value())
+		{
+			if (isTerminated()) break;
+
+			Query.exec(QString(
+				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
+				"VALUES (%3, %4) MATCHING (UIDO)")
+					 .arg(Table.Data)
+					 .arg(FIELDS)
+					 .arg(Index)
+					 .arg(UPDATES));
+
+			if (NULLS) Query.exec(QString(
+				"UPDATE %1 EW_DATA SET %2 "
+				"WHERE EW_DATA.UIDO = '%3'")
+					 .arg(Table.Data)
+					 .arg(REASONS)
+					 .arg(Index));
+
+			emit onUpdateProgress(++Step);
+		}
+		else emit onUpdateProgress(Step += i.value().size());
+	}
+
+	if (!Emit) blockSignals(Signals);
+}
+
+QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QList<BatchWidget::RECORD>& Functions, const QList<QStringList>& Values)
+{
+	emit onBeginProgress(tr("Executing batch"));
+	emit onSetupProgress(0, 0); QSet<int> Changes;
+
+	QHash<int, QHash<int, QVariant>> List;
+
+	for (const auto& Table : Tables) if (!isTerminated())
+	{
+		auto Data = loadData(Table, Items, QString(), true, true);
+
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+		{
+			List.insert(i.key(), i.value());
+		}
+	}
+
+	emit onSetupProgress(0, Values.size()); int Step = 0;
+
+	for (const auto& Rules : Values)
+	{
+		if (isTerminated()) break;
+
+		QSet<int> Filtered; QHash<int, QVariant> Updates;
+
+		for (const auto& Index : Items)
+		{
+			const auto Data = List.value(Index);
+			bool OK = true; int Col = 0;
+
+			for (const auto& F : Functions) if (OK)
+			{
+				if (F.second == BatchWidget::WHERE) OK = Data[F.first].toString() == Rules[Col]; ++Col;
+			}
+
+			if (OK) Filtered.insert(Index);
+		}
+
+		if (Filtered.size()) for (const auto& Table : Tables)
+		{
+			int Col(0); for (const auto& F : Functions)
+			{
+				if (F.second == BatchWidget::UPDATE)
+				{
+					if (F.first < Common.size())
+					{
+						if (F.first >= 0 && !Updates.contains(F.first) && Common[F.first].Type != READONLY)
+						{
+							if (Common[F.first].Dict.isEmpty()) Updates.insert(F.first, Rules[Col]);
+							else Updates.insert(F.first, getDataByDict(Rules[Col], Common[F.first].Dict, Common[F.first].Type));
+						}
+					}
+					else
+					{
+						const int Column = Table.Headers.indexOf(F.first);
+						const int Ufid = Table.Indexes.value(Column);
+
+						if (Column != -1 && !Updates.contains(Ufid) && Fields[Ufid].Type != READONLY)
+						{
+							if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Rules[Col]);
+							else Updates.insert(Ufid, getDataByDict(Rules[Col], Fields[Ufid].Dict, Fields[Ufid].Type));
+						}
+					}
+				}
+
+				Col += 1;
+			}
+		}
+
+		if (Filtered.size() && Updates.size())
+		{
+			performDataUpdates(QMap<QString, QSet<int>>(), Filtered,
+						    Updates, QHash<int, int>(), false);
+
+			Changes += Filtered;
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	return Changes;
 }
 
 QList<int> DatabaseDriver::getUsedFields(const QString& Filter) const
@@ -941,99 +1122,15 @@ void DatabaseDriver::reloadData(const QString& Filter, QList<int> Used, const QH
 	emit onDataLoad(Model);
 }
 
-void DatabaseDriver::updateData(const QSet<int>& Items, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons, bool Emit)
+void DatabaseDriver::updateData(const QSet<int>& Items, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1);
-	const QSet<int> Used = Values.keys().toSet(); const QSet<int> Nills = Reasons.keys().toSet();
 
-	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; QStringList All;
+	performDataUpdates(Tasks, Items, Values, Reasons, true);
 
-	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
-	{
-		if (Values[i].isNull()) All.append(QString("%1 = NULL").arg(Fields[i].Name));
-		else All.append(QString("%1 = '%2'").arg(Fields[i].Name).arg(Values[i].toString()));
-	}
-
-	emit onBeginProgress(tr("Updating common data"));
-	emit onSetupProgress(0, Tasks.first().size());
-
-	if (!All.isEmpty()) for (const auto& Index : Tasks.first())
-	{
-		if (isTerminated()) break;
-
-		Query.exec(QString(
-			"UPDATE "
-				"EW_OBIEKTY "
-			"SET "
-				"%1 "
-			"WHERE "
-				"UID = '%2'")
-				 .arg(All.join(", "))
-				 .arg(Index));
-
-		emit onUpdateProgress(++Step);
-	}
-
-	if (Dateupdate) updateModDate(Tasks.first(), 0);
-
-	emit onEndProgress(); Step = 0;
-	emit onBeginProgress(tr("Updating special data"));
-	emit onSetupProgress(0, Tasks.first().size());
-
-	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
-	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-
-		QStringList fieldsNames, fieldsUpdates, nullsUpdates;
-
-		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
-		{
-			fieldsNames.append(QString(Fields[Index].Name).remove("EW_DATA."));
-
-			if (Values[Index].isNull()) fieldsUpdates.append("NULL");
-			else fieldsUpdates.append(QString("'%1'").arg(Values[Index].toString()));
-		}
-
-		for (const auto& Index : Nills) if (Table.Indexes.contains(Index))
-		{
-			const QString Name = QString("%1_V").arg(Fields[Index].Name);
-
-			nullsUpdates.append(QString("%1 = '%2'").arg(Name).arg(Reasons[Index]));
-		}
-
-		const QString FIELDS = fieldsNames.join(", ");
-		const QString UPDATES = fieldsUpdates.join(", ");
-		const QString REASONS = nullsUpdates.join(", ");
-
-		const bool NULLS = !nullsUpdates.isEmpty();
-
-		if (!fieldsUpdates.isEmpty()) for (const auto& Index : i.value())
-		{
-			if (isTerminated()) break;
-
-			Query.exec(QString(
-				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
-				"VALUES (%3, %4) MATCHING (UIDO)")
-					 .arg(Table.Data)
-					 .arg(FIELDS)
-					 .arg(Index)
-					 .arg(UPDATES));
-
-			if (NULLS) Query.exec(QString(
-				"UPDATE %1 EW_DATA SET %2 "
-				"WHERE EW_DATA.UIDO = '%3'")
-					 .arg(Table.Data)
-					 .arg(REASONS)
-					 .arg(Index));
-
-			emit onUpdateProgress(++Step);
-		}
-		else emit onUpdateProgress(Step += i.value().size());
-	}
-
-	emit onEndProgress(); Step = 0;
+	emit onEndProgress(); int Step = 0;
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size() - 1);
 
@@ -1044,8 +1141,6 @@ void DatabaseDriver::updateData(const QSet<int>& Items, const QHash<int, QVarian
 
 		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
-
-	if (!Emit) return;
 
 	emit onEndProgress();
 	emit onDataUpdate();
@@ -1183,12 +1278,33 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 	emit onDataRemove();
 }
 
-void DatabaseDriver::execBatch(const QSet<int>& Items, const QList<QPair<int, BatchWidget::FUNCTION>>& Functions, const QList<QStringList>& Values)
+void DatabaseDriver::execBatch(const QSet<int>& Items, const QList<BatchWidget::RECORD>& Functions, const QList<QStringList>& Values)
 {
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onBatchExec(0); return; } int Changes(0);
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onBatchExec(0); return; }
 
-	emit onBeginProgress(tr("Executing batch"));
-	emit onSetupProgress(0, 0);
+	const QSet<int> Changes = performBatchUpdates(Items, Functions, Values);
+
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
+
+	emit onEndProgress(); int Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size() - 1);
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onBatchExec(0);
+}
+
+void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<CopyfieldsWidget::RECORD>& Functions, bool Nulls)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onCopyExec(0); return; }
 
 	QHash<int, QHash<int, QVariant>> List;
 
@@ -1202,64 +1318,53 @@ void DatabaseDriver::execBatch(const QSet<int>& Items, const QList<QPair<int, Ba
 		}
 	}
 
-	for (const auto& Rules : Values)
+	QList<BatchWidget::RECORD> uFunctions; QList<QStringList> uValues;
+
+	for (const auto& R : List)
 	{
-		if (isTerminated()) break;
+		QStringList Row; Row.reserve(Functions.size());
 
-		QSet<int> Filtered; QHash<int, QVariant> Updates;
-
-		for (const auto& Index : Items)
-		{
-			const auto Data = List.value(Index);
-			bool OK = true; int Col = 0;
-
-			for (const auto& F : Functions) if (OK)
+		for (const auto& F : Functions)
+			if (F.first == CopyfieldsWidget::WHERE)
 			{
-				if (F.second == BatchWidget::WHERE) OK = Data[F.first].toString() == Rules[Col]; ++Col;
+				Row.append(R.value(F.second.second).toString());
+			}
+			else if (Nulls || !isVariantEmpty(R.value(F.second.second)))
+			{
+				Row.append(R.value(F.second.second).toString());
 			}
 
-			if (OK) Filtered.insert(Index);
-		}
+		if (Row.size() == Functions.size()) uValues.append(Row);
+	}
 
-		if (Filtered.size()) for (const auto& Table : Tables)
-		{
-			int Col(0); for (const auto& F : Functions)
-			{
-				if (F.second == BatchWidget::UPDATE)
-				{
-					if (F.first < Common.size())
-					{
-						if (F.first >= 0 && !Updates.contains(F.first) && Common[F.first].Type != READONLY)
-						{
-							if (Common[F.first].Dict.isEmpty()) Updates.insert(F.first, Rules[Col]);
-							else Updates.insert(F.first, getDataByDict(Rules[Col], Common[F.first].Dict, Common[F.first].Type));
-						}
-					}
-					else
-					{
-						const int Column = Table.Headers.indexOf(F.first);
-						const int Ufid = Table.Indexes.value(Column);
+	for (const auto& F : Functions) switch (F.first)
+	{
+		case CopyfieldsWidget::WHERE:
+			uFunctions.append(qMakePair(F.second.first, BatchWidget::WHERE));
+		break;
+		case CopyfieldsWidget::UPDATE:
+			uFunctions.append(qMakePair(F.second.first, BatchWidget::UPDATE));
+		break;
+	}
 
-						if (Column != -1 && !Updates.contains(Ufid) && Fields[Ufid].Type != READONLY)
-						{
-							if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Rules[Col]);
-							else Updates.insert(Ufid, getDataByDict(Rules[Col], Fields[Ufid].Dict, Fields[Ufid].Type));
-						}
-					}
-				}
+	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, uValues);
 
-				Col += 1;
-			}
-		}
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
 
-		if (!isTerminated() && Filtered.size() && Updates.size())
-		{
-			updateData(Filtered, Updates, QHash<int, int>(), false); Changes += Filtered.size();
-		}
+	emit onEndProgress(); int Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size() - 1);
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
 
 	emit onEndProgress();
-	emit onBatchExec(Changes);
+	emit onBatchExec(Changes.size());
 }
 
 void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, const QString& From, int Type)

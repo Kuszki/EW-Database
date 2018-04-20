@@ -18,50 +18,55 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "batchwidget.hpp"
-#include "ui_batchwidget.h"
+#ifndef COPYFIELDSDIALOG_HPP
+#define COPYFIELDSDIALOG_HPP
 
-BatchWidget::BatchWidget(int ID, const QString& Tip, const QStringList& Fields, QWidget* Parent)
-: QWidget(Parent), ui(new Ui::BatchWidget)
+#include <QDialogButtonBox>
+#include <QPushButton>
+#include <QDialog>
+
+#include "copyfieldswidget.hpp"
+
+namespace Ui
 {
-	ui->setupUi(this); setData(ID, Tip, Fields);
+	class CopyfieldsDialog;
 }
 
-BatchWidget::~BatchWidget(void)
+class CopyfieldsDialog : public QDialog
 {
-	delete ui;
-}
 
-BatchWidget::RECORD BatchWidget::getFunction(void) const
-{
-	qMakePair(getField(), getAction());
-}
+		Q_OBJECT
 
-BatchWidget::FUNCTION BatchWidget::getAction(void) const
-{
-	return FUNCTION(ui->Function->currentIndex());
-}
+	private:
 
-int BatchWidget::getField(void) const
-{
-	return ui->Field->currentIndex();
-}
+		Ui::CopyfieldsDialog* ui;
 
-int BatchWidget::getIndex(void) const
-{
-	return Index;
-}
+		QStringList List;
+		int Count = 0;
 
-void BatchWidget::headerChecked(bool Checked)
-{
-	if (Checked) ui->Field->setCurrentText(ui->Column->toolTip());
-}
+	public:
 
-void BatchWidget::setData(int ID, const QString& Tip, const QStringList& Fields)
-{
-	ui->Field->clear(); Index = ID;
+		explicit CopyfieldsDialog(const QStringList& Fields,
+							 QWidget* Parent = nullptr);
+		virtual ~CopyfieldsDialog(void) override;
 
-	ui->Column->setToolTip(Tip);
-	ui->Column->setText(QString::number(ID + 1));
-	ui->Field->addItems(Fields);
-}
+		QList<CopyfieldsWidget::RECORD> getFunctions(void) const;
+
+	private slots:
+
+		void newButtonClicked(void);
+		void copyWidgetDeleted(void);
+
+	public slots:
+
+		virtual void accept(void) override;
+
+		void setFields(const QStringList& Fields);
+
+	signals:
+
+		onCopyRequest(const QList<CopyfieldsWidget::RECORD>&, bool);
+
+};
+
+#endif // COPYFIELDSDIALOG_HPP

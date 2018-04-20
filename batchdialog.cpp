@@ -34,13 +34,13 @@ BatchDialog::~BatchDialog(void)
 	delete ui;
 }
 
-QList<QPair<int, BatchWidget::FUNCTION>> BatchDialog::getFunctions(void) const
+QList<BatchWidget::RECORD> BatchDialog::getFunctions(void) const
 {
-	QList<QPair<int, BatchWidget::FUNCTION>> List;
+	QList<BatchWidget::RECORD> List;
 
 	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
 		if (auto W = qobject_cast<BatchWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
-			List.append(qMakePair(W->getField(), W->getFunction()));
+			List.append(W->getFunction());
 
 	return List;
 }

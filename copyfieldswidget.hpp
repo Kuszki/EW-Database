@@ -18,50 +18,49 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "batchwidget.hpp"
-#include "ui_batchwidget.h"
+#ifndef COPYFIELDSWIDGET_HPP
+#define COPYFIELDSWIDGET_HPP
 
-BatchWidget::BatchWidget(int ID, const QString& Tip, const QStringList& Fields, QWidget* Parent)
-: QWidget(Parent), ui(new Ui::BatchWidget)
+#include <QWidget>
+
+namespace Ui
 {
-	ui->setupUi(this); setData(ID, Tip, Fields);
+	class CopyfieldsWidget;
 }
 
-BatchWidget::~BatchWidget(void)
+class CopyfieldsWidget : public QWidget
 {
-	delete ui;
-}
 
-BatchWidget::RECORD BatchWidget::getFunction(void) const
-{
-	qMakePair(getField(), getAction());
-}
+		Q_OBJECT
 
-BatchWidget::FUNCTION BatchWidget::getAction(void) const
-{
-	return FUNCTION(ui->Function->currentIndex());
-}
+	public: enum FUNCTION
+	{
+		WHERE,
+		UPDATE
+	};
 
-int BatchWidget::getField(void) const
-{
-	return ui->Field->currentIndex();
-}
+	public:
 
-int BatchWidget::getIndex(void) const
-{
-	return Index;
-}
+		using RECORD = QPair<FUNCTION, QPair<int, int>>;
 
-void BatchWidget::headerChecked(bool Checked)
-{
-	if (Checked) ui->Field->setCurrentText(ui->Column->toolTip());
-}
+	private:
 
-void BatchWidget::setData(int ID, const QString& Tip, const QStringList& Fields)
-{
-	ui->Field->clear(); Index = ID;
+		Ui::CopyfieldsWidget* ui;
 
-	ui->Column->setToolTip(Tip);
-	ui->Column->setText(QString::number(ID + 1));
-	ui->Field->addItems(Fields);
-}
+	public:
+
+		explicit CopyfieldsWidget(const QStringList& Fields,
+							 QWidget* Parent = nullptr);
+		virtual ~CopyfieldsWidget(void) override;
+
+		RECORD getFunction(void) const;
+		FUNCTION getAction(void) const;
+
+		int getSrc(void) const;
+		int getDest(void) const;
+
+		void setData(const QStringList& Fields);
+
+};
+
+#endif // COPYFIELDSWIDGET_HPP

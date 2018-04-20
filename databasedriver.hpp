@@ -36,6 +36,7 @@
 
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"
+#include "copyfieldswidget.hpp"
 
 class DatabaseDriver : public QObject
 {
@@ -168,6 +169,15 @@ class DatabaseDriver : public QObject
 										    const QHash<int, QVariant>& Redaction,
 										    const QString& Limiter, double Radius);
 
+		void performDataUpdates(const QMap<QString, QSet<int>> Tasklist,
+						    const QSet<int>& Items,
+						    const QHash<int, QVariant>& Values,
+						    const QHash<int, int>& Reasons, bool Emit);
+
+		QSet<int> performBatchUpdates(const QSet<int>& Items,
+								const QList<BatchWidget::RECORD>& Functions,
+								const QList<QStringList>& Values);
+
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
 
@@ -243,13 +253,14 @@ class DatabaseDriver : public QObject
 					 const QSet<int>& Items = QSet<int>());
 		void updateData(const QSet<int>& Items,
 					 const QHash<int, QVariant>& Values,
-					 const QHash<int, int>& Reasons,
-					 bool Emit = true);
+					 const QHash<int, int>& Reasons);
 		void removeData(const QSet<int>& Items);
 
 		void execBatch(const QSet<int>& Items,
-					const QList<QPair<int, BatchWidget::FUNCTION>>& Functions,
+					const QList<BatchWidget::RECORD>& Functions,
 					const QList<QStringList>& Values);
+
+		void execFieldcopy(const QSet<int>& Items, const QList<CopyfieldsWidget::RECORD>& Functions, bool Nulls);
 
 		void splitData(const QSet<int>& Items, const QString& Point, const QString& From, int Type);
 
@@ -327,6 +338,7 @@ class DatabaseDriver : public QObject
 		void onDataFit(int);
 
 		void onBatchExec(int);
+		void onCopyExec(int);
 
 		void onCommonReady(const QList<int>&);
 		void onPresetReady(const QList<QHash<int, QVariant>>&,

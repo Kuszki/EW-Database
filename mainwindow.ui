@@ -98,6 +98,7 @@
     <addaction name="actionDelete"/>
     <addaction name="actionRefactor"/>
     <addaction name="actionBatch"/>
+    <addaction name="actionCopyfields"/>
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionKerg"/>
@@ -185,6 +186,7 @@
    <addaction name="actionDelete"/>
    <addaction name="actionRefactor"/>
    <addaction name="actionBatch"/>
+   <addaction name="actionCopyfields"/>
   </widget>
   <widget class="QToolBar" name="kergsTool">
    <property name="windowTitle">
@@ -630,6 +632,18 @@
    </property>
    <property name="text">
     <string>Allow groups selection</string>
+   </property>
+  </action>
+  <action name="actionCopyfields">
+   <property name="icon">
+    <iconset theme="edit-copy">
+	<normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Copy fields</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

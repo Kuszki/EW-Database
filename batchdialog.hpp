@@ -48,7 +48,7 @@ class BatchDialog : public QDialog
 						 QWidget* Parent = nullptr);
 		virtual ~BatchDialog(void) override;
 
-		QList<QPair<int, BatchWidget::FUNCTION>> getFunctions(void) const;
+		QList<BatchWidget::RECORD> getFunctions(void) const;
 
 	public slots:
 
@@ -59,7 +59,7 @@ class BatchDialog : public QDialog
 
 	signals:
 
-		void onBatchRequest(const QList<QPair<int, BatchWidget::FUNCTION>>&,
+		void onBatchRequest(const QList<BatchWidget::RECORD>&,
 						const QList<QStringList>&);
 
 };

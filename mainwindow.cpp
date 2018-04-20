@@ -117,6 +117,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataMerge, this, &MainWindow::dataMerged);
 	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
+	connect(Driver, &DatabaseDriver::onCopyExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
 	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
 	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
@@ -166,6 +167,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onCutRequest, Driver, &DatabaseDriver::cutData);
 
 	connect(this, &MainWindow::onBatchRequest, Driver, &DatabaseDriver::execBatch);
+	connect(this, &MainWindow::onCopyfieldsRequest, Driver, &DatabaseDriver::execFieldcopy);
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
@@ -466,6 +468,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionLabel->setEnabled(Count > 0);
 	ui->actionRelabel->setEnabled(Count > 0);
 	ui->actionKerg->setEnabled(Count > 0);
+	ui->actionCopyfields->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 1);
@@ -604,6 +607,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Kerg = new KergDialog(this);
 	Variable = new VariablesDialog(Variables, this);
 	Loader = new SelectorDialog(this);
+	Copyfields = new CopyfieldsDialog(allHeaders, this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -619,6 +623,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Insert, &InsertDialog::onInsertRequest, this, &MainWindow::insertBreaks);
 	connect(Variable, &VariablesDialog::onChangeRequest, this, &MainWindow::relabelData);
 	connect(Loader, &SelectorDialog::onDataAccepted, this, &MainWindow::loadRequest);
+	connect(Copyfields, &CopyfieldsDialog::onCopyRequest, this, &MainWindow::execCopy);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -631,6 +636,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionKerg, &QAction::triggered, Kerg, &KergDialog::open);
 	connect(ui->actionRelabel, &QAction::triggered, Variable, &VariablesDialog::open);
 	connect(ui->actionLoad, &QAction::triggered, Loader, &SelectorDialog::open);
+	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
@@ -658,6 +664,7 @@ void MainWindow::databaseDisconnected(void)
 	Insert->deleteLater();
 	Variable->deleteLater();
 	Loader->deleteLater();
+	Copyfields->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();
@@ -1002,12 +1009,20 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 	}
 }
 
-void MainWindow::execBatch(const QList<QPair<int, BatchWidget::FUNCTION>>& Roles, const QList<QStringList>& Data)
+void MainWindow::execBatch(const QList<BatchWidget::RECORD>& Roles, const QList<QStringList>& Data)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selected = ui->Data->selectionModel()->selectedRows();
 
 	lockUi(BUSY); emit onBatchRequest(Model->getUids(Selected).subtract(hiddenRows), Roles, Data);
+}
+
+void MainWindow::execCopy(const QList<CopyfieldsWidget::RECORD>& Roles, bool Nulls)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selected = ui->Data->selectionModel()->selectedRows();
+
+	lockUi(BUSY); emit onCopyfieldsRequest(Model->getUids(Selected).subtract(hiddenRows), Roles, Nulls);
 }
 
 void MainWindow::updateKerg(const QString& Path, int Action, int Elements)
@@ -1076,6 +1091,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
+			ui->actionCopyfields->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 		break;
 		case BUSY:
@@ -1105,6 +1121,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionHide->setEnabled(false);
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
+			ui->actionCopyfields->setEnabled(false);
 			ui->Data->setEnabled(false);
 
 			Driver->unterminate();

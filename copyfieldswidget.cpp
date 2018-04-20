@@ -18,50 +18,42 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "batchwidget.hpp"
-#include "ui_batchwidget.h"
+#include "copyfieldswidget.hpp"
+#include "ui_copyfieldswidget.h"
 
-BatchWidget::BatchWidget(int ID, const QString& Tip, const QStringList& Fields, QWidget* Parent)
-: QWidget(Parent), ui(new Ui::BatchWidget)
+CopyfieldsWidget::CopyfieldsWidget(const QStringList& Fields, QWidget* Parent)
+: QWidget(Parent), ui(new Ui::CopyfieldsWidget)
 {
-	ui->setupUi(this); setData(ID, Tip, Fields);
+	ui->setupUi(this); setData(Fields);
 }
 
-BatchWidget::~BatchWidget(void)
+CopyfieldsWidget::~CopyfieldsWidget(void)
 {
 	delete ui;
 }
 
-BatchWidget::RECORD BatchWidget::getFunction(void) const
+CopyfieldsWidget::RECORD CopyfieldsWidget::getFunction(void) const
 {
-	qMakePair(getField(), getAction());
+	return qMakePair(getAction(), qMakePair(getSrc(), getDest()));
 }
 
-BatchWidget::FUNCTION BatchWidget::getAction(void) const
+CopyfieldsWidget::FUNCTION CopyfieldsWidget::getAction(void) const
 {
-	return FUNCTION(ui->Function->currentIndex());
+	return FUNCTION(ui->functionCombo->currentIndex());
 }
 
-int BatchWidget::getField(void) const
+int CopyfieldsWidget::getSrc(void) const
 {
-	return ui->Field->currentIndex();
+	return ui->srcCombo->currentIndex();
 }
 
-int BatchWidget::getIndex(void) const
+int CopyfieldsWidget::getDest(void) const
 {
-	return Index;
+	return ui->destCombo->currentIndex();
 }
 
-void BatchWidget::headerChecked(bool Checked)
+void CopyfieldsWidget::setData(const QStringList& Fields)
 {
-	if (Checked) ui->Field->setCurrentText(ui->Column->toolTip());
-}
-
-void BatchWidget::setData(int ID, const QString& Tip, const QStringList& Fields)
-{
-	ui->Field->clear(); Index = ID;
-
-	ui->Column->setToolTip(Tip);
-	ui->Column->setText(QString::number(ID + 1));
-	ui->Field->addItems(Fields);
+	ui->srcCombo->clear(); ui->srcCombo->addItems(Fields);
+	ui->destCombo->clear(); ui->destCombo->addItems(Fields);
 }

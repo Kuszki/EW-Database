@@ -18,50 +18,61 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "batchwidget.hpp"
-#include "ui_batchwidget.h"
+#include "copyfieldsdialog.hpp"
+#include "ui_copyfieldsdialog.h"
 
-BatchWidget::BatchWidget(int ID, const QString& Tip, const QStringList& Fields, QWidget* Parent)
-: QWidget(Parent), ui(new Ui::BatchWidget)
+CopyfieldsDialog::CopyfieldsDialog(const QStringList& Fields, QWidget* Parent)
+: QDialog(Parent), ui(new Ui::CopyfieldsDialog)
 {
-	ui->setupUi(this); setData(ID, Tip, Fields);
+	ui->setupUi(this); setFields(Fields);
+
+	ui->fieldsLayout->setAlignment(Qt::AlignTop);
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
-BatchWidget::~BatchWidget(void)
+CopyfieldsDialog::~CopyfieldsDialog(void)
 {
-	delete ui;
+	Count = 0; delete ui;
 }
 
-BatchWidget::RECORD BatchWidget::getFunction(void) const
+QList<CopyfieldsWidget::RECORD> CopyfieldsDialog::getFunctions(void) const
 {
-	qMakePair(getField(), getAction());
+	QList<CopyfieldsWidget::RECORD> List;
+
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+		if (auto W = qobject_cast<CopyfieldsWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+			List.append(W->getFunction());
+
+	return List;
 }
 
-BatchWidget::FUNCTION BatchWidget::getAction(void) const
+void CopyfieldsDialog::newButtonClicked(void)
 {
-	return FUNCTION(ui->Function->currentIndex());
+	auto W = new CopyfieldsWidget(List, this);
+
+	ui->fieldsLayout->addWidget(W); ++Count;
+
+	connect(W, &CopyfieldsWidget::destroyed,
+		   this, &CopyfieldsDialog::copyWidgetDeleted);
+
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 }
 
-int BatchWidget::getField(void) const
+void CopyfieldsDialog::copyWidgetDeleted(void)
 {
-	return ui->Field->currentIndex();
+	if (!--Count) ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
-int BatchWidget::getIndex(void) const
+void CopyfieldsDialog::accept(void)
 {
-	return Index;
+	QDialog::accept(); emit onCopyRequest(getFunctions(), ui->nullCheck->isChecked());
 }
 
-void BatchWidget::headerChecked(bool Checked)
+void CopyfieldsDialog::setFields(const QStringList& Fields)
 {
-	if (Checked) ui->Field->setCurrentText(ui->Column->toolTip());
-}
+	for (int i = 0; i < ui->fieldsLayout->count(); ++i)
+		if (auto W = qobject_cast<CopyfieldsWidget*>(ui->fieldsLayout->itemAt(i)->widget()))
+			W->setData(Fields);
 
-void BatchWidget::setData(int ID, const QString& Tip, const QStringList& Fields)
-{
-	ui->Field->clear(); Index = ID;
-
-	ui->Column->setToolTip(Tip);
-	ui->Column->setText(QString::number(ID + 1));
-	ui->Field->addItems(Fields);
+	List = Fields;
 }
