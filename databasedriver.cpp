@@ -5560,7 +5560,7 @@ QSet<int> DatabaseDriver::filterDataByLength(const QList<OBJECT>& Data, double M
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
-		if (Minimum <= Maximum) return vA(L); else return vB(L);
+		if (Minimum < Maximum) return vA(L); else return vB(L);
 	};
 
 	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const OBJECT& Object) -> void
@@ -5607,7 +5607,7 @@ QSet<int> DatabaseDriver::filterDataBySurface(const QList<OBJECT>& Data, double 
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
-		if (Minimum <= Maximum) return vA(L); else return vB(L);
+		if (Minimum < Maximum) return vA(L); else return vB(L);
 	};
 
 	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const OBJECT& Object) -> void
@@ -6202,7 +6202,7 @@ QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::RE
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
-		if (Minimum <= Maximum) return vA(L); else return vB(L);
+		if (Minimum < Maximum) return vA(L); else return vB(L);
 	};
 
 	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const REDACTION& Object) -> void
@@ -6225,7 +6225,7 @@ QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::RED
 
 	const auto isOK = [Minimum, Maximum, vA, vB] (double L) -> bool
 	{
-		if (Minimum <= Maximum) return vA(L); else return vB(L);
+		if (Minimum < Maximum) return vA(L); else return vB(L);
 	};
 
 	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const REDACTION& Object) -> void
