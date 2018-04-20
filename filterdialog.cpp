@@ -274,6 +274,20 @@ double FilterDialog::getRadius(void) const
 	return ui->radiusSpin->value();
 }
 
+QJSValue FilterDialog::validateScript(const QString& Script) const
+{
+	auto Model = dynamic_cast<QStringListModel*>(ui->variablesList->model());
+
+	if (Script.trimmed().isEmpty()) return QJSValue();
+
+	QJSEngine Engine; for (const auto& V : Model->stringList())
+	{
+		Engine.globalObject().setProperty(V, QJSValue());
+	}
+
+	return Engine.evaluate(Script);
+}
+
 void FilterDialog::classSearchEdited(const QString& Search)
 {
 	for (int i = 0; i < ui->classLayout->count(); ++i)
@@ -396,17 +410,7 @@ void FilterDialog::newButtonClicked(void)
 
 void FilterDialog::validateButtonClicked(void)
 {
-	const auto Script = ui->advancedEdit->document()->toPlainText();
-	auto Model = dynamic_cast<QStringListModel*>(ui->variablesList->model());
-
-	if (Script.trimmed().isEmpty()) return; QJSEngine Engine;
-
-	for (const auto& V : Model->stringList())
-	{
-		Engine.globalObject().setProperty(V, QJSValue());
-	}
-
-	const auto V = Engine.evaluate(Script);
+	const auto V = validateScript(ui->advancedEdit->toPlainText());
 
 	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
 								    .arg(V.property("lineNumber").toInt()),
@@ -449,9 +453,19 @@ void FilterDialog::variablePasteRequest(QModelIndex Index)
 
 void FilterDialog::accept(void)
 {
-	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getAdvancedRules(), getUsedFields(),
-									getGeometryRules(), getRedactionRules(), Limiter,
-									ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
+	const auto V = validateScript(ui->advancedEdit->toPlainText());
+
+	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
+								    .arg(V.property("lineNumber").toInt()),
+								    V.toString());
+	else
+	{
+		QDialog::accept();
+
+		emit onFiltersUpdate(getFilterRules(), getAdvancedRules(), getUsedFields(),
+						 getGeometryRules(), getRedactionRules(), Limiter,
+						 ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
+	}
 }
 
 void FilterDialog::setFields(const QStringList& Variables, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)

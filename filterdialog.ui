@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -143,8 +143,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>100</width>
+            <height>30</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="redactionLayout"/>
@@ -211,7 +211,7 @@
      <item>
       <widget class="QToolButton" name="validateButton">
        <property name="text">
-        <string>Copy</string>
+        <string>Validate</string>
        </property>
        <property name="icon">
         <iconset theme="tools-check-spelling">

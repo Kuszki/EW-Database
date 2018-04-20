@@ -89,6 +89,10 @@ class FilterDialog : public QDialog
 
 		double getRadius(void) const;
 
+	protected:
+
+		QJSValue validateScript(const QString& Script) const;
+
 	private slots:
 
 		void classSearchEdited(const QString& Search);
