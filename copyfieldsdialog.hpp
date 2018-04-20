@@ -65,7 +65,7 @@ class CopyfieldsDialog : public QDialog
 
 	signals:
 
-		onCopyRequest(const QList<CopyfieldsWidget::RECORD>&, bool);
+		void onCopyRequest(const QList<CopyfieldsWidget::RECORD>&, bool);
 
 };
 

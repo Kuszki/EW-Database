@@ -264,7 +264,7 @@ void MainWindow::removelabActionClicked(void)
 
 void MainWindow::refreshActionClicked(void)
 {
-	refreshData(Filter->getFilterRules(), Filter->getUsedFields(),
+	refreshData(Filter->getFilterRules(), Filter->getAdvancedRules(), Filter->getUsedFields(),
 			  Filter->getGeometryRules(), Filter->getRedactionRules(),
 			  Filter->getLimiterFile(), Filter->getRadius(), 0);
 }
@@ -477,13 +477,13 @@ void MainWindow::selectionChanged(void)
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 }
 
-void MainWindow::refreshData(const QString& Where, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius, int Mode)
+void MainWindow::refreshData(const QString& Where, const QString& Script, const QList<int>& Used, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius, int Mode)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model()); hiddenRows.clear();
 	const auto Selected = Model ? ui->Data->selectionModel()->selectedRows() : QModelIndexList();
 	const auto Set = Model ? Model->getUids(Selected).subtract(hiddenRows) : QSet<int>();
 
-	lockUi(BUSY); emit onReloadRequest(Where, Used, Geometry, Redaction, Limiter, Radius, Mode, Model, Set);
+	lockUi(BUSY); emit onReloadRequest(Where, Script, Used, Geometry, Redaction, Limiter, Radius, Mode, Model, Set);
 }
 
 void MainWindow::updateRow(int Index, const QHash<int, QVariant>& Data)
@@ -590,12 +590,15 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
 
+	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
+										 .replaceInStrings(QRegExp("\\s+"), "_");
+
 	const bool Singletons = ui->actionSingleton->isChecked();
 	allHeaders = Headers; labelCodes = Variables.keys();
 
 	Columns = new ColumnsDialog(this, Headers, Common);
 	Groups = new GroupDialog(this, Headers);
-	Filter = new FilterDialog(this, Fields, Classes, Common, Singletons);
+	Filter = new FilterDialog(this, Props, Fields, Classes, Common, Singletons);
 	Update = new UpdateDialog(this, Fields, Singletons);
 	Export = new ExportDialog(this, Headers);
 	Merge = new MergeDialog(this, Fields, Classes);

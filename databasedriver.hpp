@@ -34,6 +34,8 @@
 
 #include <QtConcurrent>
 
+#include <QJSEngine>
+
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"
 #include "copyfieldswidget.hpp"
@@ -164,10 +166,13 @@ class DatabaseDriver : public QObject
 										  const QString& Where,
 										  bool Dict, bool View);
 
-		QHash<int, QHash<int, QVariant>> filterData(const QHash<int, QHash<int, QVariant>>& Data,
-										    const QHash<int, QVariant>& Geometry,
-										    const QHash<int, QVariant>& Redaction,
-										    const QString& Limiter, double Radius);
+		void filterData(QHash<int, QHash<int, QVariant>>& Data,
+					 const QHash<int, QVariant>& Geometry,
+					 const QHash<int, QVariant>& Redaction,
+					 const QString& Limiter, double Radius);
+
+		void filterData(QHash<int, QHash<int, QVariant>>& Data,
+					 const QString& Expression);
 
 		void performDataUpdates(const QMap<QString, QSet<int>> Tasklist,
 						    const QSet<int>& Items,
@@ -245,11 +250,10 @@ class DatabaseDriver : public QObject
 		void loadList(const QStringList& Filter, int Index, int Action,
 				    const RecordModel* Current = nullptr,
 				    const QSet<int>& Items = QSet<int>());
-		void reloadData(const QString& Filter, QList<int> Used,
-					 const QHash<int, QVariant>& Geometry,
-					 const QHash<int, QVariant>& Redaction,
-					 const QString& Limiter, double Radius,
-					 int Mode, const RecordModel* Current = nullptr,
+		void reloadData(const QString& Filter, const QString& Script, QList<int> Used,
+					 const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction,
+					 const QString& Limiter, double Radius, int Mode,
+					 const RecordModel* Current = nullptr,
 					 const QSet<int>& Items = QSet<int>());
 		void updateData(const QSet<int>& Items,
 					 const QHash<int, QVariant>& Values,

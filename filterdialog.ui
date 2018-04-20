@@ -24,7 +24,7 @@
       <enum>QTabWidget::West</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>4</number>
      </property>
      <property name="documentMode">
       <bool>true</bool>
@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1139</width>
-            <height>433</height>
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1139</width>
-            <height>433</height>
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1139</width>
-            <height>433</height>
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -143,12 +143,41 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1139</width>
-            <height>433</height>
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="redactionLayout"/>
          </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="advancedTab">
+      <attribute name="title">
+       <string>Advanced</string>
+      </attribute>
+      <layout class="QGridLayout" name="advancedScroolLayout">
+       <item row="0" column="0">
+        <widget class="QPlainTextEdit" name="advancedEdit"/>
+       </item>
+       <item row="0" column="1">
+        <widget class="QListView" name="variablesList">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>300</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
         </widget>
        </item>
       </layout>
@@ -180,12 +209,12 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="copyButton">
+      <widget class="QToolButton" name="validateButton">
        <property name="text">
         <string>Copy</string>
        </property>
        <property name="icon">
-        <iconset theme="edit-copy">
+        <iconset theme="tools-check-spelling">
          <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
@@ -350,7 +379,7 @@
   <tabstop>simpleScrool</tabstop>
   <tabstop>geometryScrool</tabstop>
   <tabstop>simpleSearch</tabstop>
-  <tabstop>copyButton</tabstop>
+  <tabstop>validateButton</tabstop>
   <tabstop>classSearch</tabstop>
   <tabstop>selectButton</tabstop>
   <tabstop>unselectButton</tabstop>
@@ -368,7 +397,7 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1216</x>
+     <x>1189</x>
      <y>488</y>
     </hint>
     <hint type="destinationlabel">
@@ -384,7 +413,7 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1216</x>
+     <x>1189</x>
      <y>488</y>
     </hint>
     <hint type="destinationlabel">
@@ -432,8 +461,8 @@
    <slot>selectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>588</x>
-     <y>487</y>
+     <x>575</x>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -448,28 +477,12 @@
    <slot>unselectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>612</x>
-     <y>487</y>
+     <x>605</x>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>567</x>
      <y>560</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>copyButton</sender>
-   <signal>clicked()</signal>
-   <receiver>FilterDialog</receiver>
-   <slot>copyButtonClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>280</x>
-     <y>471</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>294</x>
-     <y>598</y>
     </hint>
    </hints>
   </connection>
@@ -496,8 +509,8 @@
    <slot>newButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>995</x>
-     <y>487</y>
+     <x>1046</x>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>632</x>
@@ -512,12 +525,44 @@
    <slot>limiterBoxChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>862</x>
-     <y>487</y>
+     <x>891</x>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>700</x>
      <y>603</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>validateButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>validateButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>272</x>
+     <y>471</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>265</x>
+     <y>608</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variablesList</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>variablePasteRequest(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>996</x>
+     <y>326</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>949</x>
+     <y>612</y>
     </hint>
    </hints>
   </connection>
@@ -529,9 +574,10 @@
   <slot>simpleSearchEdited(QString)</slot>
   <slot>selectButtonClicked()</slot>
   <slot>unselectButtonClicked()</slot>
-  <slot>copyButtonClicked()</slot>
+  <slot>validateButtonClicked()</slot>
   <slot>filterRulesChanged()</slot>
   <slot>newButtonClicked()</slot>
   <slot>limiterBoxChecked(bool)</slot>
+  <slot>variablePasteRequest(QModelIndex)</slot>
  </slots>
 </ui>

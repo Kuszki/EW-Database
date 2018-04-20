@@ -21,10 +21,10 @@
 #include "filterdialog.hpp"
 #include "ui_filterdialog.h"
 
-FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
+FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setFields(Fields, Tables, Common, Singletons); filterRulesChanged();
+	ui->setupUi(this); setFields(Variables, Fields, Tables, Common, Singletons); filterRulesChanged();
 
 	QMenu* resetMenu = new QMenu(this);
 
@@ -32,11 +32,13 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	resetFields = new QAction(tr("Reset fields list"), this);
 	resetGeometry = new QAction(tr("Reset geometry filters"), this);
 	resetRedaction = new QAction(tr("Reset redaction filters"), this);
+	resetAdvanced = new QAction(tr("Reset advanced filters"), this);
 
 	resetClass->setCheckable(true); resetMenu->addAction(resetClass);
 	resetFields->setCheckable(true); resetMenu->addAction(resetFields);
 	resetGeometry->setCheckable(true); resetMenu->addAction(resetGeometry);
 	resetRedaction->setCheckable(true); resetMenu->addAction(resetRedaction);
+	resetAdvanced->setCheckable(true); resetMenu->addAction(resetAdvanced);
 
 	QMenu* saveMenu = new QMenu(this);
 
@@ -66,6 +68,7 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	resetFields->setChecked(Settings.value("fields", true).toBool());
 	resetGeometry->setChecked(Settings.value("geometry", true).toBool());
 	resetRedaction->setChecked(Settings.value("redaction", true).toBool());
+	resetAdvanced->setChecked(Settings.value("advanced", true).toBool());
 	Settings.endGroup();
 
 	QToolButton* Button = new QToolButton(this);
@@ -91,7 +94,7 @@ FilterDialog::FilterDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	ui->geometryLayout->setAlignment(Qt::AlignTop);
 	ui->redactionLayout->setAlignment(Qt::AlignTop);
 
-	ui->rightSpacer->changeSize(ui->copyButton->sizeHint().width(), 0);
+	ui->rightSpacer->changeSize(ui->validateButton->sizeHint().width(), 0);
 
 	connect(Button, &QToolButton::clicked, this, &FilterDialog::resetButtonClicked);
 }
@@ -105,6 +108,7 @@ FilterDialog::~FilterDialog(void)
 	Settings.setValue("fields", resetFields->isChecked());
 	Settings.setValue("geometry", resetGeometry->isChecked());
 	Settings.setValue("redaction", resetRedaction->isChecked());
+	Settings.setValue("advanced", resetAdvanced->isChecked());
 	Settings.endGroup();
 
 	delete ui;
@@ -145,6 +149,11 @@ QString FilterDialog::getFilterRules(void) const
 	}
 	else if (!Rules.isEmpty()) return Values;
 	else return QString();
+}
+
+QString FilterDialog::getAdvancedRules(void) const
+{
+	return ui->advancedEdit->document()->toPlainText().trimmed();
 }
 
 QList<int> FilterDialog::getUsedFields(void) const
@@ -308,6 +317,8 @@ void FilterDialog::resetButtonClicked(void)
 		{
 			W->deleteLater();
 		}
+
+	if (resetAdvanced->isChecked()) ui->advancedEdit->clear();
 }
 
 void FilterDialog::limiterBoxChecked(bool Checked)
@@ -360,12 +371,13 @@ void FilterDialog::filterRulesChanged(void)
 	ui->selectButton->setVisible(Index == 0);
 	ui->unselectButton->setVisible(Index == 0);
 
-	ui->copyButton->setVisible(Index == 1);
 	ui->simpleSearch->setVisible(Index == 1);
 	ui->operatorBox->setVisible(Index == 1);
 
 	ui->limiterCheck->setVisible(Index == 2);
 	ui->radiusSpin->setVisible(Index == 2);
+
+	ui->validateButton->setVisible(Index == 4);
 }
 
 void FilterDialog::newButtonClicked(void)
@@ -382,9 +394,24 @@ void FilterDialog::newButtonClicked(void)
 	}
 }
 
-void FilterDialog::copyButtonClicked(void)
+void FilterDialog::validateButtonClicked(void)
 {
-	QApplication::clipboard()->setText(getFilterRules());
+	const auto Script = ui->advancedEdit->document()->toPlainText();
+	auto Model = dynamic_cast<QStringListModel*>(ui->variablesList->model());
+
+	if (Script.trimmed().isEmpty()) return; QJSEngine Engine;
+
+	for (const auto& V : Model->stringList())
+	{
+		Engine.globalObject().setProperty(V, QJSValue());
+	}
+
+	const auto V = Engine.evaluate(Script);
+
+	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
+								    .arg(V.property("lineNumber").toInt()),
+								    V.toString());
+	else QMessageBox::information(this, tr("Syntax check"), tr("Script is ok"));
 }
 
 void FilterDialog::selectButtonClicked(void)
@@ -413,13 +440,21 @@ void FilterDialog::unselectButtonClicked(void)
 	classBoxChecked();
 }
 
-void FilterDialog::accept(void)
+void FilterDialog::variablePasteRequest(QModelIndex Index)
 {
-	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getUsedFields(), getGeometryRules(), getRedactionRules(),
-									Limiter, ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
+	const QString Value = ui->variablesList->model()->data(Index).toString();
+
+	if (!Value.isEmpty()) ui->advancedEdit->insertPlainText(Value);
 }
 
-void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
+void FilterDialog::accept(void)
+{
+	QDialog::accept(); emit onFiltersUpdate(getFilterRules(), getAdvancedRules(), getUsedFields(),
+									getGeometryRules(), getRedactionRules(), Limiter,
+									ui->radiusSpin->value(), saveMode->checkedAction()->data().toInt());
+}
+
+void FilterDialog::setFields(const QStringList& Variables, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
 {
 	Classes.clear(); Points.clear(); Lines.clear(); Surfaces.clear(); Attributes.clear(); Above = Common;
 
@@ -450,4 +485,11 @@ void FilterDialog::setFields(const QList<DatabaseDriver::FIELD>& Fields, const Q
 
 		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 	}
+
+	auto oldModel = ui->variablesList->model();
+	auto oldSelect = ui->variablesList->selectionModel();
+
+	ui->variablesList->setModel(new QStringListModel(Variables, this));
+
+	oldModel->deleteLater(); oldSelect->deleteLater();
 }
