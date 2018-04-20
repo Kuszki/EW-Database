@@ -1318,7 +1318,7 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 		}
 	}
 
-	QList<BatchWidget::RECORD> uFunctions; QList<QStringList> uValues;
+	QList<BatchWidget::RECORD> uFunctions; QSet<QStringList> uValues;
 
 	for (const auto& R : List)
 	{
@@ -1334,7 +1334,7 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 				Row.append(R.value(F.second.second).toString());
 			}
 
-		if (Row.size() == Functions.size()) uValues.append(Row);
+		if (Row.size() == Functions.size()) uValues.insert(Row);
 	}
 
 	for (const auto& F : Functions) switch (F.first)
@@ -1347,7 +1347,7 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 		break;
 	}
 
-	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, uValues);
+	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, uValues.toList());
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
 
