@@ -56,7 +56,8 @@ SOURCES		+=	main.cpp \
 				kergdialog.cpp \
 				selectordialog.cpp \
 				copyfieldswidget.cpp \
-				copyfieldsdialog.cpp
+				copyfieldsdialog.cpp \
+				scriptdialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -88,7 +89,8 @@ HEADERS		+=	mainwindow.hpp \
 				kergdialog.hpp \
 				selectordialog.hpp \
 				copyfieldswidget.hpp \
-				copyfieldsdialog.hpp
+				copyfieldsdialog.hpp \
+				scriptdialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -116,7 +118,8 @@ FORMS		+=	mainwindow.ui \
 				kergdialog.ui \
 				selectordialog.ui \
 				copyfieldswidget.ui \
-				copyfieldsdialog.ui
+				copyfieldsdialog.ui \
+				scriptdialog.ui
 
 RESOURCES		+=	resources.qrc
 

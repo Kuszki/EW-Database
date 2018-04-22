@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ScriptDialog</class>
+ <widget class="QDialog" name="ScriptDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Script edit</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="tools-check-spelling">
+    <normaloff>.</normaloff>.</iconset>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QPlainTextEdit" name="scriptEdit"/>
+   </item>
+   <item row="0" column="1">
+    <widget class="QListView" name="variablesList">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>300</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QToolButton" name="validateButton">
+       <property name="text">
+        <string>Validate</string>
+       </property>
+       <property name="icon">
+        <iconset theme="tools-check-spelling">
+         <normaloff>.</normaloff>.</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>288</x>
+     <y>389</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>356</x>
+     <y>389</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variablesList</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>variablePasteRequest(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>523</x>
+     <y>164</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>847</x>
+     <y>160</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>scriptEdit</sender>
+   <signal>textChanged()</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>scriptTextChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>166</x>
+     <y>108</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>174</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>validateButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>validateButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>27</x>
+     <y>373</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>32</x>
+     <y>496</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>validateButtonClicked()</slot>
+  <slot>variablePasteRequest(QModelIndex)</slot>
+  <slot>scriptTextChanged()</slot>
+ </slots>
+</ui>

@@ -469,6 +469,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionRelabel->setEnabled(Count > 0);
 	ui->actionKerg->setEnabled(Count > 0);
 	ui->actionCopyfields->setEnabled(Count > 0);
+	ui->actionScript->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 1);
@@ -611,6 +612,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Variable = new VariablesDialog(Variables, this);
 	Loader = new SelectorDialog(this);
 	Copyfields = new CopyfieldsDialog(allHeaders, this);
+	Script = new ScriptDialog(allHeaders, this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -627,6 +629,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Variable, &VariablesDialog::onChangeRequest, this, &MainWindow::relabelData);
 	connect(Loader, &SelectorDialog::onDataAccepted, this, &MainWindow::loadRequest);
 	connect(Copyfields, &CopyfieldsDialog::onCopyRequest, this, &MainWindow::execCopy);
+	connect(Script, &ScriptDialog::onRunRequest, this, &MainWindow::execScript);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -640,6 +643,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionRelabel, &QAction::triggered, Variable, &VariablesDialog::open);
 	connect(ui->actionLoad, &QAction::triggered, Loader, &SelectorDialog::open);
 	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
+	connect(ui->actionScript, &QAction::triggered, Script, &ScriptDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
@@ -668,6 +672,7 @@ void MainWindow::databaseDisconnected(void)
 	Variable->deleteLater();
 	Loader->deleteLater();
 	Copyfields->deleteLater();
+	Script->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();
@@ -1016,16 +1021,27 @@ void MainWindow::execBatch(const QList<BatchWidget::RECORD>& Roles, const QList<
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onBatchRequest(Model->getUids(Selected).subtract(hiddenRows), Roles, Data);
+	lockUi(BUSY); emit onBatchRequest(Set, Roles, Data);
 }
 
 void MainWindow::execCopy(const QList<CopyfieldsWidget::RECORD>& Roles, bool Nulls)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onCopyfieldsRequest(Model->getUids(Selected).subtract(hiddenRows), Roles, Nulls);
+	lockUi(BUSY); emit onCopyfieldsRequest(Set, Roles, Nulls);
+}
+
+void MainWindow::execScript(const QString& Code)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
+
+	lockUi(BUSY); emit onScriptRequest(Set, Code);
 }
 
 void MainWindow::updateKerg(const QString& Path, int Action, int Elements)
@@ -1095,6 +1111,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
 			ui->actionCopyfields->setEnabled(false);
+			ui->actionScript->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 		break;
 		case BUSY:
@@ -1125,6 +1142,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionUnhide->setEnabled(false);
 			ui->actionInterface->setEnabled(false);
 			ui->actionCopyfields->setEnabled(false);
+			ui->actionScript->setEnabled(false);
 			ui->Data->setEnabled(false);
 
 			Driver->unterminate();

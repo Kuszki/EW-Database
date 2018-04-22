@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>20</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -99,6 +99,7 @@
     <addaction name="actionRefactor"/>
     <addaction name="actionBatch"/>
     <addaction name="actionCopyfields"/>
+    <addaction name="actionScript"/>
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionKerg"/>
@@ -187,6 +188,7 @@
    <addaction name="actionRefactor"/>
    <addaction name="actionBatch"/>
    <addaction name="actionCopyfields"/>
+   <addaction name="actionScript"/>
   </widget>
   <widget class="QToolBar" name="kergsTool">
    <property name="windowTitle">
@@ -637,13 +639,24 @@
   <action name="actionCopyfields">
    <property name="icon">
     <iconset theme="edit-copy">
-	<normaloff>.</normaloff>.</iconset>
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Copy fields</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionScript">
+   <property name="icon">
+    <iconset theme="media-playback-start"/>
+   </property>
+   <property name="text">
+    <string>Exec script</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+=</string>
    </property>
   </action>
  </widget>

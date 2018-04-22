@@ -31,8 +31,6 @@
 #include <QHash>
 #include <QMenu>
 
-#include <float.h>
-
 #include "databasedriver.hpp"
 #include "geometrywidget.hpp"
 #include "redactionwidget.hpp"

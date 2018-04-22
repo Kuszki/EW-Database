@@ -33,8 +33,8 @@
 #include <QHash>
 
 #include <QtConcurrent>
-
 #include <QJSEngine>
+#include <float.h>
 
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"

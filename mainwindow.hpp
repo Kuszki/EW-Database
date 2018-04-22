@@ -44,6 +44,7 @@
 #include "filterdialog.hpp"
 #include "updatedialog.hpp"
 #include "exportdialog.hpp"
+#include "scriptdialog.hpp"
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
 #include "classdialog.hpp"
@@ -104,6 +105,7 @@ class MainWindow : public QMainWindow
 		TextDialog* Text;
 		CutDialog* Cut;
 		KergDialog* Kerg;
+		ScriptDialog* Script;
 
 		QThread Thread;
 
@@ -206,6 +208,7 @@ class MainWindow : public QMainWindow
 		void execBatch(const QList<BatchWidget::RECORD>& Roles,
 					const QList<QStringList>& Data);
 		void execCopy(const QList<CopyfieldsWidget::RECORD>& Roles, bool Nulls);
+		void execScript(const QString& Code);
 
 		void updateKerg(const QString& Path, int Action, int Elements);
 
@@ -261,6 +264,7 @@ class MainWindow : public QMainWindow
 		void onUpdateRequest(const QSet<int>&, const QHash<int, QVariant>&, const QHash<int, int>&, bool);
 		void onBatchRequest(const QSet<int>&, const QList<BatchWidget::RECORD>&, const QList<QStringList>&);
 		void onCopyfieldsRequest(const QSet<int>&, const QList<CopyfieldsWidget::RECORD>&, bool);
+		void onScriptRequest(const QSet<int>&, const QString&);
 
 		void onJoinRequest(const QSet<int>&, const QString&, const QString&, bool, int, double);
 		void onSplitRequest(const QSet<int>&, const QString&, const QString&, int);
