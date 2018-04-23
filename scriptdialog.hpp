@@ -63,6 +63,9 @@ class ScriptDialog : public QDialog
 		void validateButtonClicked(void);
 		void scriptTextChanged(void);
 
+		void helperIndexChanged(int Index);
+
+		void tooltipShowRequest(QModelIndex Index);
 		void variablePasteRequest(QModelIndex Index);
 
 	signals:

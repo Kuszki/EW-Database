@@ -63,10 +63,14 @@ void ScriptDialog::accept(void)
 
 void ScriptDialog::setFields(const QStringList& Fields)
 {
+	auto newModel = getJsHelperModel(this, Fields);
+
 	auto oldModel = ui->variablesList->model();
 	auto oldSelect = ui->variablesList->selectionModel();
 
-	ui->variablesList->setModel(new QStringListModel(Fields, this));
+	ui->helperCombo->setModel(newModel);
+	ui->variablesList->setModel(newModel);
+	ui->variablesList->setRootIndex(newModel->index(0, 0));
 
 	oldModel->deleteLater(); oldSelect->deleteLater();
 }
@@ -75,10 +79,10 @@ void ScriptDialog::validateButtonClicked(void)
 {
 	const auto V = validateScript(ui->scriptEdit->toPlainText());
 
-	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
-								    .arg(V.property("lineNumber").toInt()),
-								    V.toString());
-	else QMessageBox::information(this, tr("Syntax check"), tr("Script is ok"));
+	if (!V.isError()) ui->helpLabel->setText(tr("Script is ok"));
+	else ui->helpLabel->setText(tr("Syntax error in line %1: %2")
+						   .arg(V.property("lineNumber").toInt())
+						   .arg(V.toString()));
 }
 
 void ScriptDialog::scriptTextChanged(void)
@@ -86,6 +90,25 @@ void ScriptDialog::scriptTextChanged(void)
 	const bool OK = !ui->scriptEdit->toPlainText().trimmed().isEmpty();
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(OK);
+}
+
+void ScriptDialog::helperIndexChanged(int Index)
+{
+	auto Model = ui->helperCombo->model();
+
+	if (Model && Index != -1)
+	{
+		auto Root = Model->index(Index, 0);
+
+		ui->variablesList->setRootIndex(Root);
+	}
+
+	ui->helpLabel->clear();
+}
+
+void ScriptDialog::tooltipShowRequest(QModelIndex Index)
+{
+	ui->helpLabel->setText(ui->variablesList->model()->data(Index, Qt::ToolTipRole).toString());
 }
 
 void ScriptDialog::variablePasteRequest(QModelIndex Index)

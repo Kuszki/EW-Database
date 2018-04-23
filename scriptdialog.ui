@@ -18,17 +18,8 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QPlainTextEdit" name="scriptEdit"/>
-   </item>
-   <item row="0" column="1">
+   <item row="1" column="1">
     <widget class="QListView" name="variablesList">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
      <property name="minimumSize">
       <size>
        <width>300</width>
@@ -40,7 +31,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item row="2" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QToolButton" name="validateButton">
@@ -54,6 +45,9 @@
       </widget>
      </item>
      <item>
+      <widget class="QLabel" name="helpLabel"/>
+     </item>
+     <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -64,6 +58,12 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="helperCombo"/>
+   </item>
+   <item row="0" column="0" rowspan="2">
+    <widget class="QPlainTextEdit" name="scriptEdit"/>
    </item>
   </layout>
  </widget>
@@ -149,10 +149,44 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>helperCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>helperIndexChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>342</x>
+     <y>23</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>424</x>
+     <y>584</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variablesList</sender>
+   <signal>clicked(QModelIndex)</signal>
+   <receiver>ScriptDialog</receiver>
+   <slot>tooltipShowRequest(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>423</x>
+     <y>211</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>450</x>
+     <y>639</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>validateButtonClicked()</slot>
   <slot>variablePasteRequest(QModelIndex)</slot>
   <slot>scriptTextChanged()</slot>
+  <slot>helperIndexChanged(int)</slot>
+  <slot>tooltipShowRequest(QModelIndex)</slot>
  </slots>
 </ui>
