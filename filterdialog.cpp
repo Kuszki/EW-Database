@@ -26,6 +26,8 @@ FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const 
 {
 	ui->setupUi(this); setFields(Variables, Fields, Tables, Common, Singletons); filterRulesChanged();
 
+	Highlighter = new KLHighlighter(ui->advancedEdit->document());
+
 	QMenu* resetMenu = new QMenu(this);
 
 	resetClass = new QAction(tr("Reset class list"), this);
@@ -95,6 +97,8 @@ FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const 
 	ui->redactionLayout->setAlignment(Qt::AlignTop);
 
 	ui->rightSpacer->changeSize(ui->validateButton->sizeHint().width(), 0);
+
+	ui->advancedEdit->setFont(QFont("monospace"));
 
 	connect(Button, &QToolButton::clicked, this, &FilterDialog::resetButtonClicked);
 }

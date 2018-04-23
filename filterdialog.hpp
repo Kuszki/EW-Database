@@ -37,6 +37,7 @@
 #include "geometrywidget.hpp"
 #include "redactionwidget.hpp"
 #include "filterwidget.hpp"
+#include "klhighlighter.hpp"
 
 namespace Ui
 {
@@ -51,6 +52,8 @@ class FilterDialog : public QDialog
 	private:
 
 		Ui::FilterDialog* ui;
+
+		KLHighlighter* Highlighter;
 
 		QActionGroup* saveMode;
 

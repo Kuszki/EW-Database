@@ -56,7 +56,8 @@ SOURCES		+=	main.cpp \
 				kergdialog.cpp \
 				selectordialog.cpp \
 				copyfieldswidget.cpp \
-				copyfieldsdialog.cpp
+				copyfieldsdialog.cpp \
+				klhighlighter.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -88,7 +89,8 @@ HEADERS		+=	mainwindow.hpp \
 				kergdialog.hpp \
 				selectordialog.hpp \
 				copyfieldswidget.hpp \
-				copyfieldsdialog.hpp
+				copyfieldsdialog.hpp \
+				klhighlighter.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
