@@ -402,21 +402,25 @@ void FilterDialog::newButtonClicked(void)
 void FilterDialog::validateButtonClicked(void)
 {
 	const auto Script = ui->advancedEdit->document()->toPlainText();
-	auto Model = dynamic_cast<QStringListModel*>(ui->variablesList->model());
+	auto Model = ui->variablesList->model();
+	auto Root = ui->variablesList->rootIndex();
 
 	if (Script.trimmed().isEmpty()) return; QJSEngine Engine;
 
-	for (const auto& V : Model->stringList())
+	for (int i = 0; i < Model->rowCount(Root); ++i)
 	{
+		const auto Index = Model->index(i, 0, Root);
+		const auto V = Model->data(Index).toString();
+
 		Engine.globalObject().setProperty(V, QJSValue());
 	}
 
 	const auto V = Engine.evaluate(Script);
 
-	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
-								    .arg(V.property("lineNumber").toInt()),
-								    V.toString());
-	else ui->helpLabel->setText(tr("Script is ok"));
+	if (!V.isError()) ui->helpLabel->setText(tr("Script is ok"));
+	else ui->helpLabel->setText(tr("Syntax error in line %1: %2")
+						   .arg(V.property("lineNumber").toInt())
+						   .arg(V.toString()));
 }
 
 void FilterDialog::selectButtonClicked(void)
