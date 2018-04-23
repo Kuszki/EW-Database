@@ -50,8 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>1139</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -81,8 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>1139</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -112,8 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>1139</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -143,8 +143,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>1132</width>
-            <height>427</height>
+            <width>1139</width>
+            <height>433</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="redactionLayout"/>
@@ -158,10 +158,7 @@
        <string>Advanced</string>
       </attribute>
       <layout class="QGridLayout" name="advancedScroolLayout">
-       <item row="0" column="0">
-        <widget class="QPlainTextEdit" name="advancedEdit"/>
-       </item>
-       <item row="0" column="1">
+       <item row="1" column="1">
         <widget class="QListView" name="variablesList">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -179,6 +176,12 @@
           <set>QAbstractItemView::NoEditTriggers</set>
          </property>
         </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="helperCombo"/>
+       </item>
+       <item row="0" column="0" rowspan="2">
+        <widget class="QPlainTextEdit" name="advancedEdit"/>
        </item>
       </layout>
      </widget>
@@ -205,17 +208,6 @@
        </property>
        <property name="clearButtonEnabled">
         <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="validateButton">
-       <property name="text">
-        <string>Copy</string>
-       </property>
-       <property name="icon">
-        <iconset theme="tools-check-spelling">
-         <normaloff>.</normaloff>.</iconset>
        </property>
       </widget>
      </item>
@@ -303,6 +295,20 @@
       </widget>
      </item>
      <item>
+      <widget class="QToolButton" name="validateButton">
+       <property name="text">
+        <string>Copy</string>
+       </property>
+       <property name="icon">
+        <iconset theme="tools-check-spelling">
+         <normaloff>.</normaloff>.</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="helpLabel"/>
+     </item>
+     <item>
       <spacer name="leftSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -379,7 +385,6 @@
   <tabstop>simpleScrool</tabstop>
   <tabstop>geometryScrool</tabstop>
   <tabstop>simpleSearch</tabstop>
-  <tabstop>validateButton</tabstop>
   <tabstop>classSearch</tabstop>
   <tabstop>selectButton</tabstop>
   <tabstop>unselectButton</tabstop>
@@ -445,7 +450,7 @@
    <slot>classSearchEdited(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>545</x>
+     <x>515</x>
      <y>488</y>
     </hint>
     <hint type="destinationlabel">
@@ -461,8 +466,8 @@
    <slot>selectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>575</x>
-     <y>486</y>
+     <x>545</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -477,8 +482,8 @@
    <slot>unselectButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>605</x>
-     <y>486</y>
+     <x>575</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>567</x>
@@ -525,8 +530,8 @@
    <slot>limiterBoxChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>891</x>
-     <y>486</y>
+     <x>861</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>700</x>
@@ -541,8 +546,8 @@
    <slot>validateButtonClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>272</x>
-     <y>471</y>
+     <x>891</x>
+     <y>489</y>
     </hint>
     <hint type="destinationlabel">
      <x>265</x>
@@ -566,6 +571,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>variablesList</sender>
+   <signal>clicked(QModelIndex)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>tooltipShowRequest(QModelIndex)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1105</x>
+     <y>325</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1087</x>
+     <y>817</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>helperCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>helperIndexChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>997</x>
+     <y>26</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>971</x>
+     <y>621</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>classSearchEdited(QString)</slot>
@@ -579,5 +616,7 @@
   <slot>newButtonClicked()</slot>
   <slot>limiterBoxChecked(bool)</slot>
   <slot>variablePasteRequest(QModelIndex)</slot>
+  <slot>helperIndexChanged(int)</slot>
+  <slot>tooltipShowRequest(QModelIndex)</slot>
  </slots>
 </ui>

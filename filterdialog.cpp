@@ -382,6 +382,7 @@ void FilterDialog::filterRulesChanged(void)
 	ui->radiusSpin->setVisible(Index == 2);
 
 	ui->validateButton->setVisible(Index == 4);
+	ui->helpLabel->setVisible(Index == 4);
 }
 
 void FilterDialog::newButtonClicked(void)
@@ -415,7 +416,7 @@ void FilterDialog::validateButtonClicked(void)
 	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
 								    .arg(V.property("lineNumber").toInt()),
 								    V.toString());
-	else QMessageBox::information(this, tr("Syntax check"), tr("Script is ok"));
+	else ui->helpLabel->setText(tr("Script is ok"));
 }
 
 void FilterDialog::selectButtonClicked(void)
@@ -443,6 +444,26 @@ void FilterDialog::unselectButtonClicked(void)
 
 	classBoxChecked();
 }
+
+void FilterDialog::helperIndexChanged(int Index)
+{
+	auto Model = ui->helperCombo->model();
+
+	if (Model && Index != -1)
+	{
+		auto Root = Model->index(Index, 0);
+
+		ui->variablesList->setRootIndex(Root);
+	}
+
+	ui->helpLabel->clear();
+}
+
+void FilterDialog::tooltipShowRequest(QModelIndex Index)
+{
+	ui->helpLabel->setText(ui->variablesList->model()->data(Index, Qt::ToolTipRole).toString());
+}
+
 
 void FilterDialog::variablePasteRequest(QModelIndex Index)
 {
@@ -490,10 +511,14 @@ void FilterDialog::setFields(const QStringList& Variables, const QList<DatabaseD
 		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 	}
 
+	auto newModel = getJsHelperModel(this, Variables);
+
 	auto oldModel = ui->variablesList->model();
 	auto oldSelect = ui->variablesList->selectionModel();
 
-	ui->variablesList->setModel(new QStringListModel(Variables, this));
+	ui->helperCombo->setModel(newModel);
+	ui->variablesList->setModel(newModel);
+	ui->variablesList->setRootIndex(newModel->index(0, 0));
 
 	oldModel->deleteLater(); oldSelect->deleteLater();
 }

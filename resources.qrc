@@ -2,4 +2,14 @@
     <qresource prefix="/icon">
         <file alias="logo">logo-gnu.png</file>
     </qresource>
+    <qresource prefix="/script">
+        <file>js-array.txt</file>
+        <file>js-date.txt</file>
+        <file>js-global.txt</file>
+        <file>js-math.txt</file>
+        <file>js-number.txt</file>
+        <file>js-operators.txt</file>
+        <file>js-statements.txt</file>
+        <file>js-string.txt</file>
+    </qresource>
 </RCC>

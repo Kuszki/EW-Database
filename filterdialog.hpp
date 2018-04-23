@@ -110,6 +110,9 @@ class FilterDialog : public QDialog
 		void selectButtonClicked(void);
 		void unselectButtonClicked(void);
 
+		void helperIndexChanged(int Index);
+
+		void tooltipShowRequest(QModelIndex Index);
 		void variablePasteRequest(QModelIndex Index);
 
 	public slots:

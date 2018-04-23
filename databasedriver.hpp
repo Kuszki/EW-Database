@@ -21,7 +21,9 @@
 #ifndef DATABASEDRIVER_HPP
 #define DATABASEDRIVER_HPP
 
+#include <QStandardItemModel>
 #include <QSharedDataPointer>
+#include <QStandardItem>
 #include <QSqlDatabase>
 #include <QSqlRecord>
 #include <QSqlQuery>
@@ -391,6 +393,8 @@ const Type& getItemByField(const Container<Type>& Items, const Field& Data, Fiel
 
 template<class Type, class Field, template<class> class Container>
 bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
+
+QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables);
 
 bool pointComp(const QPointF& A, const QPointF& B, double d = 0.001);
 
