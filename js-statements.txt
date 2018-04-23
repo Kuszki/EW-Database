@@ -1,0 +1,14 @@
+break	Exits a switch or a loop
+continue	Breaks one iteration (in the loop) if a specified condition occurs, and continues with the next iteration in the loop
+debugger	Stops the execution of JavaScript, and calls (if available) the debugging function
+do ... while	Executes a block of statements and repeats the block while a condition is true
+for	Marks a block of statements to be executed as long as a condition is true
+for ... in	Marks a block of statements to be executed for each element of an object (or array)
+function	Declares a function
+if ... else ... else if	Marks a block of statements to be executed depending on a condition
+return	Stops the execution of a function and returns a value from that function
+switch	Marks a block of statements to be executed depending on different cases
+throw	Throws (generates) an error
+try ... catch ... finally	Marks the block of statements to be executed when an error occurs in a try block, and implements error handling
+var	Declares a variable
+while	Marks a block of statements to be executed while a condition is true

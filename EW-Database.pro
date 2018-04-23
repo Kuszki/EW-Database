@@ -57,7 +57,11 @@ SOURCES		+=	main.cpp \
 				selectordialog.cpp \
 				copyfieldswidget.cpp \
 				copyfieldsdialog.cpp \
+<<<<<<< HEAD
 				scriptdialog.cpp
+=======
+				klhighlighter.cpp
+>>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -90,7 +94,11 @@ HEADERS		+=	mainwindow.hpp \
 				selectordialog.hpp \
 				copyfieldswidget.hpp \
 				copyfieldsdialog.hpp \
+<<<<<<< HEAD
 				scriptdialog.hpp
+=======
+				klhighlighter.hpp
+>>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \

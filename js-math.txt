@@ -1,0 +1,26 @@
+abs()	Returns the absolute value of x
+acos()	Returns the arccosine of x, in radians
+acosh()	Returns the hyperbolic arccosine of x
+asin()	Returns the arcsine of x, in radians
+asinh()	Returns the hyperbolic arcsine of x
+atan()	Returns the arctangent of x as a numeric value between -PI/2 and PI/2 radians
+atan2(y, x)	Returns the arctangent of the quotient of its arguments
+atanh()	Returns the hyperbolic arctangent of x
+cbrt()	Returns the cubic root of x
+ceil()	Returns x, rounded upwards to the nearest integer
+cos()	Returns the cosine of x (x is in radians)
+cosh()	Returns the hyperbolic cosine of x
+exp()	Returns the value of Ex
+floor()	Returns x, rounded downwards to the nearest integer
+log()	Returns the natural logarithm (base E) of x
+max()	Returns the number with the highest value
+min()	Returns the number with the lowest value
+pow()	Returns the value of x to the power of y
+random()	Returns a random number between 0 and 1
+round()	Rounds x to the nearest integer
+sin()	Returns the sine of x (x is in radians)
+sinh()	Returns the hyperbolic sine of x
+sqrt()	Returns the square root of x
+tan()	Returns the tangent of an angle
+tanh()	Returns the hyperbolic tangent of a number
+trunc()	Returns the integer part of a number (x)

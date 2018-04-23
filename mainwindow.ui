@@ -97,9 +97,12 @@
     <addaction name="actionEdit"/>
     <addaction name="actionDelete"/>
     <addaction name="actionRefactor"/>
-    <addaction name="actionBatch"/>
     <addaction name="actionCopyfields"/>
+<<<<<<< HEAD
     <addaction name="actionScript"/>
+=======
+    <addaction name="actionBatch"/>
+>>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
     <addaction name="separator"/>
     <addaction name="actionRestore"/>
     <addaction name="actionKerg"/>
@@ -186,9 +189,12 @@
    <addaction name="actionEdit"/>
    <addaction name="actionDelete"/>
    <addaction name="actionRefactor"/>
-   <addaction name="actionBatch"/>
    <addaction name="actionCopyfields"/>
+<<<<<<< HEAD
    <addaction name="actionScript"/>
+=======
+   <addaction name="actionBatch"/>
+>>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
   </widget>
   <widget class="QToolBar" name="kergsTool">
    <property name="windowTitle">

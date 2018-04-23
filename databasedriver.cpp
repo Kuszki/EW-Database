@@ -7509,3 +7509,66 @@ double getSurface(const QPolygonF& P)
 
 	return qAbs(sum / 2.0);
 }
+
+QStandardItemModel*getJsHelperModel(QObject* Parent, const QStringList& Variables)
+{
+	static const QStringList Res =
+	{
+		":/script/js-operators.txt",
+		":/script/js-statements.txt",
+		":/script/js-global.txt",
+		":/script/js-array.txt",
+		":/script/js-date.txt",
+		":/script/js-math.txt",
+		":/script/js-string.txt"
+	};
+
+	static const QStringList Groups =
+	{
+		DatabaseDriver::tr("Variables"),
+		DatabaseDriver::tr("Operators"),
+		DatabaseDriver::tr("Statements"),
+		DatabaseDriver::tr("Global functions"),
+		DatabaseDriver::tr("Array functions"),
+		DatabaseDriver::tr("Date functions"),
+		DatabaseDriver::tr("Math functions"),
+		DatabaseDriver::tr("String functions")
+	};
+
+	QStandardItemModel* Model = new QStandardItemModel(Parent);
+	QStandardItem* Root = Model->invisibleRootItem();
+
+	for (const auto& Group : Groups)
+	{
+		Root->appendRow(new QStandardItem(Group));
+	}
+
+	for (const auto Var : Variables)
+	{
+		Root->child(0)->appendRow(new QStandardItem(Var));
+	}
+
+	for (int i = 0; i < Res.size(); ++i)
+	{
+		QStandardItem* Up = Root->child(i + 1);
+
+		QFile File(Res[i]); File.open(QFile::ReadOnly | QFile::Text);
+
+		while (!File.atEnd())
+		{
+			QStringList Row = QString::fromUtf8(File.readLine().trimmed()).split('\t');
+
+			if (Row.size() == 2)
+			{
+				QStandardItem* Item = new QStandardItem();
+
+				Item->setData(Row.first(), Qt::DisplayRole);
+				Item->setData(Row.last(), Qt::ToolTipRole);
+
+				Up->appendRow(Item);
+			}
+		}
+	}
+
+	return Model;
+}

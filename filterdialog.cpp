@@ -26,6 +26,8 @@ FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const 
 {
 	ui->setupUi(this); setFields(Variables, Fields, Tables, Common, Singletons); filterRulesChanged();
 
+	Highlighter = new KLHighlighter(ui->advancedEdit->document());
+
 	QMenu* resetMenu = new QMenu(this);
 
 	resetClass = new QAction(tr("Reset class list"), this);
@@ -95,6 +97,8 @@ FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const 
 	ui->redactionLayout->setAlignment(Qt::AlignTop);
 
 	ui->rightSpacer->changeSize(ui->validateButton->sizeHint().width(), 0);
+
+	ui->advancedEdit->setFont(QFont("monospace"));
 
 	connect(Button, &QToolButton::clicked, this, &FilterDialog::resetButtonClicked);
 }
@@ -392,6 +396,7 @@ void FilterDialog::filterRulesChanged(void)
 	ui->radiusSpin->setVisible(Index == 2);
 
 	ui->validateButton->setVisible(Index == 4);
+	ui->helpLabel->setVisible(Index == 4);
 }
 
 void FilterDialog::newButtonClicked(void)
@@ -410,12 +415,30 @@ void FilterDialog::newButtonClicked(void)
 
 void FilterDialog::validateButtonClicked(void)
 {
+<<<<<<< HEAD
 	const auto V = validateScript(ui->advancedEdit->toPlainText());
+=======
+	const auto Script = ui->advancedEdit->document()->toPlainText();
+	auto Model = ui->variablesList->model();
+	auto Root = ui->variablesList->rootIndex();
 
-	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
-								    .arg(V.property("lineNumber").toInt()),
-								    V.toString());
-	else QMessageBox::information(this, tr("Syntax check"), tr("Script is ok"));
+	if (Script.trimmed().isEmpty()) return; QJSEngine Engine;
+
+	for (int i = 0; i < Model->rowCount(Root); ++i)
+	{
+		const auto Index = Model->index(i, 0, Root);
+		const auto V = Model->data(Index).toString();
+
+		Engine.globalObject().setProperty(V, QJSValue());
+	}
+
+	const auto V = Engine.evaluate(Script);
+>>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
+
+	if (!V.isError()) ui->helpLabel->setText(tr("Script is ok"));
+	else ui->helpLabel->setText(tr("Syntax error in line %1: %2")
+						   .arg(V.property("lineNumber").toInt())
+						   .arg(V.toString()));
 }
 
 void FilterDialog::selectButtonClicked(void)
@@ -443,6 +466,26 @@ void FilterDialog::unselectButtonClicked(void)
 
 	classBoxChecked();
 }
+
+void FilterDialog::helperIndexChanged(int Index)
+{
+	auto Model = ui->helperCombo->model();
+
+	if (Model && Index != -1)
+	{
+		auto Root = Model->index(Index, 0);
+
+		ui->variablesList->setRootIndex(Root);
+	}
+
+	ui->helpLabel->clear();
+}
+
+void FilterDialog::tooltipShowRequest(QModelIndex Index)
+{
+	ui->helpLabel->setText(ui->variablesList->model()->data(Index, Qt::ToolTipRole).toString());
+}
+
 
 void FilterDialog::variablePasteRequest(QModelIndex Index)
 {
@@ -500,10 +543,14 @@ void FilterDialog::setFields(const QStringList& Variables, const QList<DatabaseD
 		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 	}
 
+	auto newModel = getJsHelperModel(this, Variables);
+
 	auto oldModel = ui->variablesList->model();
 	auto oldSelect = ui->variablesList->selectionModel();
 
-	ui->variablesList->setModel(new QStringListModel(Variables, this));
+	ui->helperCombo->setModel(newModel);
+	ui->variablesList->setModel(newModel);
+	ui->variablesList->setRootIndex(newModel->index(0, 0));
 
 	oldModel->deleteLater(); oldSelect->deleteLater();
 }
