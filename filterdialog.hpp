@@ -24,6 +24,7 @@
 #include <QAbstractButton>
 #include <QFileDialog>
 #include <QPushButton>
+#include <QMessageBox>
 #include <QClipboard>
 #include <QCheckBox>
 #include <QDialog>
@@ -57,6 +58,7 @@ class FilterDialog : public QDialog
 		QAction* resetFields;
 		QAction* resetGeometry;
 		QAction* resetRedaction;
+		QAction* resetAdvanced;
 
 		QHash<QString, QString> Classes;
 		QHash<QString, QString> Points;
@@ -70,7 +72,7 @@ class FilterDialog : public QDialog
 
 	public:
 
-		explicit FilterDialog(QWidget* Parent = nullptr,
+		explicit FilterDialog(QWidget* Parent = nullptr, const QStringList& Variables = QStringList(),
 						  const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>(),
 						  const QList<DatabaseDriver::TABLE>& Tables = QList<DatabaseDriver::TABLE>(),
 						  unsigned Common = 0, bool Singletons = false);
@@ -78,6 +80,7 @@ class FilterDialog : public QDialog
 
 		QString getLimiterFile(void) const;
 		QString getFilterRules(void) const;
+		QString getAdvancedRules(void) const;
 
 		QList<int> getUsedFields(void) const;
 		QHash<int, QVariant> getGeometryRules(void) const;
@@ -100,23 +103,25 @@ class FilterDialog : public QDialog
 		void filterRulesChanged(void);
 
 		void newButtonClicked(void);
-		void copyButtonClicked(void);
+		void validateButtonClicked(void);
 		void selectButtonClicked(void);
 		void unselectButtonClicked(void);
+
+		void variablePasteRequest(QModelIndex Index);
 
 	public slots:
 
 		virtual void accept(void) override;
 
-		void setFields(const QList<DatabaseDriver::FIELD>& Fields,
+		void setFields(const QStringList& Variables,
+					const QList<DatabaseDriver::FIELD>& Fields,
 					const QList<DatabaseDriver::TABLE>& Tables,
 					unsigned Common = 0, bool Singletons = false);
 
 	signals:
 
-		void onFiltersUpdate(const QString&, const QList<int>&,
-						 const QHash<int, QVariant>&,
-						 const QHash<int, QVariant>&,
+		void onFiltersUpdate(const QString&, const QString&, const QList<int>&,
+						 const QHash<int, QVariant>&, const QHash<int, QVariant>&,
 						 const QString&, double, int);
 
 };
