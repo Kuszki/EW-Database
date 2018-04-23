@@ -280,12 +280,16 @@ double FilterDialog::getRadius(void) const
 
 QJSValue FilterDialog::validateScript(const QString& Script) const
 {
-	auto Model = dynamic_cast<QStringListModel*>(ui->variablesList->model());
+	if (Script.trimmed().isEmpty()) return QJSValue(); QJSEngine Engine;
 
-	if (Script.trimmed().isEmpty()) return QJSValue();
+	auto Model = ui->variablesList->model();
+	auto Root = ui->variablesList->rootIndex();
 
-	QJSEngine Engine; for (const auto& V : Model->stringList())
+	for (int i = 0; i < Model->rowCount(Root); ++i)
 	{
+		const auto Index = Model->index(i, 0, Root);
+		const auto V = Model->data(Index).toString();
+
 		Engine.globalObject().setProperty(V, QJSValue());
 	}
 
@@ -415,25 +419,7 @@ void FilterDialog::newButtonClicked(void)
 
 void FilterDialog::validateButtonClicked(void)
 {
-<<<<<<< HEAD
 	const auto V = validateScript(ui->advancedEdit->toPlainText());
-=======
-	const auto Script = ui->advancedEdit->document()->toPlainText();
-	auto Model = ui->variablesList->model();
-	auto Root = ui->variablesList->rootIndex();
-
-	if (Script.trimmed().isEmpty()) return; QJSEngine Engine;
-
-	for (int i = 0; i < Model->rowCount(Root); ++i)
-	{
-		const auto Index = Model->index(i, 0, Root);
-		const auto V = Model->data(Index).toString();
-
-		Engine.globalObject().setProperty(V, QJSValue());
-	}
-
-	const auto V = Engine.evaluate(Script);
->>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
 
 	if (!V.isError()) ui->helpLabel->setText(tr("Script is ok"));
 	else ui->helpLabel->setText(tr("Syntax error in line %1: %2")

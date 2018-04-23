@@ -50,13 +50,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-<<<<<<< HEAD
-            <width>100</width>
-            <height>30</height>
-=======
-            <width>1139</width>
-            <height>433</height>
->>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="classLayout"/>
@@ -86,13 +81,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-<<<<<<< HEAD
-            <width>100</width>
-            <height>30</height>
-=======
-            <width>1139</width>
-            <height>433</height>
->>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="simpleLayout"/>
@@ -122,13 +112,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-<<<<<<< HEAD
-            <width>100</width>
-            <height>30</height>
-=======
-            <width>1139</width>
-            <height>433</height>
->>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="geometryLayout"/>
@@ -158,13 +143,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-<<<<<<< HEAD
-            <width>100</width>
-            <height>30</height>
-=======
-            <width>1139</width>
-            <height>433</height>
->>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
+            <width>1132</width>
+            <height>427</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="redactionLayout"/>
@@ -232,20 +212,6 @@
       </widget>
      </item>
      <item>
-<<<<<<< HEAD
-      <widget class="QToolButton" name="validateButton">
-       <property name="text">
-        <string>Validate</string>
-       </property>
-       <property name="icon">
-        <iconset theme="tools-check-spelling">
-         <normaloff>.</normaloff>.</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-=======
->>>>>>> 860ec2bfa222f53c84f58ec7c207924b2cb8174b
       <widget class="QLineEdit" name="classSearch">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -501,7 +467,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>545</x>
-     <y>489</y>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>530</x>
@@ -517,7 +483,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>575</x>
-     <y>489</y>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>567</x>
@@ -565,27 +531,11 @@
    <hints>
     <hint type="sourcelabel">
      <x>861</x>
-     <y>489</y>
+     <y>486</y>
     </hint>
     <hint type="destinationlabel">
      <x>700</x>
      <y>603</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>validateButton</sender>
-   <signal>clicked()</signal>
-   <receiver>FilterDialog</receiver>
-   <slot>validateButtonClicked()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>891</x>
-     <y>489</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>265</x>
-     <y>608</y>
     </hint>
    </hints>
   </connection>
@@ -634,6 +584,22 @@
     <hint type="destinationlabel">
      <x>971</x>
      <y>621</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>validateButton</sender>
+   <signal>clicked()</signal>
+   <receiver>FilterDialog</receiver>
+   <slot>validateButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>888</x>
+     <y>473</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>887</x>
+     <y>584</y>
     </hint>
    </hints>
   </connection>
