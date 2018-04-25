@@ -297,7 +297,7 @@
      <item>
       <widget class="QToolButton" name="validateButton">
        <property name="text">
-        <string>Copy</string>
+        <string>Validate</string>
        </property>
        <property name="icon">
         <iconset theme="tools-check-spelling">
