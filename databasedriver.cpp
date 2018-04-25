@@ -1343,6 +1343,9 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onCopyExec(0); return; }
 
+	emit onBeginProgress(tr("Loading items"));
+	emit onSetupProgress(0, 0);
+
 	QHash<int, QHash<int, QVariant>> List;
 
 	for (const auto& Table : Tables) if (!isTerminated())
@@ -1409,6 +1412,9 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onScriptExec(0); return; }
+
+	emit onBeginProgress(tr("Loading items"));
+	emit onSetupProgress(0, 0);
 
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
 										 .replaceInStrings(QRegExp("\\s+"), "_");
