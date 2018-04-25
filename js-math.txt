@@ -4,7 +4,7 @@ acosh()	Returns the hyperbolic arccosine of x
 asin()	Returns the arcsine of x, in radians
 asinh()	Returns the hyperbolic arcsine of x
 atan()	Returns the arctangent of x as a numeric value between -PI/2 and PI/2 radians
-atan2(y, x)	Returns the arctangent of the quotient of its arguments
+atan2()	Returns the arctangent of the quotient of its arguments
 atanh()	Returns the hyperbolic arctangent of x
 cbrt()	Returns the cubic root of x
 ceil()	Returns x, rounded upwards to the nearest integer

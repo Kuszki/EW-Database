@@ -728,28 +728,30 @@ void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasklist,
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; QStringList All;
 
-	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
-	{
-		if (Values[i].isNull()) All.append(QString("%1 = NULL").arg(Fields[i].Name));
-		else All.append(QString("%1 = '%2'").arg(Fields[i].Name).arg(Values[i].toString()));
-	}
-
 	emit onBeginProgress(tr("Updating common data"));
 	emit onSetupProgress(0, Tasks.first().size());
+
+	QSqlQuery commonQuery(Database); commonQuery.setForwardOnly(true); QVariantList commonBinds;
+
+	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
+	{
+		All.append(QString("%1 = ?").arg(Fields[i].Name));
+		commonBinds.append(Values[i]);
+	}
+
+	commonQuery.prepare(QString("UPDATE EW_OBIEKTY SET %1 WHERE UID = ?").arg(All.join(", ")));
 
 	if (!All.isEmpty()) for (const auto& Index : Tasks.first())
 	{
 		if (isTerminated()) break;
 
-		Query.exec(QString(
-			"UPDATE "
-				"EW_OBIEKTY "
-			"SET "
-				"%1 "
-			"WHERE "
-				"UID = '%2'")
-				 .arg(All.join(", "))
-				 .arg(Index));
+		for (const auto& V : commonBinds)
+		{
+			commonQuery.addBindValue(V);
+		}
+
+		commonQuery.addBindValue(Index);
+		commonQuery.exec();
 
 		emit onUpdateProgress(++Step);
 	}
@@ -764,47 +766,42 @@ void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasklist,
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
 
-		QStringList fieldsNames, fieldsUpdates, nullsUpdates;
+		QSqlQuery attribQuery(Database); attribQuery.setForwardOnly(true);
+		QStringList fieldsNames; QVariantList attribBinds;
 
 		for (const auto& Index : Used) if (Table.Indexes.contains(Index))
 		{
-			fieldsNames.append(QString(Fields[Index].Name).remove("EW_DATA."));
+			const auto Name = QString(Fields[Index].Name).remove("EW_DATA.");
 
-			if (Values[Index].isNull()) fieldsUpdates.append("NULL");
-			else fieldsUpdates.append(QString("'%1'").arg(Values[Index].toString()));
+			fieldsNames.append(Name);
+			attribBinds.append(Values[Index]);
 		}
 
 		for (const auto& Index : Nills) if (Table.Indexes.contains(Index))
 		{
-			const QString Name = QString("%1_V").arg(Fields[Index].Name);
+			const auto Name = QString(Fields[Index].Name).remove("EW_DATA.").append("_V");
 
-			nullsUpdates.append(QString("%1 = '%2'").arg(Name).arg(Reasons[Index]));
+			fieldsNames.append(Name);
+			attribBinds.append(Reasons[Index]);
 		}
 
-		const QString FIELDS = fieldsNames.join(", ");
-		const QString UPDATES = fieldsUpdates.join(", ");
-		const QString REASONS = nullsUpdates.join(", ");
+		attribQuery.prepare(QString("UPDATE OR INSERT INTO %1 (%2, UIDO) "
+							   "VALUES (%3?) MATCHING (UIDO)")
+						.arg(Table.Data)
+						.arg(fieldsNames.join(", "))
+						.arg(QString("?, ").repeated(fieldsNames.size())));
 
-		const bool NULLS = !nullsUpdates.isEmpty();
-
-		if (!fieldsUpdates.isEmpty()) for (const auto& Index : i.value())
+		if (!fieldsNames.isEmpty()) for (const auto& Index : i.value())
 		{
 			if (isTerminated()) break;
 
-			Query.exec(QString(
-				"UPDATE OR INSERT INTO %1 (UIDO, %2) "
-				"VALUES (%3, %4) MATCHING (UIDO)")
-					 .arg(Table.Data)
-					 .arg(FIELDS)
-					 .arg(Index)
-					 .arg(UPDATES));
+			for (const auto& V : attribBinds)
+			{
+				attribQuery.addBindValue(V);
+			}
 
-			if (NULLS) Query.exec(QString(
-				"UPDATE %1 EW_DATA SET %2 "
-				"WHERE EW_DATA.UIDO = '%3'")
-					 .arg(Table.Data)
-					 .arg(REASONS)
-					 .arg(Index));
+			attribQuery.addBindValue(Index);
+			attribQuery.exec();
 
 			emit onUpdateProgress(++Step);
 		}
@@ -818,6 +815,8 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QLis
 {
 	emit onBeginProgress(tr("Executing batch"));
 	emit onSetupProgress(0, 0); QSet<int> Changes;
+
+	//for (const auto& v : Values) qDebug() << v;
 
 	QHash<int, QHash<int, QVariant>> List;
 
@@ -885,6 +884,8 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QLis
 
 		if (Filtered.size() && Updates.size())
 		{
+			//qDebug() << Updates;
+
 			performDataUpdates(QMap<QString, QSet<int>>(), Filtered,
 						    Updates, QHash<int, int>(), false);
 
@@ -1358,23 +1359,23 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 		}
 	}
 
-	QList<BatchWidget::RECORD> uFunctions; QSet<QStringList> uValues;
+	QList<BatchWidget::RECORD> uFunctions; QList<QVariantList> uValues;
 
 	for (const auto& R : List)
 	{
-		QStringList Row; Row.reserve(Functions.size());
+		QVariantList Row; Row.reserve(Functions.size());
 
 		for (const auto& F : Functions)
 			if (F.first == CopyfieldsWidget::WHERE)
 			{
-				Row.append(R.value(F.second.second).toString());
+				Row.append(R.value(F.second.second));
 			}
 			else if (Nulls || !isVariantEmpty(R.value(F.second.second)))
 			{
-				Row.append(R.value(F.second.second).toString());
+				Row.append(R.value(F.second.second));
 			}
 
-		if (Row.size() == Functions.size()) uValues.insert(Row);
+		if (Row.size() == Functions.size()) uValues.append(Row);
 	}
 
 	for (const auto& F : Functions) switch (F.first)
@@ -1387,9 +1388,7 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 		break;
 	}
 
-	QList<QVariantList> Args; for (const auto& A : uValues) Args.append(QVariant(A).toList());
-
-	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, Args);
+	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, uValues);
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
 
@@ -1454,6 +1453,8 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 			const QJSValue Value = Engine.toScriptValue(Item.value(i));
 			const QString Name = Props[i];
 
+			qDebug() << "setting" << Props[i] << Item.value(i) << Value.toVariant();
+
 			Engine.globalObject().setProperty(Name, Value);
 			Before.insert(Name, Value);
 		}
@@ -1471,6 +1472,8 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 
 			for (int i = 0; i < Size; ++i) if (i != 2)
 			{
+				qDebug() << "updated" << Props[i] << Engine.globalObject().property(Props[i]).toVariant();
+
 				Updates.append(Engine.globalObject().property(Props[i]).toVariant());
 			}
 			else Updates.append(Item[2].toString());

@@ -103,7 +103,7 @@ QVariant UpdateWidget::getValue(void) const
 	}
 	else if (auto W = dynamic_cast<QLineEdit*>(Widget))
 	{
-		return W->text().trimmed().replace("'", "''");
+		return W->text().trimmed();
 	}
 	else if (auto W = dynamic_cast<QSpinBox*>(Widget))
 	{
@@ -115,11 +115,11 @@ QVariant UpdateWidget::getValue(void) const
 	}
 	else if (auto W = dynamic_cast<QDateEdit*>(Widget))
 	{
-		return W->date().toString("dd.MM.yyyy");
+		return W->date();
 	}
 	else if (auto W = dynamic_cast<QDateTimeEdit*>(Widget))
 	{
-		return W->dateTime().toString("dd.MM.yyyy hh:mm:ss");
+		return W->dateTime();
 	}
 	else return QVariant();
 }
@@ -155,6 +155,11 @@ void UpdateWidget::textChanged(const QString& Text)
 void UpdateWidget::toggleWidget(void)
 {
 	if (Widget) Widget->setEnabled(!ui->nullButton->isChecked() && ui->Field->isChecked());
+
+	const auto W = dynamic_cast<QComboBox*>(Widget);
+
+	if (!W || ui->nullButton->isChecked()) emit onDataChecked(true);
+	else emit onDataChecked(W->findText(W->currentText()) != -1);
 }
 
 void UpdateWidget::undoClicked(void)
