@@ -183,7 +183,7 @@ class DatabaseDriver : public QObject
 
 		QSet<int> performBatchUpdates(const QSet<int>& Items,
 								const QList<BatchWidget::RECORD>& Functions,
-								const QList<QStringList>& Values);
+								const QList<QVariantList>& Values);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
@@ -267,6 +267,7 @@ class DatabaseDriver : public QObject
 					const QList<QStringList>& Values);
 
 		void execFieldcopy(const QSet<int>& Items, const QList<CopyfieldsWidget::RECORD>& Functions, bool Nulls);
+		void execScript(const QSet<int>& Items, const QString& Script);
 
 		void splitData(const QSet<int>& Items, const QString& Point, const QString& From, int Type);
 
@@ -345,6 +346,7 @@ class DatabaseDriver : public QObject
 
 		void onBatchExec(int);
 		void onCopyExec(int);
+		void onScriptExec(int);
 
 		void onCommonReady(const QList<int>&);
 		void onPresetReady(const QList<QHash<int, QVariant>>&,

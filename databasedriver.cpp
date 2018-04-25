@@ -814,7 +814,7 @@ void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasklist,
 	if (!Emit) blockSignals(Signals);
 }
 
-QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QList<BatchWidget::RECORD>& Functions, const QList<QStringList>& Values)
+QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QList<BatchWidget::RECORD>& Functions, const QList<QVariantList>& Values)
 {
 	emit onBeginProgress(tr("Executing batch"));
 	emit onSetupProgress(0, 0); QSet<int> Changes;
@@ -846,7 +846,7 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QLis
 
 			for (const auto& F : Functions) if (OK)
 			{
-				if (F.second == BatchWidget::WHERE) OK = Data[F.first].toString() == Rules[Col]; ++Col;
+				if (F.second == BatchWidget::WHERE) OK = Data[F.first] == Rules[Col]; ++Col;
 			}
 
 			if (OK) Filtered.insert(Index);
@@ -1317,7 +1317,9 @@ void DatabaseDriver::execBatch(const QSet<int>& Items, const QList<BatchWidget::
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onBatchExec(0); return; }
 
-	const QSet<int> Changes = performBatchUpdates(Items, Functions, Values);
+	QList<QVariantList> Args; for (const auto& A : Values) Args.append(QVariant(A).toList());
+
+	const QSet<int> Changes = performBatchUpdates(Items, Functions, Args);
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
 
@@ -1382,7 +1384,9 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 		break;
 	}
 
-	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, uValues.toList());
+	QList<QVariantList> Args; for (const auto& A : uValues) Args.append(QVariant(A).toList());
+
+	const QSet<int> Changes = performBatchUpdates(Items, uFunctions, Args);
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
 
@@ -1399,7 +1403,96 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 	}
 
 	emit onEndProgress();
-	emit onBatchExec(Changes.size());
+	emit onCopyExec(Changes.size());
+}
+
+void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onScriptExec(0); return; }
+
+	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
+										 .replaceInStrings(QRegExp("\\s+"), "_");
+
+	QHash<int, QHash<int, QVariant>> List; QMutex Synchronizer; const int Size = Props.size();
+
+	for (const auto& Table : Tables) if (!isTerminated())
+	{
+		auto Data = loadData(Table, Items, QString(), true, true);
+
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+		{
+			List.insert(i.key(), i.value());
+		}
+	}
+
+	QList<BatchWidget::RECORD> Functions; QList<QVariantList> Values;
+
+	for (int i = 0; i < Size; ++i) if (i != 2)
+	{
+		Functions.append({ i, BatchWidget::UPDATE });
+	}
+	else Functions.append({ i, BatchWidget::WHERE });
+
+	QtConcurrent::blockingMap(Items,
+	[&List, &Script, &Functions, &Values, &Props, &Size, &Synchronizer]
+	(const int& UID) -> void
+	{
+		if (!List.contains(UID)) return;
+
+		const auto& Item = List[UID];
+		QHash<QString, QJSValue> Before;
+		QJSEngine Engine; bool OK(false);
+
+		for (int i = 0; i < Size; ++i)
+		{
+			const QJSValue Value = Engine.toScriptValue(Item.value(i));
+			const QString Name = Props[i];
+
+			Engine.globalObject().setProperty(Name, Value);
+			Before.insert(Name, Value);
+		}
+
+		const auto V = Engine.evaluate(Script);
+
+		if (!V.isError()) for (int i = 0; i < Size; ++i) if (!OK)
+		{
+			OK = Before[Props[i]].equals(Engine.globalObject().property(Props[i]));
+		}
+
+		if (OK)
+		{
+			QVariantList Updates;
+
+			for (int i = 0; i < Size; ++i) if (i != 2)
+			{
+				Updates.append(Engine.globalObject().property(Props[i]).toVariant());
+			}
+			else Updates.append(Item[2].toString());
+
+			Synchronizer.lock();
+			Values.append(Updates);
+			Synchronizer.unlock();
+		}
+	});
+
+	const QSet<int> Changes = performBatchUpdates(Items, Functions, Values);
+
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Changes, true, 1);
+
+	emit onEndProgress(); int Step = 0;
+	emit onBeginProgress(tr("Updating view"));
+	emit onSetupProgress(0, Tasks.size() - 1);
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+		const auto Data = loadData(Table, i.value(), QString(), true, true);
+
+		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onScriptExec(Changes.size());
 }
 
 void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, const QString& From, int Type)

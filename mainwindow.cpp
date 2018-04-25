@@ -118,6 +118,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataCut, this, &MainWindow::dataCutted);
 	connect(Driver, &DatabaseDriver::onBatchExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onCopyExec, this, &MainWindow::batchExec);
+	connect(Driver, &DatabaseDriver::onScriptExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
 	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
 	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
@@ -168,6 +169,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onBatchRequest, Driver, &DatabaseDriver::execBatch);
 	connect(this, &MainWindow::onCopyfieldsRequest, Driver, &DatabaseDriver::execFieldcopy);
+	connect(this, &MainWindow::onScriptRequest, Driver, &DatabaseDriver::execScript);
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
@@ -612,7 +614,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Variable = new VariablesDialog(Variables, this);
 	Loader = new SelectorDialog(this);
 	Copyfields = new CopyfieldsDialog(allHeaders, this);
-	Script = new ScriptDialog(allHeaders, this);
+	Script = new ScriptDialog(Props, this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);

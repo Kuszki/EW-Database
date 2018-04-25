@@ -26,6 +26,8 @@ ScriptDialog::ScriptDialog(const QStringList& Fields, QWidget* Parent)
 {
 	ui->setupUi(this); setFields(Fields);
 
+	Highlighter = new KLHighlighter(ui->scriptEdit->document());
+
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 }
 
@@ -36,12 +38,16 @@ ScriptDialog::~ScriptDialog(void)
 
 QJSValue ScriptDialog::validateScript(const QString& Script) const
 {
-	auto Model = dynamic_cast<QStringListModel*>(ui->variablesList->model());
+	if (Script.trimmed().isEmpty()) return QJSValue(); QJSEngine Engine;
 
-	if (Script.trimmed().isEmpty()) return QJSValue();
+	auto Model = ui->variablesList->model();
+	auto Root = ui->variablesList->rootIndex();
 
-	QJSEngine Engine; for (const auto& V : Model->stringList())
+	for (int i = 0; i < Model->rowCount(Root); ++i)
 	{
+		const auto Index = Model->index(i, 0, Root);
+		const auto V = Model->data(Index).toString();
+
 		Engine.globalObject().setProperty(V, QJSValue());
 	}
 
