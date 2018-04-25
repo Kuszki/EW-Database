@@ -816,8 +816,6 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QLis
 	emit onBeginProgress(tr("Executing batch"));
 	emit onSetupProgress(0, 0); QSet<int> Changes;
 
-	//for (const auto& v : Values) qDebug() << v;
-
 	QHash<int, QHash<int, QVariant>> List;
 
 	for (const auto& Table : Tables) if (!isTerminated())
@@ -884,8 +882,6 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QSet<int>& Items, const QLis
 
 		if (Filtered.size() && Updates.size())
 		{
-			//qDebug() << Updates;
-
 			performDataUpdates(QMap<QString, QSet<int>>(), Filtered,
 						    Updates, QHash<int, int>(), false);
 
@@ -1453,8 +1449,6 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 			const QJSValue Value = Engine.toScriptValue(Item.value(i));
 			const QString Name = Props[i];
 
-			qDebug() << "setting" << Props[i] << Item.value(i) << Value.toVariant();
-
 			Engine.globalObject().setProperty(Name, Value);
 			Before.insert(Name, Value);
 		}
@@ -1472,8 +1466,6 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 
 			for (int i = 0; i < Size; ++i) if (i != 2)
 			{
-				qDebug() << "updated" << Props[i] << Engine.globalObject().property(Props[i]).toVariant();
-
 				Updates.append(Engine.globalObject().property(Props[i]).toVariant());
 			}
 			else Updates.append(Item[2].toString());

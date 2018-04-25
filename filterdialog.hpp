@@ -86,13 +86,13 @@ class FilterDialog : public QDialog
 		QList<int> getUsedFields(void) const;
 		QHash<int, QVariant> getGeometryRules(void) const;
 		QHash<int, QVariant> getRedactionRules(void) const;
-		QHash<QString, QVariant> getFieldsRules(void) const;
+		QHash<int, QVariant> getFieldsRules(void) const;
 
 		double getRadius(void) const;
 
 	protected:
 
-		QJSValue validateScript(const QString& Script) const;
+		QPair<QString, int> validateScript(const QString& Script) const;
 
 	private slots:
 

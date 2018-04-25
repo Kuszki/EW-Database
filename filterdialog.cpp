@@ -253,20 +253,15 @@ QHash<int, QVariant> FilterDialog::getRedactionRules(void) const
 	return Rules;
 }
 
-QHash<QString, QVariant> FilterDialog::getFieldsRules(void) const
+QHash<int, QVariant> FilterDialog::getFieldsRules(void) const
 {
-	QHash<QString, QVariant> Rules;
+	QHash<int, QVariant> Rules;
 
 	for (int i = 0; i < ui->simpleLayout->count(); ++i)
 	{
 		if (auto W = qobject_cast<FilterWidget*>(ui->simpleLayout->itemAt(i)->widget()))
 		{
-			if (W->isChecked())
-			{
-				const auto Rule = W->getBinding();
-
-				Rules.insert(Rule.first, Rule.second);
-			}
+			if (W->isChecked()) Rules.insert(W->getIndex(), W->getValue());
 		}
 	}
 
@@ -278,9 +273,9 @@ double FilterDialog::getRadius(void) const
 	return ui->radiusSpin->value();
 }
 
-QJSValue FilterDialog::validateScript(const QString& Script) const
+QPair<QString, int> FilterDialog::validateScript(const QString& Script) const
 {
-	if (Script.trimmed().isEmpty()) return QJSValue(); QJSEngine Engine;
+	if (Script.trimmed().isEmpty()) return QPair<QString, int>(); QJSEngine Engine;
 
 	auto Model = ui->variablesList->model();
 	auto Root = ui->variablesList->rootIndex();
@@ -293,7 +288,10 @@ QJSValue FilterDialog::validateScript(const QString& Script) const
 		Engine.globalObject().setProperty(V, QJSValue());
 	}
 
-	return Engine.evaluate(Script);
+	const auto V = Engine.evaluate(Script);
+
+	if (!V.isError()) return qMakePair(QString(), int(0));
+	else return qMakePair(V.toString(), V.property("lineNumber").toInt());
 }
 
 void FilterDialog::classSearchEdited(const QString& Search)
@@ -421,10 +419,9 @@ void FilterDialog::validateButtonClicked(void)
 {
 	const auto V = validateScript(ui->advancedEdit->toPlainText());
 
-	if (!V.isError()) ui->helpLabel->setText(tr("Script is ok"));
+	if (!V.second) ui->helpLabel->setText(tr("Script is ok"));
 	else ui->helpLabel->setText(tr("Syntax error in line %1: %2")
-						   .arg(V.property("lineNumber").toInt())
-						   .arg(V.toString()));
+						   .arg(V.second).arg(V.first));
 }
 
 void FilterDialog::selectButtonClicked(void)
@@ -484,9 +481,7 @@ void FilterDialog::accept(void)
 {
 	const auto V = validateScript(ui->advancedEdit->toPlainText());
 
-	if (V.isError()) QMessageBox::critical(this, tr("Syntax error in line %1")
-								    .arg(V.property("lineNumber").toInt()),
-								    V.toString());
+	if (V.second) QMessageBox::critical(this, tr("Syntax error in line %1").arg(V.second), V.first);
 	else
 	{
 		QDialog::accept();

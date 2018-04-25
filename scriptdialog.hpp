@@ -53,7 +53,7 @@ class ScriptDialog : public QDialog
 
 	protected:
 
-		QJSValue validateScript(const QString& Script) const;
+		QPair<QString, int> validateScript(const QString& Script) const;
 
 	public slots:
 
