@@ -73,6 +73,12 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>scriptEdit</tabstop>
+  <tabstop>helperCombo</tabstop>
+  <tabstop>variablesList</tabstop>
+  <tabstop>validateButton</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

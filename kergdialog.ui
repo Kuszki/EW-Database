@@ -14,13 +14,17 @@
    <string>Edit KERG</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="appointment-new"/>
+   <iconset theme="appointment-new">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QLabel" name="actionLabel">
      <property name="text">
       <string>Action</string>
+     </property>
+     <property name="buddy">
+      <cstring>actionCombo</cstring>
      </property>
     </widget>
    </item>
@@ -42,6 +46,9 @@
     <widget class="QLabel" name="sourceLabel">
      <property name="text">
       <string>Sources</string>
+     </property>
+     <property name="buddy">
+      <cstring>sourceEdit</cstring>
      </property>
     </widget>
    </item>

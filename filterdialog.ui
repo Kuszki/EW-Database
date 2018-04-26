@@ -384,12 +384,17 @@
   <tabstop>classScrool</tabstop>
   <tabstop>simpleScrool</tabstop>
   <tabstop>geometryScrool</tabstop>
+  <tabstop>redactionScrool</tabstop>
+  <tabstop>advancedEdit</tabstop>
+  <tabstop>helperCombo</tabstop>
+  <tabstop>variablesList</tabstop>
   <tabstop>simpleSearch</tabstop>
   <tabstop>classSearch</tabstop>
   <tabstop>selectButton</tabstop>
   <tabstop>unselectButton</tabstop>
   <tabstop>radiusSpin</tabstop>
   <tabstop>limiterCheck</tabstop>
+  <tabstop>validateButton</tabstop>
   <tabstop>operatorBox</tabstop>
   <tabstop>newButton</tabstop>
  </tabstops>
