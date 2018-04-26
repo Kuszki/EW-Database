@@ -613,7 +613,7 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant> >& Data, const Q
 
 	Synch.waitForFinished();
 
-	emit onBeginProgress(tr("Applying filters"));
+	emit onBeginProgress(tr("Applying geometry filters"));
 	emit onSetupProgress(0, 0);
 
 	if (Geometry.contains(0) || Geometry.contains(1))
@@ -1083,9 +1083,6 @@ void DatabaseDriver::reloadData(const QString& Filter, const QString& Script, QL
 
 		emit onUpdateProgress(++Step);
 	}
-
-	emit onBeginProgress(tr("Applying geometry filters"));
-	emit onSetupProgress(0, 0);
 
 	if (!isTerminated() && (!Geometry.isEmpty() || !Redaction.isEmpty()))
 	{
