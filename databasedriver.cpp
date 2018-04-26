@@ -689,14 +689,14 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 {
 	if (!Database.isOpen()) return;
 
-	const QSet<int> All = Data.keys().toSet(); QMutex Synchronizer; int Step = 0;
+	const QSet<int> All = Data.keys().toSet(); QMutex Synchronizer;
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
 										 .replaceInStrings(QRegExp("\\s+"), "_");
 
 	emit onBeginProgress(tr("Performing advanced filters"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, All.size()); int Step = 0;
 
-	QtConcurrent::blockingMap(All, [&Data, &Synchronizer, &Step, &Expression, &Props] (int UID) -> void
+	QtConcurrent::blockingMap(All, [this, &Data, &Synchronizer, &Step, &Expression, &Props, &Step] (int UID) -> void
 	{
 		const auto& Row = Data[UID]; QJSEngine Engine;
 
@@ -715,6 +715,10 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 			Data.remove(UID);
 			Synchronizer.unlock();
 		}
+
+		Synchronizer.lock();
+		if (!(++Step % 1000)) emit onUpdateProgress(Step);
+		Synchronizer.unlock();
 	});
 }
 
@@ -1070,11 +1074,13 @@ void DatabaseDriver::reloadData(const QString& Filter, const QString& Script, QL
 	RecordModel* Model = new RecordModel(Headers); int Step = 0;
 	QHash<int, QHash<int, QVariant>> List; QSet<int> Loaded;
 
+	const QSet<int> Preload = (Mode == 1 || Mode == 3) ? Items : QSet<int>();
+
 	for (const auto& Table : Tables) if (hasAllIndexes(Table, Used))
 	{
 		if (isTerminated()) break;
 
-		auto Data = loadData(Table, QSet<int>(), Filter, true, true);
+		auto Data = loadData(Table, Preload, Filter, true, true);
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
 		{
