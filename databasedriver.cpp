@@ -1026,7 +1026,7 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index, int Action, 
 	Query.prepare("SELECT O.UID, O.NUMER, O.IIP, K.NUMER FROM EW_OBIEKTY O "
 			    "LEFT JOIN EW_OPERATY K ON O.OPERAT = K.UID WHERE O.STATUS = 0");
 
-	if (Query.exec()) while (Query.next() && !isTerminated() && UIDS.size() != Hash.size())
+	if (Query.exec()) while (Query.next() && !isTerminated())
 		if (!Query.value(Index).isNull() && Hash.contains(Query.value(Index).toString()))
 		{
 			UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
