@@ -1017,8 +1017,8 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index, int Action, 
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
-	QSet<int> UIDS; UIDS.reserve(Filter.size()); int Step = 0;
 	const QSet<QString> Hash = Filter.toSet(); QSet<int> Load;
+	QSet<int> UIDS; UIDS.reserve(Hash.size()); int Step = 0;
 
 	emit onBeginProgress(tr("Preparing objects list"));
 	emit onSetupProgress(0, Hash.size());
@@ -1027,7 +1027,7 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index, int Action, 
 			    "LEFT JOIN EW_OPERATY K ON O.OPERAT = K.UID WHERE O.STATUS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated() && UIDS.size() != Hash.size())
-		if (Hash.contains(Query.value(Index).toString()))
+		if (!Query.value(Index).isNull() && Hash.contains(Query.value(Index).toString()))
 		{
 			UIDS.insert(Query.value(0).toInt()); emit onUpdateProgress(++Step);
 		}
@@ -1042,7 +1042,7 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index, int Action, 
 
 	RecordModel* Model = new RecordModel(Headers); Step = 0;
 
-	if (!isTerminated()) for (const auto& Table : Tables)
+	if (!isTerminated() && !Load.isEmpty()) for (const auto& Table : Tables)
 	{
 		if (isTerminated()) break;
 
@@ -1437,12 +1437,12 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 	}
 	else Functions.append({ i, BatchWidget::WHERE });
 
-	QtConcurrent::blockingMap(Items,
+	const auto Loaded = List.keys().toSet();
+
+	QtConcurrent::blockingMap(Loaded,
 	[&List, &Script, &Functions, &Values, &Props, &Size, &Synchronizer]
 	(const int& UID) -> void
 	{
-		if (!List.contains(UID)) return;
-
 		const auto& Item = List[UID];
 		QHash<QString, QJSValue> Before;
 		QJSEngine Engine; bool OK(false);
