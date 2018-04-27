@@ -534,4 +534,8 @@ void FilterDialog::setFields(const QStringList& Variables, const QList<DatabaseD
 	ui->variablesList->setRootIndex(newModel->index(0, 0));
 
 	oldModel->deleteLater(); oldSelect->deleteLater();
+
+	connect(ui->variablesList->selectionModel(),
+		   &QItemSelectionModel::currentChanged,
+		   this, &FilterDialog::tooltipShowRequest);
 }

@@ -177,22 +177,6 @@
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>variablesList</sender>
-   <signal>clicked(QModelIndex)</signal>
-   <receiver>ScriptDialog</receiver>
-   <slot>tooltipShowRequest(QModelIndex)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>423</x>
-     <y>211</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>450</x>
-     <y>639</y>
-    </hint>
-   </hints>
-  </connection>
  </connections>
  <slots>
   <slot>validateButtonClicked()</slot>

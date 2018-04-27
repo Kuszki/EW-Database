@@ -80,6 +80,10 @@ void ScriptDialog::setFields(const QStringList& Fields)
 	ui->variablesList->setRootIndex(newModel->index(0, 0));
 
 	oldModel->deleteLater(); oldSelect->deleteLater();
+
+	connect(ui->variablesList->selectionModel(),
+		   &QItemSelectionModel::currentChanged,
+		   this, &FilterDialog::tooltipShowRequest);
 }
 
 void ScriptDialog::validateButtonClicked(void)
