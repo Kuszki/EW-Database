@@ -83,7 +83,7 @@ void ScriptDialog::setFields(const QStringList& Fields)
 
 	connect(ui->variablesList->selectionModel(),
 		   &QItemSelectionModel::currentChanged,
-		   this, &FilterDialog::tooltipShowRequest);
+		   this, &ScriptDialog::tooltipShowRequest);
 }
 
 void ScriptDialog::validateButtonClicked(void)
