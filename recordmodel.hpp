@@ -29,8 +29,6 @@
 #include <QList>
 #include <QHash>
 
-#include <parallel/algorithm>
-
 #include <QtConcurrent>
 
 class RecordModel : public QAbstractItemModel

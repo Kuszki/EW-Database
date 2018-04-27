@@ -164,7 +164,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			Table,
 			Query.value(1).toString(),
 			Query.value(2).toString(),
-			(Query.value(3).toInt() & 0x100),
+			bool(Query.value(3).toInt() & 0x100),
 			Query.value(9).toInt()
 		});
 
@@ -696,7 +696,7 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 	emit onBeginProgress(tr("Performing advanced filters"));
 	emit onSetupProgress(0, All.size()); int Step = 0;
 
-	QtConcurrent::blockingMap(All, [this, &Data, &Synchronizer, &Step, &Expression, &Props, &Step] (int UID) -> void
+	QtConcurrent::blockingMap(All, [this, &Data, &Synchronizer, &Step, &Expression, &Props] (int UID) -> void
 	{
 		const auto& Row = Data[UID]; QJSEngine Engine;
 
@@ -6175,7 +6175,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 			else return INFINITY;
 		};
 
-		static const auto ldistance = [&pdistance] (const QLineF& A, const QLineF& B) -> double
+		static const auto ldistance = [] (const QLineF& A, const QLineF& B) -> double
 		{
 			if (A.intersect(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
 

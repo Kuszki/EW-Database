@@ -34,7 +34,7 @@ BatchWidget::~BatchWidget(void)
 
 BatchWidget::RECORD BatchWidget::getFunction(void) const
 {
-	qMakePair(getField(), getAction());
+	return qMakePair(getField(), getAction());
 }
 
 BatchWidget::FUNCTION BatchWidget::getAction(void) const
