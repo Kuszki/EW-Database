@@ -542,7 +542,7 @@ int RecordModel::getUid(const QModelIndex& Index) const
 	return Object->getUid();
 }
 
-bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const
+bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names, const QChar& Separator) const
 {
 	QMutexLocker Synchronizer(&Locker);
 
@@ -556,7 +556,10 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 	{
 		Stream << Header[ID];
 
-		if (ID != Columns.last()) Stream << '\t';
+		if (ID != Columns.last())
+		{
+			Stream << Separator;
+		}
 		else Stream << '\n';
 	}
 
@@ -566,7 +569,10 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 		{
 			Stream << Object->getField(ID).toString();
 
-			if (ID != Columns.last()) Stream << '\t';
+			if (ID != Columns.last())
+			{
+				Stream << Separator;
+			}
 			else Stream << '\n';
 		}
 	}

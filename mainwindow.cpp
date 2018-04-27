@@ -983,12 +983,15 @@ void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHas
 void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 {
 	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"), QString(),
-											tr("Text files (*.txt);;All files (*.*)"));
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty())
 	{
 		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 		auto Selection = ui->Data->selectionModel()->selectedRows();
+
+		const QString Extension = QFileInfo(Path).suffix();
+		const QChar Sep(Extension == "csv" ? ',' : ' ');
 
 		QList<int> Enabled;
 
@@ -1008,7 +1011,7 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 			break;
 		}
 
-		if (Model->saveToFile(Path, Enabled, Selection, Header))
+		if (Model->saveToFile(Path, Enabled, Selection, Header, Sep))
 		{
 			ui->statusBar->showMessage(tr("Data saved to file %1").arg(Path));
 		}

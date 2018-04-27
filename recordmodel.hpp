@@ -181,7 +181,9 @@ class RecordModel : public QAbstractItemModel
 
 		int getUid(const QModelIndex& Index) const;
 
-		bool saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names) const;
+		bool saveToFile(const QString& Path, const QList<int>& Columns,
+					 const QModelIndexList& List, bool Names,
+					 const QChar& Separator = QChar(',')) const;
 
 		bool removeItem(const QModelIndex& Index);
 
