@@ -3,13 +3,13 @@
         <file alias="logo">logo-gnu.png</file>
     </qresource>
     <qresource prefix="/script">
-        <file>js-array.txt</file>
-        <file>js-date.txt</file>
-        <file>js-global.txt</file>
-        <file>js-math.txt</file>
-        <file>js-number.txt</file>
-        <file>js-operators.txt</file>
-        <file>js-statements.txt</file>
-        <file>js-string.txt</file>
+        <file alias="array">js-array.txt</file>
+        <file alias="date">js-date.txt</file>
+        <file alias="global">js-global.txt</file>
+        <file alias="math">js-math.txt</file>
+        <file alias="number">js-number.txt</file>
+        <file alias="operators">js-operators.txt</file>
+        <file alias="statements">js-statements.txt</file>
+        <file alias="string">js-string.txt</file>
     </qresource>
 </RCC>
