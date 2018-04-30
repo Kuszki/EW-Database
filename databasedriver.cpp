@@ -7626,13 +7626,13 @@ QStandardItemModel*getJsHelperModel(QObject* Parent, const QStringList& Variable
 {
 	static const QStringList Res =
 	{
-		":/script/js-operators.txt",
-		":/script/js-statements.txt",
-		":/script/js-global.txt",
-		":/script/js-array.txt",
-		":/script/js-date.txt",
-		":/script/js-math.txt",
-		":/script/js-string.txt"
+		":/script/operators",
+		":/script/statements",
+		":/script/global",
+		":/script/array",
+		":/script/date",
+		":/script/math",
+		":/script/string"
 	};
 
 	static const QStringList Groups =
