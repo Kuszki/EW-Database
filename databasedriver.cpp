@@ -1387,7 +1387,10 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 				Row.append(R.value(F.second.second));
 			}
 
-		if (Row.size() == Functions.size()) uValues.append(Row);
+		if (Row.size() == Functions.size() && !uValues.contains(Row))
+		{
+			uValues.append(Row);
+		}
 	}
 
 	for (const auto& F : Functions) switch (F.first)
