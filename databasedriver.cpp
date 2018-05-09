@@ -6765,7 +6765,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		"WHERE "
 			"O.STATUS = 0 AND "
 			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 0 AND "
+			"P.P1_FLAGS <> 4 AND "
 			"E.TYP = 0");
 
 	Elements.prepare(

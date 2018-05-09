@@ -123,7 +123,7 @@ class DatabaseDriver : public QObject
 		mutable bool Terminated;
 		mutable bool Dateupdate;
 
-		unsigned maxBindedSize;
+		int maxBindedSize;
 
 		QSqlDatabase Database;
 		QStringList Headers;
