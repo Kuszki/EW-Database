@@ -4623,20 +4623,20 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentDelete(0); return; }
 
 	struct ELEMENT { int IDE, Typ; };
+	struct LINE { int IDW, Typ, Opr; };
 
 	QSqlQuery Objects(Database), Elements(Database),
-			updateSegment(Database), deleteSegment(Database),
+			insertSegment(Database), deleteSegment(Database),
 			insertGeometry(Database), deleteGeometry(Database);
 
-	QMutex Synchronizer; int Step(0);
+	QMutex Synchronizer; int Step(0), Count(0);
 
 	Objects.prepare(
 		"SELECT "
-			"O.UID, P.ID, "
-			"P.P0_X, P.P0_Y, "
+			"O.UID, P.ID, P.P0_X, P.P0_Y, "
 			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
 			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
-			"P.P1_FLAGS "
+			"P.ID_WARSTWY, P.TYP_LINII, P.OPERAT "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -4673,15 +4673,21 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 			"E.UIDO ASC, "
 			"E.N ASC");
 
-	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ?");
 	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
+	insertSegment.prepare(
+		"INSERT INTO EW_POLYLINE "
+			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
+		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, 1.0, 1)");
 
-	insertGeometry.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
 	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
+	insertGeometry.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
 
 	QHash<int, QList<ELEMENT>> Geometry;
 	QHash<int, QList<QLineF>> Changes;
+	QHash<int, QList<LINE>> Attribs;
+
 	QHash<int, QLineF> Lines;
+	QHash<int, LINE> Metadata;
 
 	emit onBeginProgress(tr("Loading lines"));
 	emit onSetupProgress(0, 0);
@@ -4690,12 +4696,21 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	{
 		const int UID = Objects.value(0).toInt();
 
-		if (Items.contains(UID)) Lines.insert(Objects.value(1).toInt(),
+		if (!Items.contains(UID)) continue;
+
+		Lines.insert(Objects.value(1).toInt(),
 		{
 			Objects.value(2).toDouble(),
 			Objects.value(3).toDouble(),
 			Objects.value(4).toDouble(),
 			Objects.value(5).toDouble()
+		});
+
+		Metadata.insert(Objects.value(1).toInt(),
+		{
+			Objects.value(6).toInt(),
+			Objects.value(7).toInt(),
+			Objects.value(8).toInt()
 		});
 	}
 
@@ -4713,29 +4728,23 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 		});
 	}
 
+	if (isTerminated()) { emit onEndProgress(); emit onSegmentDelete(0); return; }
+
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Lines, &Changes, &Lines, &Synchronizer, Length]
+	[&Geometry, &Lines, &Changes, &Lines, &Attribs, &Metadata, &Synchronizer, Length]
 	(const int& UID) -> void
 	{
-		auto getRemPart = [] (const QPointF& From, const QList<QLineF>& List) -> QPointF
-		{
-			for (const auto& L : List)
-			{
-				if (From == L.p1()) return L.p2();
-				if (From == L.p2()) return L.p1();
-			}
-
-			return QPointF();
-		};
-
 		if (!Geometry.contains(UID)) return;
 		const auto& Copy = Geometry[UID];
 
 		QList<QLineF> List;
+		QList<LINE> Attr;
 		QLineF Unified;
+
+		bool isChanged(false);
 
 		for (const auto& E : Copy) if (E.Typ == 0 && Lines.contains(E.IDE))
 		{
@@ -4755,6 +4764,8 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 					List.append(Last);
 				}
 				else List.append(Line);
+
+				Attr.append(Metadata[E.IDE]);
 			}
 			else
 			{
@@ -4769,12 +4780,100 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 					if (Unified.length() > Length)
 					{
 						List.append(Unified);
+						Attr.append(Metadata[E.IDE]);
 						Unified = QLineF();
 					}
 				}
+
+				isChanged = true;
 			}
 		}
+
+		if (isChanged)
+		{
+			Synchronizer.lock();
+			Changes.insert(UID, List);
+			Attribs.insert(UID, Attr);
+			Synchronizer.unlock();
+		}
 	});
+
+	if (isTerminated()) { emit onEndProgress(); emit onSegmentDelete(0); return; }
+
+	emit onBeginProgress(tr("Updating geometry"));
+	emit onSetupProgress(0, Changes.size()); Step = 0;
+
+	for (auto i = Changes.constBegin(); i != Changes.constEnd(); ++i)
+	{
+		QList<int> freeUIDS, otherUIDS; int N(0);
+
+		const auto Attr = Attribs[i.key()];
+
+		for (const auto& E : Geometry[i.key()]) if (E.Typ == 0)
+		{
+			if (Lines.contains(E.IDE))
+			{
+				deleteSegment.addBindValue(E.IDE);
+				deleteSegment.exec();
+
+				freeUIDS.append(E.IDE);
+			}
+			else otherUIDS.append(E.IDE);
+		}
+
+		deleteGeometry.addBindValue(i.key());
+		deleteGeometry.exec();
+
+		for (int j = 0; j < i.value().size(); ++j)
+		{
+			const int ID = freeUIDS.takeLast();
+
+			insertSegment.addBindValue(ID);
+			insertSegment.addBindValue(i.value()[j].x1());
+			insertSegment.addBindValue(i.value()[j].y1());
+			insertSegment.addBindValue(i.value()[j].x2());
+			insertSegment.addBindValue(i.value()[j].y2());
+			insertSegment.addBindValue(Attr[j].IDW);
+			insertSegment.addBindValue(Attr[j].Opr);
+			insertSegment.addBindValue(Attr[j].Typ);
+
+			insertSegment.exec();
+
+			insertGeometry.addBindValue(i.key());
+			insertGeometry.addBindValue(ID);
+			insertGeometry.addBindValue(0);
+			insertGeometry.addBindValue(++N);
+
+			insertGeometry.exec();
+		}
+
+		for (const auto& ID : otherUIDS)
+		{
+			insertGeometry.addBindValue(i.key());
+			insertGeometry.addBindValue(ID);
+			insertGeometry.addBindValue(0);
+			insertGeometry.addBindValue(++N);
+
+			insertGeometry.exec();
+		}
+
+		for (const auto& E : Geometry[i.key()]) if (E.Typ != 0)
+		{
+			insertGeometry.addBindValue(i.key());
+			insertGeometry.addBindValue(E.IDE);
+			insertGeometry.addBindValue(E.Typ);
+			insertGeometry.addBindValue(++N);
+
+			insertGeometry.exec();
+		}
+
+		Count += freeUIDS.size();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onSegmentDelete(Count);
 }
 
 void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements)

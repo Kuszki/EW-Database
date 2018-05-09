@@ -58,7 +58,8 @@ SOURCES		+=	main.cpp \
 				copyfieldswidget.cpp \
 				copyfieldsdialog.cpp \
 				scriptdialog.cpp \
-				klhighlighter.cpp
+				klhighlighter.cpp \
+				reducedialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
 				connectdialog.hpp \
@@ -92,7 +93,8 @@ HEADERS		+=	mainwindow.hpp \
 				copyfieldswidget.hpp \
 				copyfieldsdialog.hpp \
 				scriptdialog.hpp \
-				klhighlighter.hpp
+				klhighlighter.hpp \
+				reducedialog.hpp
 
 FORMS		+=	mainwindow.ui \
 				connectdialog.ui \
@@ -121,7 +123,8 @@ FORMS		+=	mainwindow.ui \
 				selectordialog.ui \
 				copyfieldswidget.ui \
 				copyfieldsdialog.ui \
-				scriptdialog.ui
+				scriptdialog.ui \
+				reducedialog.ui
 
 RESOURCES		+=	resources.qrc
 

@@ -127,6 +127,7 @@
     <addaction name="separator"/>
     <addaction name="actionFit"/>
     <addaction name="actionInsert"/>
+    <addaction name="actionReduce"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -219,6 +220,7 @@
    <addaction name="actionSplit"/>
    <addaction name="actionFit"/>
    <addaction name="actionInsert"/>
+   <addaction name="actionReduce"/>
   </widget>
   <widget class="QToolBar" name="labelTool">
    <property name="windowTitle">
@@ -658,6 +660,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+=</string>
+   </property>
+  </action>
+  <action name="actionReduce">
+   <property name="icon">
+    <iconset theme="format-text-direction-rtl"/>
+   </property>
+   <property name="text">
+    <string>Remove segments</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Del</string>
    </property>
   </action>
  </widget>

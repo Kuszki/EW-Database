@@ -124,6 +124,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
 	connect(Driver, &DatabaseDriver::onLabelEdit, this, &MainWindow::labelEdit);
 	connect(Driver, &DatabaseDriver::onKergUpdate, this, &MainWindow::updatedKerg);
+	connect(Driver, &DatabaseDriver::onSegmentDelete, this, &MainWindow::segmentsReduced);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -173,6 +174,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
+	connect(this, &MainWindow::onReduceRequest, Driver, &DatabaseDriver::removeSegments);
 
 	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
 	connect(Terminator, &QPushButton::clicked, Driver, &DatabaseDriver::terminate, Qt::DirectConnection);
@@ -472,6 +474,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionKerg->setEnabled(Count > 0);
 	ui->actionCopyfields->setEnabled(Count > 0);
 	ui->actionScript->setEnabled(Count > 0);
+	ui->actionReduce->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 1);
@@ -589,6 +592,15 @@ void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, d
 	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation);
 }
 
+void MainWindow::execReduce(double Radius)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
+
+	lockUi(BUSY); emit onReduceRequest(Set, Radius);
+}
+
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
@@ -615,6 +627,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Loader = new SelectorDialog(this);
 	Copyfields = new CopyfieldsDialog(allHeaders, this);
 	Script = new ScriptDialog(Props, this);
+	Reduce = new ReduceDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -632,6 +645,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Loader, &SelectorDialog::onDataAccepted, this, &MainWindow::loadRequest);
 	connect(Copyfields, &CopyfieldsDialog::onCopyRequest, this, &MainWindow::execCopy);
 	connect(Script, &ScriptDialog::onRunRequest, this, &MainWindow::execScript);
+	connect(Reduce, &ReduceDialog::onReduceRequest, this, &MainWindow::execReduce);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -646,6 +660,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionLoad, &QAction::triggered, Loader, &SelectorDialog::open);
 	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
 	connect(ui->actionScript, &QAction::triggered, Script, &ScriptDialog::open);
+	connect(ui->actionReduce, &QAction::triggered, Reduce, &ReduceDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
@@ -675,6 +690,7 @@ void MainWindow::databaseDisconnected(void)
 	Loader->deleteLater();
 	Copyfields->deleteLater();
 	Script->deleteLater();
+	Reduce->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();
@@ -811,6 +827,11 @@ void MainWindow::labelDelete(int Count)
 void MainWindow::breaksInsert(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n breakpoint(s)", nullptr, Count));
+}
+
+void MainWindow::segmentsReduced(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n segment(s)", nullptr, Count));
 }
 
 void MainWindow::batchExec(int Count)
@@ -1117,6 +1138,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionInterface->setEnabled(false);
 			ui->actionCopyfields->setEnabled(false);
 			ui->actionScript->setEnabled(false);
+			ui->actionReduce->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 		break;
 		case BUSY:
@@ -1148,6 +1170,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionInterface->setEnabled(false);
 			ui->actionCopyfields->setEnabled(false);
 			ui->actionScript->setEnabled(false);
+			ui->actionReduce->setEnabled(false);
 			ui->Data->setEnabled(false);
 
 			Driver->unterminate();
