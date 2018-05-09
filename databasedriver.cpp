@@ -760,9 +760,8 @@ void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasks, co
 
 	if (Dateupdate) updateModDate(Tasks.first(), 0);
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating special data"));
-	emit onSetupProgress(0, Tasks.first().size());
+	emit onSetupProgress(0, Tasks.first().size()); Step = 0;
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i) if (!i.value().isEmpty())
 	{
@@ -1166,9 +1165,8 @@ void DatabaseDriver::updateData(const QSet<int>& Items, const QHash<int, QVarian
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1);
 
-	performDataUpdates(Tasks, Values, Reasons, true);
+	performDataUpdates(Tasks, Values, Reasons, true); int Step = 0;
 
-	emit onEndProgress(); int Step = 0;
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size() - 1);
 
@@ -1320,7 +1318,7 @@ void DatabaseDriver::execBatch(const QSet<int>& Items, const QList<BatchWidget::
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onBatchExec(0); return; }
 
-	QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1);
+	QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1); int Step = 0;
 
 	QList<QVariantList> Args; for (const auto& A : Values)
 	{
@@ -1334,7 +1332,6 @@ void DatabaseDriver::execBatch(const QSet<int>& Items, const QList<BatchWidget::
 	const QSet<int> Changes = performBatchUpdates(Tasks, Functions, Args);
 	for (auto& Group : Tasks) Group.intersect(Changes);
 
-	emit onEndProgress(); int Step = 0;
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size() - 1);
 
@@ -1358,7 +1355,7 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 	QHash<int, QHash<int, QVariant>> List; List.reserve(Items.size());
 
 	emit onBeginProgress(tr("Loading items"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); int Step = 0;
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i) if (!isTerminated())
 	{
@@ -1406,7 +1403,6 @@ void DatabaseDriver::execFieldcopy(const QSet<int>& Items, const QList<Copyfield
 	const QSet<int> Changes = performBatchUpdates(Tasks, uFunctions, uValues);
 	for (auto& Group : Tasks) Group.intersect(Changes);
 
-	emit onEndProgress(); int Step = 0;
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size() - 1);
 
@@ -1430,7 +1426,7 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 	QHash<int, QHash<int, QVariant>> List; List.reserve(Items.size());
 
 	emit onBeginProgress(tr("Loading items"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); int Step = 0;
 
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
 										 .replaceInStrings(QRegExp("\\s+"), "_");
@@ -1501,7 +1497,6 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 	const QSet<int> Changes = performBatchUpdates(Tasks, Functions, Values);
 	for (auto& Group : Tasks) Group.intersect(Changes);
 
-	emit onEndProgress(); int Step = 0;
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size());
 
@@ -1554,9 +1549,8 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 		emit onUpdateProgress(++Step);
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, Tasks[From].size());
+	emit onSetupProgress(0, Tasks[From].size()); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1592,9 +1586,8 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataSplit(0); return; }
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Splitting data"));
-	emit onSetupProgress(0, Objects.size());
+	emit onSetupProgress(0, Objects.size()); Step = 0;
 
 	Query.prepare("DELETE FROM EW_OB_ELEMENTY WHERE TYP = 1 AND UIDO = ? AND IDE = ?");
 
@@ -1647,9 +1640,8 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		Joined.insert(Query.value(0).toInt());
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading points"));
-	emit onSetupProgress(0, Tasks[Point].size());
+	emit onSetupProgress(0, Tasks[Point].size()); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1692,9 +1684,8 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		}
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, Tasks[Join].size());
+	emit onSetupProgress(0, Tasks[Join].size()); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1729,9 +1720,8 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		}
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	switch (Type)
 	{
@@ -1746,9 +1736,8 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		break;
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Joining data"));
-	emit onSetupProgress(0, Insert.size());
+	emit onSetupProgress(0, Insert.size()); Step = 0;
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataJoin(0); return; }
 
@@ -1789,9 +1778,8 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		emit onUpdateProgress(++Step);
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating view"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
 	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -1895,9 +1883,8 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 		});
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1963,9 +1950,8 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 		}
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Merging objects"));
-	emit onSetupProgress(0, Tasks.first().size());
+	emit onSetupProgress(0, Tasks.first().size()); Step = 0;
 
 	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
 	{
@@ -2028,9 +2014,8 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataMerge(0); return; }
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating database"));
-	emit onSetupProgress(0, Merges.size());
+	emit onSetupProgress(0, Merges.size()); Step = 0;
 
 	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
 	{
@@ -2174,9 +2159,8 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	emit onRowsRemove(Merged);
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating view"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
@@ -2352,9 +2336,8 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		}
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading lines"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -2397,9 +2380,8 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		});
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Generating tasklist"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Cuts, [this, &Parts, &Queue, &Locker] (const QPointF& Point) -> void
 	{
@@ -2425,9 +2407,8 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		}
 	});
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -2533,9 +2514,8 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataCut(0); return; }
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Inserting objects"));
-	emit onSetupProgress(0, Queue.size());
+	emit onSetupProgress(0, Queue.size()); Step = 0;
 
 	QtConcurrent::blockingMap(Parts, getPairs);
 
@@ -2889,9 +2869,8 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 		emit onUpdateProgress(++Step);
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating view"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
 	if (!vClass.isNull() || Dateupdate) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
@@ -3608,9 +3587,8 @@ void DatabaseDriver::restoreJob(const QSet<int>& Items)
 		QueryC.exec();
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Updating view"));
-	emit onSetupProgress(0, Tasks.size());
+	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
@@ -3755,9 +3733,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		}
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading lines"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -3795,9 +3772,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		});
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading texts"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -3846,9 +3822,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		if (Items.contains(i.key())) Points.insert(i.key(), i.value());
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Loading circles"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0);  Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -3885,9 +3860,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		});
 	}
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Performing edit"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Lines, [] (LINE& Line) -> void
 	{
@@ -4038,9 +4012,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	for (const auto& Point : Points) if (Point.Changed) Union.append(&Point);
 	for (const auto& Point : Texts) if (Point.Changed) Union.append(&Point);
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Saving changes"));
-	emit onSetupProgress(0, Union.size());
+	emit onSetupProgress(0, Union.size()); Step = 0;
 
 	Query.prepare(
 		"UPDATE "
@@ -4643,6 +4616,165 @@ void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radiu
 
 	emit onEndProgress();
 	emit onPointInsert(Count);
+}
+
+void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentDelete(0); return; }
+
+	struct ELEMENT { int IDE, Typ; };
+
+	QSqlQuery Objects(Database), Elements(Database),
+			updateSegment(Database), deleteSegment(Database),
+			insertGeometry(Database), deleteGeometry(Database);
+
+	QMutex Synchronizer; int Step(0);
+
+	Objects.prepare(
+		"SELECT "
+			"O.UID, P.ID, "
+			"P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
+			"P.P1_FLAGS "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS <> 4 AND "
+			"E.TYP = 0 "
+		"ORDER BY "
+			"O.UID ASC, "
+			"E.N ASC");
+
+	Elements.prepare(
+		"SELECT "
+			"E.UIDO, "
+			"E.IDE, "
+			"E.TYP "
+		"FROM "
+			"EW_OB_ELEMENTY E "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"O.UID = E.UIDO "
+		"WHERE "
+			"O.STATUS = 0 "
+		"ORDER BY "
+			"E.UIDO ASC, "
+			"E.N ASC");
+
+	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ?");
+	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
+
+	insertGeometry.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
+	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
+
+	QHash<int, QList<ELEMENT>> Geometry;
+	QHash<int, QList<QLineF>> Changes;
+	QHash<int, QLineF> Lines;
+
+	emit onBeginProgress(tr("Loading lines"));
+	emit onSetupProgress(0, 0);
+
+	if (Objects.exec()) while (Objects.next() && !isTerminated())
+	{
+		const int UID = Objects.value(0).toInt();
+
+		if (Items.contains(UID)) Lines.insert(Objects.value(1).toInt(),
+		{
+			Objects.value(2).toDouble(),
+			Objects.value(3).toDouble(),
+			Objects.value(4).toDouble(),
+			Objects.value(5).toDouble()
+		});
+	}
+
+	emit onBeginProgress(tr("Loading elements"));
+	emit onSetupProgress(0, 0); Step = 0;
+
+	if (Elements.exec()) while (Elements.next() && !isTerminated())
+	{
+		const int UID = Elements.value(0).toInt();
+
+		if (Items.contains(UID)) Geometry[UID].append(
+		{
+			Elements.value(1).toInt(),
+			Elements.value(2).toInt()
+		});
+	}
+
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, 0); Step = 0;
+
+	QtConcurrent::blockingMap(Items,
+	[&Geometry, &Lines, &Changes, &Lines, &Synchronizer, Length]
+	(const int& UID) -> void
+	{
+		auto getRemPart = [] (const QPointF& From, const QList<QLineF>& List) -> QPointF
+		{
+			for (const auto& L : List)
+			{
+				if (From == L.p1()) return L.p2();
+				if (From == L.p2()) return L.p1();
+			}
+
+			return QPointF();
+		};
+
+		if (!Geometry.contains(UID)) return;
+		const auto& Copy = Geometry[UID];
+
+		QList<QLineF> List;
+		QLineF Unified;
+
+		for (const auto& E : Copy) if (E.Typ == 0 && Lines.contains(E.IDE))
+		{
+			const auto& Line = Lines[E.IDE];
+
+			if (Line.length() > Length)
+			{
+				if (Unified != QLineF())
+				{
+					auto Last = Line;
+
+					if (Last.p1() == Unified.p1()) Last.setP1(Unified.p2());
+					else if (Last.p1() == Unified.p2()) Last.setP1(Unified.p1());
+					else if (Last.p2() == Unified.p1()) Last.setP2(Unified.p2());
+					else if (Last.p2() == Unified.p2()) Last.setP2(Unified.p1());
+
+					List.append(Last);
+				}
+				else List.append(Line);
+			}
+			else
+			{
+				if (Unified == QLineF()) Unified = Line;
+				else
+				{
+					if (Unified.p1() == Line.p1()) Unified.setP1(Line.p2());
+					else if (Unified.p1() == Line.p2()) Unified.setP1(Line.p1());
+					else if (Unified.p2() == Line.p1()) Unified.setP2(Line.p2());
+					else if (Unified.p2() == Line.p2()) Unified.setP2(Line.p1());
+
+					if (Unified.length() > Length)
+					{
+						List.append(Unified);
+						Unified = QLineF();
+					}
+				}
+			}
+		}
+	});
 }
 
 void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements)
@@ -7353,9 +7485,8 @@ void DatabaseDriver::getClass(const QSet<int>& Items)
 		"ORDER BY "
 			"G.NAZWA_L");
 
-	emit onEndProgress(); Step = 0;
 	emit onBeginProgress(tr("Selecting layers data"));
-	emit onSetupProgress(0, Tables.size());
+	emit onSetupProgress(0, Tables.size());  Step = 0;
 
 	if (Type) for (const auto& Table : Tables)
 	{
