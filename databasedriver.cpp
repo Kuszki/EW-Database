@@ -4806,7 +4806,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	emit onBeginProgress(tr("Updating geometry"));
 	emit onSetupProgress(0, Changes.size()); Step = 0;
 
-	for (auto i = Changes.constBegin(); i != Changes.constEnd(); ++i)
+	for (auto i = Changes.constBegin(); i != Changes.constEnd(); ++i) if (!isTerminated())
 	{
 		QList<int> freeUIDS, otherUIDS; int N(0);
 
