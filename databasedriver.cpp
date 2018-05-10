@@ -4633,9 +4633,11 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 
 	Objects.prepare(
 		"SELECT "
-			"O.UID, P.ID, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
+			"O.UID, P.ID, "
+			"ROUND(P.P0_X, 5), "
+			"ROUND(P.P0_Y, 5), "
+			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 5), "
+			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 5), "
 			"P.ID_WARSTWY, P.TYP_LINII, P.OPERAT "
 		"FROM "
 			"EW_OBIEKTY O "
@@ -4677,7 +4679,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	insertSegment.prepare(
 		"INSERT INTO EW_POLYLINE "
 			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
-		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, 1.0, 1)");
+		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, 1.0, 2)");
 
 	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
 	insertGeometry.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
@@ -4734,7 +4736,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Lines, &Changes, &Lines, &Attribs, &Metadata, &Synchronizer, Length]
+	[&Geometry, &Lines, &Changes, &Attribs, &Metadata, &Synchronizer, Length]
 	(const int& UID) -> void
 	{
 		if (!Geometry.contains(UID)) return;
@@ -4766,6 +4768,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 				else List.append(Line);
 
 				Attr.append(Metadata[E.IDE]);
+				Unified = QLineF();
 			}
 			else
 			{

@@ -129,5 +129,3 @@ FORMS		+=	mainwindow.ui \
 RESOURCES		+=	resources.qrc
 
 TRANSLATIONS	+=	ew-database_pl.ts
-
-QMAKE_CXXFLAGS	+=	-std=c++14
