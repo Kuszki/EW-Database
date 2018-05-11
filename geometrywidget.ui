@@ -47,12 +47,12 @@
      </item>
      <item>
       <property name="text">
-       <string>Is geometry of</string>
+       <string>Geometry is part of</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>Is not geometry of</string>
+       <string>Geometry is not part of</string>
       </property>
      </item>
      <item>
