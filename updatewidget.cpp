@@ -250,6 +250,8 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 			Combo->addItem(tr("Yes"), 1);
 			Combo->addItem(tr("No"), 0);
 			Combo->setProperty("MASK", false);
+
+			connect(Combo, &QComboBox::currentTextChanged, this, &UpdateWidget::textChanged);
 		}
 		break;
 		case DatabaseDriver::DOUBLE:
