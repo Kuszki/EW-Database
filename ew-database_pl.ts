@@ -1115,12 +1115,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     </message>
     <message>
         <location filename="geometrywidget.ui" line="50"/>
-        <source>Is geometry of</source>
+        <source>Geometry is part of</source>
         <translation>Geometria jest częścią</translation>
     </message>
     <message>
         <location filename="geometrywidget.ui" line="55"/>
-        <source>Is not geometry of</source>
+        <source>Geometry is not part of</source>
         <translation>Geometria nie jest częścią</translation>
     </message>
     <message>
