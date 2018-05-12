@@ -4338,18 +4338,218 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 		}
 	});
 
-	QtConcurrent::blockingMap(SurfaceList, [this, &Insertions, &Synchronizer] (SURFACE& Surface) -> void
+	QtConcurrent::blockingMap(SurfaceList, [this, &Insertions, &Synchronizer, L, R] (SURFACE& Surface) -> void
 	{
 		if (this->isTerminated()) return;
 
 		if (Surface.Surface.isEmpty()) return;
 
-		const double Mul = 1.0 / Surface.Surface.size(); double X(0.0), Y(0.0);
-		for (const auto& P : Surface.Surface) { X += Mul * P.x(); Y += Mul * P.y(); }
+		QLineF Radius(INFINITY, INFINITY, -INFINITY, -INFINITY);
 
-		Synchronizer.lock();
-		Insertions.append({ Surface.ID, X, Y, 0.0, Surface.Layer });
-		Synchronizer.unlock();
+		for (const auto& P : Surface.Surface)
+		{
+			if (P.x() < Radius.x1()) Radius.setP1({ P.x(), Radius.y1() });
+			if (P.x() > Radius.x2()) Radius.setP2({ P.x(), Radius.y2() });
+			if (P.y() < Radius.y1()) Radius.setP1({ Radius.x1(), P.y() });
+			if (P.y() > Radius.y2()) Radius.setP2({ Radius.x2(), P.y() });
+		}
+
+		const double Length = qMax(Radius.dx(), Radius.dy());
+
+		if (R == 0.0 && Length >= L)
+		{
+			const double Mul = 1.0 / Surface.Surface.size(); double X(0.0), Y(0.0);
+			for (const auto& P : Surface.Surface) { X += Mul * P.x(); Y += Mul * P.y(); }
+
+			Synchronizer.lock();
+			Insertions.append({ Surface.ID, X, Y, 0.0, Surface.Layer });
+			Synchronizer.unlock();
+		}
+		else if (R != 0.0 && Length >= L)
+		{
+			auto normalizeAngle = [] (double rad) -> double
+			{
+				while (rad > 2*M_PI) rad -= 2*M_PI;
+				while (rad < 0) rad += 2*M_PI;
+
+				if (rad > 1*M_PI_2 && rad <= 2*M_PI_2) rad += M_PI;
+				if (rad < 3*M_PI_2 && rad >= 2*M_PI_2) rad -= M_PI;
+
+				return rad;
+			};
+
+			auto getAngle = [] (const QList<QPair<QPointF, double>> L, const QPointF& P) -> double
+			{
+				for (const auto& I : L) if (I.first == P) return I.second; return NAN;
+			};
+
+			double Start = (Length - (int(Length / R) * R)) / 2.0;
+
+			if (Radius.dx() > Radius.dy())
+			{
+				double Stop(Radius.x2()); Start += Radius.x1();
+
+				QLineF Step(Start, Radius.y1(), Start, Radius.y2());
+
+				while (Start < Stop)
+				{
+					QList<QPointF> Intersections; QPointF Int;
+					QList<QPair<QPointF, double>> Angles;
+
+					for (int i = 1; i < Surface.Surface.size(); ++i)
+					{
+						const QLineF vLine(Surface.Surface[i - 1],
+									    Surface.Surface[i]);
+
+						auto Type = Step.intersect(vLine, &Int);
+
+						if (Type == QLineF::BoundedIntersection)
+						{
+							const double ang = qAtan((vLine.y1() - vLine.y2()) /
+												(vLine.x1() - vLine.x2()));
+
+							Angles.append({ Int, normalizeAngle(ang - M_PI_2) });
+							Intersections.append(Int);
+						}
+					}
+
+					std::sort(Intersections.begin(), Intersections.end(),
+					[] (const QPointF& A, const QPointF& B) -> bool
+					{
+						return A.y() < B.y();
+					});
+
+					while (Intersections.size() >= 2)
+					{
+						QLineF vLine(Intersections.takeFirst(),
+								   Intersections.takeFirst());
+
+						const double vLength = vLine.length();
+						const double a1 = getAngle(Angles, vLine.p1());
+						const double a2 = getAngle(Angles, vLine.p2());
+
+						if (vLength >= R)
+						{
+							double vStart = (vLength - (int(vLength / R) * R)) / 2.0;
+							vStart += qMin(vLine.y1(), vLine.y2());
+
+							while (vStart < qMax(vLine.y1(), vLine.y2()))
+							{
+								const QPointF C(Start, vStart); vStart += R;
+
+								const double w1 = 1/QLineF(C, vLine.p1()).length();
+								const double w2 = 1/QLineF(C, vLine.p2()).length();
+
+								const double ang = normalizeAngle((w1*a1 + w2*a2) / (w1 + w2));
+
+								if (Surface.Surface.containsPoint(C, Qt::OddEvenFill))
+								{
+									Synchronizer.lock();
+									Insertions.append({ Surface.ID, C.x(), C.y(), ang, Surface.Layer });
+									Synchronizer.unlock();
+								}
+							}
+						}
+						else
+						{
+							const auto C = vLine.center();
+							const double ang = normalizeAngle((a1 + a2) / 2);
+
+							if (Surface.Surface.containsPoint(C, Qt::OddEvenFill))
+							{
+								Synchronizer.lock();
+								Insertions.append({ Surface.ID, C.x(), C.y(), ang, Surface.Layer });
+								Synchronizer.unlock();
+							}
+						}
+					}
+
+					Start += R; Step.setLine(Start, Radius.y1(), Start, Radius.y2());
+				}
+			}
+			else
+			{
+				double Stop(Radius.y2()); Start += Radius.y1();
+
+				QLineF Step(Radius.x1(), Start, Radius.x2(), Start);
+
+				while (Start < Stop)
+				{
+					QList<QPointF> Intersections; QPointF Int;
+					QList<QPair<QPointF, double>> Angles;
+
+					for (int i = 1; i < Surface.Surface.size(); ++i)
+					{
+						const QLineF hLine(Surface.Surface[i - 1],
+									    Surface.Surface[i]);
+
+						auto Type = Step.intersect(hLine, &Int);
+
+						if (Type == QLineF::BoundedIntersection)
+						{
+							const double ang = qAtan((hLine.y1() - hLine.y2()) /
+												(hLine.x1() - hLine.x2()));
+
+							Angles.append({ Int, normalizeAngle(ang - M_PI_2) });
+							Intersections.append(Int);
+						}
+					}
+
+					std::sort(Intersections.begin(), Intersections.end(),
+					[] (const QPointF& A, const QPointF& B) -> bool
+					{
+						return A.x() < B.x();
+					});
+
+					while (Intersections.size() >= 2)
+					{
+						QLineF hLine(Intersections.takeFirst(),
+								   Intersections.takeFirst());
+
+						const double hLength = hLine.length();
+						const double a1 = getAngle(Angles, hLine.p1());
+						const double a2 = getAngle(Angles, hLine.p2());
+
+						if (hLength >= R)
+						{
+							double hStart = (hLength - (int(hLength / R) * R)) / 2.0;
+							hStart += qMin(hLine.x1(), hLine.x2());
+
+							while (hStart < qMax(hLine.x1(), hLine.x2()))
+							{
+								const QPointF C(Start, hStart); hStart += R;
+
+								const double w1 = 1/QLineF(C, hLine.p1()).length();
+								const double w2 = 1/QLineF(C, hLine.p2()).length();
+
+								const double ang = normalizeAngle((w1*a1 + w2*a2) / (w1 + w2));
+
+								if (Surface.Surface.containsPoint(C, Qt::OddEvenFill))
+								{
+									Synchronizer.lock();
+									Insertions.append({ Surface.ID, C.x(), C.y(), ang, Surface.Layer });
+									Synchronizer.unlock();
+								}
+							}
+						}
+						else
+						{
+							const auto C = hLine.center();
+							const double ang = normalizeAngle((a1 + a2) / 2);
+
+							if (Surface.Surface.containsPoint(C, Qt::OddEvenFill))
+							{
+								Synchronizer.lock();
+								Insertions.append({ Surface.ID, C.x(), C.y(), ang, Surface.Layer });
+								Synchronizer.unlock();
+							}
+						}
+					}
+
+					Start += R; Step.setLine(Radius.x1(), Start, Radius.x2(), Start);
+				}
+			}
+		}
 	});
 
 	QtConcurrent::blockingMap(Insertions, [X, Y] (LABEL& Point) -> void
