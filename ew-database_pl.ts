@@ -1375,7 +1375,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Źródła</translation>
     </message>
     <message>
-        <location filename="kergdialog.ui" line="63"/>
+        <location filename="kergdialog.ui" line="67"/>
         <source>Open</source>
         <translation>Otwórz</translation>
     </message>

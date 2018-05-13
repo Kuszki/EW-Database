@@ -717,7 +717,7 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 		}
 
 		Synchronizer.lock();
-		if (!(++Step % 1000)) emit onUpdateProgress(Step);
+		if (!(++Step % 100)) emit onUpdateProgress(Step);
 		Synchronizer.unlock();
 	});
 }
