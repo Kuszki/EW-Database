@@ -859,7 +859,9 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QMap<QString, QSet<int>> Tas
 					{
 						if (F.first >= 0 && !Updates.contains(F.first) && Common[F.first].Type != READONLY)
 						{
-							if (Common[F.first].Dict.isEmpty()) Updates.insert(F.first, Rules[Col]);
+							const QVariant Val = castVariantTo(Rules[Col], Common[F.first].Type);
+
+							if (Common[F.first].Dict.isEmpty()) Updates.insert(F.first, Val);
 							else Updates.insert(F.first, getDataByDict(Rules[Col], Common[F.first].Dict, Common[F.first].Type));
 						}
 					}
@@ -870,7 +872,9 @@ QSet<int> DatabaseDriver::performBatchUpdates(const QMap<QString, QSet<int>> Tas
 
 						if (Column != -1 && !Updates.contains(Ufid) && Fields[Ufid].Type != READONLY)
 						{
-							if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Rules[Col]);
+							const QVariant Val = castVariantTo(Rules[Col], Fields[Ufid].Type);
+
+							if (Table.Fields[Column].Dict.isEmpty()) Updates.insert(Ufid, Val);
 							else Updates.insert(Ufid, getDataByDict(Rules[Col], Fields[Ufid].Dict, Fields[Ufid].Type));
 						}
 					}
@@ -8119,4 +8123,33 @@ QStandardItemModel*getJsHelperModel(QObject* Parent, const QStringList& Variable
 	}
 
 	return Model;
+}
+
+QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type)
+{
+	if (Variant.type() == QVariant::String) switch (Type)
+	{
+		case DatabaseDriver::READONLY:
+		case DatabaseDriver::STRING:
+			return Variant;
+		break;
+		case DatabaseDriver::MASK:
+		case DatabaseDriver::INTEGER:
+		case DatabaseDriver::SMALLINT:
+			return Variant.toInt();
+		break;
+		case DatabaseDriver::BOOL:
+			return Variant.toBool();
+		break;
+		case DatabaseDriver::DOUBLE:
+			return Variant.toDouble();
+		break;
+		case DatabaseDriver::DATE:
+			return QDate::fromString(Variant.toString(), Qt::SystemLocaleShortDate);
+		break;
+		case DatabaseDriver::DATETIME:
+			return QDateTime::fromString(Variant.toString(), Qt::SystemLocaleShortDate);
+		break;
+	}
+	else return Variant;
 }

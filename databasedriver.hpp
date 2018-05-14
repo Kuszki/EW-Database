@@ -389,6 +389,8 @@ bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE&
 QVariant getDataFromDict(const QVariant& Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
 QVariant getDataByDict(const QVariant& Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
 
+QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type);
+
 template<class Type, class Field, template<class> class Container>
 Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);
 

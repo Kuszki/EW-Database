@@ -379,7 +379,7 @@ void MainWindow::batchActionClicked(void)
 
 		if (File.isOpen())
 		{
-			QList<QStringList> Values; QRegExp Separator; int Count = 0;
+			QSet<QStringList> Values; QRegExp Separator; int Count = 0;
 
 			const QString Extension = QFileInfo(Path).suffix();
 
@@ -392,13 +392,13 @@ void MainWindow::batchActionClicked(void)
 				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
 
 				if (!Count) Count = Data.size();
-				if (Data.size() == Count) Values.append(Data);
+				if (Data.size() == Count) Values.insert(Data);
 
 			}
 
 			if (Count && !Values.isEmpty())
 			{
-				auto Dialog = new BatchDialog(allHeaders, Values, this); Dialog->open();
+				auto Dialog = new BatchDialog(allHeaders, Values.toList(), this); Dialog->open();
 
 				connect(Dialog, &BatchDialog::accepted, Dialog, &BatchDialog::deleteLater);
 				connect(Dialog, &BatchDialog::rejected, Dialog, &BatchDialog::deleteLater);
