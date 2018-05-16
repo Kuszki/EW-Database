@@ -4124,10 +4124,11 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 			"IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), "
 			"("
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+				"INNER JOIN EW_GRUPY_WARSTW M ON H.ID_GRUPY = M.ID"
 				"WHERE P.NAZWA = ("
 					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
-					"WHERE H.ID = T.ID_WARSTWY "
-				") "
+					"WHERE H.ID = T.ID_WARSTWY"
+				") AND M.NAZWA LIKE '%#_E' ESCAPE '#'"
 			") "
 		"FROM "
 			"EW_OBIEKTY O "
@@ -5127,7 +5128,7 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 
 				if (Data.size() < 2 || !Mapping.contains(Data[0])) continue;
 
-				const QDate Date = QDate::fromString(Data[1], Qt::SystemLocaleShortDate);
+				const QDate Date = castStrToDate(Data[1]);
 
 				if (Date.isValid()) Dates[Mapping[Data[0]]] = Date;
 			}
@@ -8151,11 +8152,45 @@ QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type)
 			return Variant.toDouble();
 		break;
 		case DatabaseDriver::DATE:
-			return QDate::fromString(Variant.toString(), Qt::SystemLocaleShortDate);
+			return castStrToDate(Variant.toString());
 		break;
 		case DatabaseDriver::DATETIME:
-			return QDateTime::fromString(Variant.toString(), Qt::SystemLocaleShortDate);
+			return castStrToDatetime(Variant.toString());
 		break;
 	}
 	else return Variant;
+}
+
+QDateTime castStrToDatetime(const QString& String)
+{
+	static const QStringList Formats =
+	{
+		"d.M.yyyy h:m:s", "d/M/yyyy h:m:s", "yyyy-M-d h:m:s"
+	};
+
+	for (const auto& Fmt : Formats)
+	{
+
+		QDateTime Date = QDateTime::fromString(String, Fmt);
+		if (Date.isValid()) return Date;
+	}
+
+	return QDateTime::fromString(String, Qt::DefaultLocaleShortDate);
+}
+
+QDate castStrToDate(const QString& String)
+{
+	static const QStringList Formats =
+	{
+		"d.M.yyyy", "d/M/yyyy", "yyyy-M-d"
+	};
+
+	for (const auto& Fmt : Formats)
+	{
+
+		QDate Date = QDate::fromString(String, Fmt);
+		if (Date.isValid()) return Date;
+	}
+
+	return QDate::fromString(String, Qt::DefaultLocaleShortDate);
 }

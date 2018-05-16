@@ -390,6 +390,8 @@ QVariant getDataFromDict(const QVariant& Value, const QMap<QVariant, QString>& D
 QVariant getDataByDict(const QVariant& Value, const QMap<QVariant, QString>& Dict, DatabaseDriver::TYPE Type);
 
 QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type);
+QDateTime castStrToDatetime(const QString& String);
+QDate castStrToDate(const QString& String);
 
 template<class Type, class Field, template<class> class Container>
 Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);
