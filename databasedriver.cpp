@@ -687,7 +687,7 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant> >& Data, const Q
 
 void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QString& Expression)
 {
-	if (!Database.isOpen()) return;
+	if (!Database.isOpen()) return; QSet<int> Deletes;
 
 	const QSet<int> All = Data.keys().toSet(); QMutex Synchronizer;
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
@@ -696,8 +696,10 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 	emit onBeginProgress(tr("Performing advanced filters"));
 	emit onSetupProgress(0, All.size()); int Step = 0;
 
-	QtConcurrent::blockingMap(All, [this, &Data, &Synchronizer, &Step, &Expression, &Props] (int UID) -> void
+	QtConcurrent::blockingMap(All, [this, &Data, &Synchronizer, &Step, &Expression, &Props, &Deletes] (int UID) -> void
 	{
+		if (isTerminated()) return;
+
 		const auto& Row = Data[UID]; QJSEngine Engine;
 
 		for (int i = 0; i < Props.size(); ++i)
@@ -712,14 +714,18 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 		if (Res.isError() || !Res.toBool())
 		{
 			Synchronizer.lock();
-			Data.remove(UID);
+			Deletes.insert(UID); if (!(++Step % 100)) emit onUpdateProgress(Step);
 			Synchronizer.unlock();
 		}
-
-		Synchronizer.lock();
-		if (!(++Step % 100)) emit onUpdateProgress(Step);
-		Synchronizer.unlock();
+		else
+		{
+			Synchronizer.lock();
+			if (!(++Step % 100)) emit onUpdateProgress(Step);
+			Synchronizer.unlock();
+		}
 	});
+
+	for (const auto& ID : Deletes) Data.remove(ID);
 }
 
 void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasks, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons, bool Emit)
