@@ -41,7 +41,7 @@ QPair<QString, int> ScriptDialog::validateScript(const QString& Script) const
 	if (Script.trimmed().isEmpty()) return QPair<QString, int>(); QJSEngine Engine;
 
 	auto Model = ui->variablesList->model();
-	auto Root = ui->variablesList->rootIndex();
+	auto Root = Model->index(0, 0);
 
 	for (int i = 0; i < Model->rowCount(Root); ++i)
 	{
