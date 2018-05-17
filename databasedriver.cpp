@@ -5132,6 +5132,11 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 		}
 	};
 
+	const auto isCut = [] (const QPointF& P, const QList<QPointF>& Cuts) -> bool
+	{
+		for (const auto& C : Cuts) if (pointComp(P, C)) return true; return false;
+	};
+
 	struct LINE { int ID; QLineF Line; };
 
 	QList<QPointF> Cuts; QList<int> Counts; QList<QPointF> Ends;
@@ -5241,11 +5246,9 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 	Objects.prepare(
 		"SELECT "
-			"O.UID, P.ID, "
-			"ROUND(P.P0_X, 5), "
-			"ROUND(P.P0_Y, 5), "
-			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 5), "
-			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 5) "
+			"O.UID, P.ID, P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
 		"FROM "
 			"EW_OBIEKTY O "
 		"INNER JOIN "
@@ -5268,7 +5271,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ? AND IDE = ? AND TYP = 0");
 	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
 	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? "
-					  "WHERE P.ID = ? AND P.STAN_ZMIANY = 0");
+					  "WHERE ID = ? AND STAN_ZMIANY = 0");
 
 	QHash<int, QList<LINE>> Geometry;
 	QSet<QPair<int, int>> Deletes;
@@ -5301,7 +5304,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff]
+	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff, isCut]
 	(const int& UID) -> void
 	{
 		if (!Geometry.contains(UID)) return;
@@ -5316,10 +5319,10 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 			if (qAbs(ang) < Diff || qAbs(qAbs(ang) - 180) < Diff || qAbs(qAbs(ang) - 360) < Diff)
 			{
-				if (L2.Line.p1() == L1.Line.p1() && !Cuts.contains(L2.Line.p1())) L2.Line.setP1(L1.Line.p2());
-				else if (L2.Line.p1() == L1.Line.p2() && !Cuts.contains(L2.Line.p1())) L2.Line.setP1(L1.Line.p1());
-				else if (L2.Line.p2() == L1.Line.p1() && !Cuts.contains(L2.Line.p2())) L2.Line.setP2(L1.Line.p2());
-				else if (L2.Line.p2() == L1.Line.p2() && !Cuts.contains(L2.Line.p2())) L2.Line.setP2(L1.Line.p1());
+				if (pointComp(L2.Line.p1(), L1.Line.p1()) && !isCut(L2.Line.p1(), Cuts)) L2.Line.setP1(L1.Line.p2());
+				else if (pointComp(L2.Line.p1(), L1.Line.p2()) && !isCut(L2.Line.p1(), Cuts)) L2.Line.setP1(L1.Line.p1());
+				else if (pointComp(L2.Line.p2(), L1.Line.p1()) && !isCut(L2.Line.p2(), Cuts)) L2.Line.setP2(L1.Line.p2());
+				else if (pointComp(L2.Line.p2(), L1.Line.p2()) && !isCut(L2.Line.p2(), Cuts)) L2.Line.setP2(L1.Line.p1());
 				else break;
 
 				Synchronizer.lock();
