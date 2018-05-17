@@ -96,9 +96,7 @@ void SelectorDialog::refreshButtonClicked(void)
 
 		if (File.open(QFile::ReadOnly | QFile::Text)) while (!Stream.atEnd())
 		{
-			QString Line = Stream.readLine().trimmed().remove(Spliter);
-
-			ui->listEdit->appendPlainText(Line.append('\n'));
+			ui->listEdit->appendPlainText(Stream.readLine().trimmed().remove(Spliter));
 		}
 	}
 	else if (Index == 1)
