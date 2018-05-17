@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -127,6 +127,7 @@
     <addaction name="separator"/>
     <addaction name="actionFit"/>
     <addaction name="actionInsert"/>
+    <addaction name="actionBreaks"/>
     <addaction name="actionReduce"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -664,13 +665,22 @@
   </action>
   <action name="actionReduce">
    <property name="icon">
-    <iconset theme="format-text-direction-rtl"/>
+    <iconset theme="format-text-direction-rtl">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Remove segments</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Del</string>
+   </property>
+  </action>
+  <action name="actionBreaks">
+   <property name="text">
+    <string>Remove breakpoints</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+/</string>
    </property>
   </action>
  </widget>

@@ -306,6 +306,7 @@ class DatabaseDriver : public QObject
 		void insertPoints(const QSet<int>& Items, int Mode, double Radius, bool Recursive);
 
 		void removeSegments(const QSet<int>& Items, double Length);
+		void mergeSegments(const QSet<int>& Items, int Flags);
 
 		void updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements);
 
@@ -379,6 +380,7 @@ class DatabaseDriver : public QObject
 		void onLabelInsert(int);
 		void onPointInsert(int);
 		void onSegmentDelete(int);
+		void onSegmentReduce(int);
 		void onLabelDelete(int);
 
 };

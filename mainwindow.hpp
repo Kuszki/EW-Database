@@ -46,6 +46,7 @@
 #include "exportdialog.hpp"
 #include "scriptdialog.hpp"
 #include "reducedialog.hpp"
+#include "breaksdialog.hpp"
 #include "groupdialog.hpp"
 #include "aboutdialog.hpp"
 #include "classdialog.hpp"
@@ -108,6 +109,7 @@ class MainWindow : public QMainWindow
 		KergDialog* Kerg;
 		ScriptDialog* Script;
 		ReduceDialog* Reduce;
+		BreaksDialog* Breaks;
 
 		QThread Thread;
 
@@ -193,6 +195,7 @@ class MainWindow : public QMainWindow
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L, bool E);
 		void insertBreaks(int Mode, double Radius, double Recursive);
 		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation);
+		void execBreaks(int Flags, double Radius);
 		void execReduce(double Radius);
 
 		void prepareMerge(const QList<int>& Used);
@@ -233,6 +236,7 @@ class MainWindow : public QMainWindow
 		void labelDelete(int Count);
 		void breaksInsert(int Count);
 		void segmentsReduced(int Count);
+		void breaksReduced(int Count);
 
 		void batchExec(int Count);
 
@@ -299,6 +303,8 @@ class MainWindow : public QMainWindow
 		void onInsertRequest(const QSet<int>&, int, double, bool);
 
 		void onReduceRequest(const QSet<int>&, double);
+
+		void onBreaksRequest(const QSet<int>&, int, double);
 
 		void onKergRequest(const QSet<int>&, const QString&, int, int);
 

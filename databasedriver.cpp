@@ -5113,6 +5113,261 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	emit onSegmentDelete(Count);
 }
 
+void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Diff)
+{
+	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentReduce(0); return; }
+
+	const auto appendCount = [] (const QPointF& P, QList<QPointF>& Ends, QList<QPointF>& Cuts, QList<int>& Counts)
+	{
+		const int Index = Ends.indexOf(P);
+
+		if (Index == -1)
+		{
+			Ends.append(P);
+			Counts.append(1);
+		}
+		else if (++Counts[Index] == 3)
+		{
+			Cuts.append(P);
+		}
+	};
+
+	struct LINE { int ID; QLineF Line; };
+
+	QList<QPointF> Cuts; QList<int> Counts; QList<QPointF> Ends;
+
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, 0);
+
+	if (Flags & 0x01)
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		Query.prepare(
+			"SELECT "
+				"ROUND(T.POS_X, 5), "
+				"ROUND(T.POS_Y, 5), "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_TEXT T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 4 AND "
+				"E.TYP = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
+				"T.TYP = 4");
+
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+
+		Query.prepare(
+			"SELECT "
+				"ROUND((P.P0_X + P.P1_X) / 2.0, 5), "
+				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 5) "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"P.STAN_ZMIANY = 0 AND "
+				"P.P1_FLAGS = 4 AND "
+				"E.TYP = 0 AND "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 3");
+
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+	}
+
+	if (Flags & 0x02)
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		Query.prepare(
+			"SELECT "
+				"ROUND(P.P0_X, 5), "
+				"ROUND(P.P0_Y, 5), "
+				"ROUND(P.P1_X, 5), "
+				"ROUND(P.P1_Y, 5) "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 4 AND "
+				"E.TYP = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
+				"T.P1_FLAGS = 0");
+
+		if (Query.exec()) while (Query.next() && !isTerminated())
+		{
+			const QPointF PointA(Query.value(0).toDouble(), Query.value(1).toDouble());
+			const QPointF PointB(Query.value(2).toDouble(), Query.value(3).toDouble());
+
+			appendCount(PointA, Ends, Cuts, Counts); appendCount(PointB, Ends, Cuts, Counts);
+		};
+	}
+
+	QSqlQuery Objects(Database), deleteGeometry(Database),
+			updateSegment(Database), deleteSegment(Database);
+
+	QMutex Synchronizer; int Step(0);
+
+	Objects.prepare(
+		"SELECT "
+			"O.UID, P.ID, "
+			"ROUND(P.P0_X, 5), "
+			"ROUND(P.P0_Y, 5), "
+			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 5), "
+			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 5) "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"E.IDE = P.ID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS <> 4 AND "
+			"E.TYP = 0 "
+		"ORDER BY "
+			"O.UID ASC, "
+			"E.N ASC");
+
+	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ? AND IDE = ? AND TYP = 0");
+	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
+	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? "
+					  "WHERE P.ID = ? AND P.STAN_ZMIANY = 0");
+
+	QHash<int, QList<LINE>> Geometry;
+	QSet<QPair<int, int>> Deletes;
+	QHash<int, QLineF> Updates;
+
+	emit onBeginProgress(tr("Loading lines"));
+	emit onSetupProgress(0, 0);
+
+	if (Objects.exec()) while (Objects.next() && !isTerminated())
+	{
+		const int UID = Objects.value(0).toInt();
+
+		if (!Items.contains(UID)) continue;
+
+		Geometry[UID].append(
+		{
+			Objects.value(1).toInt(),
+			{
+				Objects.value(2).toDouble(),
+				Objects.value(3).toDouble(),
+				Objects.value(4).toDouble(),
+				Objects.value(5).toDouble()
+			}
+		});
+	}
+
+	if (isTerminated()) { emit onEndProgress(); emit onSegmentReduce(0); return; }
+
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, 0); Step = 0;
+
+	QtConcurrent::blockingMap(Items,
+	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff]
+	(const int& UID) -> void
+	{
+		if (!Geometry.contains(UID)) return;
+		auto& List = Geometry[UID];
+
+		for (int i = 1; i < List.size(); ++i)
+		{
+			auto& L1 = List[i - 1];
+			auto& L2 = List[i];
+
+			const double ang = L1.Line.angleTo(L2.Line);
+
+			if (qAbs(ang) < Diff || qAbs(qAbs(ang) - 180) < Diff || qAbs(qAbs(ang) - 360) < Diff)
+			{
+				if (L2.Line.p1() == L1.Line.p1() && !Cuts.contains(L2.Line.p1())) L2.Line.setP1(L1.Line.p2());
+				else if (L2.Line.p1() == L1.Line.p2() && !Cuts.contains(L2.Line.p1())) L2.Line.setP1(L1.Line.p1());
+				else if (L2.Line.p2() == L1.Line.p1() && !Cuts.contains(L2.Line.p2())) L2.Line.setP2(L1.Line.p2());
+				else if (L2.Line.p2() == L1.Line.p2() && !Cuts.contains(L2.Line.p2())) L2.Line.setP2(L1.Line.p1());
+				else break;
+
+				Synchronizer.lock();
+				Deletes.insert({ UID, L1.ID });
+				Updates.remove(L1.ID);
+				Updates.insert(L2.ID, L2.Line);
+				Synchronizer.unlock();
+			}
+		}
+	});
+
+	if (isTerminated()) { emit onEndProgress(); emit onSegmentReduce(0); return; }
+
+	emit onBeginProgress(tr("Updating geometry")); Step = 0;
+	emit onSetupProgress(0, Deletes.size() + Updates.size());
+
+	for (auto i = Updates.constBegin(); i != Updates.constEnd(); ++i)
+	{
+		updateSegment.addBindValue(i.value().x1());
+		updateSegment.addBindValue(i.value().y1());
+		updateSegment.addBindValue(i.value().x2());
+		updateSegment.addBindValue(i.value().y2());
+
+		updateSegment.addBindValue(i.key());
+
+		updateSegment.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (auto i = Deletes.constBegin(); i != Deletes.constEnd(); ++i)
+	{
+		deleteGeometry.addBindValue((*i).first);
+		deleteGeometry.addBindValue((*i).second);
+
+		deleteGeometry.exec();
+
+		deleteSegment.addBindValue((*i).second);
+
+		deleteSegment.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onSegmentReduce(Deletes.size());
+}
+
 void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onKergUpdate(0); return; }
