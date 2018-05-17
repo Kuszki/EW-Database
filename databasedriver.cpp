@@ -1198,12 +1198,24 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, false, 1);
 
-	QSqlQuery selectLines(Database), selectTexts(Database), selectUIDS(Database),
+	QSqlQuery selectLines(Database), selectTexts(Database), selectUIDS(Database), selectCommon(Database),
 			QueryA(Database), QueryB(Database), QueryC(Database),
 			QueryD(Database), QueryE(Database), QueryF(Database);
 
-	QSet<int> Lines, Texts; QHash<int, int> UIDS; int Step = 0;
+	QSet<int> Lines, Texts, Common; QHash<int, int> UIDS; int Step = 0;
 	const QString deleteQuery = QString("DELETE FROM %1 WHERE UIDO = ?");
+
+	selectCommon.prepare(
+		"SELECT "
+			"E.UIDO, E.IDE "
+		"FROM "
+			"EW_OB_ELEMENTY E "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"O.UID = E.UIDO "
+		"WHERE "
+			"E.TYP = 0 AND O.STATUS = 0");
 
 	selectLines.prepare(
 		"SELECT "
@@ -1252,7 +1264,15 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 	QueryE.prepare("DELETE FROM EW_OBIEKTY WHERE UID = ?");
 
 	emit onBeginProgress(tr("Loading items"));
-	emit onSetupProgress(0, Items.size());
+	emit onSetupProgress(0, 0);
+
+	if (selectCommon.exec()) while (selectCommon.next() && !isTerminated())
+	{
+		if (!Items.contains(selectCommon.value(0).toInt()))
+		{
+			Common.insert(selectCommon.value(1).toInt());
+		}
+	}
 
 	if (selectUIDS.exec()) while (selectUIDS.next() && !isTerminated())
 	{
@@ -1260,22 +1280,25 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 				  selectUIDS.value(1).toInt());
 	}
 
-	for (const auto UID : Items)
-	{
-		if (isTerminated()) break;
+	emit onBeginProgress(tr("Loading items"));
+	emit onSetupProgress(0, Items.size());
 
+	for (const auto UID : Items) if (!isTerminated())
+	{
 		selectLines.addBindValue(UID);
 
 		if (selectLines.exec()) while (selectLines.next())
 		{
-			Lines.insert(selectLines.value(1).toInt());
+			const int IDE = selectLines.value(1).toInt();
+			if (!Common.contains(IDE)) Lines.insert(IDE);
 		}
 
 		selectTexts.addBindValue(UID);
 
 		if (selectTexts.exec()) while (selectTexts.next())
 		{
-			Texts.insert(selectTexts.value(1).toInt());
+			const int IDE = selectTexts.value(1).toInt();
+			if (!Common.contains(IDE)) Texts.insert(IDE);
 		}
 
 		emit onUpdateProgress(++Step);
