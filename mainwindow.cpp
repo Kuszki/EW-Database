@@ -523,13 +523,13 @@ void MainWindow::disconnectData(const QString& Point, const QString& Line, int T
 	lockUi(BUSY); emit onSplitRequest(Set, Point, Line, Type);
 }
 
-void MainWindow::mergeData(const QList<int>& Fields, const QStringList& Points)
+void MainWindow::mergeData(const QList<int>& Fields, const QStringList& Points, double Angle)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onMergeRequest(Set, Fields, Points);
+	lockUi(BUSY); emit onMergeRequest(Set, Fields, Points, Angle);
 }
 
 void MainWindow::cutData(const QStringList& Points, bool Endings)

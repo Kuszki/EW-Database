@@ -273,7 +273,7 @@ class DatabaseDriver : public QObject
 		void joinData(const QSet<int>& Items, const QString& Point, const QString& Join,
 				    bool Override, int Type, double Radius);
 
-		void mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points);
+		void mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points, double Diff);
 
 		void cutData(const QSet<int>& Items, const QStringList& Points, bool Endings);
 

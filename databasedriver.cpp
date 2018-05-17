@@ -1826,7 +1826,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	emit onDataJoin(Count);
 }
 
-void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points)
+void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points, double Diff)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataMerge(0); return; }
 

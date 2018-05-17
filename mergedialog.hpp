@@ -75,7 +75,7 @@ class MergeDialog : public QDialog
 
 	signals:
 
-		void onMergeRequest(const QList<int>&, const QStringList&);
+		void onMergeRequest(const QList<int>&, const QStringList&, double);
 
 
 };
