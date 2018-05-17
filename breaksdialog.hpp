@@ -42,6 +42,10 @@ class BreaksDialog : public QDialog
 		explicit BreaksDialog(QWidget* Parent = nullptr);
 		virtual ~BreaksDialog(void) override;
 
+	public slots:
+
+		virtual void accept(void) override;
+
 	signals:
 
 		void onReduceRequest(int, double);

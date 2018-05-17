@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -26,10 +26,10 @@ const QVector<int> GeometryWidget::Points = { 6, 7, 8, 9 };
 const QVector<int> GeometryWidget::Classes = { 4, 5, 10, 11, 12, 13, 14, 15 };
 const QVector<int> GeometryWidget::Geometries = { 16, 17, 18, 19 };
 
-GeometryWidget::GeometryWidget(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Surfaces, QWidget* Parent)
+GeometryWidget::GeometryWidget(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::GeometryWidget)
 {
-	ui->setupUi(this); setParameters(Classes, Points, Lines, Surfaces); typeChanged(ui->typeCombo->currentIndex());
+	ui->setupUi(this); setParameters(Classes, Points); typeChanged(ui->typeCombo->currentIndex());
 }
 
 GeometryWidget::~GeometryWidget(void)
@@ -64,7 +64,7 @@ void GeometryWidget::editFinished(void)
 	emit onValueUpdate(getCondition());
 }
 
-void GeometryWidget::setParameters(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Surfaces)
+void GeometryWidget::setParameters(const QHash<QString, QString>& Classes, const QHash<QString, QString>& Points)
 {
 	ui->classCombo->clear(); ui->pointCombo->clear();
 

@@ -1,4 +1,4 @@
-﻿/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
  *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@openmailbox.org   *
@@ -49,8 +49,6 @@ class GeometryWidget : public QWidget
 
 		explicit GeometryWidget(const QHash<QString, QString>& Classes,
 						    const QHash<QString, QString>& Points,
-						    const QHash<QString, QString>& Lines,
-						    const QHash<QString, QString>& Surfaces,
 						    QWidget* Parent = nullptr);
 		virtual ~GeometryWidget(void) override;
 
@@ -64,9 +62,7 @@ class GeometryWidget : public QWidget
 	public slots:
 
 		void setParameters(const QHash<QString, QString>& Classes,
-					    const QHash<QString, QString>& Points,
-					    const QHash<QString, QString>& Lines,
-					    const QHash<QString, QString>& Surfaces);
+					    const QHash<QString, QString>& Points);
 
 	signals:
 

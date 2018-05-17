@@ -407,7 +407,7 @@ void FilterDialog::newButtonClicked(void)
 
 	if (Index == 2)
 	{
-		ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, Lines, Surfaces, this));
+		ui->geometryLayout->addWidget(new GeometryWidget(Classes, Points, this));
 	}
 	else
 	{
