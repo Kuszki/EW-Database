@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>100</height>
+    <height>119</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Reduce breakpoints</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="object-flip-horizontal"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">

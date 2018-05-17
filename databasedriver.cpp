@@ -1830,7 +1830,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataMerge(0); return; }
 
-	struct PART { int ID, Type; double X1, Y1, X2, Y2; bool Text; };
+	struct PART { int ID; QLineF Line; };
 
 	const auto appendCount = [] (const QPointF& P, QList<QPointF>& Ends, QList<QPointF>& Cuts, QList<int>& Counts)
 	{
@@ -1847,10 +1847,38 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 		}
 	};
 
+	const auto isTouching = [] (const QLineF& A, const QLineF& B, QPointF* P = nullptr) -> bool
+	{
+		QPointF Touch = QPointF();
+
+		if (A.p1() == B.p1() || A.p1() == B.p2()) Touch = A.p1();
+		else if (A.p2() == B.p1() || A.p2() == B.p2()) Touch = A.p2();
+
+		if (P) *P = Touch;
+
+		return Touch != QPointF();
+	};
+
+	const auto isClosed = [isTouching] (const QList<PART>& List) -> bool
+	{
+		if (List.size() < 2) return false;
+		else return isTouching(List.first().Line, List.last().Line);
+	};
+
+	const auto isAngleOK = [Diff] (double Angle) -> bool
+	{
+		return (qAbs(Angle) < Diff || qAbs(qAbs(Angle) - 180) < Diff || qAbs(qAbs(Angle) - 360) < Diff);
+	};
+
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0);
-	QHash<int, QList<QPointF>> Geometry; QSet<int> Used; QList<int> Counts; QList<QPointF> Ends;
-	QHash<int, QSet<int>> Merges; QList<QPointF> Cuts; int Step = 0; QSet<int> Merged;
-	QSqlQuery Query(Database); Query.setForwardOnly(true); QHash<int, QList<PART>> Geometries;
+
+	QList<int> Counts; QList<QPointF> Ends; QList<QPointF> Cuts;
+	QSet<int> Used; QHash<int, QSet<int>> Merges; int Step = 0;
+
+	QHash<int, QList<PART>> Geometries; QSet<int> Merged;
+	QHash<int, QList<QPair<int, int>>> Additions;
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	emit onBeginProgress(tr("Loading points"));
 	emit onSetupProgress(0, 0);
@@ -1917,7 +1945,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	}
 
 	emit onBeginProgress(tr("Loading geometry"));
-	emit onSetupProgress(0, 0); Step = 0;
+	emit onSetupProgress(0, Items.size()); Step = 0;
 
 	Query.prepare(
 		"SELECT "
@@ -1950,32 +1978,26 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	{
 		const int ID = Query.value(0).toInt();
 
-		if (Tasks.first().contains(ID))
+		if (Items.contains(ID))
 		{
+			if (!Geometries.contains(ID)) emit onUpdateProgress(++Step);
+
 			const QPointF PointA(Query.value(1).toDouble(), Query.value(2).toDouble());
 			const QPointF PointB(Query.value(3).toDouble(), Query.value(4).toDouble());
 
-			if (!Query.value(6).toBool() && !Query.value(7).toBool())
+			if (Query.value(7).toBool()) Additions[ID].append(
 			{
-				if (!Geometry.contains(ID)) Geometry.insert(ID, QList<QPointF>());
-
-				if (!Geometry[ID].contains(PointA)) Geometry[ID].append(PointA);
-				else Geometry[ID].removeOne(PointA);
-				if (!Geometry[ID].contains(PointB)) Geometry[ID].append(PointB);
-				else Geometry[ID].removeOne(PointB);
-			}
-
-			if (!Geometries.contains(ID)) Geometries.insert(ID, QList<PART>());
-
-			Geometries[ID].append(
+				{
+					Query.value(5).toInt(),
+					Query.value(6).toInt()
+				}
+			});
+			else Geometries[ID].append(
 			{
 				Query.value(5).toInt(),
-				Query.value(6).toInt(),
-				Query.value(1).toDouble(),
-				Query.value(2).toDouble(),
-				Query.value(3).toDouble(),
-				Query.value(4).toDouble(),
-				Query.value(7).toBool()
+				{
+					PointA, PointB
+				}
 			});
 
 			appendCount(PointA, Ends, Cuts, Counts);
@@ -1984,61 +2006,81 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	}
 
 	emit onBeginProgress(tr("Merging objects"));
-	emit onSetupProgress(0, Tasks.first().size()); Step = 0;
+	emit onSetupProgress(0, Items.size()); Step = 0;
 
-	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
+	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k) if (!isTerminated())
 	{
-		if (isTerminated()) break;
-
 		const auto& Table = getItemByField(Tables, k.key(), &TABLE::Name);
-
-		auto Data = loadData(Table, k.value(), QString(), false, false);
+		const auto Data = loadData(Table, k.value(), QString(), false, false);
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
 		{
-			if (!Used.contains(i.key()) && Geometry[i.key()].size() == 2)
+			if (!Used.contains(i.key()) && !isClosed(Geometries[i.key()]))
 			{
-				QPointF& P1 = Geometry[i.key()].first();
-				QPointF& P2 = Geometry[i.key()].last();
-				QSet<int> Parts; bool Continue = true;
-				const auto D1 = Data[i.key()];
+				auto& Geometry = Geometries[i.key()]; Used.insert(i.key());
+				const auto& D1 = Data[i.key()]; bool Continue(true);
 
-				Used.insert(i.key()); while (Continue)
+				while (Continue)
 				{
-					const int oldSize = Parts.size();
+					const int oldSize = Geometry.size();
 
-					for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) if (!Used.contains(j.key()) && Geometry[j.key()].size() == 2)
+					for (auto j = Data.constBegin(); j != Data.constEnd(); ++j)
 					{
-						const QPointF& L1 = Geometry[j.key()].first();
-						const QPointF& L2 = Geometry[j.key()].last();
-						const auto& D2 = Data[j.key()];
+						if (Used.contains(j.key()) || isClosed(Geometries[j.key()])) continue;
 
-						int T(0); if (P1 == L1 && !Cuts.contains(P1)) T = 1;
-						else if (P1 == L2 && !Cuts.contains(P1)) T = 2;
-						else if (P2 == L1 && !Cuts.contains(P2)) T = 3;
-						else if (P2 == L2 && !Cuts.contains(P2)) T = 4;
+						const auto& D2 = Data[j.key()]; bool OK(true);
 
-						if (T) for (const auto& Field : Values) if (D1[Field] != D2[Field]) T = 0;
+						for (const auto& Field : Values) OK = OK && (D1[Field] == D2[Field]);
 
-						switch (T)
+						if (!OK) continue;
+
+						auto& othGeometry = Geometries[i.key()]; QPointF Touch; bool Added(false);
+
+						const auto& L1f = Geometry.first().Line; const auto& L1l = Geometry.last().Line;
+						const auto& L2f = othGeometry.first().Line; const auto& L2l = othGeometry.last().Line;
+
+						if (isTouching(L1f, L2f, &Touch))
 						{
-							case 1: P1 = L2; break;
-							case 2: P1 = L1; break;
-							case 3: P2 = L2; break;
-							case 4: P2 = L1; break;
+							if ((Diff != 0.0 && isAngleOK(L1f.angleTo(L2f))) || !Cuts.contains(Touch))
+							{
+								std::reverse(Geometry.begin(), Geometry.end());
+								Geometry = Geometry + othGeometry; Added = true;
+							}
+						}
+						else if (isTouching(L1f, L2l, &Touch))
+						{
+							if ((Diff != 0.0 && isAngleOK(L1f.angleTo(L2l))) || !Cuts.contains(Touch))
+							{
+								Geometry = othGeometry + Geometry; Added = true;
+							}
+						}
+						else if (isTouching(L1l, L2f, &Touch))
+						{
+							if ((Diff != 0.0 && isAngleOK(L1l.angleTo(L2f))) || !Cuts.contains(Touch))
+							{
+								Geometry = Geometry + othGeometry; Added = true;
+							}
+						}
+						else if (isTouching(L1l, L2l, &Touch))
+						{
+							if ((Diff != 0.0 && isAngleOK(L1l.angleTo(L2f))) || !Cuts.contains(Touch))
+							{
+								std::reverse(Geometry.begin(), Geometry.end());
+								Geometry = othGeometry + Geometry; Added = true;
+							}
 						}
 
-						if (T)
+						if (Added)
 						{
-							Parts.insert(j.key());
 							Used.insert(j.key());
+							Merges[i.key()].insert(j.key());
+
+							Additions[i.key()].append(Additions[j.key()]);
 						}
 					}
 
-					Continue = oldSize != Parts.size();
+					Continue = oldSize != Geometry.size();
 				}
-
-				if (!Parts.isEmpty()) { Parts.insert(i.key()); Merges.insert(i.key(), Parts); }
 			}
 
 			emit onUpdateProgress(++Step);
@@ -2056,11 +2098,6 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 		for (const auto& Index : k.value()) if (Merges.contains(Index))
 		{
-			QList<PART> Parts, Sorted, Labels; QSet<int> Taken;
-			bool Continue = true; int n = 0;
-
-			Parts.append(Geometries[Index]);
-
 			for (const auto& Part : Merges[Index])
 			{
 				{
@@ -2119,72 +2156,43 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 				}
 
 				Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(Part));
-
-				if (Part == Index) continue; else Merged.insert(Part);
-
 				Query.exec(QString("DELETE FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
 				Query.exec(QString("DELETE FROM %1 WHERE UIDO = %2").arg(Table.Data, Part));
 
-				Parts.append(Geometries[Part]);
+				Merged.insert(Part);
 			}
 
-			for (int i = 0; i < Parts.size(); ++i)
+			Query.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)"); int N(0);
+
+			for (const auto& P: Geometries[Index])
 			{
-				if (Parts[i].Type || Parts[i].Text) Labels.append(Parts.takeAt(i--));
+				Query.addBindValue(Index);
+				Query.addBindValue(P.ID);
+				Query.addBindValue(0);
+				Query.addBindValue(++N);
+
+				Query.exec();
 			}
 
-			QPointF P1(Parts.first().X1, Parts.first().Y1);
-			QPointF P2(Parts.first().X2, Parts.first().Y2);
-
-			Sorted.append(Parts.first());
-			Taken.insert(Parts.first().ID);
-
-			while (Continue)
+			for (const auto& P: Additions[Index]) if (P.second == 0)
 			{
-				const int oldSize = Sorted.size();
+				Query.addBindValue(Index);
+				Query.addBindValue(P.first);
+				Query.addBindValue(0);
+				Query.addBindValue(++N);
 
-				for (const auto& L : Parts) if (!Taken.contains(L.ID))
-				{
-					QPointF L1(L.X1, L.Y1), L2(L.X2, L.Y2);
-
-					int T(0); if (P1 == L1) T = 1;
-					else if (P1 == L2) T = 2;
-					else if (P2 == L1) T = 3;
-					else if (P2 == L2) T = 4;
-
-					switch (T)
-					{
-						case 1: P1 = L2; Sorted.push_front(L); break;
-						case 2: P1 = L1; Sorted.push_front(L); break;
-						case 3: P2 = L2; Sorted.push_back(L); break;
-						case 4: P2 = L1; Sorted.push_back(L); break;
-					}
-
-					if (T) Taken.insert(L.ID);
-				}
-
-				Continue = oldSize != Sorted.size();
+				Query.exec();
 			}
 
-			for (const auto& Part: Sorted) Query.exec(QString(
-				"INSERT INTO "
-					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-				"VALUES "
-					"(%1, %2, %3, %4)")
-				.arg(Index)
-				.arg(Part.ID)
-				.arg(Part.Type)
-				.arg(n++));
+			for (const auto& P: Additions[Index]) if (P.second != 0)
+			{
+				Query.addBindValue(Index);
+				Query.addBindValue(P.first);
+				Query.addBindValue(P.second);
+				Query.addBindValue(++N);
 
-			for (const auto& Part: Labels) Query.exec(QString(
-				"INSERT INTO "
-					"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-				"VALUES "
-					"(%1, %2, %3, %4)")
-				.arg(Index)
-				.arg(Part.ID)
-				.arg(Part.Type)
-				.arg(n++));
+				Query.exec();
+			}
 
 			emit onUpdateProgress(++Step);
 		}
