@@ -1832,19 +1832,9 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	struct PART { int ID; QLineF Line; };
 
-	const auto appendCount = [] (const QPointF& P, QList<QPointF>& Ends, QList<QPointF>& Cuts, QList<int>& Counts)
+	const auto appendCount = [] (const QPointF& P, QSet<QPair<double, double>>& Cuts, QHash<QPair<double, double>, int>& Counts)
 	{
-		const int Index = Ends.indexOf(P);
-
-		if (Index == -1)
-		{
-			Ends.append(P);
-			Counts.append(1);
-		}
-		else if (++Counts[Index] == 3)
-		{
-			Cuts.append(P);
-		}
+		if (++Counts[qMakePair(P.x(), P.y())] == 3) Cuts.insert(qMakePair(P.x(), P.y()));
 	};
 
 	const auto isTouching = [] (const QLineF& A, const QLineF& B, QPointF* P = nullptr) -> bool
@@ -1881,7 +1871,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0);
 
-	QList<int> Counts; QList<QPointF> Ends; QList<QPointF> Cuts;
+	QHash<QPair<double, double>, int> Counts; QSet<QPair<double, double>> Cuts;
 	QSet<int> Used; QHash<int, QSet<int>> Merges; int Step = 0;
 
 	QHash<int, QList<PART>> Geometries; QSet<int> Merged;
@@ -1917,7 +1907,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -1946,7 +1936,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -2009,8 +1999,8 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 				}
 			});
 
-			appendCount(PointA, Ends, Cuts, Counts);
-			appendCount(PointB, Ends, Cuts, Counts);
+			appendCount(PointA, Cuts, Counts);
+			appendCount(PointB, Cuts, Counts);
 		}
 	}
 
@@ -2022,35 +2012,32 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 		const auto& Table = getItemByField(Tables, k.key(), &TABLE::Name);
 		const auto Data = loadData(Table, k.value(), QString(), false, false);
 
-		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i)
+		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) if (!isTerminated())
 		{
-			if (!Used.contains(i.key()) && !isClosed(Geometries[i.key()]))
+			if (!Used.contains(i.key()) && !isClosed(Geometries[i.key()]) && !Geometries[i.key()].isEmpty())
 			{
 				auto& Geometry = Geometries[i.key()]; Used.insert(i.key());
-				const auto& D1 = Data[i.key()]; bool Continue(true);
+				const auto& D1 = i.value(); bool Continue(true);
 
-				while (Continue)
+				while (Continue && !isTerminated())
 				{
 					const int oldSize = Geometry.size();
 
-					for (auto j = Data.constBegin(); j != Data.constEnd(); ++j)
+					for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) if (!Geometries[j.key()].isEmpty())
 					{
 						if (Used.contains(j.key()) || isClosed(Geometries[j.key()])) continue;
 
-						const auto& D2 = Data[j.key()]; bool OK(true);
+						auto& othGeometry = Geometries[j.key()]; QPointF Touch;
+						const auto& D2 = j.value(); bool OK(true), Added(false);
 
-						for (const auto& Field : Values) OK = OK && (D1[Field] == D2[Field]);
-
-						if (!OK) continue;
-
-						auto& othGeometry = Geometries[j.key()]; QPointF Touch; bool Added(false);
+						for (const auto& Field : Values) OK = OK && (D1[Field] == D2[Field]); if (!OK) continue;
 
 						const auto& L1f = Geometry.first().Line; const auto& L1l = Geometry.last().Line;
 						const auto& L2f = othGeometry.first().Line; const auto& L2l = othGeometry.last().Line;
 
 						if (isTouching(L1f, L2f, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1f, L2f)) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1f, L2f)) || !Cuts.contains({ Touch.x(), Touch.y() }))
 							{
 								std::reverse(Geometry.begin(), Geometry.end());
 								Geometry = Geometry + othGeometry; Added = true;
@@ -2058,21 +2045,21 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 						}
 						else if (isTouching(L1f, L2l, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1f, L2l)) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1f, L2l)) || !Cuts.contains({ Touch.x(), Touch.y() }))
 							{
 								Geometry = othGeometry + Geometry; Added = true;
 							}
 						}
 						else if (isTouching(L1l, L2f, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1l, L2f)) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1l, L2f)) || !Cuts.contains({ Touch.x(), Touch.y() }))
 							{
 								Geometry = Geometry + othGeometry; Added = true;
 							}
 						}
 						else if (isTouching(L1l, L2l, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1l, L2f)) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1l, L2f)) || !Cuts.contains({ Touch.x(), Touch.y() }))
 							{
 								std::reverse(Geometry.begin(), Geometry.end());
 								Geometry = othGeometry + Geometry; Added = true;
@@ -2334,7 +2321,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 	if (Endings)
 	{
-		QList<int> Counter; QList<QPointF> Breaks;
+		QHash<QPair<double, double>, int> Counts;
 
 		Query.prepare(
 			"SELECT "
@@ -2361,17 +2348,11 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		{
 			if (Tasks.first().contains(Query.value(0).toInt()))
 			{
-				const QPointF PointA(Query.value(1).toDouble(), Query.value(2).toDouble());
-				const QPointF PointB(Query.value(3).toDouble(), Query.value(4).toDouble());
+				const QPointF PA(Query.value(1).toDouble(), Query.value(2).toDouble());
+				const QPointF PB(Query.value(3).toDouble(), Query.value(4).toDouble());
 
-				const int PosA = Breaks.indexOf(PointA);
-				const int PosB = Breaks.indexOf(PointB);
-
-				if (PosA == -1) { Breaks.append(PointA); Counter.append(1); }
-				else if (++Counter[PosA] == 3) Cuts.append(PointA);
-
-				if (PosB == -1) { Breaks.append(PointB); Counter.append(1); }
-				else if (++Counter[PosB] == 3) Cuts.append(PointB);
+				if (++Counts[qMakePair(PA.x(), PA.y())] == 3) Cuts.append(PA);
+				if (++Counts[qMakePair(PB.x(), PB.y())] == 3) Cuts.append(PB);
 			}
 		}
 	}
@@ -5125,29 +5106,19 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentReduce(0); return; }
 
-	const auto appendCount = [] (const QPointF& P, QList<QPointF>& Ends, QList<QPointF>& Cuts, QList<int>& Counts)
+	const auto appendCount = [] (const QPointF& P, QSet<QPair<double, double>>& Cuts, QHash<QPair<double, double>, int>& Counts)
 	{
-		const int Index = Ends.indexOf(P);
-
-		if (Index == -1)
-		{
-			Ends.append(P);
-			Counts.append(1);
-		}
-		else if (++Counts[Index] == 3)
-		{
-			Cuts.append(P);
-		}
+		if (++Counts[qMakePair(P.x(), P.y())] == 3) Cuts.insert(qMakePair(P.x(), P.y()));
 	};
 
-	const auto isCut = [] (const QPointF& P, const QList<QPointF>& Cuts) -> bool
+	const auto isCut = [] (const QPointF& P, const QSet<QPair<double, double>>& Cuts) -> bool
 	{
-		for (const auto& C : Cuts) if (pointComp(P, C)) return true; return false;
+		for (const auto& C : Cuts) if (pointComp(P, QPointF(C.first, C.second))) return true; return false;
 	};
 
 	struct LINE { int ID; QLineF Line; };
 
-	QList<QPointF> Cuts; QList<int> Counts; QList<QPointF> Ends;
+	QSet<QPair<double, double>> Cuts; QHash<QPair<double, double>, int> Counts;
 
 	emit onBeginProgress(tr("Loading points"));
 	emit onSetupProgress(0, 0);
@@ -5177,7 +5148,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 				"T.STAN_ZMIANY = 0 AND "
 				"T.TYP = 4");
 
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -5204,7 +5175,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 				"O.STATUS = 0 AND "
 				"O.RODZAJ = 3");
 
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -5243,7 +5214,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 			const QPointF PointA(Query.value(0).toDouble(), Query.value(1).toDouble());
 			const QPointF PointB(Query.value(2).toDouble(), Query.value(3).toDouble());
 
-			appendCount(PointA, Ends, Cuts, Counts); appendCount(PointB, Ends, Cuts, Counts);
+			appendCount(PointA, Cuts, Counts); appendCount(PointB, Cuts, Counts);
 		};
 	}
 
