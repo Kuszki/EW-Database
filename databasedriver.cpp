@@ -1861,12 +1861,21 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	const auto isClosed = [isTouching] (const QList<PART>& List) -> bool
 	{
-		if (List.size() < 2) return false;
+		if (List.size() < 3) return false;
 		else return isTouching(List.first().Line, List.last().Line);
 	};
 
-	const auto isAngleOK = [Diff] (double Angle) -> bool
+	const auto isAngleOK = [Diff, isTouching] (const QLineF& A, const QLineF& B) -> bool
 	{
+		QPointF T; QLineF New; const double Angle = A.angleTo(B);
+
+		if (!isTouching(A, B, &T)) return false;
+
+		if (T == A.p1()) New.setP1(A.p2()); else New.setP1(A.p1());
+		if (T == B.p1()) New.setP2(B.p2()); else New.setP2(B.p1());
+
+		if (New.length() < A.length() || New.length() < B.length()) return false;
+
 		return (qAbs(Angle) < Diff || qAbs(qAbs(Angle) - 180) < Diff || qAbs(qAbs(Angle) - 360) < Diff);
 	};
 
@@ -2034,14 +2043,14 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 						if (!OK) continue;
 
-						auto& othGeometry = Geometries[i.key()]; QPointF Touch; bool Added(false);
+						auto& othGeometry = Geometries[j.key()]; QPointF Touch; bool Added(false);
 
 						const auto& L1f = Geometry.first().Line; const auto& L1l = Geometry.last().Line;
 						const auto& L2f = othGeometry.first().Line; const auto& L2l = othGeometry.last().Line;
 
 						if (isTouching(L1f, L2f, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1f.angleTo(L2f))) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1f, L2f)) || !Cuts.contains(Touch))
 							{
 								std::reverse(Geometry.begin(), Geometry.end());
 								Geometry = Geometry + othGeometry; Added = true;
@@ -2049,27 +2058,26 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 						}
 						else if (isTouching(L1f, L2l, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1f.angleTo(L2l))) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1f, L2l)) || !Cuts.contains(Touch))
 							{
 								Geometry = othGeometry + Geometry; Added = true;
 							}
 						}
 						else if (isTouching(L1l, L2f, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1l.angleTo(L2f))) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1l, L2f)) || !Cuts.contains(Touch))
 							{
 								Geometry = Geometry + othGeometry; Added = true;
 							}
 						}
 						else if (isTouching(L1l, L2l, &Touch))
 						{
-							if ((Diff != 0.0 && isAngleOK(L1l.angleTo(L2f))) || !Cuts.contains(Touch))
+							if ((Diff != 0.0 && isAngleOK(L1l, L2f)) || !Cuts.contains(Touch))
 							{
 								std::reverse(Geometry.begin(), Geometry.end());
 								Geometry = othGeometry + Geometry; Added = true;
 							}
 						}
-
 						if (Added)
 						{
 							Used.insert(j.key());
@@ -2089,7 +2097,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataMerge(0); return; }
 
-	emit onBeginProgress(tr("Updating database"));
+	emit onBeginProgress(tr("Updating database")); int Count(0);
 	emit onSetupProgress(0, Merges.size()); Step = 0;
 
 	for (auto k = Tasks.constBegin() + 1; k != Tasks.constEnd(); ++k)
@@ -2098,71 +2106,62 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 		for (const auto& Index : k.value()) if (Merges.contains(Index))
 		{
+			QVariantList obValues, ddValues;
+
+			Count += Merges[Index].size() + 1;
+			Merged += Merges[Index];
+
+			Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Index));
+			if (Query.next()) for (int i = 1; i < Query.record().count(); ++i) obValues.append(Query.value(i));
+
+			Query.exec(QString("SELECT * FROM %1 WHERE UIDO = %2").arg(Table.Data).arg(Index));
+			if (Query.next()) for (int i = 1; i < Query.record().count(); ++i) ddValues.append(Query.value(i));
+
 			for (const auto& Part : Merges[Index])
 			{
+				QVariantList mObValues, mDdValues;
+
+				Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
+				if (Query.next()) for (int i = 1; i < Query.record().count(); ++i) mObValues.append(Query.value(i));
+
+				Query.exec(QString("SELECT * FROM %1 WHERE UIDO = %2").arg(Table.Data).arg(Part));
+				if (Query.next()) for (int i = 1; i < Query.record().count(); ++i) mDdValues.append(Query.value(i));
+
+				if (!obValues.isEmpty() && !mObValues.isEmpty()) for (int i = 0; i < obValues.size(); ++i)
 				{
-					QVariantList ValuesA, ValuesB, finallValues; QStringList Params;
-
-					Query.exec(QString("SELECT * FROM %1 WHERE UIDO = %2").arg(Table.Data).arg(Index));
-
-					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesA.append(Query.value(i));
-
-					Query.exec(QString("SELECT * FROM %1 WHERE UIDO = %2").arg(Table.Data).arg(Part));
-
-					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesB.append(Query.value(i));
-
-					if (!ValuesA.isEmpty() && !ValuesB.isEmpty()) for (int i = 0; i < ValuesA.size(); ++i)
-					{
-						finallValues.append(isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i]);
-					}
-					else if (!ValuesB.isEmpty()) finallValues = ValuesB;
-
-					if (!finallValues.isEmpty())
-					{
-						for (int i = 0; i < finallValues.size(); ++i) Params.append("?");
-
-						Query.prepare(QString("UPDATE OR INSERT INTO %1 "
-										  "VALUES (%2) MATCHING (UIDO)")
-								    .arg(Table.Data)
-								    .arg(Params.join(", ")));
-
-						for (const auto& V : finallValues) Query.addBindValue(V); Query.exec();
-					}
+					obValues[i] = isVariantEmpty(obValues[i]) ? mObValues[i] : obValues[i];
 				}
+				else if (!mObValues.isEmpty()) obValues = mObValues;
 
+				if (!ddValues.isEmpty() && !mDdValues.isEmpty()) for (int i = 0; i < ddValues.size(); ++i)
 				{
-					QVariantList ValuesA, ValuesB; QStringList Params;
-
-					Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Index));
-
-					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesA.append(Query.value(i));
-
-					Query.exec(QString("SELECT * FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
-
-					if (Query.next()) for (int i = 0; i < Query.record().count(); ++i) ValuesB.append(Query.value(i));
-
-					for (int i = 8; i < ValuesA.size(); ++i)
-					{
-						ValuesA[i] = isVariantEmpty(ValuesA[i]) ? ValuesB[i] : ValuesA[i];
-					}
-
-					for (int i = 0; i < ValuesA.size(); ++i) Params.append("?");
-
-					Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY "
-									  "VALUES (%1) MATCHING (UID)")
-							    .arg(Params.join(", ")));
-
-					for (const auto& V : ValuesA) Query.addBindValue(V); Query.exec();
+					ddValues[i] = isVariantEmpty(ddValues[i]) ? mDdValues[i] : ddValues[i];
 				}
+				else if (!mDdValues.isEmpty()) ddValues = mDdValues;
 
 				Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(Part));
 				Query.exec(QString("DELETE FROM EW_OBIEKTY WHERE UID = %1").arg(Part));
 				Query.exec(QString("DELETE FROM %1 WHERE UIDO = %2").arg(Table.Data, Part));
-
-				Merged.insert(Part);
 			}
 
-			Query.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)"); int N(0);
+			if (!obValues.isEmpty())
+			{
+				Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY VALUES (%1%2) MATCHING (UID)")
+						    .arg(Index).arg(QString(",?").repeated(obValues.size())));
+
+				for (const auto& V : obValues) Query.addBindValue(V); Query.exec();
+			}
+
+			if (!ddValues.isEmpty())
+			{
+				Query.prepare(QString("UPDATE OR INSERT INTO %1 VALUES (%2%3) MATCHING (UIDO)")
+						    .arg(Table.Data).arg(Index).arg(QString(",?").repeated(ddValues.size())));
+
+				for (const auto& V : ddValues) Query.addBindValue(V); Query.exec();
+			}
+
+			Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(Index)); int N(0);
+			Query.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
 
 			for (const auto& P: Geometries[Index])
 			{
@@ -2212,7 +2211,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	}
 
 	emit onEndProgress();
-	emit onDataMerge(Merged.size() + Merges.size());
+	emit onDataMerge(Count);
 }
 
 void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, bool Endings)
@@ -4141,6 +4140,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 			"O.UID = ? AND "
 			"O.RODZAJ = 4 AND "
 			"O.STATUS = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
 			"0 = ("
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
@@ -4150,12 +4150,12 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 
 	Lines.prepare(
 		"SELECT "
-			"O.UID, T.P0_X, T.P0_Y, "
-			"IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), "
-			"IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), "
+			"O.UID, ROUND(T.P0_X, 5), ROUND(T.P0_Y, 5), "
+			"ROUND(IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), 5), "
+			"ROUND(IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), 5), "
 			"("
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
-				"INNER JOIN EW_GRUPY_WARSTW M ON H.ID_GRUPY = M.ID"
+				"INNER JOIN EW_GRUPY_WARSTW M ON P.ID_GRUPY = M.ID "
 				"WHERE P.NAZWA = ("
 					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
 					"WHERE H.ID = T.ID_WARSTWY"
@@ -4175,6 +4175,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 			"O.UID = ? AND "
 			"O.RODZAJ = 2 AND "
 			"O.STATUS = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
 			"0 = ("
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
@@ -4186,9 +4187,9 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 
 	Surfaces.prepare(
 		"SELECT "
-			"O.UID, T.P1_FLAGS, T.P0_X, T.P0_Y, "
-			"IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), "
-			"IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), "
+			"O.UID, T.P1_FLAGS, ROUND(T.P0_X, 5), ROUND(T.P0_Y, 5), "
+			"ROUND(IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), 5), "
+			"ROUND(IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), 5), "
 			"("
 				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
 				"WHERE P.NAZWA = LEFT(("
@@ -4210,6 +4211,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 			"O.UID = ? AND "
 			"O.RODZAJ = 3 AND "
 			"O.STATUS = 0 AND "
+			"T.STAN_ZMIANY = 0 AND "
 			"0 = ("
 				"SELECT COUNT(L.ID) FROM EW_TEXT L "
 				"INNER JOIN EW_OB_ELEMENTY Q "
@@ -4604,10 +4606,8 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 	emit onBeginProgress(tr("Inserting labels"));
 	emit onSetupProgress(0, Insertions.size()); Step = 0;
 
-	for (const auto& Item : Insertions)
+	for (const auto& Item : Insertions) if (!isTerminated())
 	{
-		if (isTerminated()) break;
-
 		if (Select.exec() && Select.next())
 		{
 			const int ID = Select.value(0).toInt();
@@ -5322,16 +5322,19 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 		{
 			auto& L1 = List[i - 1];
 			auto& L2 = List[i];
+			auto New = L2.Line;
 
 			const double ang = L1.Line.angleTo(L2.Line);
 
 			if (qAbs(ang) < Diff || qAbs(qAbs(ang) - 180) < Diff || qAbs(qAbs(ang) - 360) < Diff)
 			{
-				if (pointComp(L2.Line.p1(), L1.Line.p1()) && !isCut(L2.Line.p1(), Cuts)) L2.Line.setP1(L1.Line.p2());
-				else if (pointComp(L2.Line.p1(), L1.Line.p2()) && !isCut(L2.Line.p1(), Cuts)) L2.Line.setP1(L1.Line.p1());
-				else if (pointComp(L2.Line.p2(), L1.Line.p1()) && !isCut(L2.Line.p2(), Cuts)) L2.Line.setP2(L1.Line.p2());
-				else if (pointComp(L2.Line.p2(), L1.Line.p2()) && !isCut(L2.Line.p2(), Cuts)) L2.Line.setP2(L1.Line.p1());
+				if (pointComp(L2.Line.p1(), L1.Line.p1()) && !isCut(L2.Line.p1(), Cuts)) New.setP1(L1.Line.p2());
+				else if (pointComp(L2.Line.p1(), L1.Line.p2()) && !isCut(L2.Line.p1(), Cuts)) New.setP1(L1.Line.p1());
+				else if (pointComp(L2.Line.p2(), L1.Line.p1()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p2());
+				else if (pointComp(L2.Line.p2(), L1.Line.p2()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p1());
 				else break;
+
+				if (New.length() < L1.Line.length() || New.length() < L2.Line.length()) break; else L2.Line = New;
 
 				Synchronizer.lock();
 				Deletes.insert({ UID, L1.ID });
