@@ -2014,10 +2014,11 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 		for (auto i = Data.constBegin(); i != Data.constEnd(); ++i) if (!isTerminated())
 		{
-			if (!Used.contains(i.key()) && !isClosed(Geometries[i.key()]) && !Geometries[i.key()].isEmpty())
+			auto& Geometry = Geometries[i.key()]; const auto& D1 = i.value();
+
+			if (!Used.contains(i.key()) && !Geometry.isEmpty() && !isClosed(Geometry))
 			{
-				auto& Geometry = Geometries[i.key()]; Used.insert(i.key());
-				const auto& D1 = i.value(); bool Continue(true);
+				bool Continue(true); Used.insert(i.key());
 
 				while (Continue && !isTerminated())
 				{
@@ -2025,10 +2026,10 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 					for (auto j = Data.constBegin(); j != Data.constEnd(); ++j) if (!Geometries[j.key()].isEmpty())
 					{
-						if (Used.contains(j.key()) || isClosed(Geometries[j.key()])) continue;
-
 						auto& othGeometry = Geometries[j.key()]; QPointF Touch;
 						const auto& D2 = j.value(); bool OK(true), Added(false);
+
+						if (Used.contains(j.key()) || isClosed(othGeometry)) continue;
 
 						for (const auto& Field : Values) OK = OK && (D1[Field] == D2[Field]); if (!OK) continue;
 
