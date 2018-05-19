@@ -2065,6 +2065,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 								Geometry = othGeometry + Geometry; Added = true;
 							}
 						}
+
 						if (Added)
 						{
 							Used.insert(j.key());
@@ -2072,9 +2073,11 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 							Additions[i.key()].append(Additions[j.key()]);
 						}
+
+						if (isClosed(Geometry)) break;
 					}
 
-					Continue = oldSize != Geometry.size();
+					Continue = oldSize != Geometry.size() && !isClosed(Geometry);
 				}
 			}
 
