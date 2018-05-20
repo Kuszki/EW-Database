@@ -7511,7 +7511,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	QHash<int, QList<ELEMENT>> Geometry; QHash<int, INSERT> Inserts; QSet<int> Changed;
 	QHash<int, QList<QPointF>> Unique;	QHash<int, LINE> Lines, Origins;
-	QList<QPointF> Points, Ends, Breaks, Intersect, pointCuts;
+	QSet<QPair<double, double>> Points, Ends, Breaks, Intersect, pointCuts;
 
 	emit onBeginProgress(tr("Loading symbols"));
 	emit onSetupProgress(0, 0);
@@ -7520,7 +7520,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	{
 		if (Tasks.contains(Symbols.value(0).toInt()))
 		{
-			Points.append(
+			Points.insert(
 			{
 				Symbols.value(1).toDouble(),
 				Symbols.value(2).toDouble()
@@ -7553,8 +7553,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 				if (!Unique[UID].contains(B)) Unique[UID].append(B);
 				else Unique[UID].removeAll(B);
 
-				if ((Mode & 0x2) && !Breaks.contains(A)) Breaks.append(A);
-				if ((Mode & 0x2) && !Breaks.contains(B)) Breaks.append(B);
+				if (Mode & 0x2) Breaks.insert({ A.x(), A.y() });
+				if (Mode & 0x2) Breaks.insert({ B.x(), B.y() });
 			}
 
 			Lines.insert(Objects.value(1).toInt(),
@@ -7569,8 +7569,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		}
 	}
 
-	if (Mode & 0x1) for (const auto& E : Unique) Ends.append(E);
-	if (Mode & 0x2) for (const auto& E : Ends) Breaks.removeAll(E);
+	if (Mode & 0x1) for (const auto& E : Unique) for (const auto& B : E) Ends.insert({ B.x(), B.y() });
+	if (Mode & 0x2) for (const auto& E : Ends) Breaks.remove(E);
 
 	emit onBeginProgress(tr("Loading elements"));
 	emit onSetupProgress(0, 0); Step = 0;
@@ -7606,9 +7606,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 			if (Type == QLineF::BoundedIntersection)
 			{
 				Synchronizer.lock();
-
-				if (!Intersect.contains(Int)) Intersect.append(Int);
-
+				Intersect.insert({ Int.x(), Int.y() });
 				Synchronizer.unlock();
 			}
 		}
@@ -7616,10 +7614,10 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 
 	if (Mode) pointCuts.setSharable(false);
 
-	if (Mode & 0x1) pointCuts.append(Ends);
-	if (Mode & 0x2) pointCuts.append(Breaks);
-	if (Mode & 0x4) pointCuts.append(Intersect);
-	if (Mode & 0x8) pointCuts.append(Points);
+	if (Mode & 0x1) pointCuts += Ends;
+	if (Mode & 0x2) pointCuts += Breaks;
+	if (Mode & 0x4) pointCuts += Intersect;
+	if (Mode & 0x8) pointCuts += Points;
 
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, Lines.size()); Step = 0;
@@ -7628,8 +7626,15 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	{
 		if (this->isTerminated()) return;
 
-		if (!Part.Type) for (const auto& P : pointCuts) if (P != Part.Line.p1() && P != Part.Line.p2())
+		if (!Part.Type) for (const auto& Pair : pointCuts)
 		{
+			const QPointF P(Pair.first, Pair.second);
+
+			if (P.x() >= qMax(Part.Line.x1(), Part.Line.x2()) ||
+			    P.x() <= qMin(Part.Line.x1(), Part.Line.x2()) ||
+			    P.y() >= qMax(Part.Line.y1(), Part.Line.y2()) ||
+			    P.y() <= qMin(Part.Line.y1(), Part.Line.y2())) continue;
+
 			QPointF Int; QLineF Normal(P, QPointF());
 
 			Normal.setAngle(Part.Line.angle() + 90.0);
