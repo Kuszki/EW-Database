@@ -54,7 +54,7 @@ class InsertDialog : public QDialog
 
 	signals:
 
-		void onInsertRequest(int, double, bool);
+		void onInsertRequest(int, double);
 
 };
 

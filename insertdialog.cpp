@@ -40,8 +40,7 @@ void InsertDialog::accept(void)
 		(ui->intersectCheck->isChecked() << 2) |
 		(ui->symbolCheck->isChecked() << 3);
 
-	QDialog::accept(); emit onInsertRequest(Mode, ui->radiusSpin->value(),
-									ui->recursiveCheck->isChecked());
+	QDialog::accept(); emit onInsertRequest(Mode, ui->radiusSpin->value());
 }
 
 void InsertDialog::insertParamsChanged(void)

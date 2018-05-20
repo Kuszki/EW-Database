@@ -303,7 +303,7 @@ class DatabaseDriver : public QObject
 		void editLabel(const QSet<int>& Items, const QString& Label,
 					int Underline, int Pointer, double Rotation);
 
-		void insertPoints(const QSet<int>& Items, int Mode, double Radius, bool Recursive);
+		void insertPoints(const QSet<int>& Items, int Mode, double Radius);
 
 		void removeSegments(const QSet<int>& Items, double Length);
 		void mergeSegments(const QSet<int>& Items, int Flags, double Diff);

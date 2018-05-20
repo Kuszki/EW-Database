@@ -4829,7 +4829,7 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 	emit onLabelEdit(Step);
 }
 
-void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radius, bool Recursive)
+void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radius)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPointInsert(0); return; }
 
@@ -4839,7 +4839,7 @@ void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radiu
 	{
 		Current = insertBreakpoints(Items, Mode, Radius); Count += Current;
 	}
-	while (Recursive && Current && !isTerminated());
+	while (Current && !isTerminated());
 
 	emit onEndProgress();
 	emit onPointInsert(Count);

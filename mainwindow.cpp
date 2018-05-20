@@ -577,13 +577,13 @@ void MainWindow::fitData(const QString& File, bool Points, int X1, int Y1, int X
 	lockUi(BUSY); emit onFitRequest(Set, File, Points, X1, Y1, X2, Y2, R, L, E);
 }
 
-void MainWindow::insertBreaks(int Mode, double Radius, double Recursive)
+void MainWindow::insertBreaks(int Mode, double Radius)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius, Recursive);
+	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius);
 }
 
 void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation)
