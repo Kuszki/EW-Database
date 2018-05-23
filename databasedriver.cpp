@@ -5253,8 +5253,8 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ? AND IDE = ? AND TYP = 0");
 	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
-	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? "
-					  "WHERE ID = ? AND STAN_ZMIANY = 0");
+	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ?,"
+					  "PN_X = NULL, PN_Y = NULL, P1_FLAGS = 0 WHERE ID = ? AND STAN_ZMIANY = 0");
 
 	QHash<int, QList<LINE>> Geometry;
 	QSet<QPair<int, int>> Deletes;
@@ -7501,7 +7501,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
 		"SELECT ?, ?, ?, ?, ?, 0, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT FROM EW_POLYLINE WHERE ID = ? AND STAN_ZMIANY = 0");
 
-	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ?");
+	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ?, PN_X = NULL, PN_Y = NULL, P1_FLAGS = 0 WHERE ID = ?");
 
 	insertElement.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
 
