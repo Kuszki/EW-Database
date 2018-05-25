@@ -320,14 +320,28 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Dzielenie obiektów</translation>
     </message>
     <message>
-        <location filename="cutdialog.ui" line="58"/>
+        <location filename="cutdialog.ui" line="48"/>
         <source>Search</source>
         <translation>Szukaj</translation>
     </message>
     <message>
-        <location filename="cutdialog.ui" line="68"/>
+        <location filename="cutdialog.ui" line="59"/>
+        <source>Do not cut on breakpoints</source>
+        <translation>Nie dziel na punktach załamania</translation>
+    </message>
+    <message>
+        <location filename="cutdialog.ui" line="64"/>
+        <source>Cut on breakpoints</source>
+        <translation>Dziel na wspólnych punktach</translation>
+    </message>
+    <message>
+        <location filename="cutdialog.ui" line="69"/>
+        <source>Cut on line ends</source>
+        <translation>Dziel na końcach obiektów</translation>
+    </message>
+    <message>
         <source>Cut on line endings</source>
-        <translation>Przetnij na styku z końcem linii</translation>
+        <translation type="vanished">Przetnij na styku z końcem linii</translation>
     </message>
 </context>
 <context>
