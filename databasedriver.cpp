@@ -2205,7 +2205,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	emit onDataMerge(Count);
 }
 
-void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, bool Endings)
+void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, int Endings)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataCut(0); return; }
 
@@ -2255,8 +2255,8 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		for (auto& Part : P.Objects) find(P.Lines, Part);
 	};
 
-	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0);
-	QHash<int, PARTS> Parts; QList<QPointF> Cuts; QHash<int, QSet<int>> Queue; int Step = 0;
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0); int Step = 0;
+	QHash<int, PARTS> Parts; QSet<QPair<double, double>> Cuts; QHash<int, QSet<int>> Queue;
 	QSqlQuery Query(Database); Query.setForwardOnly(true); QMutex Locker;
 
 	emit onBeginProgress(tr("Loading points"));
@@ -2287,7 +2287,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -2316,7 +2316,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 				"O.KOD IN ('%1')")
 				    .arg(Points.join("', '")));
 
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.append(
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
 			Query.value(0).toDouble(),
 			Query.value(1).toDouble()
@@ -2326,6 +2326,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 	if (Endings)
 	{
 		QHash<QPair<double, double>, int> Counts;
+		QHash<int, QSet<QPair<double, double>>> Unique;
 
 		Query.prepare(
 			"SELECT "
@@ -2350,15 +2351,36 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
-			if (Tasks.first().contains(Query.value(0).toInt()))
-			{
-				const QPointF PA(Query.value(1).toDouble(), Query.value(2).toDouble());
-				const QPointF PB(Query.value(3).toDouble(), Query.value(4).toDouble());
+			const int UID = Query.value(0).toInt();
 
-				if (++Counts[qMakePair(PA.x(), PA.y())] == 3) Cuts.append(PA);
-				if (++Counts[qMakePair(PB.x(), PB.y())] == 3) Cuts.append(PB);
+			if (Items.contains(UID))
+			{
+				const QPair<double, double> PA(Query.value(1).toDouble(), Query.value(2).toDouble());
+				const QPair<double, double> PB(Query.value(3).toDouble(), Query.value(4).toDouble());
+
+				if (Endings == 1)
+				{
+					if (++Counts[PA] == 3) Cuts.insert(PA);
+					if (++Counts[PB] == 3) Cuts.insert(PB);
+				}
+				else if (Endings == 2)
+				{
+					if (!Unique[UID].contains(PA))
+					{
+						Unique[UID].insert(PA);
+					}
+					else Unique[UID].remove(PA);
+
+					if (!Unique[UID].contains(PB))
+					{
+						Unique[UID].insert(PB);
+					}
+					else Unique[UID].remove(PB);
+				}
 			}
 		}
+
+		if (Endings == 2) for (const auto& Set : Unique) Cuts += Set;
 	}
 
 	emit onBeginProgress(tr("Loading lines"));
@@ -2408,9 +2430,9 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 	emit onBeginProgress(tr("Generating tasklist"));
 	emit onSetupProgress(0, 0); Step = 0;
 
-	QtConcurrent::blockingMap(Cuts, [this, &Parts, &Queue, &Locker] (const QPointF& Point) -> void
+	QtConcurrent::blockingMap(Cuts, [this, &Parts, &Queue, &Locker] (const QPair<double, double>& Pair) -> void
 	{
-		if (this->isTerminated()) return;
+		if (this->isTerminated()) return; const QPointF Point(Pair.first, Pair.second);
 
 		for (auto i = Parts.constBegin(); i != Parts.constEnd(); ++i) for (int j = 1; j < i.value().Lines.size(); ++j)
 		{
@@ -3456,7 +3478,9 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 		{
 			QLineF Dummy(Symbol.Point, { 0, 0 });
 			Dummy.setAngle(L.angle() + 90);
+
 			QPointF Intersect;
+			Dummy.intersect(L, &Intersect);
 
 			const double Rad1 = QLineF(Symbol.Point, L.p1()).length();
 
@@ -3472,13 +3496,11 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 				Final = L.p2(); h = Rad2;
 			}
 
-			if (Dummy.intersect(L, &Intersect) != QLineF::BoundedIntersection) continue;
-
 			const double Rad3 = QLineF(Symbol.Point, Intersect).length();
 
 			if (Rad3 <= Radius && (qIsNaN(h) || 2*Rad3 < h))
 			{
-				Final = Intersect; h = Rad3;
+				Final = Intersect; h = 2*Rad3;
 			}
 		}
 

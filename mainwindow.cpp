@@ -532,7 +532,7 @@ void MainWindow::mergeData(const QList<int>& Fields, const QStringList& Points, 
 	lockUi(BUSY); emit onMergeRequest(Set, Fields, Points, Angle);
 }
 
-void MainWindow::cutData(const QStringList& Points, bool Endings)
+void MainWindow::cutData(const QStringList& Points, int Endings)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());

@@ -52,13 +52,15 @@ class CutDialog : public QDialog
 		virtual ~CutDialog(void) override;
 
 		QStringList getSelectedClasses(void) const;
-		bool isEndingsChecked(void) const;
+		int isEndingsChecked(void) const;
 
 	private slots:
 
 		void searchBoxEdited(const QString& Search);
 
 		void fieldButtonChecked(bool Enabled);
+
+		void lineIndexChanged(int Index);
 
 	public slots:
 
@@ -70,7 +72,7 @@ class CutDialog : public QDialog
 
 	signals:
 
-		void onClassesUpdate(const QStringList&, bool);
+		void onClassesUpdate(const QStringList&, int);
 
 
 };

@@ -275,7 +275,7 @@ class DatabaseDriver : public QObject
 
 		void mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points, double Diff);
 
-		void cutData(const QSet<int>& Items, const QStringList& Points, bool Endings);
+		void cutData(const QSet<int>& Items, const QStringList& Points, int Endings);
 
 		void refactorData(const QSet<int>& Items, const QString& Class, int Line, int Point, int Text,
 					   const QString& Symbol, int Style, const QString& Label, int Actions, double Radius);

@@ -35,21 +35,11 @@
         <x>0</x>
         <y>0</y>
         <width>582</width>
-        <height>448</height>
+        <height>454</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="fieldsLayout"/>
      </widget>
-    </widget>
-   </item>
-   <item row="1" column="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
     </widget>
    </item>
    <item row="1" column="0">
@@ -63,9 +53,31 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QCheckBox" name="endingsCheck">
-     <property name="text">
-      <string>Cut on line endings</string>
+    <widget class="QComboBox" name="lineCombo">
+     <item>
+      <property name="text">
+       <string>Do not cut on breakpoints</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Cut on breakpoints</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Cut on line ends</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -74,7 +86,6 @@
  <tabstops>
   <tabstop>scrollArea</tabstop>
   <tabstop>searchEdit</tabstop>
-  <tabstop>endingsCheck</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -127,18 +138,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>endingsCheck</sender>
-   <signal>toggled(bool)</signal>
+   <sender>lineCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
    <receiver>CutDialog</receiver>
-   <slot>fieldButtonChecked(bool)</slot>
+   <slot>lineIndexChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>328</x>
-     <y>481</y>
+     <x>317</x>
+     <y>478</y>
     </hint>
     <hint type="destinationlabel">
-     <x>333</x>
-     <y>591</y>
+     <x>369</x>
+     <y>624</y>
     </hint>
    </hints>
   </connection>
@@ -146,5 +157,6 @@
  <slots>
   <slot>searchBoxEdited(QString)</slot>
   <slot>fieldButtonChecked(bool)</slot>
+  <slot>lineIndexChanged(int)</slot>
  </slots>
 </ui>

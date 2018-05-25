@@ -46,9 +46,9 @@ QStringList CutDialog::getSelectedClasses(void) const
 	return List;
 }
 
-bool CutDialog::isEndingsChecked(void) const
+int CutDialog::isEndingsChecked(void) const
 {
-	return ui->endingsCheck->isChecked();
+	return ui->lineCombo->currentIndex();
 }
 
 void CutDialog::searchBoxEdited(const QString& Search)
@@ -65,6 +65,11 @@ void CutDialog::fieldButtonChecked(bool Enabled)
 	if (Enabled) ++Count; else --Count;
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(Count);
+}
+
+void CutDialog::lineIndexChanged(int Index)
+{
+	fieldButtonChecked(Index > 0);
 }
 
 void CutDialog::accept(void)

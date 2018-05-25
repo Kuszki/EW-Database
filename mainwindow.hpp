@@ -186,7 +186,7 @@ class MainWindow : public QMainWindow
 					  bool Override, int Type, double Radius);
 		void disconnectData(const QString& Point, const QString& Line, int Type);
 		void mergeData(const QList<int>& Fields, const QStringList& Points, double Angle);
-		void cutData(const QStringList& Points, bool Endings);
+		void cutData(const QStringList& Points, int Endings);
 		void changeClass(const QString& Class, int Line, int Point, int Text,
 					  const QString& Symbol, int Style, const QString& Label,
 					  int Actions, double Radius);
@@ -278,7 +278,7 @@ class MainWindow : public QMainWindow
 		void onSplitRequest(const QSet<int>&, const QString&, const QString&, int);
 
 		void onMergeRequest(const QSet<int>&, const QList<int>&, const QStringList&, double);
-		void onCutRequest(const QSet<int>&, const QStringList&, bool);
+		void onCutRequest(const QSet<int>&, const QStringList&, int);
 
 		void onRefactorRequest(const QSet<int>&, const QString&, int, int, int,
 						   const QString&, int, const QString&, int, double);
