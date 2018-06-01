@@ -2126,7 +2126,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 				if (!ddValues.isEmpty() && !mDdValues.isEmpty()) for (int i = 0; i < ddValues.size(); ++i)
 				{
-					ddValues[i] = isVariantEmpty(ddValues[i]) ? mDdValues[i] : ddValues[i];
+					ddValues[i] = qMax(ddValues[i], mDdValues[i]);
 				}
 				else if (!mDdValues.isEmpty()) ddValues = mDdValues;
 
@@ -2196,7 +2196,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		const auto Data = loadData(Table, i.value() & Merged, QString(), true, true);
+		const auto Data = loadData(Table, i.value() - Merged, QString(), true, true);
 
 		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
