@@ -1839,14 +1839,12 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 	const auto isTouching = [] (const QLineF& A, const QLineF& B, QPointF* P = nullptr) -> bool
 	{
-		QPointF Touch = QPointF();
+		QPointF Touch = QPointF(); int N = 0;
 
-		if (A.p1() == B.p1() || A.p1() == B.p2()) Touch = A.p1();
-		else if (A.p2() == B.p1() || A.p2() == B.p2()) Touch = A.p2();
+		if (A.p1() == B.p1() || A.p1() == B.p2()) { Touch = A.p1(); ++N; }
+		if (A.p2() == B.p1() || A.p2() == B.p2()) { Touch = A.p2(); ++N; }
 
-		if (P) *P = Touch;
-
-		return Touch != QPointF();
+		if (N == 1 && P) *P = Touch; return N == 1;
 	};
 
 	const auto isClosed = [isTouching] (const QList<PART>& List) -> bool
@@ -2075,7 +2073,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 							Additions[i.key()].append(Additions[j.key()]);
 						}
 
-						if (isClosed(Geometry)) break;
+						if (Added && isClosed(Geometry)) break;
 					}
 
 					Continue = oldSize != Geometry.size() && !isClosed(Geometry);
@@ -2256,7 +2254,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 	};
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0); int Step = 0;
-	QHash<int, PARTS> Parts; QSet<QPair<double, double>> Cuts; QHash<int, QSet<int>> Queue;
+	QHash<int, PARTS> Parts; QSet<QPair<double, double>> Cuts; QHash<int, QList<int>> Queue;
 	QSqlQuery Query(Database); Query.setForwardOnly(true); QMutex Locker;
 
 	emit onBeginProgress(tr("Loading points"));
@@ -2436,23 +2434,26 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 		for (auto i = Parts.constBegin(); i != Parts.constEnd(); ++i) for (int j = 1; j < i.value().Lines.size(); ++j)
 		{
-			QPointF A(i.value().Lines[j - 1].X1, i.value().Lines[j - 1].Y1);
-			QPointF B(i.value().Lines[j - 1].X2, i.value().Lines[j - 1].Y2);
-			QPointF C(i.value().Lines[j].X1, i.value().Lines[j].Y1);
-			QPointF D(i.value().Lines[j].X2, i.value().Lines[j].Y2);
+			const auto& L1 = i.value().Lines[j - 1];
+			const auto& L2 = i.value().Lines[j];
+
+			const QPointF A(L1.X1, L1.Y1); const QPointF B(L1.X2, L1.Y2);
+			const QPointF C(L2.X1, L2.Y1); const QPointF D(L2.X2, L2.Y2);
 
 			if ((Point == A && Point == C) || (Point == B && Point == C) ||
 			    (Point == A && Point == D) || (Point == B && Point == D))
 			{
 				Locker.lock();
 
-				if (Queue.contains(i.key())) Queue[i.key()].insert(j);
-				else Queue.insert(i.key(), QSet<int>() << j);
+				if (Queue.contains(i.key())) Queue[i.key()].append(L1.N);
+				else Queue.insert(i.key(), QList<int>() << L1.N);
 
 				Locker.unlock();
 			};
 		}
 	});
+
+	QtConcurrent::blockingMap(Queue, [] (QList<int>& List) -> void { qSort(List); });
 
 	emit onBeginProgress(tr("Loading geometry"));
 	emit onSetupProgress(0, 0); Step = 0;
@@ -2581,59 +2582,66 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i) if (t.value().contains(i.key()))
 		{
-			QList<int> Jobs = i.value().values(); qSort(Jobs); int on = Jobs.first();
+			const QList<int>& Jobs = i.value(); int on = Jobs.first();
 
-			Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1 AND N >= %2")
-					 .arg(i.key()).arg(on));
+			Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1 AND N > %2").arg(i.key()).arg(on));
 
-			for (auto j = Jobs.constBegin(); j != Jobs.constEnd(); ++j)
+			for (int j = 1; j <= Jobs.size(); ++j)
 			{
-				int Index(0), n(0); const int Stop = (j + 1) == Jobs.constEnd() ? Parts[i.key()].Lines.size() : *(j + 1);
+				int Index(0), n(-1), From(Jobs[j - 1]), To(j == Jobs.size() ? INT_MAX : Jobs[j]);
 
 				Query.prepare("SELECT GEN_ID(EW_OBIEKTY_UID_GEN, 1) FROM RDB$DATABASE");
 
 				if (Query.exec() && Query.next()) Index = Query.value(0).toInt();
+				else
+				{
+					Index = qHash(QDateTime::currentMSecsSinceEpoch()); thread()->usleep(1500);
+				}
 
-				const QString Numer = QString::number(qHash(qMakePair(Index, QDateTime::currentDateTimeUtc())), 16);
+				const QString Numer = QString("%1%2").arg(qHash(QDateTime::currentMSecsSinceEpoch()), 0, 16).arg(qHash(Index), 0, 16);
 
 				Query.exec(objectInsert.arg(Index).arg(Numer).arg(i.key()));
 				Query.exec(dataInsert.arg(Index).arg(i.key()));
 
-				for (int p = *j; p < Stop; ++p)
+				for (const auto& Line : Parts[i.key()].Lines) if (Line.N > From && Line.N <= To)
 				{
 					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 								    "VALUES (%1, %2, 0, %3)")
-							 .arg(Index).arg(Parts[i.key()].Lines[p].ID).arg(n++));
+							 .arg(Index).arg(Line.ID).arg(++n));
 				}
 
-				for (int p = *j; p < Stop; ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
+				for (const auto& Line : Parts[i.key()].Lines) if (Line.N > From && Line.N <= To)
+					for (const auto& T : Parts[i.key()].Labels) if (T.LID == Line.ID)
+					{
+						Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+									    "VALUES (%1, %2, 0, %3)")
+								 .arg(Index).arg(T.ID).arg(++n));
+					}
+
+				for (const auto& Line : Parts[i.key()].Lines) if (Line.N > From && Line.N <= To)
+					for (const auto& T : Parts[i.key()].Objects) if (T.LID == Line.ID)
+					{
+						Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+									    "VALUES (%1, %2, 1, %3)")
+								 .arg(Index).arg(T.ID).arg(++n));
+					}
+			}
+
+			for (const auto& Line : Parts[i.key()].Lines) if (Line.N <= Jobs.first())
+				for (const auto& T : Parts[i.key()].Labels) if (T.LID == Line.ID)
 				{
 					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 								    "VALUES (%1, %2, 0, %3)")
-							 .arg(Index).arg(T.ID).arg(n++));
+							 .arg(i.key()).arg(T.ID).arg(++on));
 				}
 
-				for (int p = *j; p < Stop; ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
+			for (const auto& Line : Parts[i.key()].Lines) if (Line.N <= Jobs.first())
+				for (const auto& T : Parts[i.key()].Objects) if (T.LID == Line.ID)
 				{
 					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
 								    "VALUES (%1, %2, 1, %3)")
-							 .arg(Index).arg(T.ID).arg(n++));
+							 .arg(i.key()).arg(T.ID).arg(++on));
 				}
-			}
-
-			for (int p = 0; p < Jobs.first(); ++p) for (const auto& T : Parts[i.key()].Labels) if (T.LID == Parts[i.key()].Lines[p].ID)
-			{
-				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-							    "VALUES (%1, %2, 0, %3)")
-						 .arg(i.key()).arg(T.ID).arg(on++));
-			}
-
-			for (int p = 0; p < Jobs.first(); ++p) for (const auto& T : Parts[i.key()].Objects) if (T.LID == Parts[i.key()].Lines[p].ID)
-			{
-				Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-							    "VALUES (%1, %2, 1, %3)")
-						 .arg(i.key()).arg(T.ID).arg(on++));
-			}
 
 			emit onUpdateProgress(++Step);
 		}
@@ -3107,7 +3115,7 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 			}
 			else continue;
 
-			const QString Numer = QString("OB_ID_%1").arg(QString::number(qHash(qMakePair(UIDO, QDateTime::currentDateTimeUtc())), 16));
+			const QString Numer = QString("OB_ID_%1%2").arg(qHash(QDateTime::currentMSecsSinceEpoch()), 0, 16).arg(qHash(UIDO), 0, 16);
 
 			Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
 						    "SELECT '%3', %2 FROM %4 "
