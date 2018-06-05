@@ -5163,8 +5163,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 		Query.prepare(
 			"SELECT "
-				"ROUND(T.POS_X, 5), "
-				"ROUND(T.POS_Y, 5), "
+				"T.POS_X, T.POS_Y, "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -5190,8 +5189,8 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 		Query.prepare(
 			"SELECT "
-				"ROUND((P.P0_X + P.P1_X) / 2.0, 5), "
-				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 5) "
+				"(P.P0_X + P.P1_X) / 2.0, "
+				"(P.P0_Y + P.P1_Y) / 2.0 "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -5222,10 +5221,8 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 		Query.prepare(
 			"SELECT "
-				"ROUND(P.P0_X, 5), "
-				"ROUND(P.P0_Y, 5), "
-				"ROUND(P.P1_X, 5), "
-				"ROUND(P.P1_Y, 5) "
+				"P.P0_X, P.P0_Y, "
+				"P.P1_X, P.P1_Y "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "

@@ -406,7 +406,7 @@ bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type:
 
 QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables);
 
-bool pointComp(const QPointF& A, const QPointF& B, double d = 0.001);
+bool pointComp(const QPointF& A, const QPointF& B, double d = 0.005);
 
 bool isVariantEmpty(const QVariant& Value);
 
