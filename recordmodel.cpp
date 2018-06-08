@@ -544,13 +544,24 @@ int RecordModel::getUid(const QModelIndex& Index) const
 
 bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names, const QChar& Separator) const
 {
-	QMutexLocker Synchronizer(&Locker);
+	QMutexLocker Synchronizer(&Locker); QSet<QStringList> Lines;
 
 	for (const auto& Index : Columns) if (Header.size() <= Index) return false;
 
 	QFile File(Path); if (!File.open(QFile::WriteOnly | QFile::Text)) return false;
 
 	QTextStream Stream(&File); const auto UIDS = getUids(List);
+	QStringList Line; Line.reserve(Columns.size());
+
+	for (const auto Object : Objects) if (UIDS.contains(Object->getUid()))
+	{
+		for (const auto& ID : Columns)
+		{
+			Line.append(Object->getField(ID).toString());
+		}
+
+		Lines.insert(Line); Line.clear();
+	}
 
 	if (Names) for (const auto& ID : Columns)
 	{
@@ -560,21 +571,12 @@ bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, con
 		{
 			Stream << Separator;
 		}
-		else Stream << '\n';
+		else Stream << endl;
 	}
 
-	for (const auto Object : Objects) if (UIDS.contains(Object->getUid()))
+	for (const auto& Line : Lines)
 	{
-		for (const auto& ID : Columns)
-		{
-			Stream << Object->getField(ID).toString();
-
-			if (ID != Columns.last())
-			{
-				Stream << Separator;
-			}
-			else Stream << '\n';
-		}
+		Stream << Line.join(Separator) << endl;
 	}
 
 	return true;

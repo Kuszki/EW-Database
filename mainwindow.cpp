@@ -381,7 +381,7 @@ void MainWindow::batchActionClicked(void)
 
 		if (File.isOpen())
 		{
-			QSet<QStringList> Values; QRegExp Separator; int Count = 0;
+			QList<QStringList> Values; QRegExp Separator; int Count = 0;
 
 			const QString Extension = QFileInfo(Path).suffix();
 
@@ -394,13 +394,13 @@ void MainWindow::batchActionClicked(void)
 				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
 
 				if (!Count) Count = Data.size();
-				if (Data.size() == Count) Values.insert(Data);
+				if (Data.size() == Count) Values.append(Data);
 
 			}
 
 			if (Count && !Values.isEmpty())
 			{
-				auto Dialog = new BatchDialog(allHeaders, Values.toList(), this); Dialog->open();
+				auto Dialog = new BatchDialog(allHeaders, Values, this); Dialog->open();
 
 				connect(Dialog, &BatchDialog::accepted, Dialog, &BatchDialog::deleteLater);
 				connect(Dialog, &BatchDialog::rejected, Dialog, &BatchDialog::deleteLater);
@@ -1033,7 +1033,7 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 		auto Selection = ui->Data->selectionModel()->selectedRows();
 
 		const QString Extension = QFileInfo(Path).suffix();
-		const QChar Sep(Extension == "csv" ? ',' : ' ');
+		const QChar Sep(Extension == "csv" ? ',' : '\t');
 
 		QList<int> Enabled;
 

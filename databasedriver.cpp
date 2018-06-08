@@ -4417,8 +4417,11 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 
 		if (R == 0.0 && Length >= L)
 		{
-			const double Mul = 1.0 / Surface.Surface.size(); double X(0.0), Y(0.0);
-			for (const auto& P : Surface.Surface) { X += Mul * P.x(); Y += Mul * P.y(); }
+			const double Mul = 1.0 / (Surface.Surface.size() - 1);
+			double X(0.0), Y(0.0); bool Skip(true);
+
+			for (const auto& P : Surface.Surface) if (Skip) Skip = false;
+			else { X += Mul * P.x(); Y += Mul * P.y(); }
 
 			Synchronizer.lock();
 			Insertions.append({ Surface.ID, X, Y, 0.0, Surface.Layer });
@@ -4865,7 +4868,9 @@ void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radiu
 
 	int Count(0), Current(0);
 
-	if (!isTerminated()) do
+	if (Mode & 0x10) Count += insertSurfsegments(Items, Radius, Mode);
+
+	if ((Mode & 0x0F) && !isTerminated()) do
 	{
 		Current = insertBreakpoints(Items, Mode, Radius); Count += Current;
 	}
@@ -7449,7 +7454,7 @@ QSet<int> DatabaseDriver::filterDataByHasMulrel(const QSet<int>& Data)
 	return QSet<int>(Data).intersect(Filtered);
 }
 
-int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius)
+int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double Radius)
 {
 	struct LINE { int ID; QLineF Line; int Type; bool Changed = false; };
 
@@ -7837,6 +7842,307 @@ int DatabaseDriver::insertBreakpoints(const QSet<int> Tasks, int Mode, double Ra
 	}
 
 	return Currentrun;
+}
+
+int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, int Mode)
+{
+	const auto append_pl = [] (QPolygonF& Pol, const QPointF& A, const QPointF& B) -> void
+	{
+		if (Pol.isEmpty())
+		{
+			Pol.append(A); Pol.append(B);
+		}
+		else if (Pol.last() == A)
+		{
+			Pol.push_back(B);
+		}
+		else if (Pol.last() == B)
+		{
+			Pol.push_back(A);
+		}
+		else if (Pol.first() == A)
+		{
+			Pol.push_front(B);
+		}
+		else if (Pol.first() == B)
+		{
+			Pol.push_front(A);
+		}
+	};
+
+	QHash<int, QList<QPair<int, QLineF>>> Segments;
+	QHash<int, QPair<QPointF, double>> Circles;
+	QHash<int, QList<QPair<int, int>>> Addons;
+	QHash<int, QPolygonF> Polygons;
+	QHash<int, QPointF> Centers;
+	QHash<int, QPair<int, int>> Styles;
+
+	QSet<int> Mods; QMutex Synchronizer;
+	int Step = 0, Count = 0;
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QSqlQuery Index(Database); Index.setForwardOnly(true);
+
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, 0);
+
+	Index.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
+
+	Query.prepare(
+		"SELECT "
+			"O.UID, O.RODZAJ, P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
+			"E.IDE, E.TYP, IIF(P.ID IS NULL, 1, 0),"
+			"P.TYP_LINII, P.ID_WARSTWY, P.P1_FLAGS "
+		"FROM "
+			"EW_OBIEKTY O "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"O.UID = E.UIDO "
+		"LEFT JOIN "
+			"EW_POLYLINE P "
+		"ON "
+			"("
+				"E.IDE = P.ID AND "
+				"P.STAN_ZMIANY = 0 AND "
+				"E.TYP = 0 "
+			")"
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ IN (2, 3) "
+		"ORDER BY "
+			"O.UID, E.N ASC");
+
+	if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		const int ID = Query.value(0).toInt();
+		const int Ot = Query.value(1).toInt();
+		const bool Gt = Query.value(8).toInt();
+		const bool Cr = Query.value(11).toInt() == 4;
+
+		if (!Tasks.contains(ID)) continue;
+
+		if (Ot == 2 && Gt) Addons[ID].append(
+		{
+			Query.value(6).toInt(),
+			Query.value(7).toInt()
+		});
+		else if (Ot == 2 && !Gt) Segments[ID].append(
+		{
+			Query.value(6).toInt(),
+			{
+				Query.value(2).toDouble(),
+				Query.value(3).toDouble(),
+				Query.value(4).toDouble(),
+				Query.value(5).toDouble()
+			}
+		});
+		else if (Ot == 3 && !Gt && !Cr) append_pl(Polygons[ID],
+		{
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble()
+		},
+		{
+			Query.value(4).toDouble(),
+			Query.value(5).toDouble()
+		});
+		else if (Ot == 3 && !Gt && Cr) Circles[ID] =
+		{
+			{
+				(Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0,
+				(Query.value(3).toDouble() + Query.value(5).toDouble()) / 2.0,
+			},
+			qAbs(Query.value(2).toDouble() - ((Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0))
+		};
+
+		const int IW = Query.value(10).toInt();
+		const int SL = Query.value(9).toInt();
+
+		if (Ot == 2 && !Gt && IW && SL) Styles[ID] = { IW, SL };
+	}
+
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, 0);
+
+	QtConcurrent::blockingMap(Tasks,
+	[&Polygons, &Centers, &Synchronizer]
+	(int UID) -> void
+	{
+		if (!Polygons.contains(UID)) return;
+
+		const auto& Pol = Polygons[UID];
+		double X(0.0), Y(0.0), Div(Pol.size());
+
+		for (int i = 1; i < Div; ++i)
+		{
+			X += Pol[i].x() / (Div - 1);
+			Y += Pol[i].y() / (Div - 1);
+		}
+
+		Synchronizer.lock();
+		Centers.insert(UID, { X, Y });
+		Synchronizer.unlock();
+	});
+
+	QtConcurrent::blockingMap(Tasks,
+	[&Segments, &Polygons, &Circles, &Centers, &Addons, &Mods, &Synchronizer, Radius, Mode]
+	(int UID) -> void
+	{
+		if (!Segments.contains(UID)) return;
+
+		QPointF sMatch, eMatch;
+		double sRad(NAN), eRad(NAN);
+		QPointF Start, Stop;
+
+		auto& Geom = Segments[UID];
+
+		if (Geom.size() < 2)
+		{
+			Start = Geom.first().second.p1();
+			Stop = Geom.first().second.p2();
+		}
+		else
+		{
+			const int L = Geom.size() - 1; const int P = L - 1;
+
+			if (Geom[0].second.p1() == Geom[1].second.p1()) Start = Geom[0].second.p2();
+			else if (Geom[0].second.p1() == Geom[1].second.p2()) Start = Geom[0].second.p2();
+			else if (Geom[0].second.p2() == Geom[1].second.p1()) Start = Geom[0].second.p1();
+			else if (Geom[0].second.p2() == Geom[1].second.p2()) Start = Geom[0].second.p1();
+
+			if (Geom[L].second.p1() == Geom[P].second.p1()) Stop = Geom[L].second.p2();
+			else if (Geom[L].second.p1() == Geom[P].second.p2()) Stop = Geom[L].second.p2();
+			else if (Geom[L].second.p2() == Geom[P].second.p1()) Stop = Geom[L].second.p1();
+			else if (Geom[L].second.p2() == Geom[P].second.p2()) Stop = Geom[L].second.p1();
+		}
+
+		for (auto i = Polygons.constBegin(); i != Polygons.constEnd(); ++i)
+		{
+			if (!(Mode & 0x20) && i.value().containsPoint(Start, Qt::OddEvenFill))
+			{
+				sMatch = Centers[i.key()]; sRad = 0.0;
+			}
+
+			if (!(Mode & 0x20) && i.value().containsPoint(Stop, Qt::OddEvenFill))
+			{
+				sMatch = Centers[i.key()]; sRad = 0.0;
+			}
+
+			for (int j = 1; j < i.value().size(); ++j)
+			{
+				QPointF IntA, IntB; const QLineF L(i.value()[j - 1], i.value()[j]);
+
+				L.intersect(Geom.first().second, &IntA);
+				L.intersect(Geom.last().second, &IntB);
+
+				const double RadA = QLineF(IntA, Start).length();
+				const double RadB = QLineF(IntB, Stop).length();
+
+				if (RadA <= Radius && (qIsNaN(sRad) || RadA < sRad))
+				{
+					sMatch = Centers[i.key()]; sRad = RadA;
+				}
+
+				if (RadB <= Radius && (qIsNaN(eRad) || RadB < eRad))
+				{
+					eMatch = Centers[i.key()]; eRad = RadB;
+				}
+			}
+		}
+
+		for (auto i = Circles.constBegin(); i != Circles.constEnd(); ++i)
+		{
+			double RadA = QLineF(i.value().first, Start).length() - i.value().second;
+			double RadB = QLineF(i.value().first, Stop).length() - i.value().second;
+
+			if (Mode & 0x20) { RadA = qAbs(RadA); RadB = qAbs(RadB); }
+
+			if (RadA <= Radius && (qIsNaN(sRad) || RadA < sRad))
+			{
+				sMatch = i.value().first; sRad = RadA;
+			}
+
+			if (RadB <= Radius && (qIsNaN(eRad) || RadB < eRad))
+			{
+				eMatch = i.value().first; eRad = RadB;
+			}
+		}
+
+		if (sMatch != QPointF() && sMatch != Start)
+		{
+			Synchronizer.lock();
+			Geom.push_front({ 0, { Start, sMatch } });
+			Mods.insert(UID);
+			Synchronizer.unlock();
+		}
+
+		if (eMatch != QPointF() && eMatch != Stop)
+		{
+			Synchronizer.lock();
+			Geom.push_back({ 0, { Stop, eMatch } });
+			Mods.insert(UID);
+			Synchronizer.unlock();
+		}
+	});
+
+	QSqlQuery Insert(Database); Insert.setForwardOnly(true);
+	QSqlQuery Line(Database); Line.setForwardOnly(true);
+
+	Insert.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
+
+	Line.prepare(
+		"INSERT INTO EW_POLYLINE "
+			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, TYP_LINII, MNOZNIK, POINTCOUNT) "
+		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, 0.0, 2)");
+
+	emit onBeginProgress(tr("Inserting segments"));
+	emit onSetupProgress(0, Mods.size());
+
+	for (const auto& UID : Mods)
+	{
+		Query.exec(QString("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = %1").arg(UID)); int N(0);
+
+		for (auto& L : Segments[UID])
+		{
+			if (L.first == 0 && Index.exec() && Index.next())
+			{
+				L.first = Index.value(0).toInt();
+
+				Line.addBindValue(L.first);
+				Line.addBindValue(L.second.x1());
+				Line.addBindValue(L.second.y1());
+				Line.addBindValue(L.second.x2());
+				Line.addBindValue(L.second.y2());
+				Line.addBindValue(Styles[UID].first);
+				Line.addBindValue((Mode & 0x40) ? 14 : Styles[UID].second);
+
+				Line.exec(); ++Count;
+			}
+
+			Insert.addBindValue(UID);
+			Insert.addBindValue(L.first);
+			Insert.addBindValue(0);
+			Insert.addBindValue(N++);
+
+			Insert.exec();
+		}
+
+		for (const auto& A : Addons[UID])
+		{
+			Insert.addBindValue(UID);
+			Insert.addBindValue(A.first);
+			Insert.addBindValue(A.second);
+			Insert.addBindValue(N++);
+
+			Insert.exec();
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	return Count;
 }
 
 void DatabaseDriver::getCommon(const QSet<int>& Items)

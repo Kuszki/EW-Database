@@ -235,7 +235,9 @@ class DatabaseDriver : public QObject
 		QSet<int> filterDataByHasGeoemetry(const QSet<int>& Data, const QSet<int>& Types);
 		QSet<int> filterDataByHasMulrel(const QSet<int>& Data);
 
-		int insertBreakpoints(const QSet<int> Tasks, int Mode, double Radius);
+		int insertBreakpoints(const QSet<int>& Tasks, int Mode, double Radius);
+
+		int insertSurfsegments(const QSet<int>& Tasks, double Radius, int Mode);
 
 		bool hasAllIndexes(const TABLE& Tab, const QList<int>& Used);
 
