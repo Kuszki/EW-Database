@@ -32,22 +32,29 @@ InsertDialog::~InsertDialog(void)
 	delete ui;
 }
 
-void InsertDialog::accept(void)
+int InsertDialog::getMode(void) const
 {
-	const int Mode =
+	int Mode = 0;
+
+	if (ui->breakGroup->isChecked()) Mode = Mode |
 		(ui->endsCheck->isChecked() << 0) |
 		(ui->breaksCheck->isChecked() << 1) |
 		(ui->intersectCheck->isChecked() << 2) |
 		(ui->symbolCheck->isChecked() << 3);
 
-	QDialog::accept(); emit onInsertRequest(Mode, ui->radiusSpin->value());
+	if (ui->segmentGroup->isChecked()) Mode = Mode | (1 << 4) |
+		(ui->outsideCheck->isChecked() << 5) |
+		(ui->hideCheck->isChecked() << 6);
+
+	return Mode;
+}
+
+void InsertDialog::accept(void)
+{
+	QDialog::accept(); emit onInsertRequest(getMode(), ui->radiusSpin->value());
 }
 
 void InsertDialog::insertParamsChanged(void)
 {
-	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(
-		ui->endsCheck->isChecked() ||
-		ui->breaksCheck->isChecked() ||
-		ui->intersectCheck->isChecked() ||
-		ui->symbolCheck->isChecked());
+	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(getMode());
 }

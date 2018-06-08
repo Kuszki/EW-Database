@@ -44,6 +44,8 @@ class InsertDialog : public QDialog
 		explicit InsertDialog(QWidget* Parent = nullptr);
 		virtual ~InsertDialog(void) override;
 
+		int getMode(void) const;
+
 	public slots:
 
 		virtual void accept(void) override;

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>213</height>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,35 +18,85 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0" colspan="2">
-    <widget class="QCheckBox" name="breaksCheck">
-     <property name="text">
-      <string>Insert breakpoint on segment break</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QCheckBox" name="symbolCheck">
-     <property name="text">
-      <string>Insert breakpoint on point object</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="0" colspan="2">
-    <widget class="QCheckBox" name="endsCheck">
-     <property name="text">
-      <string>Insert breakpoint at line end</string>
+    <widget class="QGroupBox" name="breakGroup">
+     <property name="title">
+      <string>Insert breakpoints on existing points</string>
      </property>
+     <property name="flat">
+      <bool>true</bool>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="breaksLayout">
+      <item>
+       <widget class="QCheckBox" name="endsCheck">
+        <property name="text">
+         <string>Insert breakpoint at line end</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="breaksCheck">
+        <property name="text">
+         <string>Insert breakpoint on segment break</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="intersectCheck">
+        <property name="text">
+         <string>Insert breakpoint at lines intersection</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="symbolCheck">
+        <property name="text">
+         <string>Insert breakpoint on point object</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QGroupBox" name="segmentGroup">
+     <property name="title">
+      <string>Insert segments in surface center</string>
+     </property>
+     <property name="flat">
+      <bool>true</bool>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="segmentsLayout">
+      <item>
+       <widget class="QCheckBox" name="outsideCheck">
+        <property name="text">
+         <string>Insert only near boundary</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="hideCheck">
+        <property name="text">
+         <string>Hide inserted segments</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item row="2" column="0" colspan="2">
-    <widget class="QCheckBox" name="intersectCheck">
-     <property name="text">
-      <string>Insert breakpoint at lines intersection</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -59,17 +109,7 @@
      </property>
     </spacer>
    </item>
-   <item row="5" column="1">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
+   <item row="3" column="0">
     <widget class="QDoubleSpinBox" name="radiusSpin">
      <property name="specialValueText">
       <string>Match exactly</string>
@@ -85,6 +125,16 @@
      </property>
      <property name="singleStep">
       <double>0.010000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -107,7 +157,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>189</y>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -123,7 +173,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>189</y>
+     <y>289</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -138,11 +188,11 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>359</x>
-     <y>21</y>
+     <x>378</x>
+     <y>56</y>
     </hint>
     <hint type="destinationlabel">
-     <x>754</x>
+     <x>399</x>
      <y>20</y>
     </hint>
    </hints>
@@ -154,11 +204,11 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>356</x>
-     <y>41</y>
+     <x>377</x>
+     <y>81</y>
     </hint>
     <hint type="destinationlabel">
-     <x>577</x>
+     <x>399</x>
      <y>52</y>
     </hint>
    </hints>
@@ -170,11 +220,11 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>362</x>
-     <y>74</y>
+     <x>378</x>
+     <y>106</y>
     </hint>
     <hint type="destinationlabel">
-     <x>612</x>
+     <x>399</x>
      <y>66</y>
     </hint>
    </hints>
@@ -186,12 +236,44 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>343</x>
-     <y>88</y>
+     <x>364</x>
+     <y>131</y>
     </hint>
     <hint type="destinationlabel">
-     <x>609</x>
+     <x>399</x>
      <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>breakGroup</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>InsertDialog</receiver>
+   <slot>insertParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>344</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>642</x>
+     <y>11</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>segmentGroup</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>InsertDialog</receiver>
+   <slot>insertParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>227</x>
+     <y>159</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>649</x>
+     <y>155</y>
     </hint>
    </hints>
   </connection>
