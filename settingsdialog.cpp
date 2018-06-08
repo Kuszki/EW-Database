@@ -34,14 +34,16 @@ SettingsDialog::~SettingsDialog(void)
 
 void SettingsDialog::loadValues(void)
 {
+	QSettings Settings("EW-Database");
+
 	Settings.beginGroup("Database");
 	ui->driverCombo->setCurrentText(Settings.value("driver", "QIBASE").toString());
 	ui->querySpin->setValue(Settings.value("binded", 2500).toUInt());
 	Settings.endGroup();
 
 	Settings.beginGroup("History");
-	ui->serversEdit->setPlainText(Settings.value("server").toStringList().join(endl));
-	ui->basesEdit->setPlainText(Settings.value("path").toStringList().join(endl));
+	ui->serversEdit->setPlainText(Settings.value("server").toStringList().join('\n'));
+	ui->basesEdit->setPlainText(Settings.value("path").toStringList().join('\n'));
 	Settings.endGroup();
 
 	Settings.beginGroup("Locale");
@@ -76,8 +78,8 @@ void SettingsDialog::accept(void)
 	Settings.endGroup();
 
 	Settings.beginGroup("History");
-	Settings.setValue("server", ui->serversEdit->toPlainText().split(endl, QString::SkipEmptyParts));
-	Settings.setValue("path", ui->basesEdit->toPlainText().split(endl, QString::SkipEmptyParts));
+	Settings.setValue("server", ui->serversEdit->toPlainText().split('\n', QString::SkipEmptyParts));
+	Settings.setValue("path", ui->basesEdit->toPlainText().split('\n', QString::SkipEmptyParts));
 	Settings.endGroup();
 
 	Settings.beginGroup("Locale");
