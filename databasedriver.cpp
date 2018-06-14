@@ -7739,7 +7739,7 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 		const int IW = Query.value(10).toInt();
 		const int SL = Query.value(9).toInt();
 
-		if (Ot == 2 && !Gt && IW && SL) Styles[ID] = { IW, SL };
+		if (Ot == 2 && !Gt && IW) Styles[ID] = { IW, SL };
 	}
 
 	emit onBeginProgress(tr("Computing geometry"));
