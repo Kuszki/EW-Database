@@ -127,6 +127,7 @@ class DatabaseDriver : public QObject
 
 		QSqlDatabase Database;
 		QStringList Headers;
+		QFile Logfile;
 
 		QList<TABLE> Tables;
 		QList<FIELD> Fields;
@@ -243,6 +244,8 @@ class DatabaseDriver : public QObject
 
 		void updateModDate(const QSet<int>& Objects, int Type = 0);
 
+		void appendLog(const QString& Title, const QSet<int>& Items);
+
 	public slots:
 
 		bool openDatabase(const QString& Server, const QString& Base,
@@ -317,6 +320,8 @@ class DatabaseDriver : public QObject
 		void getClass(const QSet<int>& Items);
 
 		bool addInterface(const QString& Path, int Type, bool Modal);
+
+		void setLogfilePath(const QString& Path);
 
 		void setDateOverride(bool Override);
 

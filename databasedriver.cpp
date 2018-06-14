@@ -31,15 +31,25 @@ const QStringList DatabaseDriver::Operators =
 DatabaseDriver::DatabaseDriver(QObject* Parent)
 : QObject(Parent), Terminated(false) 
 {
-	QSettings Settings("EW-Database");
+	QSettings Settings("EW-Database"); QString Log;
 
 	Settings.beginGroup("Database");
 	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
 	maxBindedSize = Settings.value("binded", 2500).toUInt();
+	Log = Settings.value("logfile").toString();
 	Settings.endGroup();
+
+	if (!Log.isEmpty()) setLogfilePath(Log);
 }
 
-DatabaseDriver::~DatabaseDriver(void) {}
+DatabaseDriver::~DatabaseDriver(void)
+{
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	Settings.setValue("logfile", Logfile.isOpen() ? Logfile.fileName() : QString());
+	Settings.endGroup();
+}
 
 QString DatabaseDriver::getDatabaseName(void) const
 {
@@ -967,6 +977,27 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 	}
 
 	for (const auto& ID : Objects) { Query.addBindValue(ID); Query.exec(); }
+}
+
+void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
+{
+	QMutexLocker Locker(&Terminator);
+	if (!Logfile.isOpen()) return;
+	QTextStream Stream(&Logfile);
+
+	emit onBeginProgress(tr("Creating log file"));
+	emit onSetupProgress(0, Items.size()); int Step(0);
+
+	QSqlQuery Query("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0", Database);
+
+	Stream << endl << QDateTime::currentDateTime().toString() << " " << Title << endl;
+
+	while (Query.next()) if (Items.contains(Query.value(0).toInt()))
+	{
+		Stream << Query.value(1).toString() << endl;
+
+		emit onUpdateProgress(++Step);
+	}
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -8271,6 +8302,19 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 	Query.addBindValue(Modal);
 
 	return Query.exec();
+}
+
+void DatabaseDriver::setLogfilePath(const QString& Path)
+{
+	QMutexLocker Locker(&Terminator);
+
+	if (Logfile.isOpen()) Logfile.close();
+
+	if (!Path.isEmpty())
+	{
+		Logfile.setFileName(Path);
+		Logfile.open(QFile::Append | QFile::Text);
+	}
 }
 
 void DatabaseDriver::setDateOverride(bool Override)
