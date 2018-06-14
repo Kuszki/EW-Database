@@ -40,6 +40,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="specialValueText">
+      <string>No maximum angle difference</string>
+     </property>
      <property name="prefix">
       <string>Maximum angle difference </string>
      </property>
@@ -130,8 +133,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>257</x>
+     <y>201</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -146,8 +149,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>325</x>
+     <y>201</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -155,5 +158,56 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>modeCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>BreaksDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>375</x>
+     <y>19</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>504</x>
+     <y>23</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>angleSpin</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>BreaksDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>312</x>
+     <y>43</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>491</x>
+     <y>45</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lengthSpin</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>BreaksDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>382</x>
+     <y>72</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>510</x>
+     <y>79</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>dialogParamsChanged()</slot>
+ </slots>
 </ui>

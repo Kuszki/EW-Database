@@ -4880,426 +4880,7 @@ void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radiu
 	emit onPointInsert(Count);
 }
 
-void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length, double Angle, int Flags)
-{
-	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentDelete(0); return; }
-
-	const auto appendCount = [] (const QPointF& P, QSet<QPair<double, double>>& Cuts, QHash<QPair<double, double>, int>& Counts)
-	{
-		if (++Counts[qMakePair(P.x(), P.y())] == 3) Cuts.insert(qMakePair(P.x(), P.y()));
-	};
-
-	const auto isCut = [] (const QPointF& P, const QSet<QPair<double, double>>& Cuts) -> bool
-	{
-		for (const auto& C : Cuts) if (pointComp(P, QPointF(C.first, C.second))) return true; return false;
-	};
-
-	struct ELEMENT { int IDE, Typ; };
-	struct LINE { int IDW, Typ, Opr; };
-
-	QSqlQuery Objects(Database), Elements(Database),
-			insertSegment(Database), deleteSegment(Database),
-			insertGeometry(Database), deleteGeometry(Database);
-
-	QSet<QPair<double, double>> Cuts; QHash<QPair<double, double>, int> Counts;
-	QMutex Synchronizer; int Step(0), Count(0);
-
-	emit onBeginProgress(tr("Loading points"));
-	emit onSetupProgress(0, 0);
-
-	if (Flags & 0x01)
-	{
-		QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-		Query.prepare(
-			"SELECT "
-				"T.POS_X, T.POS_Y "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_TEXT T "
-			"ON "
-				"E.IDE = T.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 4 AND "
-				"E.TYP = 0 AND "
-				"T.STAN_ZMIANY = 0 AND "
-				"T.TYP = 4");
-
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
-		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
-		});
-
-		Query.prepare(
-			"SELECT "
-				"(P.P0_X + P.P1_X) / 2.0, "
-				"(P.P0_Y + P.P1_Y) / 2.0 "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"E.IDE = P.ID "
-			"WHERE "
-				"P.STAN_ZMIANY = 0 AND "
-				"P.P1_FLAGS = 4 AND "
-				"E.TYP = 0 AND "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 3");
-
-		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
-		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
-		});
-	}
-
-	if (Flags & 0x02)
-	{
-		QSqlQuery Query(Database); Query.setForwardOnly(true);
-
-		Query.prepare(
-			"SELECT "
-				"P.P0_X, P.P0_Y, "
-				"P.P1_X, P.P1_Y "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE T "
-			"ON "
-				"E.IDE = T.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 4 AND "
-				"E.TYP = 0 AND "
-				"T.STAN_ZMIANY = 0 AND "
-				"T.P1_FLAGS = 0");
-
-		if (Query.exec()) while (Query.next() && !isTerminated())
-		{
-			const QPointF PointA(Query.value(0).toDouble(), Query.value(1).toDouble());
-			const QPointF PointB(Query.value(2).toDouble(), Query.value(3).toDouble());
-
-			appendCount(PointA, Cuts, Counts); appendCount(PointB, Cuts, Counts);
-		};
-	}
-
-	Objects.prepare(
-		"SELECT "
-			"O.UID, P.ID, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
-			"P.ID_WARSTWY, P.TYP_LINII, P.OPERAT "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS <> 4 AND "
-			"E.TYP = 0 "
-		"ORDER BY "
-			"O.UID ASC, "
-			"E.N ASC");
-
-	Elements.prepare(
-		"SELECT "
-			"E.UIDO, "
-			"E.IDE, "
-			"E.TYP "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"O.STATUS = 0 "
-		"ORDER BY "
-			"E.UIDO ASC, "
-			"E.N ASC");
-
-	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
-	insertSegment.prepare(
-		"INSERT INTO EW_POLYLINE "
-			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
-		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, 1.0, 2)");
-
-	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
-	insertGeometry.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
-
-	QHash<int, QList<ELEMENT>> Geometry;
-	QHash<int, QList<QLineF>> Changes;
-	QHash<int, QList<LINE>> Attribs;
-
-	QHash<int, QLineF> Lines;
-	QHash<int, LINE> Metadata;
-
-	emit onBeginProgress(tr("Loading lines"));
-	emit onSetupProgress(0, 0);
-
-	if (Objects.exec()) while (Objects.next() && !isTerminated())
-	{
-		const int UID = Objects.value(0).toInt();
-
-		if (!Items.contains(UID)) continue;
-
-		Lines.insert(Objects.value(1).toInt(),
-		{
-			Objects.value(2).toDouble(),
-			Objects.value(3).toDouble(),
-			Objects.value(4).toDouble(),
-			Objects.value(5).toDouble()
-		});
-
-		Metadata.insert(Objects.value(1).toInt(),
-		{
-			Objects.value(6).toInt(),
-			Objects.value(7).toInt(),
-			Objects.value(8).toInt()
-		});
-	}
-
-	emit onBeginProgress(tr("Loading elements"));
-	emit onSetupProgress(0, 0); Step = 0;
-
-	if (Elements.exec()) while (Elements.next() && !isTerminated())
-	{
-		const int UID = Elements.value(0).toInt();
-
-		if (Items.contains(UID)) Geometry[UID].append(
-		{
-			Elements.value(1).toInt(),
-			Elements.value(2).toInt()
-		});
-	}
-
-	if (isTerminated()) { emit onEndProgress(); emit onSegmentDelete(0); return; }
-
-	emit onBeginProgress(tr("Computing geometry"));
-	emit onSetupProgress(0, 0); Step = 0;
-
-	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Lines, &Changes, &Attribs, &Metadata, &Cuts, &Synchronizer, Length, Angle, isCut]
-	(const int& UID) -> void
-	{
-		if (!Geometry.contains(UID)) return;
-		const auto& Copy = Geometry[UID];
-
-		QList<QLineF> List;
-		QList<LINE> Attr;
-		QLineF Unified;
-		LINE uAttr;
-
-		bool isChanged(false);
-
-		for (const auto& E : Copy) if (E.Typ == 0 && Lines.contains(E.IDE))
-		{
-			const auto& Line = Lines[E.IDE];
-
-			if (Line.length() > Length)
-			{
-				if (Unified != QLineF())
-				{
-					auto Last = Line; const double ang = Last.angleTo(Unified);
-
-					if (qAbs(ang) < Angle || qAbs(qAbs(ang) - 180) < Angle || qAbs(qAbs(ang) - 360) < Angle)
-					{
-						bool isOk = true;
-
-						if (pointComp(Last.p1(), Unified.p1()) && !isCut(Last.p1(), Cuts)) Last.setP1(Unified.p2());
-						else if (pointComp(Last.p1(), Unified.p2()) && !isCut(Last.p1(), Cuts)) Last.setP1(Unified.p1());
-						else if (pointComp(Last.p2(), Unified.p1()) && !isCut(Last.p2(), Cuts)) Last.setP2(Unified.p2());
-						else if (pointComp(Last.p2(), Unified.p2()) && !isCut(Last.p2(), Cuts)) Last.setP2(Unified.p1());
-						else isOk = false;
-
-						if (isOk)
-						{
-							Attr.append(Metadata[E.IDE]);
-							List.append(Last);
-
-							Unified = QLineF();
-						}
-						else
-						{
-							Attr.append(uAttr);
-							Attr.append(Metadata[E.IDE]);
-
-							List.append(Unified);
-							List.append(Last);
-						}
-
-						isChanged = isChanged || isOk;
-					}
-					else
-					{
-						Attr.append(uAttr);
-						Attr.append(Metadata[E.IDE]);
-
-						List.append(Unified);
-						List.append(Last);
-					}
-				}
-				else
-				{
-					Attr.append(Metadata[E.IDE]);
-					List.append(Line);
-				}
-			}
-			else
-			{
-				if (Unified == QLineF()) Unified = Line;
-				else
-				{
-					const double ang = Line.angleTo(Unified);
-
-					if (qAbs(ang) < Angle || qAbs(qAbs(ang) - 180) < Angle || qAbs(qAbs(ang) - 360) < Angle)
-					{
-						bool isOk = true;
-
-						if (pointComp(Unified.p1(), Line.p1()) && !isCut(Unified.p1(), Cuts)) Unified.setP1(Line.p2());
-						else if (pointComp(Unified.p1(), Line.p2()) && !isCut(Unified.p1(), Cuts)) Unified.setP1(Line.p1());
-						else if (pointComp(Unified.p2(), Line.p1()) && !isCut(Unified.p2(), Cuts)) Unified.setP2(Line.p2());
-						else if (pointComp(Unified.p2(), Line.p2()) && !isCut(Unified.p2(), Cuts)) Unified.setP2(Line.p1());
-						else isOk = false;
-
-						if (!isOk)
-						{
-							List.append(Unified);
-							Attr.append(uAttr);
-							Unified = Line;
-						}
-						else if (Unified.length() > Length)
-						{
-							List.append(Unified);
-							Attr.append(Metadata[E.IDE]);
-							Unified = QLineF();
-						}
-
-						isChanged = isChanged || isOk;
-					}
-					else
-					{
-						List.append(Unified);
-						Attr.append(uAttr);
-						Unified = Line;
-					}
-
-					uAttr = Metadata[E.IDE];
-				}
-			}
-		}
-
-		if (isChanged)
-		{
-			Synchronizer.lock();
-			Changes.insert(UID, List);
-			Attribs.insert(UID, Attr);
-			Synchronizer.unlock();
-		}
-	});
-
-	if (isTerminated()) { emit onEndProgress(); emit onSegmentDelete(0); return; }
-
-	emit onBeginProgress(tr("Updating geometry"));
-	emit onSetupProgress(0, Changes.size()); Step = 0;
-
-	for (auto i = Changes.constBegin(); i != Changes.constEnd(); ++i) if (!isTerminated())
-	{
-		QList<int> freeUIDS, otherUIDS; int N(0);
-
-		const auto Attr = Attribs[i.key()];
-
-		for (const auto& E : Geometry[i.key()]) if (E.Typ == 0)
-		{
-			if (Lines.contains(E.IDE))
-			{
-				deleteSegment.addBindValue(E.IDE);
-				deleteSegment.exec();
-
-				freeUIDS.append(E.IDE);
-			}
-			else otherUIDS.append(E.IDE);
-		}
-
-		deleteGeometry.addBindValue(i.key());
-		deleteGeometry.exec();
-
-		for (int j = 0; j < i.value().size(); ++j)
-		{
-			const int ID = freeUIDS.takeLast();
-
-			insertSegment.addBindValue(ID);
-			insertSegment.addBindValue(i.value()[j].x1());
-			insertSegment.addBindValue(i.value()[j].y1());
-			insertSegment.addBindValue(i.value()[j].x2());
-			insertSegment.addBindValue(i.value()[j].y2());
-			insertSegment.addBindValue(Attr[j].IDW);
-			insertSegment.addBindValue(Attr[j].Opr);
-			insertSegment.addBindValue(Attr[j].Typ);
-
-			insertSegment.exec();
-
-			insertGeometry.addBindValue(i.key());
-			insertGeometry.addBindValue(ID);
-			insertGeometry.addBindValue(0);
-			insertGeometry.addBindValue(++N);
-
-			insertGeometry.exec();
-		}
-
-		for (const auto& ID : otherUIDS)
-		{
-			insertGeometry.addBindValue(i.key());
-			insertGeometry.addBindValue(ID);
-			insertGeometry.addBindValue(0);
-			insertGeometry.addBindValue(++N);
-
-			insertGeometry.exec();
-		}
-
-		for (const auto& E : Geometry[i.key()]) if (E.Typ != 0)
-		{
-			insertGeometry.addBindValue(i.key());
-			insertGeometry.addBindValue(E.IDE);
-			insertGeometry.addBindValue(E.Typ);
-			insertGeometry.addBindValue(++N);
-
-			insertGeometry.exec();
-		}
-
-		Count += freeUIDS.size();
-
-		emit onUpdateProgress(++Step);
-	}
-
-	emit onEndProgress();
-	emit onSegmentDelete(Count);
-}
-
-void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Diff, double Length)
+void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Diff, double Length, bool Mode)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentReduce(0); return; }
 
@@ -5476,8 +5057,11 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0); Step = 0;
 
+	if (Diff == 0.0) Diff = INFINITY;
+	if (Length == 0.0) Length = INFINITY;
+
 	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff, Length, isCut]
+	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff, Length, Mode, isCut]
 	(const int& UID) -> void
 	{
 		if (!Geometry.contains(UID)) return;
@@ -5487,22 +5071,28 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 		{
 			auto& L1 = List[i - 1];
 			auto& L2 = List[i];
-			auto New = L2.Line;
 
-			if (Length && L1.Line.length() > Length && L2.Line.length() > Length) continue;
+			auto New = L2.Line;
+			bool OK = true;
 
 			const double ang = L1.Line.angleTo(L2.Line);
 
-			if (qAbs(ang) < Diff || qAbs(qAbs(ang) - 180) < Diff || qAbs(qAbs(ang) - 360) < Diff)
+			const bool isLastOk = (Mode == 0) && (i == List.size() - 1) && (L1.Line.length() < Length || L2.Line.length() < Length);
+			const bool isLenOk = isLastOk || (L1.Line.length() < Length && L2.Line.length() < Length);
+			const bool isAngOk = qAbs(ang) < Diff || qAbs(qAbs(ang) - 180) < Diff || qAbs(qAbs(ang) - 360) < Diff;
+
+			if (!isLenOk || !isAngOk) continue;
+
+			if (pointComp(L2.Line.p1(), L1.Line.p1()) && !isCut(L2.Line.p1(), Cuts)) New.setP1(L1.Line.p2());
+			else if (pointComp(L2.Line.p1(), L1.Line.p2()) && !isCut(L2.Line.p1(), Cuts)) New.setP1(L1.Line.p1());
+			else if (pointComp(L2.Line.p2(), L1.Line.p1()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p2());
+			else if (pointComp(L2.Line.p2(), L1.Line.p2()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p1());
+			else OK = false;
+
+			if (New.length() < L1.Line.length() || New.length() < L2.Line.length()) continue; if (OK) L2.Line = New;
+
+			if (OK)
 			{
-				if (pointComp(L2.Line.p1(), L1.Line.p1()) && !isCut(L2.Line.p1(), Cuts)) New.setP1(L1.Line.p2());
-				else if (pointComp(L2.Line.p1(), L1.Line.p2()) && !isCut(L2.Line.p1(), Cuts)) New.setP1(L1.Line.p1());
-				else if (pointComp(L2.Line.p2(), L1.Line.p1()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p2());
-				else if (pointComp(L2.Line.p2(), L1.Line.p2()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p1());
-				else break;
-
-				if (New.length() < L1.Line.length() || New.length() < L2.Line.length()) break; else L2.Line = New;
-
 				Synchronizer.lock();
 				Deletes.insert({ UID, L1.ID });
 				Updates.remove(L1.ID);

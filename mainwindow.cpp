@@ -124,7 +124,6 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
 	connect(Driver, &DatabaseDriver::onLabelEdit, this, &MainWindow::labelEdit);
 	connect(Driver, &DatabaseDriver::onKergUpdate, this, &MainWindow::updatedKerg);
-	connect(Driver, &DatabaseDriver::onSegmentDelete, this, &MainWindow::segmentsReduced);
 	connect(Driver, &DatabaseDriver::onSegmentReduce, this, &MainWindow::breaksReduced);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
@@ -175,7 +174,6 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
-	connect(this, &MainWindow::onReduceRequest, Driver, &DatabaseDriver::removeSegments);
 	connect(this, &MainWindow::onBreaksRequest, Driver, &DatabaseDriver::mergeSegments);
 
 	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
@@ -594,22 +592,13 @@ void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, d
 	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation);
 }
 
-void MainWindow::execBreaks(int Flags, double Angle, double Length)
+void MainWindow::execBreaks(int Flags, double Angle, double Length, bool Mode)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onBreaksRequest(Set, Flags, Angle, Length);
-}
-
-void MainWindow::execReduce(int Mode, double Angle, double Radius)
-{
-	const auto Selected = ui->Data->selectionModel()->selectedRows();
-	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-	auto Set = Model->getUids(Selected).subtract(hiddenRows);
-
-	lockUi(BUSY); emit onReduceRequest(Set, Radius, Angle, Mode);
+	lockUi(BUSY); emit onBreaksRequest(Set, Flags, Angle, Length, Mode);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)
@@ -656,8 +645,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Loader, &SelectorDialog::onDataAccepted, this, &MainWindow::loadRequest);
 	connect(Copyfields, &CopyfieldsDialog::onCopyRequest, this, &MainWindow::execCopy);
 	connect(Script, &ScriptDialog::onRunRequest, this, &MainWindow::execScript);
-	connect(Breaks, &BreaksDialog::onShortRequest, this, &MainWindow::execReduce);
-	connect(Breaks, &BreaksDialog::onAngleRequest, this, &MainWindow::execBreaks);
+	connect(Breaks, &BreaksDialog::onReduceRequest, this, &MainWindow::execBreaks);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -839,11 +827,6 @@ void MainWindow::labelDelete(int Count)
 void MainWindow::breaksInsert(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Inserted %n breakpoint(s)", nullptr, Count));
-}
-
-void MainWindow::segmentsReduced(int Count)
-{
-	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n segment(s)", nullptr, Count));
 }
 
 void MainWindow::breaksReduced(int Count)

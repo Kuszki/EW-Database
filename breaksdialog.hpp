@@ -21,6 +21,8 @@
 #ifndef BREAKSDIALOG_HPP
 #define BREAKSDIALOG_HPP
 
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include <QDialog>
 
 namespace Ui
@@ -46,10 +48,13 @@ class BreaksDialog : public QDialog
 
 		virtual void accept(void) override;
 
+	private slots:
+
+		void dialogParamsChanged(void);
+
 	signals:
 
-		void onShortRequest(int, double, double);
-		void onAngleRequest(int, double, double);
+		void onReduceRequest(int, double, double, bool);
 
 };
 

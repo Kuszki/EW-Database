@@ -193,8 +193,7 @@ class MainWindow : public QMainWindow
 		void fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L, bool E);
 		void insertBreaks(int Mode, double Radius);
 		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation);
-		void execBreaks(int Flags, double Angle, double Length);
-		void execReduce(int Mode, double Angle, double Radius);
+		void execBreaks(int Flags, double Angle, double Length, bool Mode);
 
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
@@ -233,7 +232,6 @@ class MainWindow : public QMainWindow
 		void labelEdit(int Count);
 		void labelDelete(int Count);
 		void breaksInsert(int Count);
-		void segmentsReduced(int Count);
 		void breaksReduced(int Count);
 
 		void batchExec(int Count);
@@ -300,9 +298,7 @@ class MainWindow : public QMainWindow
 
 		void onInsertRequest(const QSet<int>&, int, double);
 
-		void onReduceRequest(const QSet<int>&, double, double, int);
-
-		void onBreaksRequest(const QSet<int>&, int, double, double);
+		void onBreaksRequest(const QSet<int>&, int, double, double, bool);
 
 		void onKergRequest(const QSet<int>&, const QString&, int, int);
 
