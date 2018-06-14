@@ -36,7 +36,7 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 	Settings.beginGroup("Database");
 	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
 	maxBindedSize = Settings.value("binded", 2500).toUInt();
-	Logfile = Settings.value("logfile").toString();
+	Logdir = Settings.value("logdir").toString();
 	Settings.endGroup();
 }
 
@@ -45,7 +45,7 @@ DatabaseDriver::~DatabaseDriver(void)
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
-	Settings.setValue("logfile", Logfile);
+	Settings.setValue("logdir", Logdir);
 	Settings.endGroup();
 }
 
@@ -979,23 +979,24 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 
 void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 {
-	QMutexLocker Locker(&Terminator); QFile File(Logfile); QTextStream Stream(&File);
+	QMutexLocker Locker(&Terminator);
 
-	if (!File.open(QFile::Append | QFile::Text)) return;
+	const QString Path = QString("%1/%2_%3.txt").arg(Logdir).arg(Title)
+					 .arg(QDateTime::currentDateTime().toString(Qt::ISODate));
+
+	QFile File(Path); QTextStream Stream(&File);
+
+	if (!File.open(QFile::WriteOnly | QFile::Text)) return;
 
 	emit onBeginProgress(tr("Creating log file"));
 	emit onSetupProgress(0, Items.size()); int Step(0);
 
 	QSqlQuery Query("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0", Database);
 
-	Stream << "===== " << Title << " ===== " << QDateTime::currentDateTime().toString() << endl;
-
 	while (Query.next()) if (Items.contains(Query.value(0).toInt()))
 	{
 		Stream << Query.value(1).toString() << endl; emit onUpdateProgress(++Step);
 	}
-
-	Stream << "========================================" << endl << endl;
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -8304,7 +8305,7 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 
 void DatabaseDriver::setLogfilePath(const QString& Path)
 {
-	QMutexLocker Locker(&Terminator); Logfile = Path;
+	QMutexLocker Locker(&Terminator); Logdir = Path;
 }
 
 void DatabaseDriver::setDateOverride(bool Override)

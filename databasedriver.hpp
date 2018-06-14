@@ -127,7 +127,7 @@ class DatabaseDriver : public QObject
 
 		QSqlDatabase Database;
 		QStringList Headers;
-		QString Logfile;
+		QString Logdir;
 
 		QList<TABLE> Tables;
 		QList<FIELD> Fields;
