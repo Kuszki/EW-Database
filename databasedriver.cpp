@@ -29,17 +29,15 @@ const QStringList DatabaseDriver::Operators =
 };
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent), Terminated(false) 
+: QObject(Parent), Terminated(false)
 {
-	QSettings Settings("EW-Database"); QString Log;
+	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
 	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
 	maxBindedSize = Settings.value("binded", 2500).toUInt();
-	Log = Settings.value("logfile").toString();
+	Logfile = Settings.value("logfile").toString();
 	Settings.endGroup();
-
-	if (!Log.isEmpty()) setLogfilePath(Log);
 }
 
 DatabaseDriver::~DatabaseDriver(void)
@@ -47,7 +45,7 @@ DatabaseDriver::~DatabaseDriver(void)
 	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
-	Settings.setValue("logfile", Logfile.isOpen() ? Logfile.fileName() : QString());
+	Settings.setValue("logfile", Logfile);
 	Settings.endGroup();
 }
 
@@ -981,23 +979,23 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 
 void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 {
-	QMutexLocker Locker(&Terminator);
-	if (!Logfile.isOpen()) return;
-	QTextStream Stream(&Logfile);
+	QMutexLocker Locker(&Terminator); QFile File(Logfile); QTextStream Stream(&File);
+
+	if (!File.open(QFile::Append | QFile::Text)) return;
 
 	emit onBeginProgress(tr("Creating log file"));
 	emit onSetupProgress(0, Items.size()); int Step(0);
 
 	QSqlQuery Query("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0", Database);
 
-	Stream << endl << QDateTime::currentDateTime().toString() << " " << Title << endl;
+	Stream << "===== " << Title << " ===== " << QDateTime::currentDateTime().toString() << endl;
 
 	while (Query.next()) if (Items.contains(Query.value(0).toInt()))
 	{
-		Stream << Query.value(1).toString() << endl;
-
-		emit onUpdateProgress(++Step);
+		Stream << Query.value(1).toString() << endl; emit onUpdateProgress(++Step);
 	}
+
+	Stream << "========================================" << endl << endl;
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -8306,15 +8304,7 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 
 void DatabaseDriver::setLogfilePath(const QString& Path)
 {
-	QMutexLocker Locker(&Terminator);
-
-	if (Logfile.isOpen()) Logfile.close();
-
-	if (!Path.isEmpty())
-	{
-		Logfile.setFileName(Path);
-		Logfile.open(QFile::Append | QFile::Text);
-	}
+	QMutexLocker Locker(&Terminator); Logfile = Path;
 }
 
 void DatabaseDriver::setDateOverride(bool Override)
