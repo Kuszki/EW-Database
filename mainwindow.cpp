@@ -476,7 +476,6 @@ void MainWindow::selectionChanged(void)
 	ui->actionKerg->setEnabled(Count > 0);
 	ui->actionCopyfields->setEnabled(Count > 0);
 	ui->actionScript->setEnabled(Count > 0);
-	ui->actionReduce->setEnabled(Count > 0);
 	ui->actionBreaks->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
@@ -595,22 +594,22 @@ void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, d
 	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation);
 }
 
-void MainWindow::execBreaks(int Flags, double Radius)
+void MainWindow::execBreaks(int Flags, double Angle, double Length)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onBreaksRequest(Set, Flags, Radius);
+	lockUi(BUSY); emit onBreaksRequest(Set, Flags, Angle, Length);
 }
 
-void MainWindow::execReduce(double Radius)
+void MainWindow::execReduce(int Mode, double Angle, double Radius)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onReduceRequest(Set, Radius);
+	lockUi(BUSY); emit onReduceRequest(Set, Radius, Angle, Mode);
 }
 
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)
@@ -639,7 +638,6 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Loader = new SelectorDialog(this);
 	Copyfields = new CopyfieldsDialog(allHeaders, this);
 	Script = new ScriptDialog(Props, this);
-	Reduce = new ReduceDialog(this);
 	Breaks = new BreaksDialog(this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
@@ -658,8 +656,8 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Loader, &SelectorDialog::onDataAccepted, this, &MainWindow::loadRequest);
 	connect(Copyfields, &CopyfieldsDialog::onCopyRequest, this, &MainWindow::execCopy);
 	connect(Script, &ScriptDialog::onRunRequest, this, &MainWindow::execScript);
-	connect(Reduce, &ReduceDialog::onReduceRequest, this, &MainWindow::execReduce);
-	connect(Breaks, &BreaksDialog::onReduceRequest, this, &MainWindow::execBreaks);
+	connect(Breaks, &BreaksDialog::onShortRequest, this, &MainWindow::execReduce);
+	connect(Breaks, &BreaksDialog::onAngleRequest, this, &MainWindow::execBreaks);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -674,7 +672,6 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionLoad, &QAction::triggered, Loader, &SelectorDialog::open);
 	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
 	connect(ui->actionScript, &QAction::triggered, Script, &ScriptDialog::open);
-	connect(ui->actionReduce, &QAction::triggered, Reduce, &ReduceDialog::open);
 	connect(ui->actionBreaks, &QAction::triggered, Breaks, &BreaksDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
@@ -705,7 +702,6 @@ void MainWindow::databaseDisconnected(void)
 	Loader->deleteLater();
 	Copyfields->deleteLater();
 	Script->deleteLater();
-	Reduce->deleteLater();
 	Breaks->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
@@ -1159,7 +1155,6 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionInterface->setEnabled(false);
 			ui->actionCopyfields->setEnabled(false);
 			ui->actionScript->setEnabled(false);
-			ui->actionReduce->setEnabled(false);
 			ui->actionBreaks->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 		break;
@@ -1192,7 +1187,6 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionInterface->setEnabled(false);
 			ui->actionCopyfields->setEnabled(false);
 			ui->actionScript->setEnabled(false);
-			ui->actionReduce->setEnabled(false);
 			ui->actionBreaks->setEnabled(false);
 			ui->Data->setEnabled(false);
 

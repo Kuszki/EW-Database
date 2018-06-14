@@ -59,7 +59,6 @@ SOURCES		+=	main.cpp \
 				copyfieldsdialog.cpp \
 				scriptdialog.cpp \
 				klhighlighter.cpp \
-				reducedialog.cpp \
 				breaksdialog.cpp \
 				settingsdialog.cpp
 
@@ -96,7 +95,6 @@ HEADERS		+=	mainwindow.hpp \
 				copyfieldsdialog.hpp \
 				scriptdialog.hpp \
 				klhighlighter.hpp \
-				reducedialog.hpp \
 				breaksdialog.hpp \
 				settingsdialog.hpp
 
@@ -128,7 +126,6 @@ FORMS		+=	mainwindow.ui \
 				copyfieldswidget.ui \
 				copyfieldsdialog.ui \
 				scriptdialog.ui \
-				reducedialog.ui \
 				breaksdialog.ui \
 				settingsdialog.ui
 

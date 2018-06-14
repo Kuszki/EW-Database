@@ -48,7 +48,8 @@ class BreaksDialog : public QDialog
 
 	signals:
 
-		void onReduceRequest(int, double);
+		void onShortRequest(int, double, double);
+		void onAngleRequest(int, double, double);
 
 };
 

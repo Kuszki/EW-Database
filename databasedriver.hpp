@@ -307,8 +307,8 @@ class DatabaseDriver : public QObject
 
 		void insertPoints(const QSet<int>& Items, int Mode, double Radius);
 
-		void removeSegments(const QSet<int>& Items, double Length);
-		void mergeSegments(const QSet<int>& Items, int Flags, double Diff);
+		void removeSegments(const QSet<int>& Items, double Length, double Angle, int Flags);
+		void mergeSegments(const QSet<int>& Items, int Flags, double Diff, double Length);
 
 		void updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements);
 

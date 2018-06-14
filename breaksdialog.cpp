@@ -34,10 +34,11 @@ BreaksDialog::~BreaksDialog(void)
 
 void BreaksDialog::accept(void)
 {
-	int Flags; QDialog::accept();
+	int Flags(0); QDialog::accept(); const int Job = ui->modeCombo->currentIndex();
 
 	if (!ui->pointCheck->isChecked()) Flags = Flags | 0x01;
 	if (!ui->breakCheck->isChecked()) Flags = Flags | 0x02;
 
-	emit onReduceRequest(Flags, ui->angleSpin->value());
+	if (Job == 0) emit onShortRequest(Flags, ui->angleSpin->value(), ui->lengthSpin->value());
+	if (Job == 1) emit onAngleRequest(Flags, ui->angleSpin->value(), ui->lengthSpin->value());
 }

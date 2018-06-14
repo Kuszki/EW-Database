@@ -29,7 +29,7 @@ const QStringList DatabaseDriver::Operators =
 };
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent), Terminated(false)
+: QObject(Parent), Terminated(false) 
 {
 	QSettings Settings("EW-Database");
 
@@ -4880,9 +4880,19 @@ void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radiu
 	emit onPointInsert(Count);
 }
 
-void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
+void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length, double Angle, int Flags)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentDelete(0); return; }
+
+	const auto appendCount = [] (const QPointF& P, QSet<QPair<double, double>>& Cuts, QHash<QPair<double, double>, int>& Counts)
+	{
+		if (++Counts[qMakePair(P.x(), P.y())] == 3) Cuts.insert(qMakePair(P.x(), P.y()));
+	};
+
+	const auto isCut = [] (const QPointF& P, const QSet<QPair<double, double>>& Cuts) -> bool
+	{
+		for (const auto& C : Cuts) if (pointComp(P, QPointF(C.first, C.second))) return true; return false;
+	};
 
 	struct ELEMENT { int IDE, Typ; };
 	struct LINE { int IDW, Typ, Opr; };
@@ -4891,15 +4901,109 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 			insertSegment(Database), deleteSegment(Database),
 			insertGeometry(Database), deleteGeometry(Database);
 
+	QSet<QPair<double, double>> Cuts; QHash<QPair<double, double>, int> Counts;
 	QMutex Synchronizer; int Step(0), Count(0);
+
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, 0);
+
+	if (Flags & 0x01)
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		Query.prepare(
+			"SELECT "
+				"T.POS_X, T.POS_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_TEXT T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 4 AND "
+				"E.TYP = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
+				"T.TYP = 4");
+
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+
+		Query.prepare(
+			"SELECT "
+				"(P.P0_X + P.P1_X) / 2.0, "
+				"(P.P0_Y + P.P1_Y) / 2.0 "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE P "
+			"ON "
+				"E.IDE = P.ID "
+			"WHERE "
+				"P.STAN_ZMIANY = 0 AND "
+				"P.P1_FLAGS = 4 AND "
+				"E.TYP = 0 AND "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 3");
+
+		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
+		{
+			Query.value(0).toDouble(),
+			Query.value(1).toDouble()
+		});
+	}
+
+	if (Flags & 0x02)
+	{
+		QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+		Query.prepare(
+			"SELECT "
+				"P.P0_X, P.P0_Y, "
+				"P.P1_X, P.P1_Y "
+			"FROM "
+				"EW_OBIEKTY O "
+			"INNER JOIN "
+				"EW_OB_ELEMENTY E "
+			"ON "
+				"O.UID = E.UIDO "
+			"INNER JOIN "
+				"EW_POLYLINE T "
+			"ON "
+				"E.IDE = T.ID "
+			"WHERE "
+				"O.STATUS = 0 AND "
+				"O.RODZAJ = 4 AND "
+				"E.TYP = 0 AND "
+				"T.STAN_ZMIANY = 0 AND "
+				"T.P1_FLAGS = 0");
+
+		if (Query.exec()) while (Query.next() && !isTerminated())
+		{
+			const QPointF PointA(Query.value(0).toDouble(), Query.value(1).toDouble());
+			const QPointF PointB(Query.value(2).toDouble(), Query.value(3).toDouble());
+
+			appendCount(PointA, Cuts, Counts); appendCount(PointB, Cuts, Counts);
+		};
+	}
 
 	Objects.prepare(
 		"SELECT "
-			"O.UID, P.ID, "
-			"ROUND(P.P0_X, 5), "
-			"ROUND(P.P0_Y, 5), "
-			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 5), "
-			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 5), "
+			"O.UID, P.ID, P.P0_X, P.P0_Y, "
+			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
 			"P.ID_WARSTWY, P.TYP_LINII, P.OPERAT "
 		"FROM "
 			"EW_OBIEKTY O "
@@ -4998,7 +5102,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Lines, &Changes, &Attribs, &Metadata, &Synchronizer, Length]
+	[&Geometry, &Lines, &Changes, &Attribs, &Metadata, &Cuts, &Synchronizer, Length, Angle, isCut]
 	(const int& UID) -> void
 	{
 		if (!Geometry.contains(UID)) return;
@@ -5007,6 +5111,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 		QList<QLineF> List;
 		QList<LINE> Attr;
 		QLineF Unified;
+		LINE uAttr;
 
 		bool isChanged(false);
 
@@ -5018,39 +5123,92 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 			{
 				if (Unified != QLineF())
 				{
-					auto Last = Line;
+					auto Last = Line; const double ang = Last.angleTo(Unified);
 
-					if (Last.p1() == Unified.p1()) Last.setP1(Unified.p2());
-					else if (Last.p1() == Unified.p2()) Last.setP1(Unified.p1());
-					else if (Last.p2() == Unified.p1()) Last.setP2(Unified.p2());
-					else if (Last.p2() == Unified.p2()) Last.setP2(Unified.p1());
+					if (qAbs(ang) < Angle || qAbs(qAbs(ang) - 180) < Angle || qAbs(qAbs(ang) - 360) < Angle)
+					{
+						bool isOk = true;
 
-					List.append(Last);
+						if (pointComp(Last.p1(), Unified.p1()) && !isCut(Last.p1(), Cuts)) Last.setP1(Unified.p2());
+						else if (pointComp(Last.p1(), Unified.p2()) && !isCut(Last.p1(), Cuts)) Last.setP1(Unified.p1());
+						else if (pointComp(Last.p2(), Unified.p1()) && !isCut(Last.p2(), Cuts)) Last.setP2(Unified.p2());
+						else if (pointComp(Last.p2(), Unified.p2()) && !isCut(Last.p2(), Cuts)) Last.setP2(Unified.p1());
+						else isOk = false;
+
+						if (isOk)
+						{
+							Attr.append(Metadata[E.IDE]);
+							List.append(Last);
+
+							Unified = QLineF();
+						}
+						else
+						{
+							Attr.append(uAttr);
+							Attr.append(Metadata[E.IDE]);
+
+							List.append(Unified);
+							List.append(Last);
+						}
+
+						isChanged = isChanged || isOk;
+					}
+					else
+					{
+						Attr.append(uAttr);
+						Attr.append(Metadata[E.IDE]);
+
+						List.append(Unified);
+						List.append(Last);
+					}
 				}
-				else List.append(Line);
-
-				Attr.append(Metadata[E.IDE]);
-				Unified = QLineF();
+				else
+				{
+					Attr.append(Metadata[E.IDE]);
+					List.append(Line);
+				}
 			}
 			else
 			{
 				if (Unified == QLineF()) Unified = Line;
 				else
 				{
-					if (Unified.p1() == Line.p1()) Unified.setP1(Line.p2());
-					else if (Unified.p1() == Line.p2()) Unified.setP1(Line.p1());
-					else if (Unified.p2() == Line.p1()) Unified.setP2(Line.p2());
-					else if (Unified.p2() == Line.p2()) Unified.setP2(Line.p1());
+					const double ang = Line.angleTo(Unified);
 
-					if (Unified.length() > Length)
+					if (qAbs(ang) < Angle || qAbs(qAbs(ang) - 180) < Angle || qAbs(qAbs(ang) - 360) < Angle)
+					{
+						bool isOk = true;
+
+						if (pointComp(Unified.p1(), Line.p1()) && !isCut(Unified.p1(), Cuts)) Unified.setP1(Line.p2());
+						else if (pointComp(Unified.p1(), Line.p2()) && !isCut(Unified.p1(), Cuts)) Unified.setP1(Line.p1());
+						else if (pointComp(Unified.p2(), Line.p1()) && !isCut(Unified.p2(), Cuts)) Unified.setP2(Line.p2());
+						else if (pointComp(Unified.p2(), Line.p2()) && !isCut(Unified.p2(), Cuts)) Unified.setP2(Line.p1());
+						else isOk = false;
+
+						if (!isOk)
+						{
+							List.append(Unified);
+							Attr.append(uAttr);
+							Unified = Line;
+						}
+						else if (Unified.length() > Length)
+						{
+							List.append(Unified);
+							Attr.append(Metadata[E.IDE]);
+							Unified = QLineF();
+						}
+
+						isChanged = isChanged || isOk;
+					}
+					else
 					{
 						List.append(Unified);
-						Attr.append(Metadata[E.IDE]);
-						Unified = QLineF();
+						Attr.append(uAttr);
+						Unified = Line;
 					}
-				}
 
-				isChanged = true;
+					uAttr = Metadata[E.IDE];
+				}
 			}
 		}
 
@@ -5141,7 +5299,7 @@ void DatabaseDriver::removeSegments(const QSet<int>& Items, double Length)
 	emit onSegmentDelete(Count);
 }
 
-void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Diff)
+void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Diff, double Length)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onSegmentReduce(0); return; }
 
@@ -5168,7 +5326,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 		Query.prepare(
 			"SELECT "
-				"T.POS_X, T.POS_Y, "
+				"T.POS_X, T.POS_Y "
 			"FROM "
 				"EW_OBIEKTY O "
 			"INNER JOIN "
@@ -5319,7 +5477,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 	emit onSetupProgress(0, 0); Step = 0;
 
 	QtConcurrent::blockingMap(Items,
-	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff, isCut]
+	[&Geometry, &Deletes, &Updates, &Cuts, &Synchronizer, Diff, Length, isCut]
 	(const int& UID) -> void
 	{
 		if (!Geometry.contains(UID)) return;
@@ -5330,6 +5488,8 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 			auto& L1 = List[i - 1];
 			auto& L2 = List[i];
 			auto New = L2.Line;
+
+			if (Length && L1.Line.length() > Length && L2.Line.length() > Length) continue;
 
 			const double ang = L1.Line.angleTo(L2.Line);
 
