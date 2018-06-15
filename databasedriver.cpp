@@ -982,7 +982,7 @@ void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 	QMutexLocker Locker(&Terminator);
 
 	const QString Path = QString("%1/%2_%3.txt").arg(Logdir).arg(Title)
-					 .arg(QDateTime::currentDateTime().toString(Qt::ISODate));
+					 .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
 
 	QFile File(Path); QTextStream Stream(&File);
 
@@ -5102,13 +5102,15 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 			auto& L1 = List[i - 1];
 			auto& L2 = List[i];
 
+			auto L3 = (i == List.size() - 1) ? QLineF() : List[i + 1].Line;
 			auto New = L2.Line;
 			bool OK = true;
 
 			const double ang = L1.Line.angleTo(L2.Line);
 
+			const bool isNextOk = (Mode == 0) && (L3 != QLineF()) && (L1.Line.length() < Length || L2.Line.length() < Length) && L3.length() > Length;
 			const bool isLastOk = (Mode == 0) && (i == List.size() - 1) && (L1.Line.length() < Length || L2.Line.length() < Length);
-			const bool isLenOk = isLastOk || (L1.Line.length() < Length && L2.Line.length() < Length);
+			const bool isLenOk = isNextOk || isLastOk || (L1.Line.length() < Length && L2.Line.length() < Length);
 			const bool isAngOk = qAbs(ang) < Diff || qAbs(qAbs(ang) - 180) < Diff || qAbs(qAbs(ang) - 360) < Diff;
 
 			if (!isLenOk || !isAngOk) continue;
