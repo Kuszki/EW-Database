@@ -993,7 +993,7 @@ void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 
 	QSqlQuery Query("SELECT UID, NUMER FROM EW_OBIEKTY WHERE STATUS = 0", Database);
 
-	while (Query.next()) if (Items.contains(Query.value(0).toInt()))
+	if (Items.size()) while (Query.next()) if (Items.contains(Query.value(0).toInt()))
 	{
 		Stream << Query.value(1).toString() << endl; emit onUpdateProgress(++Step);
 	}
@@ -7312,8 +7312,9 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 			"E.N ASC");
 
 	insertSegment.prepare(
-		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT) "
-		"SELECT ?, ?, ?, ?, ?, 0, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT FROM EW_POLYLINE WHERE ID = ? AND STAN_ZMIANY = 0");
+		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT, CREATE_TS, MODIFY_TS) "
+		"SELECT ?, ?, ?, ?, ?, 0, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
+		"FROM EW_POLYLINE WHERE ID = ? AND STAN_ZMIANY = 0");
 
 	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ?, PN_X = NULL, PN_Y = NULL, P1_FLAGS = 0 WHERE ID = ?");
 
@@ -7772,6 +7773,14 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 	[&Segments, &Polygons, &Circles, &Centers, &Addons, &Mods, &Synchronizer, Radius, Mode]
 	(int UID) -> void
 	{
+		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
+		{
+			const double lx1 = qMax(x1, x2); const double lx2 = qMin(x1, x2);
+			const double ly1 = qMax(y1, y2); const double ly2 = qMin(y1, y2);
+
+			return (px <= lx1) && (px >= lx2) && (py <= ly1) && (py >= ly2);
+		};
+
 		if (!Segments.contains(UID)) return;
 
 		QPointF sMatch, eMatch;
@@ -7822,12 +7831,15 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 				const double RadA = QLineF(IntA, Start).length();
 				const double RadB = QLineF(IntB, Stop).length();
 
-				if (RadA <= Radius && (qIsNaN(sRad) || RadA < sRad))
+				const bool b1 = between(IntA.x(), IntA.y(), L.x1(), L.y1(), L.x2(), L.y2());
+				const bool b2 = between(IntB.x(), IntB.y(), L.x1(), L.y1(), L.x2(), L.y2());
+
+				if (b1 && RadA <= Radius && (qIsNaN(sRad) || RadA < sRad))
 				{
 					sMatch = Centers[i.key()]; sRad = RadA;
 				}
 
-				if (RadB <= Radius && (qIsNaN(eRad) || RadB < eRad))
+				if (b2 && RadB <= Radius && (qIsNaN(eRad) || RadB < eRad))
 				{
 					eMatch = Centers[i.key()]; eRad = RadB;
 				}
@@ -7876,8 +7888,8 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 
 	Line.prepare(
 		"INSERT INTO EW_POLYLINE "
-			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, TYP_LINII, MNOZNIK, POINTCOUNT) "
-		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, 0.0, 2)");
+			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, TYP_LINII, MNOZNIK, POINTCOUNT, CREATE_TS, MODIFY_TS) "
+		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, 0.0, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
 
 	emit onBeginProgress(tr("Inserting segments"));
 	emit onSetupProgress(0, Mods.size());
@@ -7923,6 +7935,8 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 
 		emit onUpdateProgress(++Step);
 	}
+
+	appendLog("Dociąganie_do_urządzeń", Mods);
 
 	return Count;
 }
