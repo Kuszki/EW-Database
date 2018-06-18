@@ -18,7 +18,7 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+   <item row="0" column="0" colspan="2">
     <widget class="QComboBox" name="modeCombo">
      <item>
       <property name="text">
@@ -32,7 +32,7 @@
      </item>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="1" column="0" colspan="2">
     <widget class="QDoubleSpinBox" name="angleSpin">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -60,7 +60,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="2" column="0" colspan="2">
     <widget class="QDoubleSpinBox" name="lengthSpin">
      <property name="specialValueText">
       <string>No maximum segment length</string>
@@ -85,21 +85,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QCheckBox" name="pointCheck">
-     <property name="text">
-      <string>Remove breakpoints on point objects</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QCheckBox" name="breakCheck">
-     <property name="text">
-      <string>Remove common breakpoints</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
+   <item row="3" column="0" colspan="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -112,7 +98,10 @@
      </property>
     </spacer>
    </item>
-   <item row="6" column="0">
+   <item row="4" column="0">
+    <widget class="QComboBox" name="flagsCombo"/>
+   </item>
+   <item row="4" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
