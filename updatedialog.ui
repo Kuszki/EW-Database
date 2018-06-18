@@ -48,7 +48,7 @@
       <string>Prev</string>
      </property>
      <property name="icon">
-      <iconset theme="previous">
+      <iconset theme="go-previous">
        <normaloff>.</normaloff>.</iconset>
      </property>
     </widget>
@@ -59,7 +59,7 @@
       <string>Next</string>
      </property>
      <property name="icon">
-      <iconset theme="next">
+      <iconset theme="go-next">
        <normaloff>.</normaloff>.</iconset>
      </property>
     </widget>
