@@ -21,6 +21,7 @@
 #ifndef BREAKSDIALOG_HPP
 #define BREAKSDIALOG_HPP
 
+#include <QStandardItemModel>
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QDialog>

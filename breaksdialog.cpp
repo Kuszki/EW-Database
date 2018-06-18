@@ -23,8 +23,33 @@
 
 BreaksDialog::BreaksDialog(QWidget* Parent)
 : QDialog(Parent), ui(new Ui::BreaksDialog)
-{
-	ui->setupUi(this); dialogParamsChanged();
+{	
+	ui->setupUi(this); static const QStringList Flags =
+	{
+		tr("On point objects"),
+		tr("On common breakpoints")
+	};
+
+	auto Model = new QStandardItemModel(0, 1, this);
+	auto Item = new QStandardItem(tr("Remove breakpoints"));
+
+	int i(0); for (const auto& Text : Flags)
+	{
+		auto Item = new QStandardItem(Text);
+
+		Item->setData(i);
+		Item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+		Item->setCheckState(Qt::Unchecked);
+
+		Model->insertRow(i++, Item);
+	}
+
+	Item->setFlags(Qt::ItemIsEnabled);
+	Model->insertRow(0, Item);
+
+	ui->flagsCombo->setModel(Model);
+
+	dialogParamsChanged();
 }
 
 BreaksDialog::~BreaksDialog(void)
@@ -34,10 +59,12 @@ BreaksDialog::~BreaksDialog(void)
 
 void BreaksDialog::accept(void)
 {
+	const auto M = dynamic_cast<QStandardItemModel*>(ui->flagsCombo->model());
+
 	int Flags(0); QDialog::accept(); const bool Job = ui->modeCombo->currentIndex();
 
-	if (!ui->pointCheck->isChecked()) Flags = Flags | 0x01;
-	if (!ui->breakCheck->isChecked()) Flags = Flags | 0x02;
+	if (M->item(1)->checkState() == Qt::Checked) Flags = Flags | 0x01;
+	if (M->item(2)->checkState() == Qt::Checked) Flags = Flags | 0x02;
 
 	emit onReduceRequest(Flags, ui->angleSpin->value(), ui->lengthSpin->value(), Job);
 }
