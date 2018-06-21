@@ -269,8 +269,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>logopenButton</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>openButtonClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>564</x>
+     <y>60</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>707</x>
+     <y>56</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>dialogButtonClicked(QAbstractButton*)</slot>
+  <slot>openButtonClicked()</slot>
  </slots>
 </ui>

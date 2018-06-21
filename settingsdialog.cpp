@@ -39,6 +39,8 @@ void SettingsDialog::loadValues(void)
 	Settings.beginGroup("Database");
 	ui->driverCombo->setCurrentText(Settings.value("driver", "QIBASE").toString());
 	ui->querySpin->setValue(Settings.value("binded", 2500).toUInt());
+	ui->logCombo->setCurrentIndex(Settings.value("logen").toBool());
+	ui->logdirEdit->setText(Settings.value("logdir").toString());
 	Settings.endGroup();
 
 	Settings.beginGroup("History");
@@ -65,7 +67,17 @@ void SettingsDialog::dialogButtonClicked(QAbstractButton* Button)
 
 		ui->csvSep->clear();
 		ui->txtSep->clear();
+
+		ui->logCombo->setCurrentIndex(0);
+		ui->logdirEdit->clear();
 	}
+}
+
+void SettingsDialog::openButtonClicked(void)
+{
+	const QString Dir = QFileDialog::getExistingDirectory(this, tr("Select log directory"));
+
+	if (!Dir.isEmpty()) ui->logdirEdit->setText(Dir);
 }
 
 void SettingsDialog::accept(void)
@@ -75,6 +87,8 @@ void SettingsDialog::accept(void)
 	Settings.beginGroup("Database");
 	Settings.setValue("driver", ui->driverCombo->currentText());
 	Settings.setValue("binded", ui->querySpin->value());
+	Settings.setValue("logen", bool(ui->logCombo->currentIndex()));
+	Settings.setValue("logdir", ui->logdirEdit->text());
 	Settings.endGroup();
 
 	Settings.beginGroup("History");

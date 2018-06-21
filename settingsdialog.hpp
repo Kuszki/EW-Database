@@ -23,6 +23,7 @@
 
 #include <QDialogButtonBox>
 #include <QAbstractButton>
+#include <QFileDialog>
 #include <QSettings>
 #include <QDialog>
 
@@ -52,6 +53,7 @@ class SettingsDialog : public QDialog
 	private slots:
 
 		void dialogButtonClicked(QAbstractButton* Button);
+		void openButtonClicked(void);
 
 	public slots:
 
