@@ -23,6 +23,7 @@
 
 #include <QDialogButtonBox>
 #include <QAbstractButton>
+#include <QPushButton>
 #include <QFileDialog>
 #include <QSettings>
 #include <QDialog>

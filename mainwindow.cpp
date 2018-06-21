@@ -87,6 +87,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
 	connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::connectActionClicked);
+	connect(ui->actionSettings, &QAction::triggered, this, &MainWindow::settingsActionClicked);
 	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
 
 	connect(ui->actionDateoverride, &QAction::toggled, Driver, &DatabaseDriver::setDateOverride);
@@ -235,6 +236,14 @@ void MainWindow::connectActionClicked(void)
 
 	connect(Driver, &DatabaseDriver::onLogin, Dialog, &ConnectDialog::connected);
 	connect(Driver, &DatabaseDriver::onError, Dialog, &ConnectDialog::refused);
+}
+
+void MainWindow::settingsActionClicked(void)
+{
+	SettingsDialog* Dialog = new SettingsDialog(this); Dialog->open();
+
+	connect(Dialog, &SettingsDialog::accepted, Dialog, &SettingsDialog::deleteLater);
+	connect(Dialog, &SettingsDialog::rejected, Dialog, &SettingsDialog::deleteLater);
 }
 
 void MainWindow::deleteActionClicked(void)

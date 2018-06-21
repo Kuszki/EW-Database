@@ -39,7 +39,7 @@ void SettingsDialog::loadValues(void)
 	Settings.beginGroup("Database");
 	ui->driverCombo->setCurrentText(Settings.value("driver", "QIBASE").toString());
 	ui->querySpin->setValue(Settings.value("binded", 2500).toUInt());
-	ui->logCombo->setCurrentIndex(Settings.value("logen").toBool());
+	ui->logCombo->setCurrentIndex(Settings.value("logen", false).toBool());
 	ui->logdirEdit->setText(Settings.value("logdir").toString());
 	Settings.endGroup();
 
@@ -56,8 +56,15 @@ void SettingsDialog::loadValues(void)
 
 void SettingsDialog::dialogButtonClicked(QAbstractButton* Button)
 {
-	if (ui->buttonBox->buttonRole(Button) == QDialogButtonBox::ResetRole) loadValues();
-	else if (ui->buttonBox->buttonRole(Button) == QDialogButtonBox::RestoreDefaults)
+	const auto RD = ui->buttonBox->button(QDialogButtonBox::RestoreDefaults);
+	const auto RS = ui->buttonBox->button(QDialogButtonBox::Reset);
+	const auto RJ = ui->buttonBox->button(QDialogButtonBox::Discard);
+
+	const auto BT = dynamic_cast<QPushButton*>(Button);
+
+	if (BT == RS) loadValues();
+	else if (BT == RJ) reject();
+	else if (BT == RD)
 	{
 		ui->driverCombo->setCurrentText("QIBASE");
 		ui->querySpin->setValue(2500);

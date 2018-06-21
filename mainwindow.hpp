@@ -37,6 +37,7 @@
 #include "copyfieldsdialog.hpp"
 #include "variablesdialog.hpp"
 #include "harmonizedialog.hpp"
+#include "settingsdialog.hpp"
 #include "selectordialog.hpp"
 #include "connectdialog.hpp"
 #include "columnsdialog.hpp"
@@ -139,6 +140,7 @@ class MainWindow : public QMainWindow
 	private slots:
 
 		void connectActionClicked(void);
+		void settingsActionClicked(void);
 		void deleteActionClicked(void);
 		void removelabActionClicked(void);
 		void refreshActionClicked(void);

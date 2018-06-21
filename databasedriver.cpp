@@ -36,18 +36,10 @@ DatabaseDriver::DatabaseDriver(QObject* Parent)
 	Settings.beginGroup("Database");
 	Database = QSqlDatabase::addDatabase(Settings.value("driver", "QIBASE").toString());
 	maxBindedSize = Settings.value("binded", 2500).toUInt();
-	Logdir = Settings.value("logdir").toString();
 	Settings.endGroup();
 }
 
-DatabaseDriver::~DatabaseDriver(void)
-{
-	QSettings Settings("EW-Database");
-
-	Settings.beginGroup("Database");
-	Settings.setValue("logdir", Logdir);
-	Settings.endGroup();
-}
+DatabaseDriver::~DatabaseDriver(void) {}
 
 QString DatabaseDriver::getDatabaseName(void) const
 {
@@ -979,7 +971,11 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 
 void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 {
-	QMutexLocker Locker(&Terminator);
+	QMutexLocker Locker(&Terminator); QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	const QString Logdir = Settings.value("logdir").toString();
+	Settings.endGroup();
 
 	const QString Path = QString("%1/%2_%3.txt").arg(Logdir).arg(Title)
 					 .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
@@ -997,6 +993,17 @@ void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 	{
 		Stream << Query.value(1).toString() << endl; emit onUpdateProgress(++Step);
 	}
+}
+
+bool DatabaseDriver::isLogEnabled(void) const
+{
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Database");
+	const bool Log = Settings.value("logen", false).toBool();
+	Settings.endGroup();
+
+	return Log;
 }
 
 bool DatabaseDriver::openDatabase(const QString& Server, const QString& Base, const QString& User, const QString& Pass)
@@ -8319,10 +8326,6 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 	return Query.exec();
 }
 
-void DatabaseDriver::setLogfilePath(const QString& Path)
-{
-	QMutexLocker Locker(&Terminator); Logdir = Path;
-}
 
 void DatabaseDriver::setDateOverride(bool Override)
 {
