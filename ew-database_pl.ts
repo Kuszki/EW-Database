@@ -1730,7 +1730,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="mainwindow.ui" line="180"/>
         <location filename="mainwindow.ui" line="372"/>
         <source>Edit</source>
-        <translation>Edytuj</translation>
+        <translation>Edycja</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="228"/>
