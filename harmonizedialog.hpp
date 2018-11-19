@@ -25,6 +25,7 @@
 #include <QPushButton>
 #include <QFileDialog>
 #include <QDialog>
+#include <QSet>
 
 namespace Ui
 {
