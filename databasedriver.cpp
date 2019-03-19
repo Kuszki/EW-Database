@@ -3996,13 +3996,13 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.J &= 0b1011111; Point.Changed = true; }
 
-		if (Justify && !Found) for (const auto& Line : Lines) if (!Found)
+		if (Rotate && !Found) for (const auto& Line : Lines) if (!Found)
 			if ((Point.WX == Line.X1 && Point.WY == Line.Y1) || (Point.WX == Line.X2 && Point.WY == Line.Y2))
 			{
 				Match = Line; Found = true;
 			}
 
-		if (Justify && !Found) for (const auto& Line : Lines) if (!Found)
+		if (Rotate && !Found) for (const auto& Line : Lines) if (!Found)
 			if (distance(QLineF(Line.X1, Line.Y1, Line.X2, Line.Y2), QPointF(Point.WX, Point.WY)) <= 0.05)
 			{
 				Match = Line; Found = true;
@@ -4014,12 +4014,14 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			{
 				if (Point.J == 1) { Point.J = 4; Point.Changed = true; return; }
 			}
-			else if (Justify && Rotate && (Match.Length >= Length))
+			else if (Rotate && (Match.Length >= Length))
 			{
 				Point.A = qAtan((Match.Y1 - Match.Y2) / (Match.X1 - Match.X2)) - M_PI / 2.0;
 
 				const double lengthA = QLineF(Point.WX, Point.WY, Match.X1, Match.Y1).length();
 				const double lengthB = QLineF(Point.WX, Point.WY, Match.X2, Match.Y2).length();
+
+				int oldJust = (12 - Point.J) / 3;
 
 				if (Match.Y1 < Match.Y2)
 				{
@@ -4030,8 +4032,10 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 					if (lengthB < lengthA) Point.J = 4; else Point.J = 6;
 				}
 
-				if (Justify == 1) Point.J += 3;
-				if (Justify == 3) Point.J -= 3;
+				if (Justify) oldJust = Justify;
+
+				if (oldJust == 1) Point.J += 3;
+				if (oldJust == 3) Point.J -= 3;
 
 				while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
 				while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
@@ -4041,7 +4045,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		}
 	});
 
-	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate, Length] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate] (POINT& Point) -> void
 	{
 		static const auto length = [] (double x1, double y1, double x2, double y2)
 		{

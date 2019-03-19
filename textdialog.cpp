@@ -36,7 +36,8 @@ void TextDialog::CheckStatusChanged(void)
 {
 	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(
 		ui->Justify->currentIndex() ||
-		ui->Move->isChecked());
+		ui->Move->isChecked() ||
+		ui->Rotate->isChecked());
 
 	ui->Sort->setEnabled(ui->Rotate->isChecked());
 }
