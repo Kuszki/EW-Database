@@ -53,6 +53,7 @@
 #include "mergedialog.hpp"
 #include "batchdialog.hpp"
 #include "labeldialog.hpp"
+#include "edgesdialog.hpp"
 #include "kergdialog.hpp"
 #include "joindialog.hpp"
 #include "textdialog.hpp"
@@ -109,6 +110,7 @@ class MainWindow : public QMainWindow
 		KergDialog* Kerg;
 		ScriptDialog* Script;
 		BreaksDialog* Breaks;
+		EdgesDialog* Edges;
 
 		QThread Thread;
 
@@ -155,6 +157,7 @@ class MainWindow : public QMainWindow
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
 		void fitActionClicked(void);
+		void edgesActionClicked(void);
 
 		void selectionActionToggled(bool Allow);
 
@@ -197,6 +200,8 @@ class MainWindow : public QMainWindow
 		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation);
 		void execBreaks(int Flags, double Angle, double Length, bool Mode);
 
+		void hideEdges(const QList<int>& List);
+
 		void prepareMerge(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
 					  const QList<int>& Used);
@@ -235,6 +240,8 @@ class MainWindow : public QMainWindow
 		void labelDelete(int Count);
 		void breaksInsert(int Count);
 		void breaksReduced(int Count);
+
+		void edgesHidden(int Count);
 
 		void batchExec(int Count);
 
@@ -305,6 +312,8 @@ class MainWindow : public QMainWindow
 		void onKergRequest(const QSet<int>&, const QString&, int, int);
 
 		void onGroupRequest(const QList<int>&);
+
+		void onEdgesRequest(const QSet<int>&, const QList<int>&);
 
 };
 

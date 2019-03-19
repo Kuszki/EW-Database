@@ -83,6 +83,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
 	connect(ui->actionFit, &QAction::triggered, this, &MainWindow::fitActionClicked);
 
+
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
 	connect(ui->actionReload, &QAction::triggered, this, &MainWindow::refreshActionClicked);
@@ -126,6 +127,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onLabelEdit, this, &MainWindow::labelEdit);
 	connect(Driver, &DatabaseDriver::onKergUpdate, this, &MainWindow::updatedKerg);
 	connect(Driver, &DatabaseDriver::onSegmentReduce, this, &MainWindow::breaksReduced);
+	connect(Driver, &DatabaseDriver::onEdgesHide, this, &MainWindow::edgesHidden);
 
 	connect(Driver, &DatabaseDriver::onRowUpdate, this, &MainWindow::updateRow);
 	connect(Driver, &DatabaseDriver::onRowRemove, this, &MainWindow::removeRow);
@@ -176,6 +178,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
 	connect(this, &MainWindow::onBreaksRequest, Driver, &DatabaseDriver::mergeSegments);
+	connect(this, &MainWindow::onEdgesRequest, Driver, &DatabaseDriver::hideEdges);
 
 	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
 	connect(Terminator, &QPushButton::clicked, Driver, &DatabaseDriver::terminate, Qt::DirectConnection);
@@ -610,6 +613,15 @@ void MainWindow::execBreaks(int Flags, double Angle, double Length, bool Mode)
 	lockUi(BUSY); emit onBreaksRequest(Set, Flags, Angle, Length, Mode);
 }
 
+void MainWindow::hideEdges(const QList<int>& List)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
+
+	lockUi(BUSY); emit onEdgesRequest(Set, List);
+}
+
 void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Classes, const QStringList& Headers, unsigned Common, const QHash<QString, QSet<QString>>& Variables)
 {
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
@@ -637,6 +649,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Copyfields = new CopyfieldsDialog(allHeaders, this);
 	Script = new ScriptDialog(Props, this);
 	Breaks = new BreaksDialog(this);
+	Edges = new EdgesDialog(this, Fields);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -655,6 +668,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(Copyfields, &CopyfieldsDialog::onCopyRequest, this, &MainWindow::execCopy);
 	connect(Script, &ScriptDialog::onRunRequest, this, &MainWindow::execScript);
 	connect(Breaks, &BreaksDialog::onReduceRequest, this, &MainWindow::execBreaks);
+	connect(Edges, &EdgesDialog::onEdgeRequest, this, &MainWindow::hideEdges);
 
 	connect(ui->actionView, &QAction::triggered, Columns, &ColumnsDialog::open);
 	connect(ui->actionGroup, &QAction::triggered, Groups, &GroupDialog::open);
@@ -670,6 +684,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
 	connect(ui->actionScript, &QAction::triggered, Script, &ScriptDialog::open);
 	connect(ui->actionBreaks, &QAction::triggered, Breaks, &BreaksDialog::open);
+	connect(ui->actionEdges, &QAction::trigger, Edges, &EdgesDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
@@ -841,6 +856,11 @@ void MainWindow::breaksInsert(int Count)
 void MainWindow::breaksReduced(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Removed %n breakpoint(s)", nullptr, Count));
+}
+
+void MainWindow::edgesHidden(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Idden %n edge(s)", nullptr, Count));
 }
 
 void MainWindow::batchExec(int Count)

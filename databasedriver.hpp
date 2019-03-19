@@ -315,6 +315,8 @@ class DatabaseDriver : public QObject
 
 		void updateKergs(const QSet<int>& Items, const QString& Path, int Action, int Elements);
 
+		void hideEdges(const QSet<int>& Items, const QList<int>& Values);
+
 		void getCommon(const QSet<int>& Items);
 		void getPreset(const QSet<int>& Items);
 		void getJoins(const QSet<int>& Items);
@@ -375,6 +377,8 @@ class DatabaseDriver : public QObject
 		void onJobsRestore(int);
 		void onHistoryRemove(int);
 		void onKergUpdate(int);
+
+		void onEdgesHide(int);
 
 		void onDataMerge(int);
 		void onDataCut(int);

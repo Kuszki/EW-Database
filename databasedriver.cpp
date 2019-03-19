@@ -5401,6 +5401,144 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 	emit onKergUpdate(Action ? Updates.size() : Count);
 }
 
+void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
+{
+	if (!Database.open()) { emit onError(tr("Database is not opened")); emit onEdgesHide(0); return; }
+
+	struct SEGMENT { int ID; QPointF A, B; }; int Step(0);
+
+	QList<SEGMENT> Lines; QSet<int> Hides; QMutex Synchronizer;
+
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, false, 0);
+	QHash<int, QHash<int, QVariant>> Data;
+
+	emit onBeginProgress(tr("Loading data"));
+	emit onSetupProgress(0, Tasks.size());
+
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+		for (auto& Row : loadData(Table, i.value(), QString(), false, false))
+		{
+			Data.insert(Row)
+		}
+	}
+
+	emit onBeginProgress(tr("Loading lines"));
+	emit onSetupProgress(0, 0);
+
+	QSqlQuery selectQuery(Database), updateQuery(Database);
+
+	selectQuery.prepare(
+		"SELECT "
+			"O.UID, P.UID, "
+			"ROUND(P.P0_X, 3), "
+			"ROUND(P.P0_Y, 3), "
+			"ROUND(P.P1_X, 3), "
+			"ROUND(P.P1_Y, 3) "
+		"FROM "
+			"EW_POLYLINE P "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"P.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"E.UIDO = O.UID "
+		"WHERE "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS = 0 AND "
+			"O.STATUS = 0 AND "
+			"E.TYP = 0");
+
+	if (selectQuery.exec()) while (selectQuery.next())
+	{
+		if (Items.contains(selectQuery.value(0).toInt())) Lines.append(
+		{
+			selectQuery.value(1).toInt(),
+			{
+				selectQuery.value(2).toDouble(),
+				selectQuery.value(3).toDouble()
+			},
+			{
+				selectQuery.value(4).toDouble(),
+				selectQuery.value(5).toDouble()
+			}
+		});
+	}
+
+	selectQuery.prepare(
+		"SELECT "
+			"L.UID "
+		"FROM "
+			"EW_POLYLINE L "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"E.IDE = L.ID "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"O.UID = E.UIDO "
+		"WHERE "
+			"L.STAN_ZMIANY = 0 AND "
+			"E.TYP = 0 AND "
+			"O.STATUS = 0 "
+		"GROUP BY "
+			"L.UID "
+		"HAVING "
+			"COUNT(O.UID) > 1");
+
+	emit onBeginProgress(tr("Computing geometry"));
+	emit onSetupProgress(0, 0);
+
+	if (selectQuery.exec()) while (selectQuery.next())
+	{
+		Hides.insert(selectQuery.value(0).toInt());
+	}
+
+	QtConcurrent::blockingMap(Lines, [&Lines, &Hides, &Synchronizer] (SEGMENT& Segment) -> void
+	{
+		const auto compare = [] (const SEGMENT& A, const SEGMENT& B) -> bool
+		{
+			return (A.A == B.A && A.B == B.B) || (A.B == B.A && A.A == B.B);
+		};
+
+		for (const auto& Other : Lines) if (Other.ID != Segment.ID)
+		{
+			if (compare(Segment, Other))
+			{
+				Synchronizer.lock();
+				Hides.insert(Segment.ID);
+				Synchronizer.unlock();
+
+				return;
+			}
+		}
+	});
+
+	emit onBeginProgress(tr("Updating lines"));
+	emit onSetupProgress(0, Hides.size());
+
+	updateQuery.prepare("UPDATE EW_POLYLINE SET TYP_LINII = 14 WHERE UID = ?");
+
+	for (const auto& Line : Lines)
+	{
+		if (Hides.contains(Line.ID))
+		{
+			updateQuery.addBindValue(Line.ID);
+			updateQuery.exec();
+		}
+		else Hides.remove(Line.ID);
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onEdgesHide(Hides.size());
+}
+
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
