@@ -48,7 +48,7 @@ class MergeDialog : public QDialog
 
 	public:
 
-		explicit MergeDialog(QWidget* Parent = 0,
+		explicit MergeDialog(QWidget* Parent = nullptr,
 						 const QList<DatabaseDriver::FIELD>& Fields = QList<DatabaseDriver::FIELD>(),
 						 const QList<DatabaseDriver::TABLE>& Tables = QList<DatabaseDriver::TABLE>());
 		virtual ~MergeDialog(void) override;

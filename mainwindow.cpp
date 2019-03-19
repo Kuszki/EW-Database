@@ -80,9 +80,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionRefactor, &QAction::triggered, this, &MainWindow::classActionClicked);
 	connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::batchActionClicked);
 	connect(ui->actionMerge, &QAction::triggered, this, &MainWindow::mergeActionClicked);
+	connect(ui->actionEdges, &QAction::triggered, this, &MainWindow::edgesActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
 	connect(ui->actionFit, &QAction::triggered, this, &MainWindow::fitActionClicked);
-
 
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
@@ -105,7 +105,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onDataLoad, this, &MainWindow::loadData);
 	connect(Driver, &DatabaseDriver::onDataUpdate, this, &MainWindow::updateData);
 	connect(Driver, &DatabaseDriver::onDataRemove, this, &MainWindow::removeData);
-	connect(Driver, &DatabaseDriver::onCommonReady, this, &MainWindow::prepareMerge);
+	connect(Driver, &DatabaseDriver::onCommonReady, this, &MainWindow::prepareCommonact);
 	connect(Driver, &DatabaseDriver::onPresetReady, this, &MainWindow::prepareEdit);
 	connect(Driver, &DatabaseDriver::onJoinsReady, this, &MainWindow::prepareJoin);
 	connect(Driver, &DatabaseDriver::onDataJoin, this, &MainWindow::joinData);
@@ -337,7 +337,16 @@ void MainWindow::mergeActionClicked(void)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onCommonRequest(Set);
+	lockUi(BUSY); CommonAction = 1; emit onCommonRequest(Set);
+}
+
+void MainWindow::edgesActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
+
+	lockUi(BUSY); CommonAction = 2; emit onCommonRequest(Set);
 }
 
 void MainWindow::classActionClicked(void)
@@ -491,6 +500,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 1);
 	ui->actionJoin->setEnabled(Count > 1);
+	ui->actionEdges->setEnabled(Count > 1);
 
 	ui->statusBar->showMessage(tr("Selected %1 from %n object(s)", nullptr, From).arg(Count));
 }
@@ -684,7 +694,6 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
 	connect(ui->actionScript, &QAction::triggered, Script, &ScriptDialog::open);
 	connect(ui->actionBreaks, &QAction::triggered, Breaks, &BreaksDialog::open);
-	connect(ui->actionEdges, &QAction::trigger, Edges, &EdgesDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 
@@ -860,7 +869,7 @@ void MainWindow::breaksReduced(int Count)
 
 void MainWindow::edgesHidden(int Count)
 {
-	lockUi(DONE); ui->statusBar->showMessage(tr("Idden %n edge(s)", nullptr, Count));
+	lockUi(DONE); ui->statusBar->showMessage(tr("Hidden %n edge(s)", nullptr, Count));
 }
 
 void MainWindow::batchExec(int Count)
@@ -988,11 +997,21 @@ void MainWindow::readRequest(void)
 	Sender.writeDatagram("\n\n", QHostAddress::LocalHost, Port);
 }
 
-void MainWindow::prepareMerge(const QList<int>& Used)
+void MainWindow::prepareCommonact(const QList<int>& Used)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Job done"));
 
-	if (!Used.isEmpty()) { Merge->open();  Merge->setActive(Used); }
+	if (!Used.isEmpty()) switch (CommonAction)
+	{
+		case 1:
+			Merge->setActive(Used);
+			Merge->open();
+		break;
+		case 2:
+			Edges->setActive(Used);
+			Edges->open();
+		break;
+	}
 	else ui->statusBar->showMessage(tr("Unable to prepare dialog data"));
 }
 
@@ -1168,6 +1187,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionCopyfields->setEnabled(false);
 			ui->actionScript->setEnabled(false);
 			ui->actionBreaks->setEnabled(false);
+			ui->actionEdges->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 		break;
 		case BUSY:
@@ -1200,6 +1220,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionCopyfields->setEnabled(false);
 			ui->actionScript->setEnabled(false);
 			ui->actionBreaks->setEnabled(false);
+			ui->actionEdges->setEnabled(false);
 			ui->Data->setEnabled(false);
 
 			Driver->unterminate();

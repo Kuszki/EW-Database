@@ -14,8 +14,7 @@
    <string>Hide common edges</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="insert-object">
-    <normaloff>.</normaloff>.</iconset>
+   <iconset theme="bookmark-new"/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">

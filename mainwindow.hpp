@@ -122,6 +122,8 @@ class MainWindow : public QMainWindow
 		QByteArray headerState;
 		QSet<int> hiddenRows;
 
+		int CommonAction = 0;
+
 	private:
 
 		void lockUi(STATUS Status);
@@ -151,13 +153,13 @@ class MainWindow : public QMainWindow
 		void restoreActionClicked(void);
 		void historyActionClicked(void);
 		void mergeActionClicked(void);
+		void edgesActionClicked(void);
 		void classActionClicked(void);
 		void hideActionClicked(void);
 		void unhideActionClicked(void);
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
 		void fitActionClicked(void);
-		void edgesActionClicked(void);
 
 		void selectionActionToggled(bool Allow);
 
@@ -202,7 +204,7 @@ class MainWindow : public QMainWindow
 
 		void hideEdges(const QList<int>& List);
 
-		void prepareMerge(const QList<int>& Used);
+		void prepareCommonact(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
 					  const QList<int>& Used);
 		void prepareJoin(const QHash<QString, QString>& Points,

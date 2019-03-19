@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>20</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -129,6 +129,7 @@
     <addaction name="actionFit"/>
     <addaction name="actionInsert"/>
     <addaction name="actionBreaks"/>
+    <addaction name="actionEdges"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -222,6 +223,7 @@
    <addaction name="actionFit"/>
    <addaction name="actionInsert"/>
    <addaction name="actionBreaks"/>
+   <addaction name="actionEdges"/>
   </widget>
   <widget class="QToolBar" name="labelTool">
    <property name="windowTitle">
@@ -682,6 +684,14 @@
    </property>
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionEdges">
+   <property name="icon">
+    <iconset theme="bookmark-new"/>
+   </property>
+   <property name="text">
+    <string>Hide edges</string>
    </property>
   </action>
  </widget>
