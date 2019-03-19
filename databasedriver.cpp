@@ -5489,8 +5489,6 @@ void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
 
 		for (const auto& Other : Lines) if (Other.OID != Segment.OID)
 		{
-			if (Segment.LID == Other.LID) qDebug() << "boom";
-
 			if (compare(Segment, Other) && check(Segment.OID, Other.OID))
 			{
 				Synchronizer.lock();
