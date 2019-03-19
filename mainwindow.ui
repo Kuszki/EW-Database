@@ -688,10 +688,14 @@
   </action>
   <action name="actionEdges">
    <property name="icon">
-    <iconset theme="bookmark-new"/>
+    <iconset theme="bookmark-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Hide edges</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+.</string>
    </property>
   </action>
  </widget>
