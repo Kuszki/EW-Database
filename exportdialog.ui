@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>607</width>
+    <width>621</width>
     <height>300</height>
    </rect>
   </property>
@@ -33,6 +33,11 @@
      <item>
       <property name="text">
        <string>Selected</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Geometry</string>
       </property>
      </item>
     </widget>
@@ -63,8 +68,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>589</width>
-        <height>214</height>
+        <width>603</width>
+        <height>216</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="itemsLayout"/>

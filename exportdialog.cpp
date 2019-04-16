@@ -94,6 +94,8 @@ void ExportDialog::typeIndexChanged(int Type)
 	ui->unselectButton->setEnabled(Type == 2);
 	ui->itemsScrool->setEnabled(Type == 2);
 
+	ui->headerCheck->setEnabled(Type != 3);
+
 	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(Type != 2 || Count);
 }
 

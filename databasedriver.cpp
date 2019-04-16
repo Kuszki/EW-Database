@@ -5525,6 +5525,59 @@ void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
 	emit onEdgesHide(Hides.size());
 }
 
+void DatabaseDriver::saveGeometry(const QSet<int>& Items, const QString& Path)
+{
+	QList<QLineF> Set; QSqlQuery Query(Database);
+
+	const auto Geometry = loadGeometry(Items); emit onEndProgress();
+
+	for (const auto& G : Geometry) switch (G.Geometry.type())
+	{
+		case QVariant::PointF:
+		{
+			Set.append({ G.Geometry.toPointF(), G.Geometry.toPointF() });
+		}
+		break;
+		case QVariant::LineF:
+		{
+			const QLineF C = G.Geometry.toLineF();
+			const QPointF P = { (C.x1() + C.x2()) / 2.0, (C.y1() + C.y2()) / 2.0 };
+
+			Set.append({ P, P });
+		}
+		break;
+		case QVariant::PolygonF:
+		{
+			const QPolygonF P = G.Geometry.value<QPolygonF>();
+			const int Size = P.count();
+
+			for (int i = 1; i < Size; ++i)
+			{
+				Set.append({ P[i - 1], P[i] });
+			}
+		}
+		break;
+		case QVariant::List:
+		{
+			for (const auto& L : G.Geometry.toList())
+			{
+				Set.append(L.toLineF());
+			}
+		}
+	}
+
+	QFile File(Path); QTextStream Stream(&File);
+
+	File.open(QFile::Text | QFile::WriteOnly);
+	Stream.setRealNumberNotation(QTextStream::FixedNotation);
+	Stream.setRealNumberPrecision(5);
+
+	for (const auto& L : Set)
+	{
+		Stream << L.x1() << '\t' << L.y1() << '\t' << L.x2() << '\t' << L.y2() << endl;
+	}
+}
+
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();

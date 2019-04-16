@@ -1054,11 +1054,14 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"), QString(),
 											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
-	if (!Path.isEmpty())
-	{
-		auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
-		auto Selection = ui->Data->selectionModel()->selectedRows();
+	if (Path.isEmpty()) return;
 
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Selection = ui->Data->selectionModel()->selectedRows();
+	auto Set = Model->getUids(Selection).subtract(hiddenRows);
+
+	if (Type != 3)
+	{
 		const QString Extension = QFileInfo(Path).suffix();
 		const QChar Sep(Extension == "csv" ? ',' : '\t');
 
@@ -1089,6 +1092,7 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 			ui->statusBar->showMessage(tr("Error while saving data"));
 		}
 	}
+	else Driver->saveGeometry(Set, Path);
 }
 
 void MainWindow::execBatch(const QList<BatchWidget::RECORD>& Roles, const QList<QStringList>& Data)

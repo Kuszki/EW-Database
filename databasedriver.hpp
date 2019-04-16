@@ -317,6 +317,8 @@ class DatabaseDriver : public QObject
 
 		void hideEdges(const QSet<int>& Items, const QList<int>& Values);
 
+		void saveGeometry(const QSet<int>& Items, const QString& Path);
+
 		void getCommon(const QSet<int>& Items);
 		void getPreset(const QSet<int>& Items);
 		void getJoins(const QSet<int>& Items);
