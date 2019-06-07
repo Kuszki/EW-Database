@@ -136,11 +136,11 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			"S.WYPELNIENIE "
 		"FROM "
 			"EW_OB_OPISY O "
-		"INNER JOIN "
+		"LEFT JOIN "
 			"EW_OB_DDSTR F "
 		"ON "
 			"O.KOD = F.KOD "
-		"INNER JOIN "
+		"LEFT JOIN "
 			"EW_OB_DDSTR S "
 		"ON "
 			"F.KOD = S.KOD "
@@ -149,17 +149,18 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 		"ON "
 			"S.UID = D.UIDP OR S.UIDSL = D.UIDP "
 		"WHERE "
-			"S.NAZWA = F.NAZWA "
+			"S.NAZWA = F.NAZWA OR (S.NAZWA IS NULL AND F.NAZWA IS NULL) "
 		"ORDER BY "
 			"O.KOD, F.NAZWA, D.OPIS");
 
 	if (Query.exec()) while (Query.next())
 	{
-		const QString Field = QString("EW_DATA.%1").arg(Query.value(4).toString());
+		const QString Fname = Query.value(4).toString();
+		const QString Field = QString("EW_DATA.%1").arg(Fname);
 		const QString Table = Query.value(0).toString();
 		const bool Dict = !Query.value(7).isNull();
 
-		if (!hasItemByField(List, Table, &TABLE::Name)) List.append(
+		if (!Table.isEmpty() && !hasItemByField(List, Table, &TABLE::Name)) List.append(
 		{
 			Table,
 			Query.value(1).toString(),
@@ -170,7 +171,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 
 		auto& Tabref = getItemByField(List, Table, &TABLE::Name);
 
-		if (!hasItemByField(Tabref.Fields, Field, &FIELD::Name)) Tabref.Fields.append(
+		if (!Fname.isEmpty() && !hasItemByField(Tabref.Fields, Field, &FIELD::Name)) Tabref.Fields.append(
 		{
 			TYPE(Query.value(6).toInt()),
 			Field,
@@ -178,9 +179,11 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			Query.value(10).toInt() == 2
 		});
 
-		auto& Fieldref = getItemByField(Tabref.Fields, Field, &FIELD::Name);
-
-		if (Dict) Fieldref.Dict.insert(Query.value(7), Query.value(8).toString());
+		if (!Fname.isEmpty() && Dict)
+		{
+			auto& Fieldref = getItemByField(Tabref.Fields, Field, &FIELD::Name);
+			Fieldref.Dict.insert(Query.value(7), Query.value(8).toString());
+		}
 
 		if (Emit && Step != List.size()) emit onUpdateProgress(Step = List.size());
 	}
@@ -462,7 +465,19 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 		if (!Values.isEmpty()) List.insert(Index, Values); Values.clear();
 	};
 
-	const QString ExecA = QString(
+	const QString ExecA = Table.Fields.isEmpty() ?
+	QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, %1 "
+		"FROM "
+			"EW_OBIEKTY "
+		"WHERE "
+			"EW_OBIEKTY.KOD = '%3' AND "
+			"EW_OBIEKTY.STATUS = 0")
+	.arg(Attribs.join(", "))
+	.arg(Table.Name)
+	:
+	QString(
 		"SELECT "
 			"EW_OBIEKTY.UID, %1 "
 		"FROM "
@@ -474,11 +489,24 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 		"WHERE "
 			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.STATUS = 0")
-				.arg(Attribs.join(", "))
-				.arg(Table.Data)
-				.arg(Table.Name);
+	.arg(Attribs.join(", "))
+	.arg(Table.Data)
+	.arg(Table.Name);
 
-	const QString ExecB = QString(
+	const QString ExecB = Table.Fields.isEmpty() ?
+	QString(
+		"SELECT "
+			"EW_OBIEKTY.UID, %1 "
+		"FROM "
+			"EW_OBIEKTY "
+		"WHERE "
+			"EW_OBIEKTY.KOD = '%3' AND "
+			"EW_OBIEKTY.UID = ? AND "
+			"EW_OBIEKTY.STATUS = 0")
+				.arg(Attribs.join(", "))
+				.arg(Table.Name)
+	:
+	QString(
 		"SELECT "
 			"EW_OBIEKTY.UID, %1 "
 		"FROM "
@@ -491,9 +519,9 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.UID = ? AND "
 			"EW_OBIEKTY.STATUS = 0")
-				.arg(Attribs.join(", "))
-				.arg(Table.Data)
-				.arg(Table.Name);
+	.arg(Attribs.join(", "))
+	.arg(Table.Data)
+	.arg(Table.Name);
 
 	const bool isBinded = Filter.size() < maxBindedSize;
 	const bool isEmpty = Filter.isEmpty();
