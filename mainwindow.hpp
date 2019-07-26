@@ -231,6 +231,8 @@ class MainWindow : public QMainWindow
 		void removeRows(const QSet<int>& List);
 		void updateRows(const QHash<int, QHash<int, QVariant>>& Data);
 
+		void updateUids(const QHash<int, int>& Newuids);
+
 		void removeData(void);
 		void updateData(void);
 		void groupData(void);

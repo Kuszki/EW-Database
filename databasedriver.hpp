@@ -36,7 +36,7 @@
 
 #include <QtConcurrent>
 #include <QJSEngine>
-#include <float.h>
+#include <cfloat>
 
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"
@@ -121,9 +121,10 @@ class DatabaseDriver : public QObject
 
 		mutable QMutex Terminator;
 		mutable bool Terminated;
-		mutable bool Dateupdate;
 
 		int maxBindedSize;
+		bool makeHistory;
+		bool Dateupdate;
 
 		QSqlDatabase Database;
 		QStringList Headers;
@@ -162,6 +163,9 @@ class DatabaseDriver : public QObject
 
 		QMap<QString, QSet<int>> getClassGroups(const QSet<int>& Indexes,
 										bool Common, int Index);
+
+		QMap<QString, QSet<int>> createHistory(const QMap<QString, QSet<int>>& Tasks,
+									    QHash<int, int>* Updates = nullptr);
 
 		QHash<int, QHash<int, QVariant>> loadData(const TABLE& Table,
 										  const QSet<int>& Filter,
@@ -327,6 +331,7 @@ class DatabaseDriver : public QObject
 		bool addInterface(const QString& Path, int Type, bool Modal);
 
 		void setDateOverride(bool Override);
+		void setHistoryMake(bool Make);
 
 		void unterminate(void);
 		void terminate(void);
@@ -375,6 +380,8 @@ class DatabaseDriver : public QObject
 
 		void onRowUpdate(int, const QHash<int, QVariant>&);
 		void onRowRemove(int);
+
+		void onUidsUpdate(const QHash<int, int>&);
 
 		void onJobsRestore(int);
 		void onHistoryRemove(int);

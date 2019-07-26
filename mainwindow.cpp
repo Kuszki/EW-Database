@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	ui->actionSingleton->setChecked(Settings.value("singletons").toBool());
 	ui->actionSelection->setChecked(Settings.value("groupselect").toBool());
 	ui->actionDateoverride->setChecked(Settings.value("override").toBool());
+	ui->actionCreatehistory->setChecked(Settings.value("history").toBool());
 	Color->setValue(Settings.value("color", 0).toInt());
 	Settings.endGroup();
 
@@ -92,6 +93,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionDisconnect, &QAction::triggered, Driver, &DatabaseDriver::closeDatabase);
 
 	connect(ui->actionDateoverride, &QAction::toggled, Driver, &DatabaseDriver::setDateOverride);
+	connect(ui->actionCreatehistory, &QAction::toggled, Driver, &DatabaseDriver::setHistoryMake);
 	connect(ui->actionSelection, &QAction::toggled, this, &MainWindow::selectionActionToggled);
 
 	connect(ui->actionHide, &QAction::triggered, this, &MainWindow::hideActionClicked);
@@ -134,6 +136,8 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(Driver, &DatabaseDriver::onRowsUpdate, this, &MainWindow::updateRows);
 	connect(Driver, &DatabaseDriver::onRowsRemove, this, &MainWindow::removeRows);
+
+	connect(Driver, &DatabaseDriver::onUidsUpdate, this, &MainWindow::updateUids);
 
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -198,6 +202,7 @@ MainWindow::~MainWindow(void)
 	Settings.setValue("singletons", ui->actionSingleton->isChecked());
 	Settings.setValue("groupselect", ui->actionSelection->isChecked());
 	Settings.setValue("override", ui->actionDateoverride->isChecked());
+	Settings.setValue("history", ui->actionCreatehistory->isChecked());
 	Settings.setValue("color", Color->value());
 	Settings.endGroup();
 
@@ -696,6 +701,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionBreaks, &QAction::triggered, Breaks, &BreaksDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
+	Driver->setHistoryMake(ui->actionCreatehistory->isChecked());
 
 	setWindowTitle(tr("EW-Database") + " (" + Driver->getDatabaseName() + ")");
 	registerSockets(Driver->getDatabasePath());
@@ -815,6 +821,16 @@ void MainWindow::updateRows(const QHash<int, QHash<int, QVariant>>& Data)
 	}
 
 	if (Data.size() > 25) ui->Data->setUpdatesEnabled(true);
+}
+
+void MainWindow::updateUids(const QHash<int, int>& Newuids)
+{
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+
+	if (Model) for (auto i = Newuids.constBegin(); i != Newuids.constEnd(); ++i)
+	{
+		Model->updateUid(i.key(), i.value());
+	}
 }
 
 void MainWindow::removeData(void)

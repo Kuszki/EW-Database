@@ -43,7 +43,7 @@ class RecordModel : public QAbstractItemModel
 
 			QHash<int, QVariant> Attributes;
 
-			const int Index;
+			int Index;
 
 		public:
 
@@ -59,6 +59,7 @@ class RecordModel : public QAbstractItemModel
 			bool contain(const QHash<int, QVariant>& Fields) const;
 
 			int getUid(void) const;
+			void setUid(int Uid);
 
 	};
 
@@ -178,6 +179,8 @@ class RecordModel : public QAbstractItemModel
 		QSet<int> getUids(void) const;
 
 		int getUid(const QModelIndex& Index) const;
+
+		bool updateUid(int Old, int New);
 
 		bool saveToFile(const QString& Path, const QList<int>& Columns,
 					 const QModelIndexList& List, bool Names,

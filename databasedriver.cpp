@@ -426,6 +426,132 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 	emit onEndProgress(); return List;
 }
 
+QMap<QString, QSet<int>> DatabaseDriver::createHistory(const QMap<QString, QSet<int>>& Tasks, QHash<int, int>* Updates)
+{
+	if (!Database.isOpen()) return QMap<QString, QSet<int>>();
+
+	QSqlQuery Query(Database); QHash<int, int> Uids; int Step(0);
+
+	emit onBeginProgress(tr("Creating history"));
+	emit onSetupProgress(0, Tasks.first().size() * 5);
+
+	Query.prepare("SELECT GEN_ID(EW_OBIEKTY_UID_GEN, 1) FROM RDB$DATABASE");
+
+	for (const auto& UID : Tasks[QString()])
+	{
+		if (Query.exec() && Query.next())
+		{
+			Uids.insert(UID, Query.value(0).toInt());
+		}
+		else return Tasks;
+
+		emit onUpdateProgress(++Step);
+	}
+
+	Query.prepare("UPDATE EW_OBIEKTY SET "
+				    "DTR = CURRENT_TIMESTAMP, "
+				    "OSOR = 0, "
+				    "STATUS = 3, "
+				    "OPERATR = OPERATR "
+			    "WHERE "
+				    "UID = ?");
+
+	for (const auto& UID : Tasks[QString()])
+	{
+		Query.addBindValue(UID);
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	Query.prepare("INSERT INTO EW_OBIEKTY "
+			    "("
+				    "UID, ID, IDKATALOG, KOD, TYP, NUMER, POZYSKANIE, RODZAJ, "
+				    "ATRYBUT_TYP, ATRYBUT_KUBATURA, ATRYBUT_N1, ATRYBUT_N2, "
+				    "ATRYBUT_N3, ATRYBUT_S, OSOU, OSOW, OSOR, DTU, DTW, DTR, "
+				    "OPERAT, OPERATR, STATUS, OPERATW, IIP, TERYT, DOD_OPERATY"
+			    ") "
+			    "SELECT "
+				    "?, ID, IDKATALOG, KOD, TYP, NUMER, POZYSKANIE, RODZAJ, "
+				    "ATRYBUT_TYP, ATRYBUT_KUBATURA, ATRYBUT_N1, ATRYBUT_N2, "
+				    "ATRYBUT_N3, ATRYBUT_S, OSOU, OSOW, NULL, DTU, CURRENT_TIMESTAMP, "
+				    "NULL, OPERAT, NULL, 0, OPERATW, IIP, TERYT, DOD_OPERATY "
+			    "FROM EW_OBIEKTY WHERE UID = ?");
+
+	for (const auto& UID : Tasks[QString()])
+	{
+		Query.addBindValue(Uids[UID]);
+		Query.addBindValue(UID);
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	Query.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, N, TYP, ATRYBUT) "
+			    "SELECT ?, IDE, N, TYP, ATRYBUT FROM EW_OB_ELEMENTY "
+			    "WHERE UIDO = ?");
+
+	for (const auto& UID : Tasks[QString()])
+	{
+		Query.addBindValue(Uids[UID]);
+		Query.addBindValue(UID);
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+	{
+		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
+
+		QStringList Fields;
+
+		for (const auto& F : Table.Fields)
+		{
+			const QString Name = QString(F.Name).remove("EW_DATA.");
+
+			Fields.append(Name);
+
+			if (F.Missing) Fields.append(Name + "_V");
+		}
+
+		const QString List = Fields.join(", ");
+
+		Query.prepare(QString("INSERT INTO %1 (UIDO, %2) "
+						  "SELECT ?, %2 FROM %1 "
+						  "WHERE UIDO = ?")
+				    .arg(Table.Data)
+				    .arg(List));
+
+		for (const auto& UID : Tasks[QString()])
+		{
+			Query.addBindValue(Uids[UID]);
+			Query.addBindValue(UID);
+			Query.exec();
+
+			emit onUpdateProgress(++Step);
+		}
+	}
+
+	QMap<QString, QSet<int>> Res;
+
+	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
+	{
+		QSet<int> Class;
+
+		for (const auto& UID : i.value())
+		{
+			Class.insert(Uids[UID]);
+		}
+
+		Res.insert(i.key(), Class);
+	}
+
+	if (Updates) *Updates = Uids;
+
+	return Res;
+}
+
 QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::TABLE& Table, const QSet<int>& Filter, const QString& Where, bool Dict, bool View)
 {
 	if (!Database.isOpen()) return QHash<int, QHash<int, QVariant>>();
@@ -551,7 +677,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	return List;
 }
 
-void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant> >& Data, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius)
+void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction, const QString& Limiter, double Radius)
 {
 	if (!Database.isOpen()) return; const QSet<int> Before = Data.keys().toSet(); QSet<int> Filtered = Before;
 
@@ -1238,7 +1364,16 @@ void DatabaseDriver::updateData(const QSet<int>& Items, const QHash<int, QVarian
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
-	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1);
+	QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1);
+
+	if (makeHistory)
+	{
+		QHash<int, int> Newuids;
+
+		Tasks = createHistory(Tasks, &Newuids);
+
+		emit onUidsUpdate(Newuids);
+	}
 
 	performDataUpdates(Tasks, Values, Reasons, true); int Step = 0;
 
@@ -8535,6 +8670,11 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 void DatabaseDriver::setDateOverride(bool Override)
 {
 	QMutexLocker Locker(&Terminator); Dateupdate = Override;
+}
+
+void DatabaseDriver::setHistoryMake(bool Make)
+{
+	QMutexLocker Locker(&Terminator); makeHistory = Make;
 }
 
 void DatabaseDriver::unterminate(void)

@@ -64,6 +64,11 @@ int RecordModel::RecordObject::getUid(void) const
 	return Index;
 }
 
+void RecordModel::RecordObject::setUid(int Uid)
+{
+	Index = Uid;
+}
+
 RecordModel::GroupObject::GroupObject(int Level, const QHash<int, QVariant>& Fields)
 : RecordObject(-1, Fields), Root(nullptr), Column(Level) {}
 
@@ -540,6 +545,22 @@ int RecordModel::getUid(const QModelIndex& Index) const
 	if (dynamic_cast<GroupObject*>(Object)) return -1;
 
 	return Object->getUid();
+}
+
+bool RecordModel::updateUid(int Old, int New)
+{
+	QMutexLocker Synchronizer(&Locker);
+
+	for (const auto& Item : Objects)
+	{
+		if (Item->getUid() == Old)
+		{
+			Item->setUid(New);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names, const QChar& Separator) const

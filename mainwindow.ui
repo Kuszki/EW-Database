@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>27</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -81,6 +81,7 @@
     <addaction name="separator"/>
     <addaction name="actionInterface"/>
     <addaction name="separator"/>
+    <addaction name="actionCreatehistory"/>
     <addaction name="actionDateoverride"/>
     <addaction name="actionSelection"/>
     <addaction name="separator"/>
@@ -403,7 +404,7 @@
   </action>
   <action name="actionHistory">
    <property name="icon">
-    <iconset theme="document-open-recent">
+    <iconset theme="appointment-missed">
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -610,7 +611,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="appointment-new">
+    <iconset theme="document-open-recent">
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
@@ -696,6 +697,18 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+.</string>
+   </property>
+  </action>
+  <action name="actionCreatehistory">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="appointment-soon">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Create object history</string>
    </property>
   </action>
  </widget>
