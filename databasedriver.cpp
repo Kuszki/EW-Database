@@ -882,18 +882,30 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 	for (const auto& ID : Deletes) Data.remove(ID);
 }
 
-void DatabaseDriver::performDataUpdates(const QMap<QString, QSet<int>> Tasks, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons, bool Emit)
+void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const QHash<int, QVariant>& Values, const QHash<int, int>& Reasons, bool Emit)
 {
-	const bool Signals = signalsBlocked(); if (!Emit) blockSignals(true);
+	const QSet<int> Used = Values.keys().toSet();
+	const QSet<int> Nills = Reasons.keys().toSet();
 
-	const QSet<int> Used = Values.keys().toSet(); const QSet<int> Nills = Reasons.keys().toSet();
+	const bool Signals = signalsBlocked();
+	if (!Emit) blockSignals(true);
 
-	QSqlQuery Query(Database); Query.setForwardOnly(true); int Step = 0; QStringList All;
+	if (makeHistory)
+	{
+		QHash<int, int> Newuids;
+
+		Tasks = createHistory(Tasks, &Newuids);
+
+		if (!Emit) blockSignals(Signals);
+		emit onUidsUpdate(Newuids);
+		if (!Emit) blockSignals(true);
+	}
+
+	QSqlQuery commonQuery(Database); commonQuery.setForwardOnly(true);
+	QVariantList commonBinds; int Step = 0; QStringList All;
 
 	emit onBeginProgress(tr("Updating common data"));
 	emit onSetupProgress(0, Tasks.first().size());
-
-	QSqlQuery commonQuery(Database); commonQuery.setForwardOnly(true); QVariantList commonBinds;
 
 	for (int i = 0; i < Common.size(); ++i) if (Values.contains(i))
 	{
@@ -1365,15 +1377,6 @@ void DatabaseDriver::updateData(const QSet<int>& Items, const QHash<int, QVarian
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataUpdate(); return; }
 
 	QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 1);
-
-	if (makeHistory)
-	{
-		QHash<int, int> Newuids;
-
-		Tasks = createHistory(Tasks, &Newuids);
-
-		emit onUidsUpdate(Newuids);
-	}
 
 	performDataUpdates(Tasks, Values, Reasons, true); int Step = 0;
 

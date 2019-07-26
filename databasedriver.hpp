@@ -180,7 +180,7 @@ class DatabaseDriver : public QObject
 		void filterData(QHash<int, QHash<int, QVariant>>& Data,
 					 const QString& Expression);
 
-		void performDataUpdates(const QMap<QString, QSet<int>> Tasks,
+		void performDataUpdates(QMap<QString, QSet<int>>& Tasks,
 						    const QHash<int, QVariant>& Values,
 						    const QHash<int, int>& Reasons, bool Emit);
 
