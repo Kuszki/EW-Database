@@ -556,9 +556,8 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 {
 	if (!Database.isOpen()) return QHash<int, QHash<int, QVariant>>();
 
-	QVariant (*GET)(const QVariant&, const QMap<QVariant, QString>&, TYPE);
-	GET = Dict ? getDataFromDict :
-	[] (const auto& Value, const auto&, auto) -> auto
+	const auto GET = Dict ? getDataFromDict :
+	[] (const QVariant& Value, const QMap<QVariant, QString>&, TYPE) -> QVariant
 	{
 		return Value;
 	};
