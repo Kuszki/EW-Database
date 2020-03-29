@@ -18,6 +18,22 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0" colspan="2">
+    <widget class="QComboBox" name="Join"/>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
    <item row="0" column="0" colspan="2">
     <layout class="QHBoxLayout" name="joinLayout">
      <item>
@@ -35,6 +51,11 @@
        <item>
         <property name="text">
          <string>Point to surface</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Any geometry</string>
         </property>
        </item>
       </widget>
@@ -63,48 +84,6 @@
      </item>
     </layout>
    </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QComboBox" name="Join"/>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="itemsLayout">
-     <item>
-      <widget class="QComboBox" name="Point"/>
-     </item>
-     <item>
-      <widget class="QComboBox" name="Line"/>
-     </item>
-     <item>
-      <widget class="QComboBox" name="Circle"/>
-     </item>
-    </layout>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="4" column="0">
-    <widget class="QCheckBox" name="replaceCheck">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Replace source</string>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="sizePolicy">
@@ -121,15 +100,28 @@
      </property>
     </widget>
    </item>
+   <item row="4" column="0">
+    <widget class="QCheckBox" name="replaceCheck">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Replace source</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QComboBox" name="Point"/>
+   </item>
   </layout>
  </widget>
  <tabstops>
   <tabstop>Type</tabstop>
   <tabstop>Radius</tabstop>
   <tabstop>Join</tabstop>
-  <tabstop>Point</tabstop>
-  <tabstop>Line</tabstop>
-  <tabstop>Circle</tabstop>
   <tabstop>replaceCheck</tabstop>
  </tabstops>
  <resources/>
@@ -227,38 +219,6 @@
     <hint type="destinationlabel">
      <x>153</x>
      <y>265</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Line</sender>
-   <signal>currentTextChanged(QString)</signal>
-   <receiver>JoinDialog</receiver>
-   <slot>targetNameChanged()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>207</x>
-     <y>90</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>183</x>
-     <y>484</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Circle</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>JoinDialog</receiver>
-   <slot>targetNameChanged()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>329</x>
-     <y>85</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>335</x>
-     <y>350</y>
     </hint>
    </hints>
   </connection>

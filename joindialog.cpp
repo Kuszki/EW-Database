@@ -22,34 +22,9 @@
 #include "ui_joindialog.h"
 
 JoinDialog::JoinDialog(const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Circles, QWidget* Parent)
-: QDialog(Parent), ui(new Ui::JoinDialog)
+: QDialog(Parent), P(Points), L(Lines), C(Circles), ui(new Ui::JoinDialog)
 {
 	ui->setupUi(this); typeIndexChanged(ui->Type->currentIndex());
-
-	for (auto i = Points.constBegin(); i != Points.constEnd(); ++i)
-	{
-		ui->Join->addItem(i.value(), i.key());
-	}
-
-	for (auto i = Points.constBegin(); i != Points.constEnd(); ++i)
-	{
-		ui->Point->addItem(i.value(), i.key());
-	}
-
-	for (auto i = Lines.constBegin(); i != Lines.constEnd(); ++i)
-	{
-		ui->Line->addItem(i.value(), i.key());
-	}
-
-	for (auto i = Circles.constBegin(); i != Circles.constEnd(); ++i)
-	{
-		ui->Circle->addItem(i.value(), i.key());
-	}
-
-	ui->Join->model()->sort(0); ui->Join->setCurrentIndex(0);
-	ui->Point->model()->sort(0); ui->Point->setCurrentIndex(0);
-	ui->Line->model()->sort(0); ui->Line->setCurrentIndex(0);
-	ui->Circle->model()->sort(0); ui->Circle->setCurrentIndex(0);
 }
 
 JoinDialog::~JoinDialog(void)
@@ -59,20 +34,16 @@ JoinDialog::~JoinDialog(void)
 
 void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 {
-	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line :
-				   ui->Type->currentIndex() == 1 ? ui->Point :
-				   ui->Type->currentIndex() == 2 ? ui->Circle : nullptr;
-
 	if (Button == ui->buttonBox->button(QDialogButtonBox::Reset))
 	{
 		emit onDeleteRequest(ui->Join->currentData().toString(),
-						 Join->currentData().toString(),
+						 ui->Point->currentData().toString(),
 						 ui->Type->currentIndex());
 	}
 	else if (Button == ui->buttonBox->button(QDialogButtonBox::Apply))
 	{
 		emit onCreateRequest(ui->Join->currentData().toString(),
-						 Join->currentData().toString(),
+						 ui->Point->currentData().toString(),
 						 ui->replaceCheck->isChecked(),
 						 ui->Type->currentIndex(),
 						 ui->Radius->value());
@@ -83,20 +54,72 @@ void JoinDialog::buttonBoxClicked(QAbstractButton* Button)
 
 void JoinDialog::typeIndexChanged(int Index)
 {
-	ui->Line->setVisible(Index == 0);
-	ui->Point->setVisible(Index == 1);
-	ui->Circle->setVisible(Index == 2);
+	const QString lastJ = ui->Join->currentText();
+	const QString lastP = ui->Point->currentText();
+
+	ui->Join->clear(); QSet<QString> jUsed;
+	ui->Point->clear(); QSet<QString> pUsed;
+
+	switch (Index)
+	{
+		case 3:
+			for (auto i = L.constBegin(); i != L.constEnd(); ++i)
+			{
+				if (jUsed.contains(i.key())) continue;
+
+				ui->Join->addItem(i.value(), i.key());
+				jUsed.insert(i.key());
+			}
+			for (auto i = C.constBegin(); i != C.constEnd(); ++i)
+			{
+				if (jUsed.contains(i.key())) continue;
+
+				ui->Join->addItem(i.value(), i.key());
+				jUsed.insert(i.key());
+			}
+		default:
+			for (auto i = P.constBegin(); i != P.constEnd(); ++i)
+			{
+				if (jUsed.contains(i.key())) continue;
+
+				ui->Join->addItem(i.value(), i.key());
+				jUsed.insert(i.key());
+			}
+	}
+
+	if (Index == 0 || Index == 3) for (auto i = L.constBegin(); i != L.constEnd(); ++i)
+	{
+		if (pUsed.contains(i.key())) continue;
+
+		ui->Point->addItem(i.value(), i.key());
+		pUsed.insert(i.key());
+	}
+
+	if (Index == 1 || Index == 3) for (auto i = P.constBegin(); i != P.constEnd(); ++i)
+	{
+		if (pUsed.contains(i.key())) continue;
+
+		ui->Point->addItem(i.value(), i.key());
+		pUsed.insert(i.key());
+	}
+
+	if (Index == 2 || Index == 3) for (auto i = C.constBegin(); i != C.constEnd(); ++i)
+	{
+		if (pUsed.contains(i.key())) continue;
+
+		ui->Point->addItem(i.value(), i.key());
+		pUsed.insert(i.key());
+	}
+
+	ui->Join->model()->sort(0); ui->Join->setCurrentText(lastJ);
+	ui->Point->model()->sort(0); ui->Point->setCurrentText(lastP);
 }
 
 void JoinDialog::targetNameChanged(void)
 {
-	QComboBox* Join = ui->Type->currentIndex() == 0 ? ui->Line :
-				   ui->Type->currentIndex() == 1 ? ui->Point :
-				   ui->Type->currentIndex() == 2 ? ui->Circle : nullptr;
-
-	const bool OK = !Join->currentText().isEmpty() &&
+	const bool OK = !ui->Point->currentText().isEmpty() &&
 				 !ui->Join->currentText().isEmpty() &&
-				 ui->Join->currentText() != Join->currentText();
+				 ui->Join->currentText() != ui->Point->currentText();
 
 	ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(OK);
 	ui->buttonBox->button(QDialogButtonBox::Reset)->setEnabled(OK);

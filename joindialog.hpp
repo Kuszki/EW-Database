@@ -21,10 +21,13 @@
 #ifndef JOINDIALOG_HPP
 #define JOINDIALOG_HPP
 
+#include <QStandardItemModel>
 #include <QAbstractButton>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QListView>
 #include <QDialog>
+#include <QSet>
 
 namespace Ui
 {
@@ -47,6 +50,8 @@ class JoinDialog : public QDialog
 						const QHash<QString, QString>& Circles,
 						QWidget* Parent = nullptr);
 		virtual ~JoinDialog(void) override;
+
+		const QHash<QString, QString> P, L, C;
 
 	private slots:
 
