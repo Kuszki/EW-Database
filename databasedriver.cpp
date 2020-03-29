@@ -1901,7 +1901,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 
 	Query.addBindValue(Point);
 
-	if (Query.exec()) while (Query.next() && !isTerminated())
+	if (Type != 3 && Query.exec()) while (Query.next() && !isTerminated())
 	{
 		const int UID = Query.value(0).toInt();
 		const int ID = Query.value(1).toInt();
@@ -1968,6 +1968,9 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		break;
 		case 2:
 			Insert = joinSurfaces(Geometry, Points, Tasks[Join], Join, Radius);
+		break;
+		case 3:
+			Insert = joinMixed(Geometry, Tasks[Join], Tasks[Point], Radius);
 		break;
 	}
 
@@ -6068,6 +6071,254 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 	return Insert;
 }
 
+QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geometry, const QSet<int>& Obj, const QSet<int>& Sub, double Radius)
+{
+	if (!Database.isOpen()) return QHash<int, QSet<int>>();
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QHash<int, QSet<int>> Insert; QMutex Synchronizer;
+
+	const QList<OBJECT> Objects = loadGeometry(Obj);
+	const QList<OBJECT> Subobj = loadGeometry(Sub);
+
+	QtConcurrent::blockingMap(Subobj, [this, &Synchronizer, &Objects, &Insert, &Geometry, Radius] (const OBJECT& Object) -> void
+	{
+		static const auto pdistance = [] (const QLineF& L, const QPointF& P) -> double
+		{
+			const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+			const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+			const double l = L.length();
+
+			if ((a * a <= l * l + b * b) &&
+			    (b * b <= a * a + l * l))
+			{
+				const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+				const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+				return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+			}
+			else return INFINITY;
+		};
+
+		static const auto ldistance = [] (const QLineF& A, const QLineF& B) -> double
+		{
+			if (A.intersect(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
+
+			return qMin
+			(
+				qMin(pdistance(A, B.p1()), pdistance(A, B.p2())),
+				qMin(pdistance(B, A.p1()), pdistance(B, A.p2()))
+			);
+		};
+
+		double fR = INFINITY; int fID = 0;
+
+		if (!this->isTerminated()) for (const auto& Other : Objects)
+		{
+			if (Object.UID == Other.UID) continue; double OK(INFINITY);
+
+			if (Object.Geometry.type() == QVariant::PointF)
+			{
+				const QPointF ThisPoint = Object.Geometry.toPointF();
+
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					OK = QLineF(ThisPoint, Other.Geometry.toPointF()).length();
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF Circle = Other.Geometry.toLineF();
+					const QPointF& P = ThisPoint;
+
+					const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
+					const double X = (Circle.x1() + Circle.x2()) / 2.0;
+					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+					OK = qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)) - R;
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF P = Other.Geometry.value<QPolygonF>();
+
+					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) OK = 0.0;
+					else for (int i = 1; i < P.size(); ++i)
+					{
+						OK = qMin(OK, pdistance(QLineF(P[i - 1], P[i]), ThisPoint));
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					OK = qMin(OK, pdistance(Part.toLineF(), ThisPoint));
+				}
+			}
+			else if (Object.Geometry.type() == QVariant::LineF)
+			{
+				const QLineF Circle = Object.Geometry.toLineF();
+
+				const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
+				const double X = (Circle.x1() + Circle.x2()) / 2.0;
+				const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+				const QPointF ThisPoint = QPointF(X, Y);
+
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					const QPointF P = Other.Geometry.toPointF();
+
+					OK = qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)) - R;
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF OtherCircle = Other.Geometry.toLineF();
+
+					const double OR = qAbs(OtherCircle.x1() - OtherCircle.x2()) / 2.0;
+					const double OX = (OtherCircle.x1() + OtherCircle.x2()) / 2.0;
+					const double OY = (OtherCircle.y1() + OtherCircle.y2()) / 2.0;
+
+					OK = QLineF(X, Y, OX, OY).length() - OR - R;
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF P = Other.Geometry.value<QPolygonF>();
+
+					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) OK = 0.0;
+					else for (int i = 1; i < P.size(); ++i)
+					{
+						OK = qMin(OK, pdistance(QLineF(P[i - 1], P[i]), ThisPoint) - R);
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					OK = qMin(OK, pdistance(Part.toLineF(), ThisPoint) - R);
+				}
+			}
+			else if (Object.Geometry.type() == QVariant::PolygonF)
+			{
+				const QPolygonF Polygon = Object.Geometry.value<QPolygonF>();
+
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					const QPointF P = Other.Geometry.toPointF();
+
+					if (Polygon.containsPoint(P, Qt::OddEvenFill)) OK = 0.0;
+					else for (int i = 1; i < Polygon.size(); ++i)
+					{
+						OK = qMin(OK, pdistance(QLineF(Polygon[i - 1], Polygon[i]), P));
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF Circle = Other.Geometry.toLineF();
+
+					const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
+					const double X = (Circle.x1() + Circle.x2()) / 2.0;
+					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+					const QPointF Point = QPointF(X, Y);
+
+					if (Polygon.containsPoint(Point, Qt::OddEvenFill)) OK = 0.0;
+					else for (int i = 1; i < Polygon.size(); ++i)
+					{
+						OK = qMin(OK, pdistance(QLineF(Polygon[i - 1], Polygon[i]), Point) - R);
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
+
+					for (const auto& C : OP) if (Polygon.containsPoint(C, Qt::OddEvenFill)) OK = 0.0;
+					for (const auto& C : Polygon) if (OP.containsPoint(C, Qt::OddEvenFill)) OK = 0.0;
+
+					for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
+					{
+						OK = qMin(OK, ldistance(QLineF(Polygon[i - 1], Polygon[i]), QLineF(OP[j - 1], OP[j])));
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					const QLineF Line = Part.toLineF();
+
+					if (Polygon.containsPoint(Line.p1(), Qt::OddEvenFill) ||
+					    Polygon.containsPoint(Line.p2(), Qt::OddEvenFill)) OK = 0.0;
+					else for (int i = 1; i < Polygon.size(); ++i)
+					{
+						OK = qMin(OK, ldistance(QLineF(Polygon[i - 1], Polygon[i]), Line));
+					}
+				}
+			}
+			else if (Object.Geometry.type() == QVariant::List)
+			{
+				if (Other.Geometry.type() == QVariant::PointF)
+				{
+					const QPointF Point = Other.Geometry.toPointF();
+
+					for (const auto& Part : Object.Geometry.toList())
+					{
+						OK = qMin(OK, pdistance(Part.toLineF(), Point));
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::LineF)
+				{
+					const QLineF Circle = Other.Geometry.toLineF();
+
+					const double R = qAbs(Circle.x1() - Circle.x2()) / 2.0;
+					const double X = (Circle.x1() + Circle.x2()) / 2.0;
+					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
+
+					const QPointF Point = QPointF(X, Y);
+
+					for (const auto& Part : Object.Geometry.toList())
+					{
+						const QLineF Line = Part.toLineF();
+
+						OK = qMin(OK, pdistance(Line, Point) - R);
+						OK = qMin(OK, QLineF(Line.p1(), Point).length() - R);
+						OK = qMin(OK, QLineF(Line.p2(), Point).length() - R);
+					}
+				}
+				else if (Other.Geometry.type() == QVariant::PolygonF)
+				{
+					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
+
+					for (const auto& Part : Object.Geometry.toList()) for (int j = 1; j < OP.size(); ++j)
+					{
+						OK = qMin(OK, ldistance(Part.toLineF(), QLineF(OP[j - 1], OP[j])));
+					}
+
+					for (const auto& Part : Object.Geometry.toList())
+					{
+						const QLineF Line = Part.toLineF();
+
+						if (OP.containsPoint(Line.p1(), Qt::OddEvenFill) ||
+						    OP.containsPoint(Line.p2(), Qt::OddEvenFill)) OK = 0.0;
+					}
+				}
+				else for (const auto& Part : Other.Geometry.toList())
+				{
+					for (const auto& This : Object.Geometry.toList())
+					{
+						OK = qMin(OK, ldistance(This.toLineF(), Part.toLineF()));
+					}
+				}
+			}
+
+			if (OK <= Radius && OK < fR) { fID = Other.UID; fR = OK; }
+		}
+
+		if (fID && fR <= Radius)
+		{
+			QMutexLocker Locker(&Synchronizer);
+
+			if (!Geometry[fID].contains(Object.ID))
+			{
+				Insert[fID].insert(Object.ID);
+			}
+		}
+	});
+
+	return Insert;
+}
+
 void DatabaseDriver::convertSurfaceToPoint(const QSet<int>& Objects, const QString& Symbol, int Layer)
 {
 	if (!Database.isOpen()) return; QSet<int> Used;
@@ -8677,6 +8928,106 @@ void DatabaseDriver::setDateOverride(bool Override)
 void DatabaseDriver::setHistoryMake(bool Make)
 {
 	QMutexLocker Locker(&Terminator); makeHistory = Make;
+}
+
+void DatabaseDriver::unifyJobs(void)
+{
+	if (!Database.open()) { emit onError(tr("Database is not opened")); emit onJobsUnify(0); return; } int Step(0);
+
+	emit onBeginProgress("Loading jobs");
+	emit onSetupProgress(0, 0);
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+
+	QHash<QString, QList<int>> Jobs; int Count(0);
+
+	Query.prepare(
+		"SELECT "
+			"UID, NUMER "
+		"FROM "
+			"EW_OPERATY "
+		"ORDER BY "
+			"OPERACJA DESC");
+
+	if (Query.exec()) while (Query.next())
+	{
+		Jobs[Query.value(1).toString()].append(Query.value(0).toInt());
+	}
+
+	emit onBeginProgress("Updating jobs");
+	emit onSetupProgress(0, Jobs.size());
+
+	for (auto& List : Jobs) if (List.size() > 1)
+	{
+		const int New = List.takeFirst(); QStringList Old;
+
+		for (const auto& ID : List)
+		{
+			Old.append(QString::number(ID));
+		}
+
+		Query.exec(QString("UPDATE EW_OBIEKTY SET OPERAT = %1 WHERE OPERAT IN (%2)")
+				 .arg(New).arg(Old.join(',')));
+		Query.exec(QString("UPDATE EW_POLYLINE SET OPERAT = %1 WHERE OPERAT IN (%2)")
+				 .arg(New).arg(Old.join(',')));
+		Query.exec(QString("UPDATE EW_TEXT SET OPERAT = %1 WHERE OPERAT IN (%2)")
+				 .arg(New).arg(Old.join(',')));
+
+		Query.exec(QString("DELETE FROM EW_OPERATY WHERE UID IN (%1)").arg(Old.join(',')));
+		Query.exec(QString("UPDATE EW_OPERATY SET "
+					    "OSOZ = NULL, DTZ = NULL, OPERACJA = 1 "
+					    "WHERE UID = %1)").arg(New));
+
+		emit onUpdateProgress(++Step); Count += 1;
+	}
+	else emit onUpdateProgress(++Step);
+
+	emit onEndProgress();
+	emit onJobsUnify(Count);
+}
+
+void DatabaseDriver::refactorJobs(const QHash<QString, QString>& Dict)
+{
+	if (!Database.open()) { emit onError(tr("Database is not opened")); emit onJobsRefactor(0); return; } int Step(0);
+
+	emit onBeginProgress("Loading jobs");
+	emit onSetupProgress(0, 0);
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QHash<int, QString> Jobs; int Count(0);
+
+	Query.prepare("SELECT UID, NUMER FROM EW_OPERATY");
+
+	if (Query.exec()) while (Query.next())
+	{
+		Jobs.insert(Query.value(0).toInt(), Query.value(1).toString());
+	}
+
+	emit onBeginProgress("Updating jobs");
+	emit onSetupProgress(0, Jobs.size());
+
+	Query.prepare("UPDATE EW_OPERATY O SET O.NUMER = ?, "
+			    "O.OPERACJA = (SELECT COALESCE(MAX(N.OPERACJA), 0) FROM EW_OPERATY N WHERE N.NUMER = ?) + 1 "
+			    "WHERE O.UID = ?");
+
+	for (auto i = Jobs.constBegin(); i != Jobs.constEnd(); ++i)
+	{
+		if (Dict.contains(i.value()))
+		{
+			const auto New = Dict.value(i.value());
+
+			Query.addBindValue(New);
+			Query.addBindValue(New);
+			Query.addBindValue(i.key());
+
+			if (Query.exec()) ++Count;
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onJobsRefactor(Count);
 }
 
 void DatabaseDriver::unterminate(void)

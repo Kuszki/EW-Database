@@ -99,6 +99,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionHide, &QAction::triggered, this, &MainWindow::hideActionClicked);
 	connect(ui->actionUnhide, &QAction::triggered, this, &MainWindow::unhideActionClicked);
 
+	connect(ui->actionUnifyJobs, &QAction::triggered, this, &MainWindow::unifyjobsActionClicked);
+	connect(ui->actionRefactorJobs, &QAction::triggered, this, &MainWindow::refactorjobsActionClicked);
+
 	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
 	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
 	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
@@ -138,6 +141,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onRowsRemove, this, &MainWindow::removeRows);
 
 	connect(Driver, &DatabaseDriver::onUidsUpdate, this, &MainWindow::updateUids);
+
+	connect(Driver, &DatabaseDriver::onJobsUnify, this, &MainWindow::jobsUnified);
+	connect(Driver, &DatabaseDriver::onJobsRefactor, this, &MainWindow::jobsRefactored);
 
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -183,6 +189,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
 	connect(this, &MainWindow::onBreaksRequest, Driver, &DatabaseDriver::mergeSegments);
 	connect(this, &MainWindow::onEdgesRequest, Driver, &DatabaseDriver::hideEdges);
+
+	connect(this, &MainWindow::onUnifyjobsRequest, Driver, &DatabaseDriver::unifyJobs);
+	connect(this, &MainWindow::onRefactorJobsRequest, Driver, &DatabaseDriver::refactorJobs);
 
 	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
 	connect(Terminator, &QPushButton::clicked, Driver, &DatabaseDriver::terminate, Qt::DirectConnection);
@@ -459,6 +468,49 @@ void MainWindow::fitActionClicked(void)
 	if (!Path.isEmpty()) Fit->open(Path);
 }
 
+void MainWindow::unifyjobsActionClicked(void)
+{
+	lockUi(BUSY); emit onUnifyjobsRequest();
+}
+
+void MainWindow::refactorjobsActionClicked(void)
+{
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+
+	QHash<QString, QString> Dict;
+
+	if (!Path.isEmpty())
+	{
+		QFile File(Path); File.open(QFile::ReadOnly | QFile::Text);
+
+		if (File.isOpen())
+		{
+			QList<QStringList> Values; QRegExp Separator;
+
+			const QString Extension = QFileInfo(Path).suffix();
+
+			if (Extension == "csv") Separator = QRegExp("\\s*,\\s*");
+			else Separator = QRegExp("\\s+");
+
+			while (!File.atEnd())
+			{
+				const QString Line = File.readLine().trimmed(); if (Line.isEmpty()) continue;
+				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
+
+				if (Data.size() == 2) Dict.insert(Data[0], Data[1]);
+			}
+
+			if (!Dict.isEmpty()) { lockUi(BUSY); emit onRefactorJobsRequest(Dict); }
+			else ui->statusBar->showMessage(tr("Loaded data is invalid"));
+		}
+		else
+		{
+			ui->statusBar->showMessage(tr("Error with opening file: ") + File.errorString());
+		}
+	}
+}
+
 void MainWindow::selectionActionToggled(bool Allow)
 {
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
@@ -478,6 +530,7 @@ void MainWindow::selectionChanged(void)
 	if (!ui->Data->updatesEnabled()) return;
 
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	if (!Model) return;
 	auto Selection = ui->Data->selectionModel()->selectedRows();
 
 	auto Count = Model->getUids(Selection).subtract(hiddenRows).size();
@@ -928,6 +981,16 @@ void MainWindow::refactorData(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n object(s)", nullptr, Count));
 }
 
+void MainWindow::jobsUnified(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Unified %n job(s)", nullptr, Count));
+}
+
+void MainWindow::jobsRefactored(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Refactored %n job(s)", nullptr, Count));
+}
+
 void MainWindow::loginAttempt(void)
 {
 	ui->actionConnect->setEnabled(false);
@@ -1171,6 +1234,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLoad->setEnabled(true);
 			ui->actionUnhide->setEnabled(true);
 			ui->actionInterface->setEnabled(true);
+			ui->actionUnifyJobs->setEnabled(true);
+			ui->actionRefactorJobs->setEnabled(true);
 			ui->actionSingleton->setEnabled(false);
 		break;
 		case DISCONNECTED:
@@ -1208,6 +1273,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionScript->setEnabled(false);
 			ui->actionBreaks->setEnabled(false);
 			ui->actionEdges->setEnabled(false);
+			ui->actionUnifyJobs->setEnabled(false);
+			ui->actionRefactorJobs->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 		break;
 		case BUSY:
@@ -1241,6 +1308,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionScript->setEnabled(false);
 			ui->actionBreaks->setEnabled(false);
 			ui->actionEdges->setEnabled(false);
+			ui->actionUnifyJobs->setEnabled(false);
+			ui->actionRefactorJobs->setEnabled(false);
 			ui->Data->setEnabled(false);
 
 			Driver->unterminate();
@@ -1255,6 +1324,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLoad->setEnabled(true);
 			ui->actionUnhide->setEnabled(true);
 			ui->actionInterface->setEnabled(true);
+			ui->actionUnifyJobs->setEnabled(true);
+			ui->actionRefactorJobs->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);

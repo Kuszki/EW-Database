@@ -203,6 +203,9 @@ class DatabaseDriver : public QObject
 								   const QList<DatabaseDriver::POINT>& Points,
 								   const QSet<int>& Tasks, const QString& Class,
 								   double Radius = 0.0);
+		QHash<int, QSet<int>> joinMixed(const QHash<int, QSet<int>>& Geometry,
+								  const QSet<int>& Obj, const QSet<int>& Sub,
+								  double Radius = 0.0);
 
 		void convertSurfaceToPoint(const QSet<int>& Objects, const QString& Symbol, int Layer);
 		void convertPointToSurface(const QSet<int>& Objects, int Style, int Layer, double Radius);
@@ -333,6 +336,9 @@ class DatabaseDriver : public QObject
 		void setDateOverride(bool Override);
 		void setHistoryMake(bool Make);
 
+		void unifyJobs(void);
+		void refactorJobs(const QHash<QString, QString>& Dict);
+
 		void unterminate(void);
 		void terminate(void);
 
@@ -399,6 +405,9 @@ class DatabaseDriver : public QObject
 		void onPointInsert(int);
 		void onSegmentReduce(int);
 		void onLabelDelete(int);
+
+		void onJobsUnify(int);
+		void onJobsRefactor(int);
 
 };
 
