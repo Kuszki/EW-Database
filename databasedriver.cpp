@@ -1970,7 +1970,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 			Insert = joinSurfaces(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 		case 3:
-			Insert = joinMixed(Geometry, Tasks[Join], Tasks[Point], Radius);
+			Insert = joinMixed(Geometry, Tasks[Join], Tasks[Point] - Joined, Radius);
 		break;
 	}
 
@@ -6111,11 +6111,12 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 			);
 		};
 
-		double fR = INFINITY; int fID = 0;
+		double fR = INFINITY; int fID = 0; int fN = 0;
 
 		if (!this->isTerminated()) for (const auto& Other : Objects)
 		{
-			if (Object.UID == Other.UID) continue; double OK(INFINITY);
+			if (Object.UID == Other.UID) continue;
+			double OK(INFINITY); int ON(0);
 
 			if (Object.Geometry.type() == QVariant::PointF)
 			{
@@ -6124,6 +6125,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 				if (Other.Geometry.type() == QVariant::PointF)
 				{
 					OK = QLineF(ThisPoint, Other.Geometry.toPointF()).length();
+					if (OK <= Radius) ++ON;
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
 				{
@@ -6135,20 +6137,24 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
 					OK = qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)) - R;
+					if (OK <= Radius) ++ON;
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
 				{
 					const QPolygonF P = Other.Geometry.value<QPolygonF>();
 
-					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) OK = 0.0;
-					else for (int i = 1; i < P.size(); ++i)
+					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+
+					for (int i = 1; i < P.size(); ++i)
 					{
 						OK = qMin(OK, pdistance(QLineF(P[i - 1], P[i]), ThisPoint));
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
 				{
 					OK = qMin(OK, pdistance(Part.toLineF(), ThisPoint));
+					if (OK <= Radius) ++ON;
 				}
 			}
 			else if (Object.Geometry.type() == QVariant::LineF)
@@ -6166,6 +6172,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					const QPointF P = Other.Geometry.toPointF();
 
 					OK = qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)) - R;
+					if (OK <= Radius) ++ON;
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
 				{
@@ -6176,20 +6183,24 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					const double OY = (OtherCircle.y1() + OtherCircle.y2()) / 2.0;
 
 					OK = QLineF(X, Y, OX, OY).length() - OR - R;
+					if (OK <= Radius) ++ON;
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
 				{
 					const QPolygonF P = Other.Geometry.value<QPolygonF>();
 
-					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) OK = 0.0;
-					else for (int i = 1; i < P.size(); ++i)
+					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+
+					for (int i = 1; i < P.size(); ++i)
 					{
 						OK = qMin(OK, pdistance(QLineF(P[i - 1], P[i]), ThisPoint) - R);
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
 				{
 					OK = qMin(OK, pdistance(Part.toLineF(), ThisPoint) - R);
+					if (OK <= Radius) ++ON;
 				}
 			}
 			else if (Object.Geometry.type() == QVariant::PolygonF)
@@ -6200,10 +6211,12 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 				{
 					const QPointF P = Other.Geometry.toPointF();
 
-					if (Polygon.containsPoint(P, Qt::OddEvenFill)) OK = 0.0;
-					else for (int i = 1; i < Polygon.size(); ++i)
+					if (Polygon.containsPoint(P, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+
+					for (int i = 1; i < Polygon.size(); ++i)
 					{
 						OK = qMin(OK, pdistance(QLineF(Polygon[i - 1], Polygon[i]), P));
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
@@ -6216,22 +6229,25 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					const QPointF Point = QPointF(X, Y);
 
-					if (Polygon.containsPoint(Point, Qt::OddEvenFill)) OK = 0.0;
-					else for (int i = 1; i < Polygon.size(); ++i)
+					if (Polygon.containsPoint(Point, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+
+					for (int i = 1; i < Polygon.size(); ++i)
 					{
 						OK = qMin(OK, pdistance(QLineF(Polygon[i - 1], Polygon[i]), Point) - R);
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
 				{
 					const QPolygonF OP = Other.Geometry.value<QPolygonF>();
 
-					for (const auto& C : OP) if (Polygon.containsPoint(C, Qt::OddEvenFill)) OK = 0.0;
-					for (const auto& C : Polygon) if (OP.containsPoint(C, Qt::OddEvenFill)) OK = 0.0;
+					for (const auto& C : OP) if (Polygon.containsPoint(C, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+					for (const auto& C : Polygon) if (OP.containsPoint(C, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
 
 					for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
 					{
 						OK = qMin(OK, ldistance(QLineF(Polygon[i - 1], Polygon[i]), QLineF(OP[j - 1], OP[j])));
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
@@ -6239,10 +6255,12 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					const QLineF Line = Part.toLineF();
 
 					if (Polygon.containsPoint(Line.p1(), Qt::OddEvenFill) ||
-					    Polygon.containsPoint(Line.p2(), Qt::OddEvenFill)) OK = 0.0;
-					else for (int i = 1; i < Polygon.size(); ++i)
+					    Polygon.containsPoint(Line.p2(), Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+
+					for (int i = 1; i < Polygon.size(); ++i)
 					{
 						OK = qMin(OK, ldistance(QLineF(Polygon[i - 1], Polygon[i]), Line));
+						if (OK <= Radius) ++ON;
 					}
 				}
 			}
@@ -6255,6 +6273,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					for (const auto& Part : Object.Geometry.toList())
 					{
 						OK = qMin(OK, pdistance(Part.toLineF(), Point));
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
@@ -6274,6 +6293,8 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 						OK = qMin(OK, pdistance(Line, Point) - R);
 						OK = qMin(OK, QLineF(Line.p1(), Point).length() - R);
 						OK = qMin(OK, QLineF(Line.p2(), Point).length() - R);
+
+						if (OK <= Radius) ++ON;
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
@@ -6283,6 +6304,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					for (const auto& Part : Object.Geometry.toList()) for (int j = 1; j < OP.size(); ++j)
 					{
 						OK = qMin(OK, ldistance(Part.toLineF(), QLineF(OP[j - 1], OP[j])));
+						if (OK <= Radius) ++ON;
 					}
 
 					for (const auto& Part : Object.Geometry.toList())
@@ -6290,7 +6312,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 						const QLineF Line = Part.toLineF();
 
 						if (OP.containsPoint(Line.p1(), Qt::OddEvenFill) ||
-						    OP.containsPoint(Line.p2(), Qt::OddEvenFill)) OK = 0.0;
+						    OP.containsPoint(Line.p2(), Qt::OddEvenFill)) { OK = 0.0; ++ON; }
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
@@ -6298,21 +6320,18 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					for (const auto& This : Object.Geometry.toList())
 					{
 						OK = qMin(OK, ldistance(This.toLineF(), Part.toLineF()));
+						if (OK <= Radius) ++ON;
 					}
 				}
 			}
 
-			if (OK <= Radius && OK < fR) { fID = Other.UID; fR = OK; }
+			if (OK <= Radius && OK <= fR && ON >= fN) { fID = Other.UID; fR = OK; fN = ON; }
 		}
 
-		if (fID && fR <= Radius)
+		if (fID && !Geometry[fID].contains(Object.ID))
 		{
 			QMutexLocker Locker(&Synchronizer);
-
-			if (!Geometry[fID].contains(Object.ID))
-			{
-				Insert[fID].insert(Object.ID);
-			}
+			Insert[fID].insert(Object.ID);
 		}
 	});
 
