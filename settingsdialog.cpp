@@ -52,6 +52,9 @@ void SettingsDialog::loadValues(void)
 	ui->csvSep->setText(Settings.value("csv").toString());
 	ui->txtSep->setText(Settings.value("txt").toString());
 	Settings.endGroup();
+
+	ui->logopenButton->setFixedSize(ui->logdirEdit->sizeHint().height(),
+							  ui->logdirEdit->sizeHint().height());
 }
 
 void SettingsDialog::dialogButtonClicked(QAbstractButton* Button)
