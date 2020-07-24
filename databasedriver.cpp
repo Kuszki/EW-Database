@@ -1690,7 +1690,7 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 	const auto Loaded = List.keys().toSet();
 
 	QtConcurrent::blockingMap(Loaded,
-	[&List, &Script, &Functions, &Values, &Props, &Size, &Synchronizer]
+	[&List, &Script, &Values, &Props, &Size, &Synchronizer]
 	(const int& UID) -> void
 	{
 		const auto& Item = List[UID];
@@ -2450,13 +2450,13 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 					const double h = qAbs(A * D - C * B) / qSqrt(C * C + D * D);
 
-					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
+					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; }
 				}
 				else
 				{
 					const double h = qMin(a, b) * 2.0;
 
-					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; };
+					if (qIsNaN(P.L) || h < P.L) { P.L = h; P.LID = L.ID; }
 				}
 			}
 		};
@@ -2661,7 +2661,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 				else Queue.insert(i.key(), QList<int>() << L1.N);
 
 				Locker.unlock();
-			};
+			}
 		}
 	});
 
@@ -3670,8 +3670,8 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 			QLineF Normal(Part.Point, Second); QPointF IntersectR, IntersectL;
 
 			Normal.setAngle(L.angle() + 90.0);
-			Normal.intersect(L, &IntersectR);
-			Part.Line.intersect(L, &IntersectL);
+			Normal.intersects(L, &IntersectR);
+			Part.Line.intersects(L, &IntersectL);
 
 			const double Rad = QLineF(Part.Point, IntersectR).length();
 			const double Len = QLineF(Part.Point, IntersectL).length();
@@ -3707,7 +3707,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 			Dummy.setAngle(L.angle() + 90);
 
 			QPointF Intersect;
-			Dummy.intersect(L, &Intersect);
+			Dummy.intersects(L, &Intersect);
 
 			const double Rad1 = QLineF(Symbol.Point, L.p1()).length();
 
@@ -4276,7 +4276,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			QLineF Offset(Point.DX, Point.DY, 0, 0);
 			Offset.setAngle(Line.angle() + 90.0);
 
-			QPointF Int; Offset.intersect(Line, &Int);
+			QPointF Int; Offset.intersects(Line, &Int);
 
 			if (Move) { Point.DX = Int.x(); Point.DY = Int.y(); }
 			if (Rotate) { Point.A = dtg; }
@@ -4686,7 +4686,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 						const QLineF vLine(Surface.Surface[i - 1],
 									    Surface.Surface[i]);
 
-						auto Type = Step.intersect(vLine, &Int);
+						auto Type = Step.intersects(vLine, &Int);
 
 						if (Type == QLineF::BoundedIntersection)
 						{
@@ -4768,7 +4768,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 						const QLineF hLine(Surface.Surface[i - 1],
 									    Surface.Surface[i]);
 
-						auto Type = Step.intersect(hLine, &Int);
+						auto Type = Step.intersects(hLine, &Int);
 
 						if (Type == QLineF::BoundedIntersection)
 						{
@@ -5213,7 +5213,7 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 			const QPointF PointB(Query.value(2).toDouble(), Query.value(3).toDouble());
 
 			appendCount(PointA, Cuts, Counts); appendCount(PointB, Cuts, Counts);
-		};
+		}
 	}
 
 	QSqlQuery Objects(Database), deleteGeometry(Database),
@@ -5754,6 +5754,8 @@ void DatabaseDriver::saveGeometry(const QSet<int>& Items, const QString& Path)
 				Set.append(L.toLineF());
 			}
 		}
+		break;
+		default: break;
 	}
 
 	QFile File(Path); QTextStream Stream(&File);
@@ -6124,7 +6126,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 		static const auto ldistance = [] (const QLineF& A, const QLineF& B) -> double
 		{
-			if (A.intersect(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
+			if (A.intersects(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
 
 			return qMin
 			(
@@ -7347,7 +7349,7 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 
 		static const auto ldistance = [] (const QLineF& A, const QLineF& B) -> double
 		{
-			if (A.intersect(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
+			if (A.intersects(B, nullptr) == QLineF::BoundedIntersection) return 0.0;
 
 			return qMin
 			(
@@ -7617,7 +7619,7 @@ QSet<int> DatabaseDriver::filterDataByHasSubobject(const QSet<int>& Data, const 
 
 QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::REDACTION>& Data, double Minimum, double Maximum)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+	QSet<int> Filtered; QMutex Synchronizer; emit onSetupProgress(0, 0);
 
 	const auto vA = [Minimum, Maximum] (double L) -> bool { return L > Minimum && L < Maximum; };
 	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L > Maximum && L < Minimum); };
@@ -7627,7 +7629,7 @@ QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::RE
 		if (Minimum < Maximum) return vA(L); else return vB(L);
 	};
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const REDACTION& Object) -> void
+	QtConcurrent::blockingMap(Data, [&Synchronizer, &Filtered, isOK] (const REDACTION& Object) -> void
 	{
 		if (Object.Type == 4 && isOK(Object.Angle))
 		{
@@ -7640,7 +7642,7 @@ QSet<int> DatabaseDriver::filterDataBySymbolAngle(const QList<DatabaseDriver::RE
 
 QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::REDACTION>& Data, double Minimum, double Maximum)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+	QSet<int> Filtered; QMutex Synchronizer; emit onSetupProgress(0, 0);
 
 	const auto vA = [Minimum, Maximum] (double L) -> bool { return L > Minimum && L < Maximum; };
 	const auto vB = [Minimum, Maximum] (double L) -> bool { return !(L > Maximum && L < Minimum); };
@@ -7650,7 +7652,7 @@ QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::RED
 		if (Minimum < Maximum) return vA(L); else return vB(L);
 	};
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, isOK] (const REDACTION& Object) -> void
+	QtConcurrent::blockingMap(Data, [&Synchronizer, &Filtered, isOK] (const REDACTION& Object) -> void
 	{
 		if (Object.Type == 6 && isOK(Object.Angle))
 		{
@@ -7663,11 +7665,11 @@ QSet<int> DatabaseDriver::filterDataByLabelAngle(const QList<DatabaseDriver::RED
 
 QSet<int> DatabaseDriver::filterDataBySymbolText(const QList<DatabaseDriver::REDACTION>& Data, const QStringList& Text, bool Not)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+	QSet<int> Filtered; QMutex Synchronizer; emit onSetupProgress(0, 0);
 
 	const bool Any = Text.isEmpty() || Text.contains(QString());
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, &Text, Any] (const REDACTION& Object) -> void
+	QtConcurrent::blockingMap(Data, [&Synchronizer, &Filtered, &Text, Any] (const REDACTION& Object) -> void
 	{
 		if (Object.Type != 4) return; bool OK = Any;
 
@@ -7703,11 +7705,11 @@ QSet<int> DatabaseDriver::filterDataBySymbolText(const QList<DatabaseDriver::RED
 
 QSet<int> DatabaseDriver::filterDataByLabelText(const QList<DatabaseDriver::REDACTION>& Data, const QStringList& Text, bool Not)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+	QSet<int> Filtered; QMutex Synchronizer; emit onSetupProgress(0, 0);
 
 	const bool Any = Text.isEmpty() || Text.contains(QString());
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, &Text, Any] (const REDACTION& Object) -> void
+	QtConcurrent::blockingMap(Data, [&Synchronizer, &Filtered, &Text, Any] (const REDACTION& Object) -> void
 	{
 		if (Object.Type != 6) return; bool OK = Any;
 
@@ -7743,7 +7745,7 @@ QSet<int> DatabaseDriver::filterDataByLabelText(const QList<DatabaseDriver::REDA
 
 QSet<int> DatabaseDriver::filterDataByLineStyle(const QList<DatabaseDriver::REDACTION>& Data, const QStringList& Style, bool Not)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+	QSet<int> Filtered; QMutex Synchronizer; emit onSetupProgress(0, 0);
 
 	const bool Any = Style.isEmpty() || Style.contains(QString()); QSet<int> List;
 
@@ -7752,7 +7754,7 @@ QSet<int> DatabaseDriver::filterDataByLineStyle(const QList<DatabaseDriver::REDA
 		const int n = Txt.toInt(&Number); if (Number) List.insert(n);
 	}
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, &List, Any] (const REDACTION& Object) -> void
+	QtConcurrent::blockingMap(Data, [&Synchronizer, &Filtered, &List, Any] (const REDACTION& Object) -> void
 	{
 		if (Object.Type != 0) return; const int Current = Object.Format.toInt();
 
@@ -7781,9 +7783,9 @@ QSet<int> DatabaseDriver::filterDataByLineStyle(const QList<DatabaseDriver::REDA
 
 QSet<int> DatabaseDriver::filterDataByLabelStyle(const QList<DatabaseDriver::REDACTION>& Data, int Style, bool Not)
 {
-	QSet<int> Filtered; QMutex Synchronizer; int Step(0); emit onSetupProgress(0, 0);
+	QSet<int> Filtered; QMutex Synchronizer; emit onSetupProgress(0, 0);
 
-	QtConcurrent::blockingMap(Data, [this, &Synchronizer, &Step, &Filtered, Style] (const REDACTION& Object) -> void
+	QtConcurrent::blockingMap(Data, [&Synchronizer, &Filtered, Style] (const REDACTION& Object) -> void
 	{
 		if (Object.Type == 6 && (Object.Just & Style) == Style)
 		{
@@ -8057,7 +8059,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 			    !pointComp(L.Line.p2(), Part.Line.p1()) && !pointComp(L.Line.p2(), Part.Line.p2()));
 			else continue;
 
-			QPointF Int; const auto Type = Part.Line.intersect(L.Line, &Int);
+			QPointF Int; const auto Type = Part.Line.intersects(L.Line, &Int);
 
 			if (Type == QLineF::BoundedIntersection)
 			{
@@ -8078,7 +8080,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, Lines.size()); Step = 0;
 
-	QtConcurrent::blockingMap(Lines, [this, &pointCuts, &Inserts, &Origins, &Synchronizer, &Step, Radius] (LINE& Part) -> void
+	QtConcurrent::blockingMap(Lines, [this, &pointCuts, &Inserts, &Synchronizer, &Step, Radius] (LINE& Part) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -8094,7 +8096,7 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 			QPointF Int; QLineF Normal(P, QPointF());
 
 			Normal.setAngle(Part.Line.angle() + 90.0);
-			Part.Line.intersect(Normal, &Int);
+			Part.Line.intersects(Normal, &Int);
 
 			const double a = QLineF(Int, Part.Line.p1()).length();
 			const double b = QLineF(Int, Part.Line.p2()).length();
@@ -8411,7 +8413,7 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 	});
 
 	QtConcurrent::blockingMap(Tasks,
-	[&Segments, &Polygons, &Circles, &Centers, &Addons, &Mods, &Synchronizer, Radius, Mode]
+	[&Segments, &Polygons, &Circles, &Centers, &Mods, &Synchronizer, Radius, Mode]
 	(int UID) -> void
 	{
 		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
@@ -8466,8 +8468,8 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 			{
 				QPointF IntA, IntB; const QLineF L(i.value()[j - 1], i.value()[j]);
 
-				L.intersect(Geom.first().second, &IntA);
-				L.intersect(Geom.last().second, &IntB);
+				L.intersects(Geom.first().second, &IntA);
+				L.intersects(Geom.last().second, &IntB);
 
 				const double RadA = QLineF(IntA, Start).length();
 				const double RadB = QLineF(IntB, Stop).length();
@@ -9250,7 +9252,7 @@ QStandardItemModel*getJsHelperModel(QObject* Parent, const QStringList& Variable
 		Root->appendRow(new QStandardItem(Group));
 	}
 
-	for (const auto Var : Variables)
+	for (const auto& Var : Variables)
 	{
 		Root->child(0)->appendRow(new QStandardItem(Var));
 	}
@@ -9287,24 +9289,18 @@ QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type)
 		case DatabaseDriver::READONLY:
 		case DatabaseDriver::STRING:
 			return Variant;
-		break;
 		case DatabaseDriver::MASK:
 		case DatabaseDriver::INTEGER:
 		case DatabaseDriver::SMALLINT:
 			return Variant.toInt();
-		break;
 		case DatabaseDriver::BOOL:
 			return Variant.toBool();
-		break;
 		case DatabaseDriver::DOUBLE:
 			return Variant.toDouble();
-		break;
 		case DatabaseDriver::DATE:
 			return castStrToDate(Variant.toString());
-		break;
 		case DatabaseDriver::DATETIME:
 			return castStrToDatetime(Variant.toString());
-		break;
 	}
 	else return Variant;
 }
