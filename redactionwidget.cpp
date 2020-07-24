@@ -35,6 +35,9 @@ RedactionWidget::RedactionWidget(QWidget *Parent)
 	ui->formatCombo->setItemData(2, 32);
 
 	typeChanged(ui->typeCombo->currentIndex());
+
+	ui->removeButton->setFixedSize(ui->typeCombo->sizeHint().height(),
+							 ui->typeCombo->sizeHint().height());
 }
 
 RedactionWidget::~RedactionWidget(void)

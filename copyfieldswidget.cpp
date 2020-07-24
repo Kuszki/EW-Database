@@ -25,6 +25,9 @@ CopyfieldsWidget::CopyfieldsWidget(const QStringList& Fields, QWidget* Parent)
 : QWidget(Parent), ui(new Ui::CopyfieldsWidget)
 {
 	ui->setupUi(this); setData(Fields);
+
+	ui->deleteButton->setFixedSize(ui->srcCombo->sizeHint().height(),
+							 ui->srcCombo->sizeHint().height());
 }
 
 CopyfieldsWidget::~CopyfieldsWidget(void)

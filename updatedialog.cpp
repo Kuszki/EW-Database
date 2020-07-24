@@ -30,6 +30,15 @@ UpdateDialog::UpdateDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& 
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
 	ui->prevButton->setEnabled(false);
 	ui->nextButton->setEnabled(false);
+
+	ui->nextButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+						    ui->buttonBox->sizeHint().height());
+	ui->prevButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+						    ui->buttonBox->sizeHint().height());
+	ui->allButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+						   ui->buttonBox->sizeHint().height());
+	ui->clearButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							ui->buttonBox->sizeHint().height());
 }
 
 UpdateDialog::~UpdateDialog(void)

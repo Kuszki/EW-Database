@@ -408,6 +408,13 @@ void MainWindow::batchActionClicked(void)
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
 											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Locale");
+	const auto csvSep = Settings.value("csv", ",").toString();
+	const auto txtSep = Settings.value("txt", "\\s+").toString();
+	Settings.endGroup();
+
 	if (!Path.isEmpty())
 	{
 		QFile File(Path); File.open(QFile::ReadOnly | QFile::Text);
@@ -418,8 +425,8 @@ void MainWindow::batchActionClicked(void)
 
 			const QString Extension = QFileInfo(Path).suffix();
 
-			if (Extension == "csv") Separator = QRegExp("\\s*,\\s*");
-			else Separator = QRegExp("\\s+");
+			if (Extension != "csv") Separator = QRegExp(txtSep);
+			else Separator = QRegExp(QString("\\s*%1\\s*").arg(csvSep));
 
 			while (!File.atEnd())
 			{
@@ -478,6 +485,13 @@ void MainWindow::refactorjobsActionClicked(void)
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
 											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Locale");
+	const auto csvSep = Settings.value("csv", ",").toString();
+	const auto txtSep = Settings.value("txt", "\\s+").toString();
+	Settings.endGroup();
+
 	QHash<QString, QString> Dict;
 
 	if (!Path.isEmpty())
@@ -490,8 +504,8 @@ void MainWindow::refactorjobsActionClicked(void)
 
 			const QString Extension = QFileInfo(Path).suffix();
 
-			if (Extension == "csv") Separator = QRegExp("\\s*,\\s*");
-			else Separator = QRegExp("\\s+");
+			if (Extension != "csv") Separator = QRegExp(txtSep);
+			else Separator = QRegExp(QString("\\s*%1\\s*").arg(csvSep));
 
 			while (!File.atEnd())
 			{
@@ -1135,6 +1149,13 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 
 	if (Path.isEmpty()) return;
 
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Locale");
+	const auto csvSep = Settings.value("csv", ",").toString();
+	const auto txtSep = Settings.value("txt", "\t").toString();
+	Settings.endGroup();
+
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Selection = ui->Data->selectionModel()->selectedRows();
 	auto Set = Model->getUids(Selection).subtract(hiddenRows);
@@ -1142,7 +1163,7 @@ void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 	if (Type != 3)
 	{
 		const QString Extension = QFileInfo(Path).suffix();
-		const QChar Sep(Extension == "csv" ? ',' : '\t');
+		const QString Sep(Extension == "csv" ? csvSep : txtSep);
 
 		QList<int> Enabled;
 

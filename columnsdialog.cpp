@@ -28,6 +28,11 @@ ColumnsDialog::ColumnsDialog(QWidget* Parent, const QStringList& Headers, int Co
 
 	ui->commonLayout->setAlignment(Qt::AlignTop);
 	ui->specialLayout->setAlignment(Qt::AlignTop);
+
+	ui->selectButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							 ui->buttonBox->sizeHint().height());
+	ui->selectButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							 ui->buttonBox->sizeHint().height());
 }
 
 ColumnsDialog::~ColumnsDialog(void)

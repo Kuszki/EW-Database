@@ -30,6 +30,9 @@ GeometryWidget::GeometryWidget(const QHash<QString, QString>& Classes, const QHa
 : QWidget(Parent), ui(new Ui::GeometryWidget)
 {
 	ui->setupUi(this); setParameters(Classes, Points); typeChanged(ui->typeCombo->currentIndex());
+
+	ui->removeButton->setFixedSize(ui->typeCombo->sizeHint().height(),
+							 ui->typeCombo->sizeHint().height());
 }
 
 GeometryWidget::~GeometryWidget(void)

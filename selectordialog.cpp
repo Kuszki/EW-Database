@@ -56,6 +56,11 @@ SelectorDialog::SelectorDialog(QWidget* Parent)
 	Save->setEnabled(false);
 
 	ui->buttonBox->addButton(Save, QDialogButtonBox::YesRole);
+
+	ui->openButton->setFixedSize(ui->sourceEdit->sizeHint().height(),
+						    ui->sourceEdit->sizeHint().height());
+	ui->refreshButton->setFixedSize(ui->sourceEdit->sizeHint().height(),
+							  ui->sourceEdit->sizeHint().height());
 }
 
 SelectorDialog::~SelectorDialog(void)

@@ -3409,6 +3409,13 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 
 	QMutex Synchronizer; int Step = 0; if (Points) X2 = Y2 = 0;
 
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Locale");
+	const auto csvSep = Settings.value("csv", ",").toString();
+	const auto txtSep = Settings.value("txt", "\\s+").toString();
+	Settings.endGroup();
+
 	LoadLines.prepare(
 		"SELECT "
 			"O.UID, P.ID, P.P1_FLAGS, P.P0_X, P0_Y, "
@@ -3464,7 +3471,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 	const bool CSV = (QFileInfo(File).suffix() == "csv");
 	const int Max = qMax(qMax(X1, Y1), qMax(X2, Y2));
 
-	const QRegExp Exp(CSV ? "," : "\\s+");
+	const QRegExp Exp(CSV ? QString("\\s*%1\\s*").arg(csvSep) : txtSep);
 
 	while (!Stream.atEnd() && !isTerminated())
 	{
@@ -5360,6 +5367,13 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 	QHash<int, QDate> Dates; QHash<int, int> Updates;
 	QMutex Synchronizer; QSet<int> Uids; int Step(0);
 
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Locale");
+	const auto csvSep = Settings.value("csv", ",").toString();
+	const auto txtSep = Settings.value("txt", "\\s+").toString();
+	Settings.endGroup();
+
 	emit onBeginProgress(tr("Loading jobs"));
 	emit onSetupProgress(0, 0);
 
@@ -5377,9 +5391,10 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 
 		if (File.isOpen())
 		{
-			const QString Extension = QFileInfo(Path).suffix();
+			const QString Extension = QFileInfo(Path).suffix(); QRegExp Separator;
 
-			QRegExp Separator = (Extension == "csv") ? QRegExp("\\s*,\\s*") : QRegExp("\\s+");
+			if (Extension != "csv") Separator = QRegExp(txtSep);
+			else Separator = QRegExp(QString("\\s*%1\\s*").arg(csvSep));
 
 			while (!File.atEnd())
 			{

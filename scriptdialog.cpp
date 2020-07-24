@@ -29,6 +29,9 @@ ScriptDialog::ScriptDialog(const QStringList& Fields, QWidget* Parent)
 	Highlighter = new KLHighlighter(ui->scriptEdit->document());
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+
+	ui->validateButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							   ui->buttonBox->sizeHint().height());
 }
 
 ScriptDialog::~ScriptDialog(void)

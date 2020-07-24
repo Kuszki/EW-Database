@@ -27,6 +27,9 @@ MergeDialog::MergeDialog(QWidget* Parent, const QList<DatabaseDriver::FIELD>& Fi
 	ui->setupUi(this); setFields(Fields, Tables);
 
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
+
+	ui->allButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+						   ui->buttonBox->sizeHint().height());
 }
 
 MergeDialog::~MergeDialog(void)

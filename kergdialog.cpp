@@ -54,6 +54,9 @@ KergDialog::KergDialog(QWidget* Parent)
 
 	actionIndexChanged(ui->actionCombo->currentIndex());
 
+	ui->openButton->setFixedSize(ui->sourceEdit->sizeHint().height(),
+						    ui->sourceEdit->sizeHint().height());
+
 	connect(Model, &QStandardItemModel::itemChanged, this, &KergDialog::elementsActionsChanged);
 }
 

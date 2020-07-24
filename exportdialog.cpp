@@ -27,6 +27,11 @@ ExportDialog::ExportDialog(QWidget *Parent, const QStringList& Headers)
 	ui->setupUi(this); setAttributes(Headers);
 
 	ui->itemsLayout->setAlignment(Qt::AlignTop);
+
+	ui->selectButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							 ui->buttonBox->sizeHint().height());
+	ui->unselectButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							   ui->buttonBox->sizeHint().height());
 }
 
 ExportDialog::~ExportDialog(void)

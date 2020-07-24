@@ -96,6 +96,17 @@ FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const 
 	ui->geometryLayout->setAlignment(Qt::AlignTop);
 	ui->redactionLayout->setAlignment(Qt::AlignTop);
 
+	ui->newButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+						   ui->buttonBox->sizeHint().height());
+	ui->selectButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							 ui->buttonBox->sizeHint().height());
+	ui->unselectButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							   ui->buttonBox->sizeHint().height());
+	ui->validateButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+							   ui->buttonBox->sizeHint().height());
+	ui->limiterCheck->setFixedSize(ui->buttonBox->sizeHint().height(),
+							 ui->buttonBox->sizeHint().height());
+
 	ui->rightSpacer->changeSize(ui->validateButton->sizeHint().width(), 0);
 
 	ui->advancedEdit->setFont(QFont("monospace"));

@@ -293,6 +293,9 @@ void UpdateWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 		Widget->setEnabled(!ui->nullButton->isChecked() && ui->Field->isChecked());
 
 		ui->horizontalLayout->insertWidget(1, Widget);
+
+		ui->nullButton->setFixedSize(Widget->sizeHint().height(),
+							    Widget->sizeHint().height());
 	}
 
 	setObjectName(Field.Name);

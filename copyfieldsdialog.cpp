@@ -28,6 +28,9 @@ CopyfieldsDialog::CopyfieldsDialog(const QStringList& Fields, QWidget* Parent)
 
 	ui->fieldsLayout->setAlignment(Qt::AlignTop);
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+
+	ui->toolButton->setFixedSize(ui->buttonBox->sizeHint().height(),
+						    ui->buttonBox->sizeHint().height());
 }
 
 CopyfieldsDialog::~CopyfieldsDialog(void)

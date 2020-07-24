@@ -563,7 +563,7 @@ bool RecordModel::updateUid(int Old, int New)
 	return false;
 }
 
-bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names, const QChar& Separator) const
+bool RecordModel::saveToFile(const QString& Path, const QList<int>& Columns, const QModelIndexList& List, bool Names, const QString& Separator) const
 {
 	QMutexLocker Synchronizer(&Locker); QSet<QStringList> Lines;
 

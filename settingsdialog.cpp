@@ -104,7 +104,12 @@ void SettingsDialog::accept(void)
 	Settings.endGroup();
 
 	Settings.beginGroup("Locale");
-	Settings.setValue("csv", ui->csvSep->text());
-	Settings.setValue("txt", ui->txtSep->text());
+
+	if (ui->csvSep->text().isEmpty()) Settings.remove("csv");
+	else Settings.setValue("csv", ui->csvSep->text());
+
+	if (ui->txtSep->text().isEmpty()) Settings.remove("txt");
+	else Settings.setValue("txt", ui->txtSep->text());
+
 	Settings.endGroup();
 }

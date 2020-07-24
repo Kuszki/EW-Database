@@ -184,7 +184,7 @@ class RecordModel : public QAbstractItemModel
 
 		bool saveToFile(const QString& Path, const QList<int>& Columns,
 					 const QModelIndexList& List, bool Names,
-					 const QChar& Separator = QChar(',')) const;
+					 const QString& Separator = "\t") const;
 
 		bool removeItem(const QModelIndex& Index);
 
