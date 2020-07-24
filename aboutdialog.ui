@@ -109,7 +109,7 @@
      <item row="2" column="1">
       <widget class="QLabel" name="Mail">
        <property name="text">
-        <string notr="true">&lt;a href=&quot;l.drozdz@openmailbox.org&quot;&gt;l.drozdz@openmailbox.org&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=&quot;l.drozdz@o2.pl&quot;&gt;l.drozdz@o2.pl&lt;/a&gt;</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
