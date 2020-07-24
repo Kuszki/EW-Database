@@ -1769,7 +1769,6 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 			"EW_OBIEKTY O "
 		"WHERE "
 			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4 AND "
 			"O.KOD = :kod");
 
 	Query.bindValue(":kod", Point);
@@ -1799,10 +1798,8 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 		"WHERE "
 			"E.TYP = 1 AND "
 			"O.STATUS = 0 AND "
-			"O.RODZAJ = :typ AND "
 			"O.KOD = :kod");
 
-	Query.bindValue(":typ", Type);
 	Query.bindValue(":kod", From);
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
@@ -1848,7 +1845,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, false, 0);
-	QList<POINT> Points; QSet<int> Joined; QHash<int, QSet<int>> Geometry, Insert;
+	QList<POINT> Points; QSet<int> Joined, Skip; QHash<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database), QueryA(Database), QueryB(Database); Query.setForwardOnly(true);
 	int Step = 0; int Count = 0;
 
@@ -1873,6 +1870,16 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		Joined.insert(Query.value(0).toInt());
+	}
+
+	Query.prepare("SELECT UID, ID FROM EW_OBIEKTY WHERE STATUS = 0");
+
+	if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		if (Joined.contains(Query.value(1).toInt()))
+		{
+			Skip.insert(Query.value(0).toInt());
+		}
 	}
 
 	emit onBeginProgress(tr("Loading points"));
@@ -1970,7 +1977,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 			Insert = joinSurfaces(Geometry, Points, Tasks[Join], Join, Radius);
 		break;
 		case 3:
-			Insert = joinMixed(Geometry, Tasks[Join], Tasks[Point] - Joined, Radius);
+			Insert = joinMixed(Geometry, Tasks[Join], Tasks[Point] - Skip, Radius);
 		break;
 	}
 
