@@ -183,7 +183,7 @@ QList<int> FilterDialog::getUsedFields(void) const
 		}
 	}
 
-	return Used.toList();
+	return Used.values();
 }
 
 QHash<int, QVariant> FilterDialog::getGeometryRules(void) const
@@ -239,6 +239,7 @@ QHash<int, QVariant> FilterDialog::getRedactionRules(void) const
 				case QVariant::String:
 					Rules[Rule.first] = QStringList() << Rule.second.toString();
 				break;
+				default: break;
 			}
 
 			if (Rule.first == 0 || Rule.first == 2)

@@ -22,7 +22,7 @@
 #include "ui_joindialog.h"
 
 JoinDialog::JoinDialog(const QHash<QString, QString>& Points, const QHash<QString, QString>& Lines, const QHash<QString, QString>& Circles, QWidget* Parent)
-: QDialog(Parent), P(Points), L(Lines), C(Circles), ui(new Ui::JoinDialog)
+: QDialog(Parent), ui(new Ui::JoinDialog), P(Points), L(Lines), C(Circles)
 {
 	ui->setupUi(this); typeIndexChanged(ui->Type->currentIndex());
 }

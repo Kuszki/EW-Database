@@ -44,7 +44,7 @@ class KergDialog : public QDialog
 
 		Ui::KergDialog* ui;
 
-		unsigned Checked = 0;
+		int Checked = 0;
 
 	public:
 

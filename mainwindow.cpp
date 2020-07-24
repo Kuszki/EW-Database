@@ -377,12 +377,12 @@ void MainWindow::hideActionClicked(void)
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	for (const auto Item : Selected)
+	for (const auto& Item : Selected)
 		if (Model->getUid(Item) != -1)
 		{
 			ui->Data->setRowHidden(Item.row(), Item.parent(), true);
 		}
-		else for (const auto Row : Model->getIndexes(Item))
+		else for (const auto& Row : Model->getIndexes(Item))
 		{
 			ui->Data->setRowHidden(Row.row(), Row.parent(), true);
 		}
@@ -714,7 +714,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	const bool Singletons = ui->actionSingleton->isChecked();
 	allHeaders = Headers; labelCodes = Variables.keys();
 
-	Columns = new ColumnsDialog(this, Headers, Common);
+	Columns = new ColumnsDialog(this, Headers, int(Common));
 	Groups = new GroupDialog(this, Headers);
 	Filter = new FilterDialog(this, Props, Fields, Classes, Common, Singletons);
 	Update = new UpdateDialog(this, Fields, Singletons);
@@ -1021,7 +1021,7 @@ void MainWindow::readDatagram(void)
 
 	QByteArray Data;
 
-	Data.resize(Socket->pendingDatagramSize());
+	Data.resize(int(Socket->pendingDatagramSize()));
 	Socket->readDatagram(Data.data(), Data.size());
 
 	QStringList List = QString::fromUtf8(Data).split('\n');
@@ -1067,11 +1067,11 @@ void MainWindow::readRequest(void)
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
-	Array.resize(Marker->pendingDatagramSize());
+	Array.resize(int(Marker->pendingDatagramSize()));
 	Marker->readDatagram(Array.data(), Array.size());
 
 	const QString Format = QString("%1 13\n").arg(Color->value());
-	const int Port = QString::fromUtf8(Array).toInt();
+	const unsigned short Port = QString::fromUtf8(Array).toUShort();
 
 	if (Model) for (const auto& Index : Model->getUids(Selected))
 	{
@@ -1411,7 +1411,7 @@ void MainWindow::registerSockets(const QString& Database)
 
 	Settings.beginGroup("Sockets"); Settings.beginGroup(Database);
 
-	qsrand(QDateTime::currentMSecsSinceEpoch());
+	qsrand(unsigned(QDateTime::currentMSecsSinceEpoch()));
 
 	Marker = new QUdpSocket(this); Socket = new QUdpSocket(this);
 

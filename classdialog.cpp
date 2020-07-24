@@ -46,7 +46,7 @@ ClassDialog::ClassDialog(const QHash<QString, QString>& Classes, const QHash<QSt
 		Model->insertRow(i++, Item);
 	}
 
-	Model->item(3)->setData(qVariantFromValue(ui->radiusSpin), Qt::UserRole);
+	Model->item(3)->setData(QVariant::fromValue(ui->radiusSpin), Qt::UserRole);
 	Item->setFlags(Qt::ItemIsEnabled);
 	Model->insertRow(0, Item);
 
