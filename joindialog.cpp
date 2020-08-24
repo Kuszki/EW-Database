@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
- *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@o2.pl             *
+ *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  lukasz.kuszki@gmail.com    *
  *                                                                         *
  *  This program is free software: you can redistribute it and/or modify   *
  *  it under the terms of the GNU General Public License as published by   *
@@ -113,6 +113,8 @@ void JoinDialog::typeIndexChanged(int Index)
 
 	ui->Join->model()->sort(0); ui->Join->setCurrentText(lastJ);
 	ui->Point->model()->sort(0); ui->Point->setCurrentText(lastP);
+
+	if (Index == 3) ui->Point->insertItem(0, tr("All classes"), QString());
 }
 
 void JoinDialog::targetNameChanged(void)

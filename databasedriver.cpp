@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
- *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@o2.pl             *
+ *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  lukasz.kuszki@gmail.com    *
  *                                                                         *
  *  This program is free software: you can redistribute it and/or modify   *
  *  it under the terms of the GNU General Public License as published by   *
@@ -1751,7 +1751,7 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataSplit(0); return; }
 
-	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, false, 0);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0);
 	QSet<int> Points; QHash<int, QList<int>> Objects; int Step = 0; int Count = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
@@ -1797,10 +1797,7 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 			"O.UID = E.UIDO "
 		"WHERE "
 			"E.TYP = 1 AND "
-			"O.STATUS = 0 AND "
-			"O.KOD = :kod");
-
-	Query.bindValue(":kod", From);
+			"O.STATUS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -1844,7 +1841,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
-	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, false, 0);
+	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0);
 	QList<POINT> Points; QSet<int> Joined, Skip; QHash<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database), QueryA(Database), QueryB(Database); Query.setForwardOnly(true);
 	int Step = 0; int Count = 0;
@@ -3972,7 +3969,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		"ON "
 			"E.UIDO = O.UID "
 		"WHERE "
-			"O.STATUS = 0 AND O.RODZAJ = 4 AND "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 4 AND "
 			"E.TYP = 0 AND "
 			"T.STAN_ZMIANY = 0 "
 		"ORDER BY "
@@ -4145,7 +4143,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		Line.Length = qSqrt(dx * dx + dy * dy);
 	});
 
-	if (Sort) qSort(Lines.begin(), Lines.end(), [] (const LINE& A, const LINE& B) -> bool
+	if (Sort) std::stable_sort(Lines.begin(), Lines.end(), [] (const LINE& A, const LINE& B) -> bool
 	{
 		return A.Length > B.Length;
 	});
@@ -4283,6 +4281,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 			Point.Changed = true;
 		}
+		else qDebug() << Point.DY << Point.DX;
 	});
 
 	if (isTerminated()) { emit onEndProgress(); emit onTextEdit(0); return; }
@@ -6102,10 +6101,11 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<int, QSet<int>> Insert; QMutex Synchronizer;
 
-	const QList<OBJECT> Objects = loadGeometry(Obj);
+	const QList<OBJECT> Objects = loadGeometry(Obj - Sub);
 	const QList<OBJECT> Subobj = loadGeometry(Sub);
+	const QList<REDACTION> Redaction = loadRedaction(Sub, { 6 });
 
-	QtConcurrent::blockingMap(Subobj, [this, &Synchronizer, &Objects, &Insert, &Geometry, Radius] (const OBJECT& Object) -> void
+	QtConcurrent::blockingMap(Subobj, [this, &Synchronizer, &Objects, &Insert, &Geometry, &Redaction, Radius] (const OBJECT& Object) -> void
 	{
 		static const auto pdistance = [] (const QLineF& L, const QPointF& P) -> double
 		{
@@ -6171,14 +6171,42 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (int i = 1; i < P.size(); ++i)
 					{
-						OK = qMin(OK, pdistance(QLineF(P[i - 1], P[i]), ThisPoint));
-						if (OK <= Radius) ++ON;
+						const double Now = pdistance(QLineF(P[i - 1], P[i]), ThisPoint);
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
 				{
-					OK = qMin(OK, pdistance(Part.toLineF(), ThisPoint));
-					if (OK <= Radius) ++ON;
+					const QLineF Lin = Part.toLineF();
+
+					double Angle = qAtan2(Lin.y1() - Lin.y2(), Lin.x1() - Lin.x2()) - M_PI / 2.0;
+
+					auto Red = hasItemByField(Redaction, Object.UID, &REDACTION::UID) ?
+								 getItemByField(Redaction, Object.UID, &REDACTION::UID) :
+								 REDACTION({ 0, 0, 0 });
+
+					const double Now = pdistance(Part.toLineF(), ThisPoint);
+
+					while (Angle < -(M_PI / 2.0)) Angle += M_PI;
+					while (Angle > (M_PI / 2.0)) Angle -= M_PI;
+
+					while (Red.Angle < -(M_PI / 2.0)) Red.Angle += M_PI;
+					while (Red.Angle > (M_PI / 2.0)) Red.Angle -= M_PI;
+
+					if (Now <= Radius) ++ON;
+					OK = qMin(OK, Now);
+
+					if (Red.UID && Now <= Radius)
+					{
+						const auto ABS = qAbs(Angle - Red.Angle);
+
+						for (int i = 0; i < 25; ++i)
+						{
+							if (ABS < (M_PI / qExp(i / 2.0))) ++ON;
+						}
+					}
 				}
 			}
 			else if (Object.Geometry.type() == QVariant::LineF)
@@ -6217,14 +6245,18 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (int i = 1; i < P.size(); ++i)
 					{
-						OK = qMin(OK, pdistance(QLineF(P[i - 1], P[i]), ThisPoint) - R);
-						if (OK <= Radius) ++ON;
+						const double Now = pdistance(QLineF(P[i - 1], P[i]), ThisPoint) - R;
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
 				{
-					OK = qMin(OK, pdistance(Part.toLineF(), ThisPoint) - R);
-					if (OK <= Radius) ++ON;
+					const double Now = pdistance(Part.toLineF(), ThisPoint) - R;
+
+					if (Now <= Radius) ++ON;
+					OK = qMin(OK, Now);
 				}
 			}
 			else if (Object.Geometry.type() == QVariant::PolygonF)
@@ -6239,8 +6271,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (int i = 1; i < Polygon.size(); ++i)
 					{
-						OK = qMin(OK, pdistance(QLineF(Polygon[i - 1], Polygon[i]), P));
-						if (OK <= Radius) ++ON;
+						const double Now = pdistance(QLineF(Polygon[i - 1], Polygon[i]), P);
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
@@ -6257,8 +6291,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (int i = 1; i < Polygon.size(); ++i)
 					{
-						OK = qMin(OK, pdistance(QLineF(Polygon[i - 1], Polygon[i]), Point) - R);
-						if (OK <= Radius) ++ON;
+						const double Now = pdistance(QLineF(Polygon[i - 1], Polygon[i]), Point) - R;
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
@@ -6270,8 +6306,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (int i = 1; i < Polygon.size(); ++i) for (int j = 1; j < OP.size(); ++j)
 					{
-						OK = qMin(OK, ldistance(QLineF(Polygon[i - 1], Polygon[i]), QLineF(OP[j - 1], OP[j])));
-						if (OK <= Radius) ++ON;
+						const double Now = ldistance(QLineF(Polygon[i - 1], Polygon[i]), QLineF(OP[j - 1], OP[j]));
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else for (const auto& Part : Other.Geometry.toList())
@@ -6283,8 +6321,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (int i = 1; i < Polygon.size(); ++i)
 					{
-						OK = qMin(OK, ldistance(QLineF(Polygon[i - 1], Polygon[i]), Line));
-						if (OK <= Radius) ++ON;
+						const double Now = ldistance(QLineF(Polygon[i - 1], Polygon[i]), Line);
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 			}
@@ -6296,8 +6336,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (const auto& Part : Object.Geometry.toList())
 					{
-						OK = qMin(OK, pdistance(Part.toLineF(), Point));
-						if (OK <= Radius) ++ON;
+						const double Now = pdistance(Part.toLineF(), Point);
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
@@ -6312,13 +6354,14 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (const auto& Part : Object.Geometry.toList())
 					{
-						const QLineF Line = Part.toLineF();
+						const QLineF Line = Part.toLineF(); double Now(INFINITY);
 
-						OK = qMin(OK, pdistance(Line, Point) - R);
-						OK = qMin(OK, QLineF(Line.p1(), Point).length() - R);
-						OK = qMin(OK, QLineF(Line.p2(), Point).length() - R);
+						Now = qMin(Now, pdistance(Line, Point) - R);
+						Now = qMin(Now, QLineF(Line.p1(), Point).length() - R);
+						Now = qMin(Now, QLineF(Line.p2(), Point).length() - R);
 
-						if (OK <= Radius) ++ON;
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
@@ -6327,8 +6370,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 					for (const auto& Part : Object.Geometry.toList()) for (int j = 1; j < OP.size(); ++j)
 					{
-						OK = qMin(OK, ldistance(Part.toLineF(), QLineF(OP[j - 1], OP[j])));
-						if (OK <= Radius) ++ON;
+						const double Now = ldistance(Part.toLineF(), QLineF(OP[j - 1], OP[j]));
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 
 					for (const auto& Part : Object.Geometry.toList())
@@ -6343,8 +6388,10 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 				{
 					for (const auto& This : Object.Geometry.toList())
 					{
-						OK = qMin(OK, ldistance(This.toLineF(), Part.toLineF()));
-						if (OK <= Radius) ++ON;
+						const double Now = ldistance(This.toLineF(), Part.toLineF());
+
+						if (Now <= Radius) ++ON;
+						OK = qMin(OK, Now);
 					}
 				}
 			}
@@ -6852,7 +6899,7 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 	return Objects.values();
 }
 
-QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& Limiter)
+QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& Limiter, const QSet<int>& Types)
 {
 	if (!Database.isOpen()) return QList<REDACTION>(); QList<REDACTION> List;
 
@@ -6901,8 +6948,10 @@ QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& 
 	if (selectPoint.exec()) while (selectPoint.next() && !isTerminated())
 	{
 		const int UID = selectPoint.value(0).toInt();
+		const int Type = selectPoint.value(2).toInt();
 
-		if (Limiter.isEmpty() || Limiter.contains(UID))
+		if ((Limiter.isEmpty() || Limiter.contains(UID)) &&
+		    (Types.isEmpty() || Types.contains(Type)))
 		{
 			List.append(
 			{

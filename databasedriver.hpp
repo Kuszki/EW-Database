@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
  *  Firebird database editor                                               *
- *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  l.drozdz@o2.pl             *
+ *  Copyright (C) 2016  Łukasz "Kuszki" Dróżdż  lukasz.kuszki@gmail.com    *
  *                                                                         *
  *  This program is free software: you can redistribute it and/or modify   *
  *  it under the terms of the GNU General Public License as published by   *
@@ -214,7 +214,7 @@ class DatabaseDriver : public QObject
 		void convertLineToSurface(const QSet<int>& Objects);
 
 		QList<OBJECT> loadGeometry(const QSet<int>& Limiter = QSet<int>());
-		QList<REDACTION> loadRedaction(const QSet<int>& Limiter = QSet<int>());
+		QList<REDACTION> loadRedaction(const QSet<int>& Limiter = QSet<int>(), const QSet<int>& Types = QSet<int>());
 		SUBOBJECTSTABLE loadSubobjects(void);
 
 		QSet<int> filterDataByLength(const QList<OBJECT>& Data, double Minimum, double Maximum, int Count = 0);
