@@ -91,10 +91,10 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 
 	QHash<QString, QString> Dict =
 	{
-		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY"	},
-		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, NUMER FROM EW_OPERATY"	},
-		{ "EW_OBIEKTY.OSOU",		"SELECT ID, NAME FROM EW_USERS"		},
-		{ "EW_OBIEKTY.OSOW",		"SELECT ID, NAME FROM EW_USERS"		}
+		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY"								},
+		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, COALESCE(NUMER || ':' || OPERACJA, NUMER) FROM EW_OPERATY"	},
+		{ "EW_OBIEKTY.OSOU",		"SELECT ID, NAME FROM EW_USERS"									},
+		{ "EW_OBIEKTY.OSOW",		"SELECT ID, NAME FROM EW_USERS"									}
 	};
 
 	if (Emit) emit onSetupProgress(0, Dict.size());
