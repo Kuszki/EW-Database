@@ -1841,7 +1841,7 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataJoin(0); return; }
 
-	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0);
+	QMap<QString, QSet<int>> Tasks = getClassGroups(Items, true, 0); QHash<int, int> Newuids;
 	QList<POINT> Points; QSet<int> Joined, Skip; QHash<int, QSet<int>> Geometry, Insert;
 	QSqlQuery Query(Database), QueryA(Database), QueryB(Database); Query.setForwardOnly(true);
 	int Step = 0; int Count = 0;
@@ -1978,6 +1978,38 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		break;
 	}
 
+	emit onBeginProgress(tr("Creating history"));
+	emit onSetupProgress(0, 0);
+
+	if (makeHistory)
+	{
+		QSet<int> Uids; for (auto i = Insert.constBegin(); i != Insert.constEnd(); ++i)
+		{
+			Uids.insert(i.key());
+		}
+
+		createHistory(getClassGroups(Uids, true, 1), &Newuids);
+
+		QtConcurrent::blockingMap(Tasks, [&Newuids] (QSet<int>& Set)
+		{
+			for (auto i = Newuids.constBegin(); i != Newuids.constEnd(); ++i)
+			{
+				if (Set.contains(i.key()))
+				{
+					Set.remove(i.key());
+					Set.insert(i.value());
+				}
+			}
+		});
+
+		emit onUidsUpdate(Newuids);
+	}
+
+	emit onBeginProgress(tr("Updating data"));
+	emit onSetupProgress(0, 0);
+
+	if (Dateupdate) updateModDate(Newuids.values().toSet(), 0);
+
 	emit onBeginProgress(tr("Joining data"));
 	emit onSetupProgress(0, Insert.size()); Step = 0;
 
@@ -1999,17 +2031,19 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 
 	for (auto i = Insert.constBegin(); i != Insert.constEnd(); ++i)
 	{
+		const int UIDO = Newuids.value(i.key(), i.key());
+
 		for (const auto& P : i.value())
 		{
-			QueryA.addBindValue(i.key());
+			QueryA.addBindValue(UIDO);
 			QueryA.addBindValue(P);
-			QueryA.addBindValue(i.key());
+			QueryA.addBindValue(UIDO);
 
 			QueryA.exec();
 
 			if (!Override) continue;
 
-			QueryB.addBindValue(i.key());
+			QueryB.addBindValue(UIDO);
 			QueryB.addBindValue(P);
 
 			QueryB.exec();
@@ -2023,13 +2057,14 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Tasks.size()); Step = 0;
 
-	if (Override) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
-	{
-		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
-		const auto Data = loadData(Table, i.value(), QString(), true, true);
+	if (!Insert.isEmpty() && (Override || Dateupdate))
+		for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
+		{
+			const auto& Table = getItemByField(Tables, i.key(), &TABLE::Name);
+			const auto Data = loadData(Table, i.value(), QString(), true, true);
 
-		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
-	}
+			emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
+		}
 
 	emit onEndProgress();
 	emit onDataJoin(Count);
@@ -3437,7 +3472,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 			"E.IDE = P.ID "
 		"WHERE "
 			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
+			"O.RODZAJ IN (2, 3) AND "
 			"P.STAN_ZMIANY = 0 AND "
 			"E.TYP = 0");
 
@@ -6097,6 +6132,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geometry, const QSet<int>& Obj, const QSet<int>& Sub, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
+	if (Obj.isEmpty() || Sub.isEmpty()) return QHash<int, QSet<int>>();
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<int, QSet<int>> Insert; QMutex Synchronizer;
