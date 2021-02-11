@@ -3980,9 +3980,47 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		double Length;
 	};
 
+	struct MATCH
+	{
+		const LINE* Line;
+		double Distance;
+	};
+
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
-	QMap<int, POINT> Points, Texts, Objects; QList<LINE> Lines;
-	QList<const POINT*> Union; int Step = 0;
+	QMap<int, POINT> Points, Texts, Objects; int Step = 0;
+	QList<LINE> Lines, Surfaces; QList<const POINT*> Union;
+	QHash<int, QSet<int>> Subobjects;
+
+	emit onBeginProgress(tr("Loading subobjects"));
+	emit onSetupProgress(0, 0);
+
+	Query.prepare(
+		"SELECT "
+			"S.UID, D.UID "
+		"FROM "
+			"EW_OB_ELEMENTY E "
+		"INNER JOIN "
+			"EW_OBIEKTY S "
+		"ON "
+			"S.UID = E.UIDO "
+		"INNER JOIN "
+			"EW_OBIEKTY D "
+		"ON "
+			"D.ID = E.IDE "
+		"WHERE "
+			"E.TYP = 1 AND "
+			"S.STATUS = 0 AND "
+			"D.STATUS = 0");
+
+	if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		const int UID = Query.value(0).toInt();
+		const int SID = Query.value(1).toInt();
+
+		if (!Subobjects.contains(UID)) Subobjects.insert(UID, QSet<int>());
+
+		Subobjects[UID].insert(SID);
+	}
 
 	emit onBeginProgress(tr("Loading points"));
 	emit onSetupProgress(0, 0);
@@ -4024,6 +4062,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		{
 			case 4:
 
+				Ref.UIDO = Query.value(0).toInt();
 				Ref.WX = Query.value(3).toDouble();
 				Ref.WY = Query.value(4).toDouble();
 
@@ -4079,6 +4118,46 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		});
 	}
 
+	emit onBeginProgress(tr("Loading surfaces"));
+	emit onSetupProgress(0, 0); Step = 0;
+
+	Query.prepare(
+		"SELECT "
+			"E.UIDO, E.IDE, "
+			"ROUND(P.P0_X, 3), "
+			"ROUND(P.P0_Y, 3), "
+			"ROUND(P.P1_X, 3), "
+			"ROUND(P.P1_Y, 3) "
+		"FROM "
+			"EW_POLYLINE P "
+		"INNER JOIN "
+			"EW_OB_ELEMENTY E "
+		"ON "
+			"P.ID = E.IDE "
+		"INNER JOIN "
+			"EW_OBIEKTY O "
+		"ON "
+			"E.UIDO = O.UID "
+		"WHERE "
+			"O.STATUS = 0 AND "
+			"O.RODZAJ = 3 AND "
+			"E.TYP = 0 AND "
+			"P.STAN_ZMIANY = 0 AND "
+			"P.P1_FLAGS = 0");
+
+	if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		Surfaces.append(
+		{
+			Query.value(0).toInt(),
+			Query.value(1).toInt(),
+			Query.value(2).toDouble(),
+			Query.value(3).toDouble(),
+			Query.value(4).toDouble(),
+			Query.value(5).toDouble()
+		});
+	}
+
 	emit onBeginProgress(tr("Loading texts"));
 	emit onSetupProgress(0, 0); Step = 0;
 
@@ -4100,7 +4179,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			"E.UIDO = O.UID "
 		"WHERE "
 			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
+			"O.RODZAJ IN (2, 3) AND "
 			"E.TYP = 0 AND "
 			"T.STAN_ZMIANY = 0 AND "
 			"T.TYP = 6 "
@@ -4178,125 +4257,274 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		Line.Length = qSqrt(dx * dx + dy * dy);
 	});
 
-	if (Sort) std::stable_sort(Lines.begin(), Lines.end(), [] (const LINE& A, const LINE& B) -> bool
+	if (Sort) std::stable_sort(Lines.begin(), Lines.end(),
+	[] (const LINE& A, const LINE& B) -> bool
 	{
 		return A.Length > B.Length;
 	});
 
-	QtConcurrent::blockingMap(Points, [this, &Lines, &Objects, Move, Justify, Rotate, Length] (POINT& Point) -> void
+	const auto distance = [] (const QLineF& L, const QPointF& P) -> double
 	{
-		static const auto distance = [] (const QLineF& L, const QPointF& P) -> double
+		const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+		const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+		const double l = L.length();
+
+		if ((a * a <= l * l + b * b) &&
+		    (b * b <= a * a + l * l))
 		{
-				const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
-				const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
-				const double l = L.length();
+			const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+			const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
 
-				if ((a * a <= l * l + b * b) &&
-				    (b * b <= a * a + l * l))
-				{
-					const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
-					const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+			return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
+		}
+		else return INFINITY;
+	};
 
-					return qAbs(A * D - C * B) / qSqrt(C * C + D * D);
-				}
-				else return INFINITY;
-		};
+	const auto length = [] (double x1, double y1, double x2, double y2)
+	{
+		const double dx = x1 - x2;
+		const double dy = y1 - y2;
 
+		return qSqrt(dx * dx + dy * dy);
+	};
+
+	const auto cmp = [] (double a, double b) { return diffComp(a, b, 0.01); };
+
+	QtConcurrent::blockingMap(Points, [this, &Lines, &Subobjects, Move, Justify, Rotate, Length, distance, cmp] (POINT& Point) -> void
+	{
 		if (this->isTerminated()) return;
 
-		bool Found = false; LINE Match;
+		bool Found = false; const LINE* Match = nullptr;
 
-		for (const auto& Object : Objects)
-			if (Object.IDE != Point.IDE && (Object.WX == Point.WX && Object.WY == Point.WY)) return;
+		const QVector<unsigned> jL = { 7, 4, 1};
+		const QVector<unsigned> jM = { 8, 5, 2};
+		const QVector<unsigned> jR = { 9, 6, 3};
 
-		if (Move) { Point.DX = Point.WX; Point.DY = Point.WY; Point.J &= 0b1011111; Point.Changed = true; }
-
-		if (Rotate && !Found) for (const auto& Line : Lines) if (!Found)
-			if ((Point.WX == Line.X1 && Point.WY == Line.Y1) || (Point.WX == Line.X2 && Point.WY == Line.Y2))
-			{
-				Match = Line; Found = true;
-			}
-
-		if (Rotate && !Found) for (const auto& Line : Lines) if (!Found)
-			if (distance(QLineF(Line.X1, Line.Y1, Line.X2, Line.Y2), QPointF(Point.WX, Point.WY)) <= 0.05)
-			{
-				Match = Line; Found = true;
-			}
-
-		if (Found)
+		if (Move)
 		{
-			if (Justify && !Rotate)
+			Point.DX = Point.WX; Point.DY = Point.WY;
+			Point.J &= 0b1011111; Point.Changed = true;
+		}
+
+		if (Justify && !Rotate)
+		{
+			const unsigned mask = 0b1111;
+			unsigned Just = Point.J & mask;
+
+			if (jL.contains(Just)) Just = 4;
+			else if (jM.contains(Just)) Just = 5;
+			else if (jR.contains(Just)) Just = 6;
+
+			if (Justify == 1) Just += 3;
+			if (Justify == 3) Just -= 3;
+
+			Point.J = (Point.J & ~mask) | (Just & mask);
+			Point.Changed = true;
+		}
+
+		if (Rotate && !Found) for (const auto& Line : Lines)
+			if (!Found && Subobjects.value(Line.UIDO).contains(Point.UIDO))
+				if ((cmp(Point.WX, Line.X1) && cmp(Point.WY, Line.Y1)) ||
+				    (cmp(Point.WX, Line.X2) && cmp(Point.WY, Line.Y2)))
+				{
+					Match = &Line; Found = true;
+				}
+
+		if (Rotate && !Found) for (const auto& Line : Lines)
+			if (!Found && Subobjects.value(Line.UIDO).contains(Point.UIDO))
+				if (distance(QLineF(Line.X1, Line.Y1, Line.X2, Line.Y2),
+						   QPointF(Point.WX, Point.WY)) <= 0.05)
+				{
+					Match = &Line; Found = true;
+				}
+
+		if (Found && Match && Rotate && (Match->Length >= Length))
+		{
+			const unsigned mask = 0b1111;
+			unsigned Just = Point.J & mask;
+			unsigned oldJust = (12 - Just) / 3;
+
+			Point.A = qAtan((Match->Y1 - Match->Y2) / (Match->X1 - Match->X2)) - M_PI / 2.0;
+
+			const double lengthA = QLineF(Point.WX, Point.WY, Match->X1, Match->Y1).length();
+			const double lengthB = QLineF(Point.WX, Point.WY, Match->X2, Match->Y2).length();
+
+			if (Match->Y1 < Match->Y2)
 			{
-				if (Point.J == 1) { Point.J = 4; Point.Changed = true; return; }
+				if (lengthA < lengthB) Just = 4; else Just = 6;
 			}
-			else if (Rotate && (Match.Length >= Length))
+			else
 			{
-				Point.A = qAtan((Match.Y1 - Match.Y2) / (Match.X1 - Match.X2)) - M_PI / 2.0;
+				if (lengthB < lengthA) Just = 4; else Just = 6;
+			}
 
-				const double lengthA = QLineF(Point.WX, Point.WY, Match.X1, Match.Y1).length();
-				const double lengthB = QLineF(Point.WX, Point.WY, Match.X2, Match.Y2).length();
+			if (Justify) oldJust = unsigned(Justify);
 
-				int oldJust = (12 - Point.J) / 3;
+			if (oldJust == 1) Just += 3;
+			if (oldJust == 3) Just -= 3;
 
-				if (Match.Y1 < Match.Y2)
-				{
-					if (lengthA < lengthB) Point.J = 4; else Point.J = 6;
-				}
-				else
-				{
-					if (lengthB < lengthA) Point.J = 4; else Point.J = 6;
-				}
+			while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
+			while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
 
-				if (Justify) oldJust = Justify;
+			Point.J = (Point.J & ~mask) | (Just & mask);
+			Point.Changed = true;
+		}
+	});
 
-				if (oldJust == 1) Point.J += 3;
-				if (oldJust == 3) Point.J -= 3;
+	QtConcurrent::blockingMap(Points, [this, &Surfaces, &Subobjects, Move, Justify, Rotate, distance, length, cmp] (POINT& Point) -> void
+	{
+		if (this->isTerminated()) return; QList<MATCH> Distances;
 
-				while (Point.A < -(M_PI / 2.0)) Point.A += M_PI;
-				while (Point.A > (M_PI / 2.0)) Point.A -= M_PI;
+		if (Move)
+		{
+			Point.DX = Point.WX; Point.DY = Point.WY;
+			Point.J &= 0b1011111; Point.Changed = true;
+		}
 
+		if (Justify)
+		{
+			const unsigned mask = 0b1111;
+			unsigned Just = Point.J & mask;
+
+			const QVector<unsigned> jL = { 7, 4, 1};
+			const QVector<unsigned> jM = { 8, 5, 2};
+			const QVector<unsigned> jR = { 9, 6, 3};
+
+			if (jL.contains(Just)) Just = 4;
+			else if (jM.contains(Just)) Just = 5;
+			else if (jR.contains(Just)) Just = 6;
+
+			if (Justify == 1) Just += 3;
+			if (Justify == 3) Just -= 3;
+
+			Point.J = (Point.J & ~mask) | (Just & mask);
+			Point.Changed = true;
+		}
+
+		if (Rotate) for (const auto& L : Surfaces)
+		{
+			if (Subobjects.value(L.UIDO).contains(Point.UIDO))
+			{
+				const auto F = QLineF(L.X1, L.Y1, L.X2, L.Y2);
+				const auto P = QPointF(Point.DX, Point.DY);
+
+				const double nd = distance(F, P);
+				const double d1 = length(Point.DX, Point.DY, L.X1, L.Y1);
+				const double d2 = length(Point.DX, Point.DY, L.X2, L.Y2);
+
+				const double dist = qMin(nd, qMin(d1, d2));
+
+				Distances.append({ &L, dist});
+			}
+		}
+
+		std::stable_sort(Distances.begin(), Distances.end(),
+		[] (const MATCH& A, const MATCH& B) -> bool
+		{
+			return A.Distance < B.Distance;
+		});
+
+		bool Delete = true; while (Delete && Distances.length() >= 2)
+		{
+			const auto& a = Distances[0].Line;
+			const auto& b = Distances[1].Line;
+
+			Delete = (cmp(a->X1, b->X1) && cmp(a->Y1, b->Y1)) ||
+				    (cmp(a->X1, b->X2) && cmp(a->Y1, b->Y2)) ||
+				    (cmp(a->X2, b->X1) && cmp(a->Y2, b->Y1)) ||
+				    (cmp(a->X2, b->X2) && cmp(a->Y2, b->Y2));
+
+			if (Delete) Distances.removeAt(1);
+		}
+
+		if (Rotate && Distances.length() >= 2)
+		{
+			const auto m1 = Distances[0].Line;
+			const auto m2 = Distances[1].Line;
+
+			const auto pp1 = QPointF(m1->X1, m1->Y1);
+			const auto pp2 = QPointF(m1->X2, m1->Y2);
+			const auto pp3 = QPointF(m2->X1, m2->Y1);
+			const auto pp4 = QPointF(m2->X2, m2->Y2);
+
+			const double dd23 = QLineF(pp2, pp3).length();
+			const double dd24 = QLineF(pp2, pp4).length();
+
+			const QPolygonF Polly = dd23 < dd24 ?
+				QVector<QPointF>({ pp1, pp2, pp3, pp4, pp1 }) :
+				QVector<QPointF>({ pp1, pp2, pp4, pp3, pp1 });
+
+			for (const auto& p : Polly) qDebug() << Qt::fixed << qSetRealNumberPrecision(2) << p.x() << p.y();
+
+			if (!Polly.containsPoint({ Point.DX, Point.DY }, Qt::OddEvenFill)) return;
+
+			const double w1 = 1.0 / Distances[0].Distance;
+			const double w2 = 1.0 / Distances[1].Distance;
+
+			double dtg1 = qAtan2(m1->Y1 - m1->Y2, m1->X1 - m1->X2) + (M_PI / 2.0);
+			double dtg2 = qAtan2(m2->Y1 - m2->Y2, m2->X1 - m2->X2) + (M_PI / 2.0);
+
+			while (dtg1 >= M_PI) dtg1 -= M_PI; while (dtg1 < 0.0) dtg1 += M_PI;
+
+			if ((dtg1 > (M_PI / 2.0)) && (dtg1 < M_PI)) dtg1 += M_PI;
+			if ((dtg1 > M_PI) && (dtg1 < (M_PI * 1.5))) dtg1 -= M_PI;
+
+			while (dtg2 >= M_PI) dtg2 -= M_PI; while (dtg2 < 0.0) dtg2 += M_PI;
+
+			if ((dtg2 > (M_PI / 2.0)) && (dtg2 < M_PI)) dtg2 += M_PI;
+			if ((dtg2 > M_PI) && (dtg2 < (M_PI * 1.5))) dtg2 -= M_PI;
+
+			double rot = (w1*dtg1 + w2*dtg2) / (w1 + w2);
+
+			if (!qIsNaN(rot))
+			{
+				while (rot >= M_PI) rot -= M_PI; while (rot < 0.0) rot += M_PI;
+
+				if ((rot > (M_PI / 2.0)) && (rot < M_PI)) rot += M_PI;
+				if ((rot > M_PI) && (rot < (M_PI * 1.5))) rot -= M_PI;
+
+				Point.A = rot;
 				Point.Changed = true;
 			}
 		}
 	});
 
-	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate, distance] (POINT& Point) -> void
 	{
-		static const auto length = [] (double x1, double y1, double x2, double y2)
-		{
-			const double dx = x1 - x2;
-			const double dy = y1 - y2;
-
-			return qSqrt(dx * dx + dy * dy);
-		};
-
 		if (this->isTerminated()) return;
+		if (!(Move || Rotate)) return;
 
 		const LINE* Match = nullptr; double Distance = NAN;
 
-		if (Justify) { Point.J = 5; Point.Changed = true; }
-
-		if (Move || Rotate) for (const auto& L : Lines) if (Point.UIDO == L.UIDO)
+		for (const auto& L : Lines) if (Point.UIDO == L.UIDO)
 		{
-			const double a = length(Point.DX, Point.DY, L.X1, L.Y1);
-			const double b = length(Point.DX, Point.DY, L.X2, L.Y2);
-			const double l = length(L.X1, L.Y1, L.X2, L.Y2);
+			const auto LN = QLineF(L.X1, L.Y1, L.X2, L.Y2);
+			const auto PN = QPointF(Point.DX, Point.DY);
 
-			if ((a * a <= l * l + b * b) && (b * b <= l * l + a * a))
+			const double h = distance(LN, PN);
+
+			if (qIsNaN(Distance) || h < Distance)
 			{
-				const double A = Point.DX - L.X1; const double B = Point.DY - L.Y1;
-				const double C = L.X2 - L.X1; const double D = L.Y2 - L.Y1;
-
-				const double h = qAbs(A * D - C * B) / qSqrt(C * C + D * D);
-
-				if (qIsNaN(Distance) || h < Distance)
-				{
-					Distance = h; Match = &L;
-				}
+				Distance = h; Match = &L;
 			}
 		}
 
-		if (Match)
+		if (!Match) return;
+
+		if (Move)
+		{
+			const QLineF Line(Match->X1, Match->Y1, Match->X2, Match->Y2);
+			QLineF Offset(Point.DX, Point.DY, 0, 0);
+			Offset.setAngle(Line.angle() + 90.0);
+
+			QPointF Int; Offset.intersects(Line, &Int);
+
+			Point.DX = Int.x();
+			Point.DY = Int.y();
+			Point.Changed = true;
+		}
+
+		if (Rotate)
 		{
 			double dtg = qAtan2(Match->Y1 - Match->Y2, Match->X1 - Match->X2) + (M_PI / 2.0);
 
@@ -4305,18 +4533,143 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			if ((dtg > (M_PI / 2.0)) && (dtg < M_PI)) dtg += M_PI;
 			if ((dtg > M_PI) && (dtg < (M_PI * 1.5))) dtg -= M_PI;
 
-			const QLineF Line(Match->X1, Match->Y1, Match->X2, Match->Y2);
-			QLineF Offset(Point.DX, Point.DY, 0, 0);
-			Offset.setAngle(Line.angle() + 90.0);
-
-			QPointF Int; Offset.intersects(Line, &Int);
-
-			if (Move) { Point.DX = Int.x(); Point.DY = Int.y(); }
-			if (Rotate) { Point.A = dtg; }
-
+			Point.A = dtg;
 			Point.Changed = true;
 		}
-		else qDebug() << Point.DY << Point.DX;
+
+		if (Justify)
+		{
+			const unsigned mask = 0b1111;
+			unsigned Just = 5;
+
+			if (Justify == 1) Just += 3;
+			if (Justify == 3) Just -= 3;
+
+			Point.J = (Point.J & ~mask) | (Just & mask);
+			Point.Changed = true;
+		}
+	});
+
+	QtConcurrent::blockingMap(Texts, [this, &Surfaces, Move, Justify, Rotate, distance, cmp] (POINT& Point) -> void
+	{
+		if (this->isTerminated()) return; QList<MATCH> Distances;
+
+		if (Justify)
+		{
+			const unsigned mask = 0b1111;
+			unsigned Just = Point.J & mask;
+
+			const QVector<unsigned> jL = { 7, 4, 1};
+			const QVector<unsigned> jM = { 8, 5, 2};
+			const QVector<unsigned> jR = { 9, 6, 3};
+
+			if (jL.contains(Just)) Just = 4;
+			else if (jM.contains(Just)) Just = 5;
+			else if (jR.contains(Just)) Just = 6;
+
+			if (Justify == 1) Just += 3;
+			if (Justify == 3) Just -= 3;
+
+			Point.J = (Point.J & ~mask) | (Just & mask);
+			Point.Changed = true;
+		}
+
+		if (Move || Rotate) for (const auto& L : Surfaces)
+		{
+			if (Point.UIDO == L.UIDO)
+			{
+				const auto F = QLineF(L.X1, L.Y1, L.X2, L.Y2);
+				const auto P = QPointF(Point.DX, Point.DY);
+
+				Distances.append({ &L, distance(F, P)});
+			}
+		}
+
+		std::stable_sort(Distances.begin(), Distances.end(),
+		[] (const MATCH& A, const MATCH& B) -> bool
+		{
+			return A.Distance < B.Distance;
+		});
+
+		bool Delete = true; while (Delete && Distances.length() >= 2)
+		{
+			const auto& a = Distances[0].Line;
+			const auto& b = Distances[1].Line;
+
+			Delete = (cmp(a->X1, b->X1) && cmp(a->Y1, b->Y1)) ||
+				    (cmp(a->X1, b->X2) && cmp(a->Y1, b->Y2)) ||
+				    (cmp(a->X2, b->X1) && cmp(a->Y2, b->Y1)) ||
+				    (cmp(a->X2, b->X2) && cmp(a->Y2, b->Y2));
+
+			if (Delete) Distances.removeAt(1);
+		}
+
+		if ((Move || Rotate) && Distances.length() >= 2)
+		{
+			const auto m1 = Distances[0].Line;
+			const auto m2 = Distances[1].Line;
+
+			const auto pp1 = QPointF(m1->X1, m1->Y1);
+			const auto pp2 = QPointF(m1->X2, m1->Y2);
+			const auto pp3 = QPointF(m2->X1, m2->Y1);
+			const auto pp4 = QPointF(m2->X2, m2->Y2);
+
+			const double dd23 = QLineF(pp2, pp3).length();
+			const double dd24 = QLineF(pp2, pp4).length();
+
+			const QPolygonF Polly = dd23 < dd24 ?
+				QVector<QPointF>({ pp1, pp2, pp3, pp4, pp1 }) :
+				QVector<QPointF>({ pp1, pp2, pp4, pp3, pp1 });
+
+			if (!Polly.containsPoint({ Point.DX, Point.DY }, Qt::OddEvenFill)) return;
+
+			if (Move)
+			{
+				const QLineF Axis((m1->X1 + m2->X1) / 2.0, (m1->Y1 + m2->Y1) / 2.0,
+							   (m1->X2 + m2->X2) / 2.0, (m1->Y2 + m2->Y2) / 2.0);
+
+				QLineF Offset(Point.DX, Point.DY, 0, 0);
+				Offset.setAngle(Axis.angle() + 90.0);
+
+				QPointF Int; Offset.intersects(Axis, &Int);
+
+				Point.DX = Int.x();
+				Point.DY = Int.y();
+				Point.Changed = true;
+			}
+
+			if (Rotate)
+			{
+				const double w1 = 1.0 / Distances[0].Distance;
+				const double w2 = 1.0 / Distances[1].Distance;
+
+				double dtg1 = qAtan2(m1->Y1 - m1->Y2, m1->X1 - m1->X2) + (M_PI / 2.0);
+				double dtg2 = qAtan2(m2->Y1 - m2->Y2, m2->X1 - m2->X2) + (M_PI / 2.0);
+
+				while (dtg1 >= M_PI) dtg1 -= M_PI; while (dtg1 < 0.0) dtg1 += M_PI;
+
+				if ((dtg1 > (M_PI / 2.0)) && (dtg1 < M_PI)) dtg1 += M_PI;
+				if ((dtg1 > M_PI) && (dtg1 < (M_PI * 1.5))) dtg1 -= M_PI;
+
+				while (dtg2 >= M_PI) dtg2 -= M_PI; while (dtg2 < 0.0) dtg2 += M_PI;
+
+				if ((dtg2 > (M_PI / 2.0)) && (dtg2 < M_PI)) dtg2 += M_PI;
+				if ((dtg2 > M_PI) && (dtg2 < (M_PI * 1.5))) dtg2 -= M_PI;
+
+				double rot = (w1*dtg1 + w2*dtg2) / (w1 + w2);
+
+				if (!qIsNaN(rot))
+				{
+					while (rot >= M_PI) rot -= M_PI; while (rot < 0.0) rot += M_PI;
+
+					if ((rot > (M_PI / 2.0)) && (rot < M_PI)) rot += M_PI;
+					if ((rot > M_PI) && (rot < (M_PI * 1.5))) rot -= M_PI;
+
+					Point.A = rot;
+					Point.Changed = true;
+				}
+			}
+		}
 	});
 
 	if (isTerminated()) { emit onEndProgress(); emit onTextEdit(0); return; }
@@ -9282,6 +9635,12 @@ bool isVariantEmpty(const QVariant& Value)
 
 		default: return false;
 	}
+}
+
+template<class Type>
+bool diffComp(const Type& A, const Type& B, const Type& d)
+{
+	return qAbs(A - B) <= d;
 }
 
 bool pointComp(const QPointF& A, const QPointF& B, double d)

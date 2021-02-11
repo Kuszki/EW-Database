@@ -23,7 +23,7 @@ QT			+=	core gui widgets concurrent sql network qml
 TARGET		=	EW-Database
 TEMPLATE		=	app
 
-CONFIG		+=	c++19
+CONFIG		+=	c++20
 
 SOURCES		+=	main.cpp \
 				mainwindow.cpp \

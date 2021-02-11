@@ -35,7 +35,7 @@
 #include <QHash>
 
 #include <QtConcurrent>
-#include <QJSEngine>
+#include <QtQml/QJSEngine>
 #include <cfloat>
 
 #include "recordmodel.hpp"
@@ -431,6 +431,9 @@ template<class Type, class Field, template<class> class Container>
 bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
 
 QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables);
+
+template<class Type>
+bool diffComp(const Type& A, const Type& B, const Type& d);
 
 bool pointComp(const QPointF& A, const QPointF& B, double d = 0.005);
 
