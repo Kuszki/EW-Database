@@ -37,6 +37,7 @@ SOURCES		+=	main.cpp \
 				queryeditor.cpp \
 				recordmodel.cpp \
 				aboutdialog.cpp \
+				sqleditordialog.cpp \
 				updatedialog.cpp \
 				updatewidget.cpp \
 				joindialog.cpp \
@@ -75,6 +76,7 @@ HEADERS		+=	mainwindow.hpp \
 				queryeditor.hpp \
 				recordmodel.hpp \
 				aboutdialog.hpp \
+				sqleditordialog.hpp \
 				updatedialog.hpp \
 				updatewidget.hpp \
 				joindialog.hpp \
@@ -108,6 +110,7 @@ FORMS		+=	mainwindow.ui \
 				filterdialog.ui \
 				filterwidget.ui \
 				aboutdialog.ui \
+				sqleditordialog.ui \
 				updatedialog.ui \
 				updatewidget.ui \
 				joindialog.ui \
