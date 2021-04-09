@@ -6,11 +6,12 @@ Edycja baz danych programu EW-Mapa
 
 - Wyświetlanie atrybutów obiektów
 - Wielokrotne grupowanie obiektów na podstawie atrybutów
-- Możliwość wczytania listy obiektów z pliku tekstowego
+- Możliwość wczytania listy obiektów z pliku tekstowego, schowaka i listy
 
 ## Eksport obiektów
 
 - Możliwość eksportu wybranych atrybutów obiektów do pliku tekstowego
+- Możliwość eksportu geometrii obiektów do pliku tekstowego
 
 ## Filtrowanie obiektów
 
@@ -45,12 +46,18 @@ Edycja baz danych programu EW-Mapa
 	- Iloczyn z wynikiem działania filtra
 	- Różnica z wynikiem działania filtra
 	- Suma z wynikiem działania filtra
+- Filtracja skryptowa obiektów
+	- Skrypty w języku JavaScript
 	
 ## Edycja atrybutów obiektów
 
 - Edycja dowolnych atrybutów zaznaczonych obiektów
 - Edycja wsadowa na podstawie pliku tekstowego
 - Możliwość ustalenia wartości specjalnych atrybutów
+- Edycja skryptowa
+	- Generowanie wartości skryptem
+	- Edycja warunkowa
+	- Skrypty w języku JavaScript
 
 ## Zmiana kodów obiektów
 
@@ -59,6 +66,7 @@ Edycja baz danych programu EW-Mapa
 - Możliwość zmiany treści etykiet zaznaczonych obiektów
 - Możliwość zmiany stylu linii zaznaczonych obiektów
 - Możliwość zmiany warstw elementów zaznaczonych obiektów
+- Możliwość konwersji geometrii obiektu na inną
 
 ## Edycja geometrii obiektów
 
@@ -87,6 +95,7 @@ Edycja baz danych programu EW-Mapa
 - Automatyczna redakcja opisów
 	- Nasuwanie i automatyczny obrót etykiet zgodnie z kierunkiem osi
 	- Automatyczny wybór poprawnej justyfikacji
+	- Automatyczna redakcja opisów obiektów powierzchniowych
 - Usuwanie etykiet wybranych obiektów
 
 ## Integracja z oprogramowaniem EW-Mapa
