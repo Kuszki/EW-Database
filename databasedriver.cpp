@@ -9603,24 +9603,6 @@ QVariant getDataByDict(const QVariant& Value, const QMap<QVariant, QString>& Dic
 	return 0;
 }
 
-template<class Type, class Field, template<class> class Container>
-Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer)
-{
-	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
-}
-
-template<class Type, class Field, template<class> class Container>
-const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer)
-{
-	for (auto& Item : Items) if (Item.*Pointer == Data) return Item;
-}
-
-template<class Type, class Field, template<class> class Container>
-bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer)
-{
-	for (auto& Item : Items) if (Item.*Pointer == Data) return true; return false;
-}
-
 bool isVariantEmpty(const QVariant& Value)
 {
 	if (Value.isNull()) return true;
@@ -9635,12 +9617,6 @@ bool isVariantEmpty(const QVariant& Value)
 
 		default: return false;
 	}
-}
-
-template<class Type>
-bool diffComp(const Type& A, const Type& B, const Type& d)
-{
-	return qAbs(A - B) <= d;
 }
 
 bool pointComp(const QPointF& A, const QPointF& B, double d)

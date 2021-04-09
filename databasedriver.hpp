@@ -35,8 +35,10 @@
 #include <QHash>
 
 #include <QtConcurrent>
-#include <QtQml/QJSEngine>
-#include <cfloat>
+
+#include <QJSEngine>
+
+#include "commontemplates.hpp"
 
 #include "recordmodel.hpp"
 #include "batchwidget.hpp"
@@ -421,19 +423,7 @@ QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type);
 QDateTime castStrToDatetime(const QString& String);
 QDate castStrToDate(const QString& String);
 
-template<class Type, class Field, template<class> class Container>
-Type& getItemByField(Container<Type>& Items, const Field& Data, Field Type::*Pointer);
-
-template<class Type, class Field, template<class> class Container>
-const Type& getItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
-
-template<class Type, class Field, template<class> class Container>
-bool hasItemByField(const Container<Type>& Items, const Field& Data, Field Type::*Pointer);
-
 QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables);
-
-template<class Type>
-bool diffComp(const Type& A, const Type& B, const Type& d);
 
 bool pointComp(const QPointF& A, const QPointF& B, double d = 0.005);
 

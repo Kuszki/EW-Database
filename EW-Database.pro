@@ -64,6 +64,7 @@ SOURCES		+=	main.cpp \
 				edgesdialog.cpp
 
 HEADERS		+=	mainwindow.hpp \
+				commontemplates.hpp \
 				connectdialog.hpp \
 				databasedriver.hpp \
 				columnsdialog.hpp \
