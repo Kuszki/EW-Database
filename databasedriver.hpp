@@ -147,6 +147,8 @@ class DatabaseDriver : public QObject
 		QString getDatabaseName(void) const;
 		QString getDatabasePath(void) const;
 
+		QSqlDatabase& getDatabase(void);
+
 		bool isTerminated(void) const;
 
 		static QStringList nullReasons(void);

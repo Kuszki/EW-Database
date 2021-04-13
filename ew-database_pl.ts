@@ -398,71 +398,71 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Identyfikator bazy danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="83"/>
+        <location filename="databasedriver.cpp" line="88"/>
         <source>Job name</source>
         <translation>Operat</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="82"/>
+        <location filename="databasedriver.cpp" line="87"/>
         <source>Object code</source>
         <translation>Kod obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="88"/>
+        <location filename="databasedriver.cpp" line="93"/>
         <source>Created by</source>
         <translation>Utworzony przez</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="89"/>
+        <location filename="databasedriver.cpp" line="94"/>
         <source>Modified by</source>
         <translation>Zmodyfikowany przez</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="368"/>
+        <location filename="databasedriver.cpp" line="373"/>
         <source>Preparing queries</source>
         <translation>Formułowanie zapytań</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1191"/>
+        <location filename="databasedriver.cpp" line="1196"/>
         <source>Loading database informations</source>
         <translation>Wczytywanie informacji o bazie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1254"/>
-        <location filename="databasedriver.cpp" line="1282"/>
+        <location filename="databasedriver.cpp" line="1259"/>
+        <location filename="databasedriver.cpp" line="1287"/>
         <source>Querying database</source>
         <translation>Odpytywanie bazy danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="769"/>
+        <location filename="databasedriver.cpp" line="774"/>
         <source>Applying geometry filters</source>
         <translation>Stosowanie filtrów geometrycznych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="906"/>
+        <location filename="databasedriver.cpp" line="911"/>
         <source>Updating common data</source>
         <translation>Aktualizacja wspólnych danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="934"/>
+        <location filename="databasedriver.cpp" line="939"/>
         <source>Updating special data</source>
         <translation>Aktualizacja specjalnych danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1382"/>
-        <location filename="databasedriver.cpp" line="1570"/>
-        <location filename="databasedriver.cpp" line="1641"/>
-        <location filename="databasedriver.cpp" line="1735"/>
-        <location filename="databasedriver.cpp" line="2057"/>
-        <location filename="databasedriver.cpp" line="2435"/>
-        <location filename="databasedriver.cpp" line="3171"/>
-        <location filename="databasedriver.cpp" line="3896"/>
-        <location filename="databasedriver.cpp" line="5970"/>
+        <location filename="databasedriver.cpp" line="1387"/>
+        <location filename="databasedriver.cpp" line="1575"/>
+        <location filename="databasedriver.cpp" line="1646"/>
+        <location filename="databasedriver.cpp" line="1740"/>
+        <location filename="databasedriver.cpp" line="2062"/>
+        <location filename="databasedriver.cpp" line="2440"/>
+        <location filename="databasedriver.cpp" line="3176"/>
+        <location filename="databasedriver.cpp" line="3901"/>
+        <location filename="databasedriver.cpp" line="5975"/>
         <source>Updating view</source>
         <translation>Aktualizacja widoku</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2008"/>
+        <location filename="databasedriver.cpp" line="2013"/>
         <source>Updating data</source>
         <translation>Aktualizacja danych</translation>
     </message>
@@ -471,400 +471,400 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Usuwanie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="990"/>
+        <location filename="databasedriver.cpp" line="995"/>
         <source>Executing batch</source>
         <translation>Edycja wsadowa</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1762"/>
-        <location filename="databasedriver.cpp" line="1882"/>
-        <location filename="databasedriver.cpp" line="2124"/>
-        <location filename="databasedriver.cpp" line="2504"/>
-        <location filename="databasedriver.cpp" line="4025"/>
-        <location filename="databasedriver.cpp" line="5511"/>
+        <location filename="databasedriver.cpp" line="1767"/>
+        <location filename="databasedriver.cpp" line="1887"/>
+        <location filename="databasedriver.cpp" line="2129"/>
+        <location filename="databasedriver.cpp" line="2509"/>
+        <location filename="databasedriver.cpp" line="4030"/>
+        <location filename="databasedriver.cpp" line="5516"/>
         <source>Loading points</source>
         <translation>Wczytywanie punktów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="699"/>
-        <location filename="databasedriver.cpp" line="1786"/>
-        <location filename="databasedriver.cpp" line="1926"/>
-        <location filename="databasedriver.cpp" line="2188"/>
-        <location filename="databasedriver.cpp" line="2702"/>
-        <location filename="databasedriver.cpp" line="3537"/>
-        <location filename="databasedriver.cpp" line="8750"/>
+        <location filename="databasedriver.cpp" line="704"/>
+        <location filename="databasedriver.cpp" line="1791"/>
+        <location filename="databasedriver.cpp" line="1931"/>
+        <location filename="databasedriver.cpp" line="2193"/>
+        <location filename="databasedriver.cpp" line="2707"/>
+        <location filename="databasedriver.cpp" line="3542"/>
+        <location filename="databasedriver.cpp" line="8755"/>
         <source>Loading geometry</source>
         <translation>Wczytywanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1818"/>
+        <location filename="databasedriver.cpp" line="1823"/>
         <source>Splitting data</source>
         <translation>Odłączanie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1851"/>
+        <location filename="databasedriver.cpp" line="1856"/>
         <source>Checking used items</source>
         <translation>Sprawdzanie połączonych obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1962"/>
-        <location filename="databasedriver.cpp" line="2672"/>
+        <location filename="databasedriver.cpp" line="1967"/>
+        <location filename="databasedriver.cpp" line="2677"/>
         <source>Generating tasklist</source>
         <translation>Generowanie listy zadań</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2013"/>
+        <location filename="databasedriver.cpp" line="2018"/>
         <source>Joining data</source>
         <translation>Łączenie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2249"/>
+        <location filename="databasedriver.cpp" line="2254"/>
         <source>Merging objects</source>
         <translation>Scalanie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2333"/>
+        <location filename="databasedriver.cpp" line="2338"/>
         <source>Updating database</source>
         <translation>Aktualizacja geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2809"/>
+        <location filename="databasedriver.cpp" line="2814"/>
         <source>Inserting objects</source>
         <translation>Wstawianie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3082"/>
+        <location filename="databasedriver.cpp" line="3087"/>
         <source>Updating class</source>
         <translation>Zmiana kodu obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3336"/>
+        <location filename="databasedriver.cpp" line="3341"/>
         <source>Copying objects</source>
         <translation>Kopiowanie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3503"/>
+        <location filename="databasedriver.cpp" line="3508"/>
         <source>Loading file data</source>
         <translation>Wczytywanie danych z pliku</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3587"/>
-        <location filename="databasedriver.cpp" line="5667"/>
-        <location filename="databasedriver.cpp" line="6056"/>
-        <location filename="databasedriver.cpp" line="8518"/>
-        <location filename="databasedriver.cpp" line="8830"/>
+        <location filename="databasedriver.cpp" line="3592"/>
+        <location filename="databasedriver.cpp" line="5672"/>
+        <location filename="databasedriver.cpp" line="6061"/>
+        <location filename="databasedriver.cpp" line="8523"/>
+        <location filename="databasedriver.cpp" line="8835"/>
         <source>Computing geometry</source>
         <translation>Obliczanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3796"/>
-        <location filename="databasedriver.cpp" line="5719"/>
-        <location filename="databasedriver.cpp" line="8622"/>
+        <location filename="databasedriver.cpp" line="3801"/>
+        <location filename="databasedriver.cpp" line="5724"/>
+        <location filename="databasedriver.cpp" line="8627"/>
         <source>Updating geometry</source>
         <translation>Aktualizacja geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3842"/>
+        <location filename="databasedriver.cpp" line="3847"/>
         <source>Restoring job name</source>
         <translation>Przywracanie oryginalnego operatu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3917"/>
+        <location filename="databasedriver.cpp" line="3922"/>
         <source>Removing history</source>
         <translation>Usuwanie obiektów historycznych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2628"/>
-        <location filename="databasedriver.cpp" line="4082"/>
-        <location filename="databasedriver.cpp" line="5644"/>
-        <location filename="databasedriver.cpp" line="6010"/>
-        <location filename="databasedriver.cpp" line="8427"/>
+        <location filename="databasedriver.cpp" line="2633"/>
+        <location filename="databasedriver.cpp" line="4087"/>
+        <location filename="databasedriver.cpp" line="5649"/>
+        <location filename="databasedriver.cpp" line="6015"/>
+        <location filename="databasedriver.cpp" line="8432"/>
         <source>Loading lines</source>
         <translation>Wczytywanie linii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="67"/>
+        <location filename="databasedriver.cpp" line="72"/>
         <source>Default</source>
         <comment>nilreason</comment>
         <translation>Domyślny</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="68"/>
+        <location filename="databasedriver.cpp" line="73"/>
         <source>Inapplicable</source>
         <comment>nilreason</comment>
         <translation>Nie stosuje się</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="69"/>
+        <location filename="databasedriver.cpp" line="74"/>
         <source>Missing</source>
         <comment>nilreason</comment>
         <translation>Brak danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="70"/>
+        <location filename="databasedriver.cpp" line="75"/>
         <source>Template</source>
         <comment>nilreason</comment>
         <translation>Tymczasowy brak danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="71"/>
+        <location filename="databasedriver.cpp" line="76"/>
         <source>Unknown</source>
         <comment>nilreason</comment>
         <translation>Nieznany</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="72"/>
+        <location filename="databasedriver.cpp" line="77"/>
         <source>Withheld</source>
         <comment>nilreason</comment>
         <translation>Zastrzeżony</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="85"/>
+        <location filename="databasedriver.cpp" line="90"/>
         <source>GML identifier</source>
         <translation>Identyfikator GML</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="435"/>
-        <location filename="databasedriver.cpp" line="1981"/>
+        <location filename="databasedriver.cpp" line="440"/>
+        <location filename="databasedriver.cpp" line="1986"/>
         <source>Creating history</source>
         <translation>Tworzenie historii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="849"/>
+        <location filename="databasedriver.cpp" line="854"/>
         <source>Performing advanced filters</source>
         <translation>Stosowanie dodatkowych filtrów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1152"/>
+        <location filename="databasedriver.cpp" line="1157"/>
         <source>Creating log file</source>
         <translation>Tworzenie logów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1233"/>
+        <location filename="databasedriver.cpp" line="1238"/>
         <source>Preparing objects list</source>
         <translation>Wczytywanie listy obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1316"/>
+        <location filename="databasedriver.cpp" line="1321"/>
         <source>Creating object list</source>
         <translation>Tworzenie listy obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1468"/>
-        <location filename="databasedriver.cpp" line="1485"/>
-        <location filename="databasedriver.cpp" line="1592"/>
-        <location filename="databasedriver.cpp" line="1663"/>
+        <location filename="databasedriver.cpp" line="1473"/>
+        <location filename="databasedriver.cpp" line="1490"/>
+        <location filename="databasedriver.cpp" line="1597"/>
+        <location filename="databasedriver.cpp" line="1668"/>
         <source>Loading items</source>
         <translation>Wczytywanie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1511"/>
+        <location filename="databasedriver.cpp" line="1516"/>
         <source>Removing objects</source>
         <translation>Usuwanie obiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1529"/>
+        <location filename="databasedriver.cpp" line="1534"/>
         <source>Removing geometry</source>
         <translation>Usuwanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2935"/>
+        <location filename="databasedriver.cpp" line="2940"/>
         <source>Converting geometry</source>
         <translation>Konwersja geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3129"/>
-        <location filename="databasedriver.cpp" line="6084"/>
+        <location filename="databasedriver.cpp" line="3134"/>
+        <location filename="databasedriver.cpp" line="6089"/>
         <source>Updating lines</source>
         <translation>Aktualizacja linii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3143"/>
+        <location filename="databasedriver.cpp" line="3148"/>
         <source>Updating symbols</source>
         <translation>Aktualizacja symboli</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3157"/>
-        <location filename="databasedriver.cpp" line="5434"/>
+        <location filename="databasedriver.cpp" line="3162"/>
+        <location filename="databasedriver.cpp" line="5439"/>
         <source>Updating texts</source>
         <translation>Aktualizacja etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3994"/>
+        <location filename="databasedriver.cpp" line="3999"/>
         <source>Loading subobjects</source>
         <translation>Wczytywanie podobiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4121"/>
+        <location filename="databasedriver.cpp" line="4126"/>
         <source>Loading surfaces</source>
         <translation>Wczytywanie powierzchni</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4161"/>
-        <location filename="databasedriver.cpp" line="5401"/>
+        <location filename="databasedriver.cpp" line="4166"/>
+        <location filename="databasedriver.cpp" line="5406"/>
         <source>Loading texts</source>
         <translation>Wczytywanie opisów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4211"/>
+        <location filename="databasedriver.cpp" line="4216"/>
         <source>Loading circles</source>
         <translation>Wczytywanie okręgów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4249"/>
+        <location filename="databasedriver.cpp" line="4254"/>
         <source>Performing edit</source>
         <translation>Redakcja opisów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4680"/>
+        <location filename="databasedriver.cpp" line="4685"/>
         <source>Saving changes</source>
         <translation>Zapisywanie zmian</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4860"/>
+        <location filename="databasedriver.cpp" line="4865"/>
         <source>Generating tasklist for symbols</source>
         <translation>Generowanie listy zadań dla obiektów punktowych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4885"/>
+        <location filename="databasedriver.cpp" line="4890"/>
         <source>Generating tasklist for lines</source>
         <translation>Generowanie listy zadań dla obiektów liniowych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4928"/>
+        <location filename="databasedriver.cpp" line="4933"/>
         <source>Generating tasklist for surfaces</source>
         <translation>Generowanie listy zadań dla obiektów powierzchniowych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4981"/>
+        <location filename="databasedriver.cpp" line="4986"/>
         <source>Computing labels</source>
         <translation>Obliczanie parametrów etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5234"/>
+        <location filename="databasedriver.cpp" line="5239"/>
         <source>Inserting labels</source>
         <translation>Wstawianie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5298"/>
+        <location filename="databasedriver.cpp" line="5303"/>
         <source>Loading labels</source>
         <translation>Wczytywanie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5315"/>
+        <location filename="databasedriver.cpp" line="5320"/>
         <source>Deleting labels</source>
         <translation>Usuwanie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5771"/>
+        <location filename="databasedriver.cpp" line="5776"/>
         <source>Loading jobs</source>
         <translation>Wczytywanie operatów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5875"/>
+        <location filename="databasedriver.cpp" line="5880"/>
         <source>Updating elements</source>
         <translation>Aktualizacja operatów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5996"/>
+        <location filename="databasedriver.cpp" line="6001"/>
         <source>Loading data</source>
         <translation>Wczytywanie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="8412"/>
+        <location filename="databasedriver.cpp" line="8417"/>
         <source>Loading symbols</source>
         <translation>Wczytywanie punktów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9681"/>
+        <location filename="databasedriver.cpp" line="9662"/>
         <source>Variables</source>
         <translation>Zmienne</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9682"/>
+        <location filename="databasedriver.cpp" line="9663"/>
         <source>Operators</source>
         <translation>Operatory</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9683"/>
+        <location filename="databasedriver.cpp" line="9664"/>
         <source>Statements</source>
         <translation>Struktury</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9684"/>
+        <location filename="databasedriver.cpp" line="9665"/>
         <source>Global functions</source>
         <translation>Funkcje globalne</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9685"/>
+        <location filename="databasedriver.cpp" line="9666"/>
         <source>Array functions</source>
         <translation>Funkcje tablicowe</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9686"/>
+        <location filename="databasedriver.cpp" line="9667"/>
         <source>Date functions</source>
         <translation>Funkcje daty</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9687"/>
+        <location filename="databasedriver.cpp" line="9668"/>
         <source>Math functions</source>
         <translation>Funkcje matematyczne</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9688"/>
+        <location filename="databasedriver.cpp" line="9669"/>
         <source>String functions</source>
         <translation>Funkcje znakowe</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="2958"/>
-        <location filename="databasedriver.cpp" line="3313"/>
-        <location filename="databasedriver.cpp" line="5807"/>
-        <location filename="databasedriver.cpp" line="8471"/>
+        <location filename="databasedriver.cpp" line="2963"/>
+        <location filename="databasedriver.cpp" line="3318"/>
+        <location filename="databasedriver.cpp" line="5812"/>
+        <location filename="databasedriver.cpp" line="8476"/>
         <source>Loading elements</source>
         <translation>Wczytywanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="8580"/>
-        <location filename="databasedriver.cpp" line="8975"/>
+        <location filename="databasedriver.cpp" line="8585"/>
+        <location filename="databasedriver.cpp" line="8980"/>
         <source>Inserting segments</source>
         <translation>Wczytywanie segmentów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="8605"/>
+        <location filename="databasedriver.cpp" line="8610"/>
         <source>Updating segments</source>
         <translation>Aktualizacja segmentów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9044"/>
+        <location filename="databasedriver.cpp" line="9049"/>
         <source>Preparing edit data</source>
         <translation>Przygotowywanie okna edycji danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9068"/>
+        <location filename="databasedriver.cpp" line="9073"/>
         <source>Preparing classes</source>
         <translation>Ładowanie dostępnych kodów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9283"/>
+        <location filename="databasedriver.cpp" line="9288"/>
         <source>Selecting layers data</source>
         <translation>Wczytywanie danych o warstwach</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9552"/>
-        <location filename="databasedriver.cpp" line="9579"/>
+        <location filename="databasedriver.cpp" line="9557"/>
+        <location filename="databasedriver.cpp" line="9584"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9552"/>
-        <location filename="databasedriver.cpp" line="9580"/>
+        <location filename="databasedriver.cpp" line="9557"/>
+        <location filename="databasedriver.cpp" line="9585"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="195"/>
-        <location filename="databasedriver.cpp" line="234"/>
-        <location filename="databasedriver.cpp" line="9570"/>
+        <location filename="databasedriver.cpp" line="200"/>
+        <location filename="databasedriver.cpp" line="239"/>
+        <location filename="databasedriver.cpp" line="9575"/>
         <source>Unknown</source>
         <translation>Niezdefiniowane</translation>
     </message>
@@ -873,7 +873,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Opis kodu obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="84"/>
+        <location filename="databasedriver.cpp" line="89"/>
         <source>Object ID</source>
         <translation>Identyfikator obiektu</translation>
     </message>
@@ -882,12 +882,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Źródło pozyskania danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="86"/>
+        <location filename="databasedriver.cpp" line="91"/>
         <source>Creation date</source>
         <translation>Data utworzenia</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="87"/>
+        <location filename="databasedriver.cpp" line="92"/>
         <source>Modification date</source>
         <translation>Data modyfikacji</translation>
     </message>
@@ -900,37 +900,37 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Status obiektu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="1219"/>
-        <location filename="databasedriver.cpp" line="1225"/>
-        <location filename="databasedriver.cpp" line="1278"/>
-        <location filename="databasedriver.cpp" line="1376"/>
-        <location filename="databasedriver.cpp" line="1399"/>
-        <location filename="databasedriver.cpp" line="1554"/>
-        <location filename="databasedriver.cpp" line="1587"/>
-        <location filename="databasedriver.cpp" line="1658"/>
-        <location filename="databasedriver.cpp" line="1752"/>
-        <location filename="databasedriver.cpp" line="1842"/>
-        <location filename="databasedriver.cpp" line="2075"/>
-        <location filename="databasedriver.cpp" line="2452"/>
-        <location filename="databasedriver.cpp" line="2900"/>
-        <location filename="databasedriver.cpp" line="3188"/>
-        <location filename="databasedriver.cpp" line="3439"/>
-        <location filename="databasedriver.cpp" line="3837"/>
-        <location filename="databasedriver.cpp" line="3913"/>
-        <location filename="databasedriver.cpp" line="3958"/>
-        <location filename="databasedriver.cpp" line="4715"/>
-        <location filename="databasedriver.cpp" line="5269"/>
-        <location filename="databasedriver.cpp" line="5334"/>
-        <location filename="databasedriver.cpp" line="5477"/>
-        <location filename="databasedriver.cpp" line="5495"/>
-        <location filename="databasedriver.cpp" line="5756"/>
-        <location filename="databasedriver.cpp" line="5987"/>
-        <location filename="databasedriver.cpp" line="9027"/>
-        <location filename="databasedriver.cpp" line="9038"/>
-        <location filename="databasedriver.cpp" line="9063"/>
-        <location filename="databasedriver.cpp" line="9113"/>
-        <location filename="databasedriver.cpp" line="9416"/>
-        <location filename="databasedriver.cpp" line="9472"/>
+        <location filename="databasedriver.cpp" line="1224"/>
+        <location filename="databasedriver.cpp" line="1230"/>
+        <location filename="databasedriver.cpp" line="1283"/>
+        <location filename="databasedriver.cpp" line="1381"/>
+        <location filename="databasedriver.cpp" line="1404"/>
+        <location filename="databasedriver.cpp" line="1559"/>
+        <location filename="databasedriver.cpp" line="1592"/>
+        <location filename="databasedriver.cpp" line="1663"/>
+        <location filename="databasedriver.cpp" line="1757"/>
+        <location filename="databasedriver.cpp" line="1847"/>
+        <location filename="databasedriver.cpp" line="2080"/>
+        <location filename="databasedriver.cpp" line="2457"/>
+        <location filename="databasedriver.cpp" line="2905"/>
+        <location filename="databasedriver.cpp" line="3193"/>
+        <location filename="databasedriver.cpp" line="3444"/>
+        <location filename="databasedriver.cpp" line="3842"/>
+        <location filename="databasedriver.cpp" line="3918"/>
+        <location filename="databasedriver.cpp" line="3963"/>
+        <location filename="databasedriver.cpp" line="4720"/>
+        <location filename="databasedriver.cpp" line="5274"/>
+        <location filename="databasedriver.cpp" line="5339"/>
+        <location filename="databasedriver.cpp" line="5482"/>
+        <location filename="databasedriver.cpp" line="5500"/>
+        <location filename="databasedriver.cpp" line="5761"/>
+        <location filename="databasedriver.cpp" line="5992"/>
+        <location filename="databasedriver.cpp" line="9032"/>
+        <location filename="databasedriver.cpp" line="9043"/>
+        <location filename="databasedriver.cpp" line="9068"/>
+        <location filename="databasedriver.cpp" line="9118"/>
+        <location filename="databasedriver.cpp" line="9421"/>
+        <location filename="databasedriver.cpp" line="9477"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -1653,42 +1653,42 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <name>MainWindow</name>
     <message>
         <location filename="mainwindow.ui" line="20"/>
-        <location filename="mainwindow.cpp" line="773"/>
-        <location filename="mainwindow.cpp" line="801"/>
+        <location filename="mainwindow.cpp" line="775"/>
+        <location filename="mainwindow.cpp" line="804"/>
         <source>EW-Database</source>
         <translation></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="31"/>
-        <location filename="mainwindow.cpp" line="781"/>
+        <location filename="mainwindow.cpp" line="783"/>
         <source>Press Ctrl+O or use Connect action to connect to Database</source>
         <translation>Wciśnij Ctrl+O lub użyj akcji Połącz w celu otwarcia bazy danych</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="76"/>
-        <location filename="mainwindow.ui" line="156"/>
+        <location filename="mainwindow.ui" line="158"/>
         <source>Database</source>
         <translation>Baza danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="94"/>
-        <location filename="mainwindow.ui" line="169"/>
+        <location filename="mainwindow.ui" line="96"/>
+        <location filename="mainwindow.ui" line="171"/>
         <source>Data</source>
         <translation>Dane</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="114"/>
+        <location filename="mainwindow.ui" line="116"/>
         <source>Help</source>
         <translation>Pomoc</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="120"/>
-        <location filename="mainwindow.ui" line="215"/>
+        <location filename="mainwindow.ui" line="122"/>
+        <location filename="mainwindow.ui" line="217"/>
         <source>Geometry</source>
         <translation>Geometria</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="139"/>
+        <location filename="mainwindow.ui" line="141"/>
         <source>List</source>
         <translation>Lista</translation>
     </message>
@@ -1697,184 +1697,184 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Narzędzia</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="261"/>
+        <location filename="mainwindow.ui" line="263"/>
         <source>Support</source>
         <translation>Wsparcie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="281"/>
+        <location filename="mainwindow.ui" line="283"/>
         <source>Connect</source>
         <translation>Połącz</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="284"/>
+        <location filename="mainwindow.ui" line="286"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="293"/>
+        <location filename="mainwindow.ui" line="295"/>
         <source>Disconnect</source>
         <translation>Rozłącz</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="296"/>
+        <location filename="mainwindow.ui" line="298"/>
         <source>Ctrl+Q</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="248"/>
-        <location filename="mainwindow.ui" line="305"/>
+        <location filename="mainwindow.ui" line="250"/>
+        <location filename="mainwindow.ui" line="307"/>
         <source>View</source>
         <translation>Widok</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="308"/>
+        <location filename="mainwindow.ui" line="310"/>
         <source>F4</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="317"/>
+        <location filename="mainwindow.ui" line="319"/>
         <source>Group</source>
         <translation>Grupowanie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="320"/>
+        <location filename="mainwindow.ui" line="322"/>
         <source>Ctrl+G</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="329"/>
+        <location filename="mainwindow.ui" line="331"/>
         <source>Filter</source>
         <translation>Filtruj</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="332"/>
+        <location filename="mainwindow.ui" line="334"/>
         <source>Ctrl+F</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="341"/>
+        <location filename="mainwindow.ui" line="343"/>
         <source>About</source>
         <translation>O programie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="344"/>
+        <location filename="mainwindow.ui" line="346"/>
         <source>F1</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="353"/>
+        <location filename="mainwindow.ui" line="355"/>
         <source>Reload</source>
         <translation>Odśwież</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="356"/>
+        <location filename="mainwindow.ui" line="358"/>
         <source>F5</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="365"/>
+        <location filename="mainwindow.ui" line="367"/>
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="368"/>
+        <location filename="mainwindow.ui" line="370"/>
         <source>Del</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="184"/>
-        <location filename="mainwindow.ui" line="377"/>
+        <location filename="mainwindow.ui" line="186"/>
+        <location filename="mainwindow.ui" line="379"/>
         <source>Edit</source>
         <translation>Edycja</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="233"/>
+        <location filename="mainwindow.ui" line="235"/>
         <source>Labels</source>
         <translation>Etykiety</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="201"/>
+        <location filename="mainwindow.ui" line="203"/>
         <source>Jobs</source>
         <translation>Operaty</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="380"/>
+        <location filename="mainwindow.ui" line="382"/>
         <source>Ctrl+E</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="389"/>
+        <location filename="mainwindow.ui" line="391"/>
         <source>Join</source>
         <translation>Połącz</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="392"/>
+        <location filename="mainwindow.ui" line="394"/>
         <source>Ctrl+J</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="401"/>
+        <location filename="mainwindow.ui" line="403"/>
         <source>Restore job</source>
         <translation>Przywróć operat</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="404"/>
+        <location filename="mainwindow.ui" line="406"/>
         <source>Ctrl+Z</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="413"/>
+        <location filename="mainwindow.ui" line="415"/>
         <source>Remove history</source>
         <translation>Usuń historie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="416"/>
+        <location filename="mainwindow.ui" line="418"/>
         <source>Ctrl+H</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="425"/>
+        <location filename="mainwindow.ui" line="427"/>
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="428"/>
+        <location filename="mainwindow.ui" line="430"/>
         <source>Ctrl+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="437"/>
+        <location filename="mainwindow.ui" line="439"/>
         <source>Load</source>
         <translation>Wczytaj</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="440"/>
+        <location filename="mainwindow.ui" line="442"/>
         <source>Ctrl+L</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="449"/>
+        <location filename="mainwindow.ui" line="451"/>
         <source>Refactorize</source>
         <translation>Zmień kod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="452"/>
+        <location filename="mainwindow.ui" line="454"/>
         <source>Ctrl+R</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="461"/>
+        <location filename="mainwindow.ui" line="463"/>
         <source>Move label</source>
         <translation>Redaguj opisy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="605"/>
+        <location filename="mainwindow.ui" line="607"/>
         <source>Edit label</source>
         <translation>Edytuj opisy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="608"/>
+        <location filename="mainwindow.ui" line="610"/>
         <source>Ctrl+W</source>
         <translation></translation>
     </message>
@@ -1883,201 +1883,206 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Redaguj opisy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="464"/>
+        <location filename="mainwindow.ui" line="466"/>
         <source>Ctrl+T</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="473"/>
+        <location filename="mainwindow.ui" line="475"/>
         <source>Hide</source>
         <translation>Ukryj</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="476"/>
+        <location filename="mainwindow.ui" line="478"/>
         <source>F2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="485"/>
+        <location filename="mainwindow.ui" line="487"/>
         <source>Unhide</source>
         <translation>Przywróć</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="488"/>
+        <location filename="mainwindow.ui" line="490"/>
         <source>F3</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="497"/>
+        <location filename="mainwindow.ui" line="499"/>
         <source>Merge</source>
         <translation>Scal</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="500"/>
+        <location filename="mainwindow.ui" line="502"/>
         <source>Ctrl+M</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="509"/>
+        <location filename="mainwindow.ui" line="511"/>
         <source>Split</source>
         <translation>Podziel</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="512"/>
+        <location filename="mainwindow.ui" line="514"/>
         <source>Ctrl+X</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="521"/>
+        <location filename="mainwindow.ui" line="523"/>
         <source>Batch edit</source>
         <translation>Edycja wsadowa</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="524"/>
+        <location filename="mainwindow.ui" line="526"/>
         <source>Ctrl+B</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="533"/>
+        <location filename="mainwindow.ui" line="535"/>
         <source>Register interface</source>
         <translation>Zarejestruj interfejsy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="536"/>
+        <location filename="mainwindow.ui" line="538"/>
         <source>F9</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="545"/>
+        <location filename="mainwindow.ui" line="547"/>
         <source>Insert labels</source>
         <translation>Wstaw opisy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="548"/>
+        <location filename="mainwindow.ui" line="550"/>
         <source>Ctrl+K</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="560"/>
+        <location filename="mainwindow.ui" line="562"/>
         <source>Show singleton fields</source>
         <translation>Pokaż singletony</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="569"/>
+        <location filename="mainwindow.ui" line="571"/>
         <source>Fit geometry</source>
         <translation>Dopasuj geometrie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="572"/>
+        <location filename="mainwindow.ui" line="574"/>
         <source>Ctrl+U</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="581"/>
+        <location filename="mainwindow.ui" line="583"/>
         <source>Insert breakpoints</source>
         <translation>Wstaw segmenty</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="584"/>
+        <location filename="mainwindow.ui" line="586"/>
         <source>Ctrl+I</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="593"/>
+        <location filename="mainwindow.ui" line="595"/>
         <source>Remove labels</source>
         <translation>Usuń opisy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="596"/>
+        <location filename="mainwindow.ui" line="598"/>
         <source>Ctrl+Y</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="620"/>
+        <location filename="mainwindow.ui" line="622"/>
         <source>Override modify date</source>
         <translation>Nadpisuj datę modyfikacji</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="629"/>
+        <location filename="mainwindow.ui" line="631"/>
         <source>Update job</source>
         <translation>Aktualizuj operaty</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="632"/>
+        <location filename="mainwindow.ui" line="634"/>
         <source>Ctrl+N</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="644"/>
+        <location filename="mainwindow.ui" line="646"/>
         <source>Allow groups selection</source>
         <translation>Zaznaczaj grupy obiektów</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="653"/>
+        <location filename="mainwindow.ui" line="655"/>
         <source>Copy fields</source>
         <translation>Kopiuj pola</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="656"/>
+        <location filename="mainwindow.ui" line="658"/>
         <source>Ctrl+D</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="665"/>
+        <location filename="mainwindow.ui" line="667"/>
         <source>Exec script</source>
         <translation>Edycja skryptowa</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="668"/>
+        <location filename="mainwindow.ui" line="670"/>
         <source>Ctrl+=</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="689"/>
+        <location filename="mainwindow.ui" line="691"/>
         <source>Settings</source>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="698"/>
+        <location filename="mainwindow.ui" line="700"/>
         <source>Hide edges</source>
         <translation>Ukryj krawędzie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="701"/>
+        <location filename="mainwindow.ui" line="703"/>
         <source>Ctrl+.</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="713"/>
+        <location filename="mainwindow.ui" line="715"/>
         <source>Create object history</source>
         <translation>Zapisuj historie zmian</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="721"/>
+        <location filename="mainwindow.ui" line="724"/>
         <source>Unify jobs</source>
         <translation>Scal operaty</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="729"/>
+        <location filename="mainwindow.ui" line="733"/>
         <source>Refactor jobs</source>
         <translation>Przenumeruj operaty</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="742"/>
+        <source>Query editor</source>
+        <translation>Edytor zapytań</translation>
     </message>
     <message>
         <source>Remove segments</source>
         <translation type="vanished">Usuń segmenty</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="677"/>
+        <location filename="mainwindow.ui" line="679"/>
         <source>Remove breakpoints</source>
         <translation>Usuń załamania</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="680"/>
+        <location filename="mainwindow.ui" line="682"/>
         <source>Ctrl+/</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="910"/>
+        <location filename="mainwindow.cpp" line="913"/>
         <source>Data updated</source>
         <translation>Dane zaktualizowane</translation>
     </message>
@@ -2090,7 +2095,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Nieznana operacja</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="915"/>
+        <location filename="mainwindow.cpp" line="918"/>
         <source>Data groupped</source>
         <translation>Dane pogrupowane</translation>
     </message>
@@ -2099,7 +2104,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Dane połączone</translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="925"/>
+        <location filename="mainwindow.cpp" line="928"/>
         <source>Edited %n text(s)</source>
         <oldsource>Text edited</oldsource>
         <translation>
@@ -2109,7 +2114,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="930"/>
+        <location filename="mainwindow.cpp" line="933"/>
         <source>Inserted %n label(s)</source>
         <translation>
             <numerusform>Wstawiono %n etykiete</numerusform>
@@ -2118,7 +2123,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="955"/>
+        <location filename="mainwindow.cpp" line="958"/>
         <source>Hidden %n edge(s)</source>
         <translation>
             <numerusform>Ukryto %n krawędź</numerusform>
@@ -2127,7 +2132,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="960"/>
+        <location filename="mainwindow.cpp" line="963"/>
         <source>Executed %n updates(s)</source>
         <translation>
             <numerusform>Przetworzono %n aktualizacje</numerusform>
@@ -2136,7 +2141,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="965"/>
+        <location filename="mainwindow.cpp" line="968"/>
         <source>Restored %n job(s)</source>
         <translation>
             <numerusform>Przywrócono %n operat</numerusform>
@@ -2145,7 +2150,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="970"/>
+        <location filename="mainwindow.cpp" line="973"/>
         <source>Removed %n historic object(s)</source>
         <translation>
             <numerusform>Usunięto %n obiekt historyczny</numerusform>
@@ -2154,7 +2159,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="980"/>
+        <location filename="mainwindow.cpp" line="983"/>
         <source>Merged %n object(s)</source>
         <translation>
             <numerusform>Połączono %n obiekt</numerusform>
@@ -2163,7 +2168,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="985"/>
+        <location filename="mainwindow.cpp" line="988"/>
         <source>Splitted %n object(s)</source>
         <translation>
             <numerusform>Podzielono %n obiekt</numerusform>
@@ -2176,44 +2181,44 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Kod zmieniony</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1135"/>
+        <location filename="mainwindow.cpp" line="1138"/>
         <source>Set object class</source>
         <translation>Zmień kod obiektu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1135"/>
+        <location filename="mainwindow.cpp" line="1138"/>
         <source>Selected objects have different types</source>
         <translation>Zaznaczone obiekty posiadają różne typy geometrii</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1147"/>
+        <location filename="mainwindow.cpp" line="1150"/>
         <source>Select file to save data</source>
         <translation>Wybierz plik do zapisu danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1188"/>
+        <location filename="mainwindow.cpp" line="1191"/>
         <source>Data saved to file %1</source>
         <translation>Dane zapisane do pliku %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1192"/>
+        <location filename="mainwindow.cpp" line="1195"/>
         <source>Error while saving data</source>
         <translation>Błąd podczas zapisu danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1248"/>
+        <location filename="mainwindow.cpp" line="1251"/>
         <source>Database connected</source>
         <translation>Baza danych otwarta</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1263"/>
+        <location filename="mainwindow.cpp" line="1267"/>
         <source>Database disconnected</source>
         <translation>Baza danych odłączona</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1095"/>
-        <location filename="mainwindow.cpp" line="1113"/>
-        <location filename="mainwindow.cpp" line="1339"/>
+        <location filename="mainwindow.cpp" line="1098"/>
+        <location filename="mainwindow.cpp" line="1116"/>
+        <location filename="mainwindow.cpp" line="1345"/>
         <source>Job done</source>
         <translation>Zadanie wykonane</translation>
     </message>
@@ -2326,7 +2331,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="mainwindow.cpp" line="409"/>
         <location filename="mainwindow.cpp" line="473"/>
         <location filename="mainwindow.cpp" line="486"/>
-        <location filename="mainwindow.cpp" line="1148"/>
+        <location filename="mainwindow.cpp" line="1151"/>
         <source>CSV files (*.csv);;Text files (*.txt);;All files (*.*)</source>
         <oldsource>Text files (*.txt);;All files (*.*)</oldsource>
         <translation>Pliki CSV (*.csv);;Pliki tekstowe (*.txt);;Wszystkie pliki (*.*)</translation>
@@ -2371,12 +2376,12 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="863"/>
+        <location filename="mainwindow.cpp" line="866"/>
         <source>Data loaded</source>
         <translation>Dane wczytane</translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="920"/>
+        <location filename="mainwindow.cpp" line="923"/>
         <source>Joined %n object(s)</source>
         <translation>
             <numerusform>Połączono %n obiekt</numerusform>
@@ -2385,7 +2390,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="935"/>
+        <location filename="mainwindow.cpp" line="938"/>
         <source>Updated %n label(s)</source>
         <translation>
             <numerusform>Zmieniono %n etykiete</numerusform>
@@ -2394,7 +2399,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="940"/>
+        <location filename="mainwindow.cpp" line="943"/>
         <source>Removed %n label(s)</source>
         <translation>
             <numerusform>Usunięto %n etykietę</numerusform>
@@ -2403,7 +2408,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="945"/>
+        <location filename="mainwindow.cpp" line="948"/>
         <source>Inserted %n breakpoint(s)</source>
         <translation>
             <numerusform>Wstawiono %n segment</numerusform>
@@ -2420,7 +2425,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="950"/>
+        <location filename="mainwindow.cpp" line="953"/>
         <source>Removed %n breakpoint(s)</source>
         <translation>
             <numerusform>Usunięto %n punkt załamania</numerusform>
@@ -2429,7 +2434,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="975"/>
+        <location filename="mainwindow.cpp" line="978"/>
         <source>Updated %n object(s)</source>
         <translation>
             <numerusform>Zmieniono %n obiekt</numerusform>
@@ -2438,7 +2443,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="990"/>
+        <location filename="mainwindow.cpp" line="993"/>
         <source>Changed %n segment(s)</source>
         <translation>
             <numerusform>Zmodyfikowano %n segment</numerusform>
@@ -2447,7 +2452,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="995"/>
+        <location filename="mainwindow.cpp" line="998"/>
         <source>Changed %n object(s)</source>
         <oldsource>Changed %n objects(s)</oldsource>
         <translation>
@@ -2457,7 +2462,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="1000"/>
+        <location filename="mainwindow.cpp" line="1003"/>
         <source>Unified %n job(s)</source>
         <translation>
             <numerusform>Scalono %n operat</numerusform>
@@ -2466,7 +2471,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="1005"/>
+        <location filename="mainwindow.cpp" line="1008"/>
         <source>Refactored %n job(s)</source>
         <translation>
             <numerusform>Zmieniono %n operat</numerusform>
@@ -2475,8 +2480,8 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1108"/>
-        <location filename="mainwindow.cpp" line="1116"/>
+        <location filename="mainwindow.cpp" line="1111"/>
+        <location filename="mainwindow.cpp" line="1119"/>
         <source>Unable to prepare dialog data</source>
         <translation>Nie udało się przygotować danych</translation>
     </message>
@@ -2485,7 +2490,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Odpytywanie bazy danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="776"/>
+        <location filename="mainwindow.cpp" line="778"/>
         <source>Press F5 or use Refresh action to load data</source>
         <translation>Wciśnij F5 lub użyj akcji Odśwież aby załadować dane</translation>
     </message>
@@ -2502,7 +2507,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation type="vanished">Dane zaktualizowane, aby ponownie aktywować filtr użyj akcji Odśwież</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="905"/>
+        <location filename="mainwindow.cpp" line="908"/>
         <source>Data removed</source>
         <translation>Dane usunięte</translation>
     </message>
@@ -2883,6 +2888,58 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="settingsdialog.cpp" line="88"/>
         <source>Select log directory</source>
         <translation>Wybierz katalog dla logów</translation>
+    </message>
+</context>
+<context>
+    <name>SqleditorDialog</name>
+    <message>
+        <location filename="sqleditordialog.ui" line="14"/>
+        <source>Query editor</source>
+        <translation>Edytor zapytań</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="27"/>
+        <source>Add record</source>
+        <translation>Dodaj rekord</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="92"/>
+        <source>Type a query or select table from list and add &quot;where&quot; keyword to filter results</source>
+        <translation>Wprowadź zapytanie lub wybierz tabelę z listy i dodaj konstrukcję &quot;where&quot; by filtrować wyniki</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="115"/>
+        <source>Run query</source>
+        <translation>Uruchom zapytanie</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="129"/>
+        <source>Delete record</source>
+        <translation>Usuń rekord</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="140"/>
+        <source>Exit</source>
+        <translation>Wyjście</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="151"/>
+        <source>Commit</source>
+        <translation>Zatwierdź zmiany</translation>
+    </message>
+    <message>
+        <location filename="sqleditordialog.ui" line="162"/>
+        <source>Rollback</source>
+        <translation>Wycofaj zmiany</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="sqleditordialog.cpp" line="136"/>
+        <source>Query complete, %n row(s) affected</source>
+        <translation>
+            <numerusform>Zapytanie wykonane, przetworzono %n rekord</numerusform>
+            <numerusform>Zapytanie wykonane, przetworzono %n rekory</numerusform>
+            <numerusform>Zapytanie wykonane, przetworzono %n rekordów</numerusform>
+        </translation>
     </message>
 </context>
 <context>

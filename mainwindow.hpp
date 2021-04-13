@@ -35,6 +35,7 @@
 #include "databasedriver.hpp"
 
 #include "copyfieldsdialog.hpp"
+#include "sqleditordialog.hpp"
 #include "variablesdialog.hpp"
 #include "harmonizedialog.hpp"
 #include "settingsdialog.hpp"
@@ -94,6 +95,7 @@ class MainWindow : public QMainWindow
 		DatabaseDriver* Driver;
 
 		CopyfieldsDialog* Copyfields;
+		SqleditorDialog* Sqleditor;
 		SelectorDialog* Loader;
 		VariablesDialog* Variable;
 		HarmonizeDialog* Fit;

@@ -79,6 +79,8 @@
     <addaction name="actionDisconnect"/>
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
+    <addaction name="actionQuery"/>
+    <addaction name="separator"/>
     <addaction name="actionInterface"/>
     <addaction name="actionUnifyJobs"/>
     <addaction name="actionRefactorJobs"/>
@@ -715,7 +717,8 @@
   </action>
   <action name="actionUnifyJobs">
    <property name="icon">
-    <iconset theme="edit-clear"/>
+    <iconset theme="edit-clear">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Unify jobs</string>
@@ -723,10 +726,20 @@
   </action>
   <action name="actionRefactorJobs">
    <property name="icon">
-    <iconset theme="mail-send-receive"/>
+    <iconset theme="mail-send-receive">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Refactor jobs</string>
+   </property>
+  </action>
+  <action name="actionQuery">
+   <property name="icon">
+    <iconset theme="drive-multidisk">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Query editor</string>
    </property>
   </action>
  </widget>

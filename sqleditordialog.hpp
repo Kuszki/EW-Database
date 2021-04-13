@@ -21,7 +21,19 @@
 #ifndef SQLEDITORDIALOG_HPP
 #define SQLEDITORDIALOG_HPP
 
+#include <QSqlTableModel>
+#include <QSqlQueryModel>
+#include <QStringListModel>
+
+#include <QItemSelectionModel>
+#include <QItemSelection>
+#include <QSqlDatabase>
+#include <QSqlRecord>
+#include <QSqlQuery>
+#include <QSqlError>
 #include <QDialog>
+
+#include <QDebug>
 
 namespace Ui {	class SqleditorDialog; }
 
@@ -30,14 +42,40 @@ class SqleditorDialog : public QDialog
 
 		Q_OBJECT
 
-	public:
-
-		explicit SqleditorDialog(QWidget *parent = nullptr);
-		virtual ~SqleditorDialog(void) override;
-
 	private:
 
 		Ui::SqleditorDialog *ui;
+		QSqlDatabase& db;
+
+		QStringListModel* list;
+		QSqlQueryModel* res;
+		QSqlTableModel* tab;
+
+		bool trans = false;
+
+	protected:
+
+		void switchModel(QAbstractItemModel* model);
+
+	public:
+
+		explicit SqleditorDialog(QSqlDatabase& database,
+							QWidget *parent = nullptr);
+		virtual ~SqleditorDialog(void) override;
+
+	private slots:
+
+		void executeActionClicked(void);
+		void commitActionClicked(void);
+		void rollbackButtonClicked(void);
+		void appendButtonClicked(void);
+		void deleteButtonClicked(void);
+
+		void tableItemSelected(const QModelIndex& index);
+		void recordItemSelected(void);
+
+		void tableItemClicked(const QModelIndex& index);
+		void fieldItemClicked(const QModelIndex& index);
 
 };
 

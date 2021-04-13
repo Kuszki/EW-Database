@@ -55,6 +55,11 @@ QString DatabaseDriver::getDatabasePath(void) const
 	return Database.databaseName();
 }
 
+QSqlDatabase& DatabaseDriver::getDatabase(void)
+{
+	return Database;
+}
+
 bool DatabaseDriver::isTerminated(void) const
 {
 	QMutexLocker Locker(&Terminator); return Terminated;

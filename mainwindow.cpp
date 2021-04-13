@@ -732,6 +732,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Script = new ScriptDialog(Props, this);
 	Breaks = new BreaksDialog(this);
 	Edges = new EdgesDialog(this, Fields);
+	Sqleditor = new SqleditorDialog(Driver->getDatabase(), this);
 
 	connect(Columns, &ColumnsDialog::onColumnsUpdate, this, &MainWindow::updateColumns);
 	connect(Groups, &GroupDialog::onGroupsUpdate, this, &MainWindow::updateGroups);
@@ -766,6 +767,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	connect(ui->actionCopyfields, &QAction::triggered, Copyfields, &CopyfieldsDialog::open);
 	connect(ui->actionScript, &QAction::triggered, Script, &ScriptDialog::open);
 	connect(ui->actionBreaks, &QAction::triggered, Breaks, &BreaksDialog::open);
+	connect(ui->actionQuery, &QAction::triggered, Sqleditor, &SqleditorDialog::open);
 
 	Driver->setDateOverride(ui->actionDateoverride->isChecked());
 	Driver->setHistoryMake(ui->actionCreatehistory->isChecked());
@@ -797,6 +799,7 @@ void MainWindow::databaseDisconnected(void)
 	Copyfields->deleteLater();
 	Script->deleteLater();
 	Breaks->deleteLater();
+	Sqleditor->deleteLater();
 
 	setWindowTitle(tr("EW-Database"));
 	freeSockets();
@@ -1257,6 +1260,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionInterface->setEnabled(true);
 			ui->actionUnifyJobs->setEnabled(true);
 			ui->actionRefactorJobs->setEnabled(true);
+			ui->actionQuery->setEnabled(true);
 			ui->actionSingleton->setEnabled(false);
 		break;
 		case DISCONNECTED:
@@ -1297,6 +1301,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionUnifyJobs->setEnabled(false);
 			ui->actionRefactorJobs->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
+			ui->actionQuery->setEnabled(false);
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -1331,6 +1336,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionEdges->setEnabled(false);
 			ui->actionUnifyJobs->setEnabled(false);
 			ui->actionRefactorJobs->setEnabled(false);
+			ui->actionQuery->setEnabled(false);
 			ui->Data->setEnabled(false);
 
 			Driver->unterminate();
@@ -1347,6 +1353,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionInterface->setEnabled(true);
 			ui->actionUnifyJobs->setEnabled(true);
 			ui->actionRefactorJobs->setEnabled(true);
+			ui->actionQuery->setEnabled(true);
 			ui->tipLabel->setVisible(false);
 			ui->Data->setEnabled(true);
 			ui->Data->setVisible(true);
