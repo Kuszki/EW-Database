@@ -1,0 +1,12 @@
+CAST()	Converts a value (of any type) into a specified datatype
+COALESCE()	Returns the first non-null value in a list
+CONVERT()	Converts a value (of any type) into a specified datatype
+CURRENT_USER()	Returns the name of the current user in the SQL Server database
+IIF()	Returns a value if a condition is TRUE, or another value if a condition is FALSE
+ISNULL()	Return a specified value if the expression is NULL, otherwise return the expression
+ISNUMERIC()	Tests whether an expression is numeric
+NULLIF()	Returns NULL if two expressions are equal
+SESSION_USER()	Returns the name of the current user in the SQL Server database
+SESSIONPROPERTY()	Returns the session settings for a specified option
+SYSTEM_USER()	Returns the login name for the current user
+USER_NAME()	Returns the database user name based on the specified id

@@ -31,14 +31,18 @@ void SqleditorDialog::switchModel(QAbstractItemModel* model)
 	ui->delButton->setEnabled(false);
 	ui->addButton->setEnabled(model == tab);
 
-	connect(ui->tableView->selectionModel(), &QItemSelectionModel::selectionChanged,
+	connect(ui->tableView->selectionModel(),
+		   &QItemSelectionModel::selectionChanged,
 		   this, &SqleditorDialog::recordItemSelected);
 }
 
 SqleditorDialog::SqleditorDialog(QSqlDatabase& database, QWidget *parent)
 : QDialog(parent), ui(new Ui::SqleditorDialog), db(database)
 {
-	ui->setupUi(this);
+	ui->setupUi(this); new SqlHighlighter(ui->queryEdit->document());
+
+	const auto mask = QSql::Tables | QSql::Views;
+	const QStringList tabs = db.tables(QSql::TableType(mask));
 
 	list = new QStringListModel(this);
 	res = new QSqlQueryModel(this);
@@ -46,20 +50,32 @@ SqleditorDialog::SqleditorDialog(QSqlDatabase& database, QWidget *parent)
 
 	tab->setEditStrategy(QSqlTableModel::OnManualSubmit);
 
-	QStringListModel* model = new QStringListModel(db.tables(), this);
+	QStringListModel* model = new QStringListModel(tabs, this);
+	QStandardItemModel* helper = SqlHighlighter::getSqlHelperModel(this);
 
 	ui->tableView->model()->deleteLater();
+	ui->tableView->selectionModel()->deleteLater();
 	ui->tableView->setModel(list);
 
 	ui->tabsView->model()->deleteLater();
+	ui->tabsView->selectionModel()->deleteLater();
 	ui->tabsView->setModel(model);
 
 	ui->fieldsView->model()->deleteLater();
+	ui->fieldsView->selectionModel()->deleteLater();
 	ui->fieldsView->setModel(new QStringListModel(this));
 
 	ui->splitter->setSizes({ 200, 575 });
 
-	connect(ui->tabsView->selectionModel(), &QItemSelectionModel::currentRowChanged,
+	ui->helperView->model()->deleteLater();
+	ui->helperView->selectionModel()->deleteLater();
+
+	ui->helperCombo->setModel(helper);
+	ui->helperView->setModel(helper);
+	ui->helperView->setRootIndex(helper->index(0, 0));
+
+	connect(ui->tabsView->selectionModel(),
+		   &QItemSelectionModel::currentRowChanged,
 		   this, &SqleditorDialog::tableItemSelected);
 
 	connect(ui->tabsView, &QListView::doubleClicked,
@@ -82,6 +98,19 @@ SqleditorDialog::SqleditorDialog(QSqlDatabase& database, QWidget *parent)
 
 	connect(ui->addButton, &QToolButton::clicked,
 		   this, &SqleditorDialog::appendButtonClicked);
+
+	connect(ui->exitButton, &QToolButton::clicked,
+		   this, &SqleditorDialog::reject);
+
+	connect(ui->helperView, &QListView::doubleClicked,
+		   this, &SqleditorDialog::helperPasteRequest);
+
+	connect(ui->helperView->selectionModel(),
+		   &QItemSelectionModel::currentChanged,
+		   this, &SqleditorDialog::helperTooltipRequest);
+
+	connect(ui->helperCombo, qOverload<int>(&QComboBox::currentIndexChanged),
+		   this, &SqleditorDialog::helperIndexChanged);
 }
 
 SqleditorDialog::~SqleditorDialog(void)
@@ -172,7 +201,11 @@ void SqleditorDialog::deleteButtonClicked(void)
 	if (ui->tableView->model() != tab) return;
 	auto rows = ui->tableView->selectionModel()->selectedRows();
 
-	std::sort(rows.begin(), rows.end(), qGreater<QModelIndex>());
+	std::sort(rows.begin(), rows.end(),
+	[] (const QModelIndex& a, const QModelIndex& b) -> bool
+	{
+		return a.row() > b.row();
+	});
 
 	for (const auto r : rows) tab->removeRow(r.row(), r.parent());
 
@@ -204,6 +237,18 @@ void SqleditorDialog::recordItemSelected(void)
 	ui->delButton->setEnabled(mok && !rows.isEmpty());
 }
 
+void SqleditorDialog::helperIndexChanged(int Index)
+{
+	auto Model = ui->helperCombo->model();
+
+	if (Model && Index != -1)
+	{
+		auto Root = Model->index(Index, 0);
+
+		ui->helperView->setRootIndex(Root);
+	}
+}
+
 void SqleditorDialog::tableItemClicked(const QModelIndex& index)
 {
 	if (!index.isValid()) return;
@@ -220,4 +265,16 @@ void SqleditorDialog::fieldItemClicked(const QModelIndex& index)
 	if (!index.isValid()) return;
 
 	ui->queryEdit->appendPlainText(index.data().toString());
+}
+
+void SqleditorDialog::helperTooltipRequest(const QModelIndex& Index)
+{
+	ui->helperLabel->setText(ui->helperView->model()->data(Index, Qt::ToolTipRole).toString());
+}
+
+void SqleditorDialog::helperPasteRequest(const QModelIndex& Index)
+{
+	const QString Value = ui->helperView->model()->data(Index).toString();
+
+	if (!Value.isEmpty()) ui->queryEdit->insertPlainText(Value);
 }

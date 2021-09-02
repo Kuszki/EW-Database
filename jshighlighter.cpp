@@ -18,9 +18,9 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "klhighlighter.hpp"
+#include "jshighlighter.hpp"
 
-const QStringList KLHighlighter::JsKeywords =
+const QStringList JsHighlighter::JsKeywords =
 {
 	"abstract", "arguments", "await", "boolean",
 	"break", "byte", "case", "catch",
@@ -40,7 +40,7 @@ const QStringList KLHighlighter::JsKeywords =
 	"volatile", "while", "with", "yield"
 };
 
-const QStringList KLHighlighter::JsOperators =
+const QStringList JsHighlighter::JsOperators =
 {
 	"\\=", "\\+", "\\-", "\\*", "\\/", "\\%",
 	"\\+\\+", "\\-\\-", "\\&\\&", "\\|\\|",
@@ -52,7 +52,7 @@ const QStringList KLHighlighter::JsOperators =
 	"\\<\\<", "\\>\\>"
 };
 
-const QStringList KLHighlighter::JsBuiltin =
+const QStringList JsHighlighter::JsBuiltin =
 {
 	"Math", "Boolean", "Date", "Infinity", "NaN", "undefined",
 	"E", "LN2", "LN10", "LOG2E", "LOG10E", "PI", "SQRT1_2", "SQRT2",
@@ -79,7 +79,7 @@ const QStringList KLHighlighter::JsBuiltin =
 	"isSafeInteger", "toExponential", "toFixed", "toPrecision"
 };
 
-KLHighlighter::KLHighlighter(QTextDocument* Parent)
+JsHighlighter::JsHighlighter(QTextDocument* Parent)
 : QSyntaxHighlighter(Parent)
 {
 	KLHighlighterRule Rule;
@@ -128,9 +128,9 @@ KLHighlighter::KLHighlighter(QTextDocument* Parent)
 	Rules.insert(COMMENTS, Rule);
 }
 
-KLHighlighter::~KLHighlighter(void) {}
+JsHighlighter::~JsHighlighter(void) {}
 
-void KLHighlighter::highlightBlock(const QString& Text)
+void JsHighlighter::highlightBlock(const QString& Text)
 {
 	for (const auto& Rule: Rules)
 	{
@@ -145,12 +145,75 @@ void KLHighlighter::highlightBlock(const QString& Text)
 	}
 }
 
-void KLHighlighter::SetFormat(STYLE Style, const QTextCharFormat& Format)
+void JsHighlighter::SetFormat(STYLE Style, const QTextCharFormat& Format)
 {
 	Rules[Style].Format = Format;
 }
 
-QTextCharFormat KLHighlighter::GetFormat(STYLE Style) const
+QTextCharFormat JsHighlighter::GetFormat(STYLE Style) const
 {
 	return Rules[Style].Format;
+}
+
+QStandardItemModel* JsHighlighter::getJsHelperModel(QObject* Parent, const QStringList& Variables)
+{
+	static const QStringList Res =
+	{
+		":/script/operators",
+		":/script/statements",
+		":/script/global",
+		":/script/array",
+		":/script/date",
+		":/script/math",
+		":/script/string"
+	};
+
+	static const QStringList Groups =
+	{
+		tr("Variables"),
+		tr("Operators"),
+		tr("Statements"),
+		tr("Global functions"),
+		tr("Array functions"),
+		tr("Date functions"),
+		tr("Math functions"),
+		tr("String functions")
+	};
+
+	QStandardItemModel* Model = new QStandardItemModel(Parent);
+	QStandardItem* Root = Model->invisibleRootItem();
+
+	for (const auto& Group : Groups)
+	{
+		Root->appendRow(new QStandardItem(Group));
+	}
+
+	for (const auto& Var : Variables)
+	{
+		Root->child(0)->appendRow(new QStandardItem(Var));
+	}
+
+	for (int i = 0; i < Res.size(); ++i)
+	{
+		QStandardItem* Up = Root->child(i + 1);
+
+		QFile File(Res[i]); File.open(QFile::ReadOnly | QFile::Text);
+
+		while (!File.atEnd())
+		{
+			QStringList Row = QString::fromUtf8(File.readLine().trimmed()).split('\t');
+
+			if (Row.size() == 2)
+			{
+				QStandardItem* Item = new QStandardItem();
+
+				Item->setData(Row.first(), Qt::DisplayRole);
+				Item->setData(Row.last(), Qt::ToolTipRole);
+
+				Up->appendRow(Item);
+			}
+		}
+	}
+
+	return Model;
 }

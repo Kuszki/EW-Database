@@ -1,0 +1,13 @@
+CURRENT_TIMESTAMP()	Returns the current date and time
+DATEADD()	Adds a time/date interval to a date and then returns the date
+DATEDIFF()	Returns the difference between two dates
+DATEFROMPARTS()	Returns a date from the specified parts (year, month, and day values)
+DATENAME()	Returns a specified part of a date (as string)
+DATEPART()	Returns a specified part of a date (as integer)
+DAY()	Returns the day of the month for a specified date
+GETDATE()	Returns the current database system date and time
+GETUTCDATE()	Returns the current database system UTC date and time
+ISDATE()	Checks an expression and returns 1 if it is a valid date, otherwise 0
+MONTH()	Returns the month part for a specified date (a number from 1 to 12)
+SYSDATETIME()	Returns the date and time of the SQL Server
+YEAR()	Returns the year part for a specified date

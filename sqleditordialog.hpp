@@ -21,21 +21,15 @@
 #ifndef SQLEDITORDIALOG_HPP
 #define SQLEDITORDIALOG_HPP
 
-#include <QSqlTableModel>
-#include <QSqlQueryModel>
-#include <QStringListModel>
+#include <QtWidgets>
+#include <QtCore>
+#include <QtSql>
 
-#include <QItemSelectionModel>
-#include <QItemSelection>
-#include <QSqlDatabase>
-#include <QSqlRecord>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QDialog>
+#include "sqlhighlighter.hpp"
 
-#include <QDebug>
-
+QT_BEGIN_NAMESPACE
 namespace Ui {	class SqleditorDialog; }
+QT_END_NAMESPACE
 
 class SqleditorDialog : public QDialog
 {
@@ -74,8 +68,13 @@ class SqleditorDialog : public QDialog
 		void tableItemSelected(const QModelIndex& index);
 		void recordItemSelected(void);
 
+		void helperIndexChanged(int Index);
+
 		void tableItemClicked(const QModelIndex& index);
 		void fieldItemClicked(const QModelIndex& index);
+
+		void helperTooltipRequest(const QModelIndex& Index);
+		void helperPasteRequest(const QModelIndex& Index);
 
 };
 

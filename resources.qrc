@@ -12,4 +12,12 @@
         <file alias="statements">js-statements.txt</file>
         <file alias="string">js-string.txt</file>
     </qresource>
+    <qresource prefix="/sql">
+        <file alias="advanced">sql-advanced.txt</file>
+        <file alias="datetime">sql-datetime.txt</file>
+        <file alias="keywords">sql-keywords.txt</file>
+        <file alias="numeric">sql-numeric.txt</file>
+        <file alias="operators">sql-operators.txt</file>
+        <file alias="strings">sql-strings.txt</file>
+    </qresource>
 </RCC>

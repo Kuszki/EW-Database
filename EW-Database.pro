@@ -26,6 +26,7 @@ TEMPLATE		=	app
 CONFIG		+=	c++20
 
 SOURCES		+=	main.cpp \
+				jshighlighter.cpp \
 				mainwindow.cpp \
 				connectdialog.cpp \
 				databasedriver.cpp \
@@ -38,6 +39,7 @@ SOURCES		+=	main.cpp \
 				recordmodel.cpp \
 				aboutdialog.cpp \
 				sqleditordialog.cpp \
+				sqlhighlighter.cpp \
 				updatedialog.cpp \
 				updatewidget.cpp \
 				joindialog.cpp \
@@ -59,7 +61,6 @@ SOURCES		+=	main.cpp \
 				copyfieldswidget.cpp \
 				copyfieldsdialog.cpp \
 				scriptdialog.cpp \
-				klhighlighter.cpp \
 				breaksdialog.cpp \
 				settingsdialog.cpp \
 				edgesdialog.cpp
@@ -72,11 +73,13 @@ HEADERS		+=	mainwindow.hpp \
 				groupdialog.hpp \
 				filterdialog.hpp \
 				filterwidget.hpp \
+				jshighlighter.hpp \
 				queryhlighter.hpp \
 				queryeditor.hpp \
 				recordmodel.hpp \
 				aboutdialog.hpp \
 				sqleditordialog.hpp \
+				sqlhighlighter.hpp \
 				updatedialog.hpp \
 				updatewidget.hpp \
 				joindialog.hpp \
@@ -98,7 +101,6 @@ HEADERS		+=	mainwindow.hpp \
 				copyfieldswidget.hpp \
 				copyfieldsdialog.hpp \
 				scriptdialog.hpp \
-				klhighlighter.hpp \
 				breaksdialog.hpp \
 				settingsdialog.hpp \
 				edgesdialog.hpp

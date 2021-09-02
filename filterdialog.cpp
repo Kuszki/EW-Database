@@ -24,9 +24,9 @@
 FilterDialog::FilterDialog(QWidget* Parent, const QStringList& Variables, const QList<DatabaseDriver::FIELD>& Fields, const QList<DatabaseDriver::TABLE>& Tables, unsigned Common, bool Singletons)
 : QDialog(Parent), ui(new Ui::FilterDialog)
 {
-	ui->setupUi(this); setFields(Variables, Fields, Tables, Common, Singletons); filterRulesChanged();
+	ui->setupUi(this); new JsHighlighter(ui->advancedEdit->document());
 
-	Highlighter = new KLHighlighter(ui->advancedEdit->document());
+	setFields(Variables, Fields, Tables, Common, Singletons); filterRulesChanged();
 
 	QMenu* resetMenu = new QMenu(this);
 
@@ -536,7 +536,7 @@ void FilterDialog::setFields(const QStringList& Variables, const QList<DatabaseD
 		if (!Singleton) ui->simpleLayout->addWidget(new FilterWidget(i, Fields[i], this));
 	}
 
-	auto newModel = getJsHelperModel(this, Variables);
+	auto newModel = JsHighlighter::getJsHelperModel(this, Variables);
 
 	auto oldModel = ui->variablesList->model();
 	auto oldSelect = ui->variablesList->selectionModel();

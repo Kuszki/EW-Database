@@ -27,7 +27,7 @@
 #include <QDialog>
 
 #include "databasedriver.hpp"
-#include "klhighlighter.hpp"
+#include "jshighlighter.hpp"
 
 namespace Ui
 {
@@ -43,7 +43,7 @@ class ScriptDialog : public QDialog
 
 		Ui::ScriptDialog* ui;
 
-		KLHighlighter* Highlighter;
+		JsHighlighter* Highlighter;
 
 	public:
 

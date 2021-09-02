@@ -425,8 +425,6 @@ QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type);
 QDateTime castStrToDatetime(const QString& String);
 QDate castStrToDate(const QString& String);
 
-QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables);
-
 bool pointComp(const QPointF& A, const QPointF& B, double d = 0.005);
 
 bool isVariantEmpty(const QVariant& Value);

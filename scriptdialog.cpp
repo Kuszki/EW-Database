@@ -26,7 +26,7 @@ ScriptDialog::ScriptDialog(const QStringList& Fields, QWidget* Parent)
 {
 	ui->setupUi(this); setFields(Fields);
 
-	Highlighter = new KLHighlighter(ui->scriptEdit->document());
+	Highlighter = new JsHighlighter(ui->scriptEdit->document());
 
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 
@@ -73,7 +73,7 @@ void ScriptDialog::accept(void)
 
 void ScriptDialog::setFields(const QStringList& Fields)
 {
-	auto newModel = getJsHelperModel(this, Fields);
+	auto newModel = JsHighlighter::getJsHelperModel(this, Fields);
 
 	auto oldModel = ui->variablesList->model();
 	auto oldSelect = ui->variablesList->selectionModel();

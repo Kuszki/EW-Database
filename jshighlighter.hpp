@@ -18,11 +18,11 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef KLHIGHLIGHTER_HPP
-#define KLHIGHLIGHTER_HPP
+#ifndef JSHIGHLIGHTER_H
+#define JSHIGHLIGHTER_H
 
-#include <QSyntaxHighlighter>
-#include <QTextCharFormat>
+#include <QtWidgets>
+#include <QtCore>
 
 /*! \file		klhighlighter.hpp
  *  \brief	Deklaracje dla klasy KLHighlighter i jej składników.
@@ -39,7 +39,7 @@
  * Implementacja subklasy `QSyntaxHighlighter` umożliwiająca wyróżnianie składni `KLScript` w dokumentach Qt.
  *
  */
-class KLHighlighter : public QSyntaxHighlighter
+class JsHighlighter : public QSyntaxHighlighter
 {
 
 		Q_OBJECT
@@ -88,14 +88,14 @@ class KLHighlighter : public QSyntaxHighlighter
 		 * Inicjuje pole rodzica i tworzy wrzystkie domyślne reguły wyróżnień.
 		 *
 		 */
-		KLHighlighter(QTextDocument* Parent);
+		JsHighlighter(QTextDocument* Parent);
 
 		/*! \brief		Destruktor.
 		 *
 		 * Zwalnia wszystkie użyte zasoby.
 		 *
 		 */
-		virtual ~KLHighlighter(void) override;
+		virtual ~JsHighlighter(void) override;
 
 		/*! \brief		Ustala styl.
 		 *  \param [in]	Style	Indeks stylu.
@@ -115,6 +115,8 @@ class KLHighlighter : public QSyntaxHighlighter
 		 */
 		QTextCharFormat GetFormat(STYLE Style) const;
 
+		static QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables);
+
 };
 
-#endif // KLHIGHLIGHTER_HPP
+#endif // JSHIGHLIGHTER_H
