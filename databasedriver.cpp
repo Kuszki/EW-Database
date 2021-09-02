@@ -137,7 +137,6 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			"O.KOD, O.OPIS, O.DANE_DOD, O.OPCJE, "
 			"F.NAZWA, F.TYTUL, F.TYP, "
 			"D.WARTOSC, D.OPIS, "
-			"BIN_AND(O.OPCJE, 266),"
 			"S.WYPELNIENIE "
 		"FROM "
 			"EW_OB_OPISY O "
@@ -171,7 +170,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			Query.value(1).toString(),
 			Query.value(2).toString(),
 			bool(Query.value(3).toInt() & 0x100),
-			Query.value(9).toInt()
+			Query.value(3).toInt() & 266
 		});
 
 		auto& Tabref = getItemByField(List, Table, &TABLE::Name);
@@ -181,7 +180,7 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 			TYPE(Query.value(6).toInt()),
 			Field,
 			Query.value(5).toString(),
-			Query.value(10).toInt() == 2
+			Query.value(9).toInt() == 2
 		});
 
 		if (!Fname.isEmpty() && Dict)
