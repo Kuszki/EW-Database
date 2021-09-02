@@ -9644,7 +9644,7 @@ double getSurface(const QPolygonF& P)
 	return qAbs(sum / 2.0);
 }
 
-QStandardItemModel*getJsHelperModel(QObject* Parent, const QStringList& Variables)
+QStandardItemModel* getJsHelperModel(QObject* Parent, const QStringList& Variables)
 {
 	static const QStringList Res =
 	{

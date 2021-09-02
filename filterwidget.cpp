@@ -266,6 +266,11 @@ void FilterWidget::setParameters(int ID, const DatabaseDriver::FIELD& Field)
 
 	if (!Field.Dict.isEmpty())
 	{
+		Operators.removeOne("BETWEEN");
+	}
+
+	if (!Field.Dict.isEmpty())
+	{
 		auto Model = new QStandardItemModel(Field.Dict.size(), 1);
 		auto Item = new QStandardItem(tr("Select values")); int j = 0;
 

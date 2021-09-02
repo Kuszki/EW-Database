@@ -196,7 +196,11 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
 	connect(Terminator, &QPushButton::clicked, Driver, &DatabaseDriver::terminate, Qt::DirectConnection);
 
-	connect(Driver, SIGNAL(onBeginProgress(QString)), ui->statusBar, SLOT(showMessage(QString)));
+	connect(Driver, &DatabaseDriver::onBeginProgress,
+	[this] (const auto& s)
+	{
+		ui->statusBar->showMessage(s);
+	});
 }
 
 MainWindow::~MainWindow(void)
