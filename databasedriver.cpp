@@ -3664,18 +3664,12 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 			if (!qIsNaN(h1) && Final1 != Current.p1())
 			{
-				if (!Endings || Object.Points.contains(Current.p1()))
-				{
-					Current.setP1(Final1);
-				}
+				Current.setP1(Final1);
 			}
 
 			if (!qIsNaN(h2) && Final2 != Current.p2())
 			{
-				if (!Endings || Object.Points.contains(Current.p2()))
-				{
-					Current.setP2(Final2);
-				}
+				Current.setP2(Final2);
 			}
 
 			if (Current != L && Current.p1() != Current.p2())
@@ -3701,71 +3695,69 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 			if (Endings && !isEnd) continue;
 
-			for (const auto& L : Lines)
+			for (const auto& P : Lines)
 			{
 				QLineF DummyA(L.p1(), { 0, 0 });
-				DummyA.setAngle(L.angle() + 90);
+				DummyA.setAngle(P.angle() + 90);
 
-				QPointF Intersect;
-				DummyA.intersects(L, &Intersect);
+				QLineF DummyB(L.p2(), { 0, 0 });
+				DummyB.setAngle(P.angle() + 90);
 
-				const double Rad1A = QLineF(L.p1(), L.p1()).length();
+				QPointF IntersectA, IntersectB;
+				DummyA.intersects(P, &IntersectA);
+				DummyB.intersects(P, &IntersectB);
+
+				const double Rad1A = QLineF(L.p1(), P.p1()).length();
 
 				if (Rad1A <= Radius && (qIsNaN(hA) || Rad1A < hA))
 				{
-					FinalA = L.p1(); hA = Rad1A;
+					FinalA = P.p1(); hA = Rad1A;
 				}
 
-				const double Rad2A = QLineF(L.p1(), L.p2()).length();
+				const double Rad2A = QLineF(L.p1(), P.p2()).length();
 
 				if (Rad2A <= Radius && (qIsNaN(hA) || Rad2A < hA))
 				{
-					FinalA = L.p2(); hA = Rad2A;
+					FinalA = P.p2(); hA = Rad2A;
 				}
 
-				const double Rad3A = QLineF(L.p1(), Intersect).length();
+				const double Rad3A = QLineF(L.p1(), IntersectA).length();
 
 				if (Rad3A <= Radius && (qIsNaN(hA) || 2*Rad3A < hA))
 				{
-					FinalA = Intersect; hA = 2*Rad3A;
+					FinalA = IntersectA; hA = 2*Rad3A;
 				}
 
-				const double Rad1B = QLineF(L.p2(), L.p1()).length();
+				const double Rad1B = QLineF(L.p2(), P.p1()).length();
 
 				if (Rad1B <= Radius && (qIsNaN(hB) || Rad1B < hB))
 				{
-					FinalB = L.p1(); hB = Rad1B;
+					FinalB = P.p1(); hB = Rad1B;
 				}
 
-				const double Rad2B = QLineF(L.p2(), L.p2()).length();
+				const double Rad2B = QLineF(L.p2(), P.p2()).length();
 
 				if (Rad2B <= Radius && (qIsNaN(hB) || Rad2B < hB))
 				{
-					FinalB = L.p2(); hB = Rad2B;
+					FinalB = P.p2(); hB = Rad2B;
 				}
 
-				const double Rad3B = QLineF(L.p2(), Intersect).length();
+				const double Rad3B = QLineF(L.p2(), IntersectB).length();
 
 				if (Rad3B <= Radius && (qIsNaN(hB) || 2*Rad3B < hB))
 				{
-					FinalB = Intersect; hB = 2*Rad3B;
+					FinalB = IntersectB; hB = 2*Rad3B;
 				}
 			}
 
 			if (!qIsNaN(hA) && FinalA != Current.p1())
 			{
-				if (!Endings || Object.Points.contains(Current.p1()))
-				{
-					Current.setP1(FinalA);
-				}
+				Current.setP1(FinalA);
 			}
 
 			if (!qIsNaN(hB) && FinalB != Current.p2())
 			{
-				if (!Endings || Object.Points.contains(Current.p2()))
-				{
-					Current.setP2(FinalB);
-				}
+				Current.setP2(FinalB);
 			}
 
 			if (Current != L && Current.p1() != Current.p2())

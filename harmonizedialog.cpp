@@ -24,7 +24,7 @@
 HarmonizeDialog::HarmonizeDialog(QWidget* Parent, const QString& Path)
 : QDialog(Parent), ui(new Ui::HarmonizeDialog), File(Path)
 {
-	ui->setupUi(this); fitParametersChanged();
+	ui->setupUi(this); sourceTypeChanged(ui->sourceCombo->currentIndex());
 }
 
 HarmonizeDialog::~HarmonizeDialog(void)
@@ -63,11 +63,14 @@ QString HarmonizeDialog::getPath(void) const
 
 void HarmonizeDialog::sourceTypeChanged(int Type)
 {
-	const bool Point = Type == 1;
+	ui->x2Spin->setDisabled(Type == 0);
+	ui->y2Spin->setDisabled(Type == 0);
+	ui->lengthSpin->setDisabled(Type == 0);
 
-	ui->x2Spin->setDisabled(Point);
-	ui->y2Spin->setDisabled(Point);
-	ui->lengthSpin->setDisabled(Point);
+	ui->lengthLabel->setVisible(Type == 1);
+	ui->lengthSpin->setVisible(Type == 1);
+
+	ui->endingsCheck->setVisible(Type != 2);
 
 	fitParametersChanged();
 }
