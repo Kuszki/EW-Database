@@ -252,6 +252,8 @@ void SqleditorDialog::helperIndexChanged(int Index)
 void SqleditorDialog::tableItemClicked(const QModelIndex& index)
 {
 	if (!index.isValid()) return;
+	
+	ui->tableView->clearSelection();
 
 	tab->revertAll();
 	tab->setTable(index.data().toString());
