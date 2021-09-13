@@ -96,7 +96,7 @@ SqlHighlighter::SqlHighlighter(QTextDocument* Parent)
 	Rule.Format.setForeground(Qt::darkRed);
 	Rule.Format.setFontWeight(QFont::Bold);
 
-	Rule.Expresion = QRegExp("\"(?:\\.|(\\\\\\\")|[^\\\"\"\\n])*\"");
+	Rule.Expresion = QRegExp("\'(?:\\.|(\\\\\\\')|[^\\\'\'\\n])*\'");
 
 	Rules.insert(STRINGS, Rule);
 
