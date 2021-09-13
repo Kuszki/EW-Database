@@ -67,8 +67,8 @@ void HarmonizeDialog::sourceTypeChanged(int Type)
 	ui->y2Spin->setDisabled(Type == 0);
 	ui->lengthSpin->setDisabled(Type == 0);
 
-	ui->lengthLabel->setVisible(Type == 1);
-	ui->lengthSpin->setVisible(Type == 1);
+	ui->lengthLabel->setVisible(Type == 2);
+	ui->lengthSpin->setVisible(Type == 2);
 
 	ui->endingsCheck->setVisible(Type != 2);
 
