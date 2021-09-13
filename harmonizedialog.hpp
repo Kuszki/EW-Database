@@ -66,7 +66,7 @@ class HarmonizeDialog : public QDialog
 
 	signals:
 
-		void onFitRequest(const QString&, bool,
+		void onFitRequest(const QString&, int,
 					   int, int, int, int,
 					   double, double, bool);
 

@@ -32,12 +32,17 @@
     <widget class="QComboBox" name="sourceCombo">
      <item>
       <property name="text">
-       <string>Lines</string>
+       <string>Fit data to points</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>Points</string>
+       <string>Fit data to lines</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Resize data to lines</string>
       </property>
      </item>
     </widget>

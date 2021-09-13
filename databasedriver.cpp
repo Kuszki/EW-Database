@@ -3438,7 +3438,7 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 	emit onDataCopy(Change.size());
 }
 
-void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool Points, int X1, int Y1, int X2, int Y2, double Radius, double Length, bool Endings)
+void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jobtype, int X1, int Y1, int X2, int Y2, double Radius, double Length, bool Endings)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onDataFit(0); return; }
 
@@ -3450,7 +3450,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 	QSqlQuery LoadLines(Database), LoadPoints(Database),
 			UpdateLines(Database), UpdatePoints(Database);
 
-	QMutex Synchronizer; int Step = 0; if (Points) X2 = Y2 = 0;
+	QMutex Synchronizer; int Step = 0; if (Jobtype == 0) X2 = Y2 = 0;
 
 	QSettings Settings("EW-Database");
 
@@ -3518,20 +3518,20 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 
 	while (!Stream.atEnd() && !isTerminated())
 	{
-		const QStringList Items = Stream.readLine().trimmed().split(Exp, QString::SkipEmptyParts);
+		const QStringList Lists = Stream.readLine().trimmed().split(Exp, Qt::SkipEmptyParts);
 
-		if (Max < Items.size())
+		if (Max < Lists.size())
 		{
 			bool OK(true), Current;
 
-			const double pX1 = Items[X1].toDouble(&Current); OK = OK && Current;
-			const double pY1 = Items[Y1].toDouble(&Current); OK = OK && Current;
-			const double pX2 = Items[X2].toDouble(&Current); OK = OK && Current;
-			const double pY2 = Items[Y2].toDouble(&Current); OK = OK && Current;
+			const double pX1 = Lists[X1].toDouble(&Current); OK = OK && Current;
+			const double pY1 = Lists[Y1].toDouble(&Current); OK = OK && Current;
+			const double pX2 = Lists[X2].toDouble(&Current); OK = OK && Current;
+			const double pY2 = Lists[Y2].toDouble(&Current); OK = OK && Current;
 
 			if (OK)
 			{
-				if (Points) Sources.append({ pX1, pY1 });
+				if (Jobtype == 0) Sources.append({ pX1, pY1 });
 				else Lines.append({ pX1, pY1, pX2, pY2 });
 			}
 		}
@@ -3591,7 +3591,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 	emit onBeginProgress(tr("Computing geometry"));
 	emit onSetupProgress(0, 0);
 
-	if (!Lines.isEmpty()) QtConcurrent::blockingMap(Objects, [this, &lUpdates, &Synchronizer] (DATA& Object) -> void
+	if (Jobtype == 2) QtConcurrent::blockingMap(Objects, [this, &lUpdates, &Synchronizer] (DATA& Object) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3625,7 +3625,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 		}
 	});
 
-	if (!Sources.isEmpty()) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, Radius, Endings] (DATA& Object) -> void
+	if (Jobtype == 0) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, Radius, Endings] (DATA& Object) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3687,7 +3687,97 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 		}
 	});
 
-	if (!Lines.isEmpty()) QtConcurrent::blockingMap(lUpdates, [this, &Lines, Radius, Length] (LINE& Part) -> void
+	if (Jobtype == 1) QtConcurrent::blockingMap(Objects, [this, &Lines, &lUpdates, &Synchronizer, Radius, Endings] (DATA& Object) -> void
+	{
+		if (this->isTerminated()) return;
+
+		for (int i = 0; i < Object.Indexes.size(); ++i)
+		{
+			QPointF FinalA, FinalB; double hA = NAN, hB = NAN;
+			const QLineF& L = Object.Lines[i]; QLineF Current = L;
+
+			const bool isEnd = Object.Points.contains(L.p1()) ||
+						    Object.Points.contains(L.p2());
+
+			if (Endings && !isEnd) continue;
+
+			for (const auto& L : Lines)
+			{
+				QLineF DummyA(L.p1(), { 0, 0 });
+				DummyA.setAngle(L.angle() + 90);
+
+				QPointF Intersect;
+				DummyA.intersects(L, &Intersect);
+
+				const double Rad1A = QLineF(L.p1(), L.p1()).length();
+
+				if (Rad1A <= Radius && (qIsNaN(hA) || Rad1A < hA))
+				{
+					FinalA = L.p1(); hA = Rad1A;
+				}
+
+				const double Rad2A = QLineF(L.p1(), L.p2()).length();
+
+				if (Rad2A <= Radius && (qIsNaN(hA) || Rad2A < hA))
+				{
+					FinalA = L.p2(); hA = Rad2A;
+				}
+
+				const double Rad3A = QLineF(L.p1(), Intersect).length();
+
+				if (Rad3A <= Radius && (qIsNaN(hA) || 2*Rad3A < hA))
+				{
+					FinalA = Intersect; hA = 2*Rad3A;
+				}
+
+				const double Rad1B = QLineF(L.p2(), L.p1()).length();
+
+				if (Rad1B <= Radius && (qIsNaN(hB) || Rad1B < hB))
+				{
+					FinalB = L.p1(); hB = Rad1B;
+				}
+
+				const double Rad2B = QLineF(L.p2(), L.p2()).length();
+
+				if (Rad2B <= Radius && (qIsNaN(hB) || Rad2B < hB))
+				{
+					FinalB = L.p2(); hB = Rad2B;
+				}
+
+				const double Rad3B = QLineF(L.p2(), Intersect).length();
+
+				if (Rad3B <= Radius && (qIsNaN(hB) || 2*Rad3B < hB))
+				{
+					FinalB = Intersect; hB = 2*Rad3B;
+				}
+			}
+
+			if (!qIsNaN(hA) && FinalA != Current.p1())
+			{
+				if (!Endings || Object.Points.contains(Current.p1()))
+				{
+					Current.setP1(FinalA);
+				}
+			}
+
+			if (!qIsNaN(hB) && FinalB != Current.p2())
+			{
+				if (!Endings || Object.Points.contains(Current.p2()))
+				{
+					Current.setP2(FinalB);
+				}
+			}
+
+			if (Current != L && Current.p1() != Current.p2())
+			{
+				Synchronizer.lock();
+				lUpdates.append({ Object.Indexes[i], Current, QPointF(), true });
+				Synchronizer.unlock();
+			}
+		}
+	});
+
+	if (Jobtype == 2) QtConcurrent::blockingMap(lUpdates, [this, &Lines, &Sources, &Synchronizer, Radius, Length] (LINE& Part) -> void
 	{
 		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
 		{
@@ -3724,14 +3814,18 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 			}
 		}
 
-		if (Part.Changed = (!qIsNaN(h) && Final != Part.Point))
+		if ((Part.Changed = (!qIsNaN(h) && Final != Part.Point)))
 		{
 			if (Part.Point == Part.Line.p1()) Part.Line.setP1(Final);
 			if (Part.Point == Part.Line.p2()) Part.Line.setP2(Final);
+
+			Synchronizer.lock();
+			Sources.append(Final);
+			Synchronizer.unlock();
 		}
 	});
 
-	if (!Lines.isEmpty()) QtConcurrent::blockingMap(pUpdates, [this, &Lines, Radius] (POINT& Symbol) -> void
+	if (Jobtype == 1) QtConcurrent::blockingMap(pUpdates, [this, &Lines, Radius] (POINT& Symbol) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3752,7 +3846,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 				Final = L.p1(); h = Rad1;
 			}
 
-			const double Rad2 = QLineF(Symbol.Point, L.p1()).length();
+			const double Rad2 = QLineF(Symbol.Point, L.p2()).length();
 
 			if (Rad2 <= Radius && (qIsNaN(h) || Rad2 < h))
 			{
@@ -3767,13 +3861,13 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 			}
 		}
 
-		if (Symbol.Changed = (!qIsNaN(h) && Final != Symbol.Point))
+		if ((Symbol.Changed = (!qIsNaN(h) && Final != Symbol.Point)))
 		{
 			Symbol.Point = Final;
 		}
 	});
 
-	if (!Sources.isEmpty()) QtConcurrent::blockingMap(pUpdates, [this, &Sources, Radius] (POINT& Symbol) -> void
+	if (Jobtype == 0 || Jobtype == 2) QtConcurrent::blockingMap(pUpdates, [this, &Sources, Radius] (POINT& Symbol) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3789,7 +3883,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 			}
 		}
 
-		if (Symbol.Changed = (!qIsNaN(h) && Final != Symbol.Point))
+		if ((Symbol.Changed = (!qIsNaN(h) && Final != Symbol.Point)))
 		{
 			Symbol.Point = Final;
 		}
@@ -3802,7 +3896,8 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 
 	for (const auto& L : lUpdates)
 	{
-		if (L.Changed)
+		if (!L.Changed) ++Rejected;
+		else
 		{
 			UpdateLines.addBindValue(L.Line.x1());
 			UpdateLines.addBindValue(L.Line.y1());
@@ -3812,14 +3907,14 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 
 			UpdateLines.exec();
 		}
-		else ++Rejected;
 
 		emit onUpdateProgress(++Step);
 	}
 
 	for (const auto& P : pUpdates)
 	{
-		if (P.Changed)
+		if (!P.Changed) ++Rejected;
+		else
 		{
 			UpdatePoints.addBindValue(P.Point.x());
 			UpdatePoints.addBindValue(P.Point.y());
@@ -3827,7 +3922,6 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, bool P
 
 			UpdatePoints.exec();
 		}
-		else ++Rejected;
 
 		emit onUpdateProgress(++Step);
 	}

@@ -302,7 +302,7 @@ class DatabaseDriver : public QObject
 				    const QString& Symbol, int Style);
 
 		void fitData(const QSet<int>& Items, const QString& Path,
-				   bool Points, int X1, int Y1, int X2, int Y2,
+				   int Jobtype, int X1, int Y1, int X2, int Y2,
 				   double Radius, double Length, bool Endings);
 
 		void restoreJob(const QSet<int>& Items);

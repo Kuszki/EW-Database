@@ -77,7 +77,7 @@ void HarmonizeDialog::fitParametersChanged(void)
 	QSet<int> Indexes; bool Accepted;
 
 	const bool Range = ui->lengthSpin->value() >= ui->distanceSpin->value();
-	const bool Point = ui->sourceCombo->currentIndex() == 1;
+	const bool Point = ui->sourceCombo->currentIndex() == 0;
 
 	Indexes.insert(ui->x1Spin->value());
 	Indexes.insert(ui->y1Spin->value());

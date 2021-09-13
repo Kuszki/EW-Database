@@ -663,13 +663,13 @@ void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool
 	lockUi(BUSY); emit onLabelRequest(Set, Text, J, X, Y, P, L, R);
 }
 
-void MainWindow::fitData(const QString& File, bool Points, int X1, int Y1, int X2, int Y2, double R, double L, bool E)
+void MainWindow::fitData(const QString& File, int Jobtype, int X1, int Y1, int X2, int Y2, double R, double L, bool E)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onFitRequest(Set, File, Points, X1, Y1, X2, Y2, R, L, E);
+	lockUi(BUSY); emit onFitRequest(Set, File, Jobtype, X1, Y1, X2, Y2, R, L, E);
 }
 
 void MainWindow::insertBreaks(int Mode, double Radius)

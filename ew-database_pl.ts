@@ -456,8 +456,8 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="2061"/>
         <location filename="databasedriver.cpp" line="2439"/>
         <location filename="databasedriver.cpp" line="3175"/>
-        <location filename="databasedriver.cpp" line="3900"/>
-        <location filename="databasedriver.cpp" line="5974"/>
+        <location filename="databasedriver.cpp" line="3994"/>
+        <location filename="databasedriver.cpp" line="6068"/>
         <source>Updating view</source>
         <translation>Aktualizacja widoku</translation>
     </message>
@@ -480,8 +480,8 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="1886"/>
         <location filename="databasedriver.cpp" line="2128"/>
         <location filename="databasedriver.cpp" line="2508"/>
-        <location filename="databasedriver.cpp" line="4029"/>
-        <location filename="databasedriver.cpp" line="5515"/>
+        <location filename="databasedriver.cpp" line="4123"/>
+        <location filename="databasedriver.cpp" line="5609"/>
         <source>Loading points</source>
         <translation>Wczytywanie punktów</translation>
     </message>
@@ -492,7 +492,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="2192"/>
         <location filename="databasedriver.cpp" line="2706"/>
         <location filename="databasedriver.cpp" line="3541"/>
-        <location filename="databasedriver.cpp" line="8754"/>
+        <location filename="databasedriver.cpp" line="8848"/>
         <source>Loading geometry</source>
         <translation>Wczytywanie geometrii</translation>
     </message>
@@ -549,36 +549,36 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     </message>
     <message>
         <location filename="databasedriver.cpp" line="3591"/>
-        <location filename="databasedriver.cpp" line="5671"/>
-        <location filename="databasedriver.cpp" line="6060"/>
-        <location filename="databasedriver.cpp" line="8522"/>
-        <location filename="databasedriver.cpp" line="8834"/>
+        <location filename="databasedriver.cpp" line="5765"/>
+        <location filename="databasedriver.cpp" line="6154"/>
+        <location filename="databasedriver.cpp" line="8616"/>
+        <location filename="databasedriver.cpp" line="8928"/>
         <source>Computing geometry</source>
         <translation>Obliczanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3800"/>
-        <location filename="databasedriver.cpp" line="5723"/>
-        <location filename="databasedriver.cpp" line="8626"/>
+        <location filename="databasedriver.cpp" line="3894"/>
+        <location filename="databasedriver.cpp" line="5817"/>
+        <location filename="databasedriver.cpp" line="8720"/>
         <source>Updating geometry</source>
         <translation>Aktualizacja geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3846"/>
+        <location filename="databasedriver.cpp" line="3940"/>
         <source>Restoring job name</source>
         <translation>Przywracanie oryginalnego operatu</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3921"/>
+        <location filename="databasedriver.cpp" line="4015"/>
         <source>Removing history</source>
         <translation>Usuwanie obiektów historycznych</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="2632"/>
-        <location filename="databasedriver.cpp" line="4086"/>
-        <location filename="databasedriver.cpp" line="5648"/>
-        <location filename="databasedriver.cpp" line="6014"/>
-        <location filename="databasedriver.cpp" line="8431"/>
+        <location filename="databasedriver.cpp" line="4180"/>
+        <location filename="databasedriver.cpp" line="5742"/>
+        <location filename="databasedriver.cpp" line="6108"/>
+        <location filename="databasedriver.cpp" line="8525"/>
         <source>Loading lines</source>
         <translation>Wczytywanie linii</translation>
     </message>
@@ -674,7 +674,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     </message>
     <message>
         <location filename="databasedriver.cpp" line="3133"/>
-        <location filename="databasedriver.cpp" line="6088"/>
+        <location filename="databasedriver.cpp" line="6182"/>
         <source>Updating lines</source>
         <translation>Aktualizacja linii</translation>
     </message>
@@ -685,93 +685,93 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     </message>
     <message>
         <location filename="databasedriver.cpp" line="3161"/>
-        <location filename="databasedriver.cpp" line="5438"/>
+        <location filename="databasedriver.cpp" line="5532"/>
         <source>Updating texts</source>
         <translation>Aktualizacja etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="3998"/>
+        <location filename="databasedriver.cpp" line="4092"/>
         <source>Loading subobjects</source>
         <translation>Wczytywanie podobiektów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4125"/>
+        <location filename="databasedriver.cpp" line="4219"/>
         <source>Loading surfaces</source>
         <translation>Wczytywanie powierzchni</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4165"/>
-        <location filename="databasedriver.cpp" line="5405"/>
+        <location filename="databasedriver.cpp" line="4259"/>
+        <location filename="databasedriver.cpp" line="5499"/>
         <source>Loading texts</source>
         <translation>Wczytywanie opisów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4215"/>
+        <location filename="databasedriver.cpp" line="4309"/>
         <source>Loading circles</source>
         <translation>Wczytywanie okręgów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4253"/>
+        <location filename="databasedriver.cpp" line="4347"/>
         <source>Performing edit</source>
         <translation>Redakcja opisów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4684"/>
+        <location filename="databasedriver.cpp" line="4778"/>
         <source>Saving changes</source>
         <translation>Zapisywanie zmian</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4864"/>
+        <location filename="databasedriver.cpp" line="4958"/>
         <source>Generating tasklist for symbols</source>
         <translation>Generowanie listy zadań dla obiektów punktowych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4889"/>
+        <location filename="databasedriver.cpp" line="4983"/>
         <source>Generating tasklist for lines</source>
         <translation>Generowanie listy zadań dla obiektów liniowych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4932"/>
+        <location filename="databasedriver.cpp" line="5026"/>
         <source>Generating tasklist for surfaces</source>
         <translation>Generowanie listy zadań dla obiektów powierzchniowych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="4985"/>
+        <location filename="databasedriver.cpp" line="5079"/>
         <source>Computing labels</source>
         <translation>Obliczanie parametrów etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5238"/>
+        <location filename="databasedriver.cpp" line="5332"/>
         <source>Inserting labels</source>
         <translation>Wstawianie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5302"/>
+        <location filename="databasedriver.cpp" line="5396"/>
         <source>Loading labels</source>
         <translation>Wczytywanie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5319"/>
+        <location filename="databasedriver.cpp" line="5413"/>
         <source>Deleting labels</source>
         <translation>Usuwanie etykiet</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5775"/>
+        <location filename="databasedriver.cpp" line="5869"/>
         <source>Loading jobs</source>
         <translation>Wczytywanie operatów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="5879"/>
+        <location filename="databasedriver.cpp" line="5973"/>
         <source>Updating elements</source>
         <translation>Aktualizacja operatów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="6000"/>
+        <location filename="databasedriver.cpp" line="6094"/>
         <source>Loading data</source>
         <translation>Wczytywanie danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="8416"/>
+        <location filename="databasedriver.cpp" line="8510"/>
         <source>Loading symbols</source>
         <translation>Wczytywanie punktów</translation>
     </message>
@@ -810,53 +810,53 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
     <message>
         <location filename="databasedriver.cpp" line="2962"/>
         <location filename="databasedriver.cpp" line="3317"/>
-        <location filename="databasedriver.cpp" line="5811"/>
-        <location filename="databasedriver.cpp" line="8475"/>
+        <location filename="databasedriver.cpp" line="5905"/>
+        <location filename="databasedriver.cpp" line="8569"/>
         <source>Loading elements</source>
         <translation>Wczytywanie geometrii</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="8584"/>
-        <location filename="databasedriver.cpp" line="8979"/>
+        <location filename="databasedriver.cpp" line="8678"/>
+        <location filename="databasedriver.cpp" line="9073"/>
         <source>Inserting segments</source>
         <translation>Wczytywanie segmentów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="8609"/>
+        <location filename="databasedriver.cpp" line="8703"/>
         <source>Updating segments</source>
         <translation>Aktualizacja segmentów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9048"/>
+        <location filename="databasedriver.cpp" line="9142"/>
         <source>Preparing edit data</source>
         <translation>Przygotowywanie okna edycji danych</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9072"/>
+        <location filename="databasedriver.cpp" line="9166"/>
         <source>Preparing classes</source>
         <translation>Ładowanie dostępnych kodów</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9287"/>
+        <location filename="databasedriver.cpp" line="9381"/>
         <source>Selecting layers data</source>
         <translation>Wczytywanie danych o warstwach</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9556"/>
-        <location filename="databasedriver.cpp" line="9583"/>
+        <location filename="databasedriver.cpp" line="9650"/>
+        <location filename="databasedriver.cpp" line="9677"/>
         <source>Yes</source>
         <translation>Tak</translation>
     </message>
     <message>
-        <location filename="databasedriver.cpp" line="9556"/>
-        <location filename="databasedriver.cpp" line="9584"/>
+        <location filename="databasedriver.cpp" line="9650"/>
+        <location filename="databasedriver.cpp" line="9678"/>
         <source>No</source>
         <translation>Nie</translation>
     </message>
     <message>
         <location filename="databasedriver.cpp" line="199"/>
         <location filename="databasedriver.cpp" line="238"/>
-        <location filename="databasedriver.cpp" line="9574"/>
+        <location filename="databasedriver.cpp" line="9668"/>
         <source>Unknown</source>
         <translation>Niezdefiniowane</translation>
     </message>
@@ -907,22 +907,22 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="databasedriver.cpp" line="2904"/>
         <location filename="databasedriver.cpp" line="3192"/>
         <location filename="databasedriver.cpp" line="3443"/>
-        <location filename="databasedriver.cpp" line="3841"/>
-        <location filename="databasedriver.cpp" line="3917"/>
-        <location filename="databasedriver.cpp" line="3962"/>
-        <location filename="databasedriver.cpp" line="4719"/>
-        <location filename="databasedriver.cpp" line="5273"/>
-        <location filename="databasedriver.cpp" line="5338"/>
-        <location filename="databasedriver.cpp" line="5481"/>
-        <location filename="databasedriver.cpp" line="5499"/>
-        <location filename="databasedriver.cpp" line="5760"/>
-        <location filename="databasedriver.cpp" line="5991"/>
-        <location filename="databasedriver.cpp" line="9031"/>
-        <location filename="databasedriver.cpp" line="9042"/>
-        <location filename="databasedriver.cpp" line="9067"/>
-        <location filename="databasedriver.cpp" line="9117"/>
-        <location filename="databasedriver.cpp" line="9420"/>
-        <location filename="databasedriver.cpp" line="9476"/>
+        <location filename="databasedriver.cpp" line="3935"/>
+        <location filename="databasedriver.cpp" line="4011"/>
+        <location filename="databasedriver.cpp" line="4056"/>
+        <location filename="databasedriver.cpp" line="4813"/>
+        <location filename="databasedriver.cpp" line="5367"/>
+        <location filename="databasedriver.cpp" line="5432"/>
+        <location filename="databasedriver.cpp" line="5575"/>
+        <location filename="databasedriver.cpp" line="5593"/>
+        <location filename="databasedriver.cpp" line="5854"/>
+        <location filename="databasedriver.cpp" line="6085"/>
+        <location filename="databasedriver.cpp" line="9125"/>
+        <location filename="databasedriver.cpp" line="9136"/>
+        <location filename="databasedriver.cpp" line="9161"/>
+        <location filename="databasedriver.cpp" line="9211"/>
+        <location filename="databasedriver.cpp" line="9514"/>
+        <location filename="databasedriver.cpp" line="9570"/>
         <source>Database is not opened</source>
         <translation>Baza danych nie jest otwarta</translation>
     </message>
@@ -1326,34 +1326,47 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Dopasuj geometrie</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="48"/>
+        <location filename="harmonizedialog.ui" line="35"/>
+        <source>Fit data to points</source>
+        <translation>Dopasuj dane do punktów</translation>
+    </message>
+    <message>
+        <location filename="harmonizedialog.ui" line="40"/>
+        <source>Fit data to lines</source>
+        <translation>Dopasuj dane do linii</translation>
+    </message>
+    <message>
+        <location filename="harmonizedialog.ui" line="45"/>
+        <source>Resize data to lines</source>
+        <translation>Przeskaluj dane do linii</translation>
+    </message>
+    <message>
+        <location filename="harmonizedialog.ui" line="53"/>
         <source>X1 index</source>
         <translation>Indeks X1</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="71"/>
+        <location filename="harmonizedialog.ui" line="76"/>
         <source>Y1 index</source>
         <translation>Indeks Y1</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="94"/>
+        <location filename="harmonizedialog.ui" line="99"/>
         <source>X2 index</source>
         <translation>Indeks X2</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="213"/>
+        <location filename="harmonizedialog.ui" line="218"/>
         <source>Endings only</source>
         <translation>Tylko końce linii</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="35"/>
         <source>Lines</source>
-        <translation>Linie</translation>
+        <translation type="vanished">Linie</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="40"/>
         <source>Points</source>
-        <translation>Punkty</translation>
+        <translation type="vanished">Punkty</translation>
     </message>
     <message>
         <location filename="harmonizedialog.ui" line="24"/>
@@ -1361,23 +1374,23 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <translation>Rodzaj danych</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="117"/>
+        <location filename="harmonizedialog.ui" line="122"/>
         <source>Y2 index</source>
         <translation>Indeks Y2</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="169"/>
+        <location filename="harmonizedialog.ui" line="174"/>
         <source>Length</source>
         <translation>Długość</translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="150"/>
-        <location filename="harmonizedialog.ui" line="179"/>
+        <location filename="harmonizedialog.ui" line="155"/>
+        <location filename="harmonizedialog.ui" line="184"/>
         <source> m</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="harmonizedialog.ui" line="140"/>
+        <location filename="harmonizedialog.ui" line="145"/>
         <source>Distance</source>
         <translation>Promień</translation>
     </message>
