@@ -104,7 +104,7 @@ SqlHighlighter::SqlHighlighter(QTextDocument* Parent)
 	Rule.Format.setFontWeight(QFont::Normal);
 	Rule.Format.setFontItalic(true);
 
-	Rule.Expresion = QRegExp("--\\s.*");
+	Rule.Expresion = QRegExp("--.*");
 
 	Rules.insert(COMMENTS, Rule);
 }
