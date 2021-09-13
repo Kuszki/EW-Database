@@ -31,7 +31,7 @@ const QStringList SqlHighlighter::SqlKeywords =
 	"LIMIT", "NOT", "NULL", "OR", "ORDER", "OUTER", "PRIMARY",
 	"PROCEDURE", "REPLACE", "RIGHT", "ROWNUM", "SELECT",
 	"SET", "TABLE", "TOP", "TRUNCATE", "UNION", "UNIQUE",
-	"UPDATE", "VALUES", "VIEW", "WHERE"
+	"UPDATE", "VALUES", "VIEW", "WHERE", "ON"
 
 };
 
