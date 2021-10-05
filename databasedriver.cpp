@@ -3589,9 +3589,9 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 	}
 
 	emit onBeginProgress(tr("Computing geometry"));
-	emit onSetupProgress(0, 0);
+	emit onSetupProgress(0, Objects.size()); Step = 0;
 
-	if (Jobtype == 2) QtConcurrent::blockingMap(Objects, [this, &lUpdates, &Synchronizer] (DATA& Object) -> void
+	if (Jobtype == 2) QtConcurrent::blockingMap(Objects, [this, &lUpdates, &Synchronizer, &Step] (DATA& Object) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3623,9 +3623,15 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 			Synchronizer.unlock();
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
-	if (Jobtype == 0) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, Radius, Endings] (DATA& Object) -> void
+	emit onSetupProgress(0, Objects.size()); Step = 0;
+
+	if (Jobtype == 0) QtConcurrent::blockingMap(Objects, [this, &Sources, &lUpdates, &Synchronizer, &Step, Radius, Endings] (DATA& Object) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3679,10 +3685,33 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 				Synchronizer.unlock();
 			}
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
-	if (Jobtype == 1) QtConcurrent::blockingMap(Objects, [this, &Lines, &lUpdates, &Synchronizer, Radius, Endings] (DATA& Object) -> void
+	emit onSetupProgress(0, Objects.size()); Step = 0;
+
+	if (Jobtype == 1) QtConcurrent::blockingMap(Objects, [this, &Lines, &lUpdates, &Synchronizer, &Step, Radius, Endings] (DATA& Object) -> void
 	{
+		static const auto pdistance = [Radius] (const QLineF& L, const QPointF& P) -> bool
+		{
+			const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+			const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+			const double l = L.length();
+
+			if ((a * a <= l * l + b * b) &&
+			    (b * b <= a * a + l * l))
+			{
+				const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+				const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+				return (qAbs(A * D - C * B) / qSqrt(C * C + D * D)) <= Radius;
+			}
+			else return false;
+		};
+
 		if (this->isTerminated()) return;
 
 		for (int i = 0; i < Object.Indexes.size(); ++i)
@@ -3723,7 +3752,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 				const double Rad3A = QLineF(L.p1(), IntersectA).length();
 
-				if (Rad3A <= Radius && (qIsNaN(hA) || 2*Rad3A < hA))
+				if (Rad3A <= Radius && (qIsNaN(hA) || 2*Rad3A < hA) && pdistance(P, L.p1()))
 				{
 					FinalA = IntersectA; hA = 2*Rad3A;
 				}
@@ -3744,7 +3773,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 				const double Rad3B = QLineF(L.p2(), IntersectB).length();
 
-				if (Rad3B <= Radius && (qIsNaN(hB) || 2*Rad3B < hB))
+				if (Rad3B <= Radius && (qIsNaN(hB) || 2*Rad3B < hB) && pdistance(P, L.p2()))
 				{
 					FinalB = IntersectB; hB = 2*Rad3B;
 				}
@@ -3767,9 +3796,15 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 				Synchronizer.unlock();
 			}
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
-	if (Jobtype == 2) QtConcurrent::blockingMap(lUpdates, [this, &Lines, &Sources, &Synchronizer, Radius, Length] (LINE& Part) -> void
+	emit onSetupProgress(0, lUpdates.size()); Step = 0;
+
+	if (Jobtype == 2) QtConcurrent::blockingMap(lUpdates, [this, &Lines, &Sources, &Synchronizer, &Step, Radius, Length] (LINE& Part) -> void
 	{
 		static const auto between = [] (double px, double py, double x1, double y1, double x2, double y2) -> bool
 		{
@@ -3815,10 +3850,33 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 			Sources.append(Final);
 			Synchronizer.unlock();
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
-	if (Jobtype == 1) QtConcurrent::blockingMap(pUpdates, [this, &Lines, Radius] (POINT& Symbol) -> void
+	emit onSetupProgress(0, pUpdates.size()); Step = 0;
+
+	if (Jobtype == 1) QtConcurrent::blockingMap(pUpdates, [this, &Lines, &Synchronizer, &Step, Radius] (POINT& Symbol) -> void
 	{
+		static const auto pdistance = [Radius] (const QLineF& L, const QPointF& P) -> bool
+		{
+			const double a = QLineF(P.x(), P.y(), L.x1(), L.y1()).length();
+			const double b = QLineF(P.x(), P.y(), L.x2(), L.y2()).length();
+			const double l = L.length();
+
+			if ((a * a <= l * l + b * b) &&
+			    (b * b <= a * a + l * l))
+			{
+				const double A = P.x() - L.x1(); const double B = P.y() - L.y1();
+				const double C = L.x2() - L.x1(); const double D = L.y2() - L.y1();
+
+				return (qAbs(A * D - C * B) / qSqrt(C * C + D * D)) <= Radius;
+			}
+			else return false;
+		};
+
 		if (this->isTerminated()) return;
 
 		QPointF Final; double h = NAN;
@@ -3847,7 +3905,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 			const double Rad3 = QLineF(Symbol.Point, Intersect).length();
 
-			if (Rad3 <= Radius && (qIsNaN(h) || 2*Rad3 < h))
+			if (Rad3 <= Radius && (qIsNaN(h) || 2*Rad3 < h) && pdistance(L, Symbol.Point))
 			{
 				Final = Intersect; h = 2*Rad3;
 			}
@@ -3857,9 +3915,15 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 		{
 			Symbol.Point = Final;
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
-	if (Jobtype == 0 || Jobtype == 2) QtConcurrent::blockingMap(pUpdates, [this, &Sources, Radius] (POINT& Symbol) -> void
+	emit onSetupProgress(0, pUpdates.size()); Step = 0;
+
+	if (Jobtype == 0 || Jobtype == 2) QtConcurrent::blockingMap(pUpdates, [this, &Sources, &Synchronizer, &Step, Radius] (POINT& Symbol) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -3879,6 +3943,10 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 		{
 			Symbol.Point = Final;
 		}
+
+		Synchronizer.lock();
+		emit onUpdateProgress(++Step);
+		Synchronizer.unlock();
 	});
 
 	if (isTerminated()) { emit onEndProgress(); emit onDataFit(0); return; }
