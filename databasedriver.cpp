@@ -7105,7 +7105,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 				if (Other.Geometry.type() == QVariant::PointF)
 				{
 					OK = QLineF(ThisPoint, Other.Geometry.toPointF()).length();
-					if (OK <= Radius) ++ON;
+					if (OK <= Radius) ON += 5;
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
 				{
@@ -7117,19 +7117,19 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
 					OK = qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)) - R;
-					if (OK <= Radius) ++ON;
+					if (OK <= Radius) ON += 5;
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
 				{
 					const QPolygonF P = Other.Geometry.value<QPolygonF>();
 
-					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) { OK = 0.0; ++ON; }
+					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) { OK = 0.0; ON += 10; }
 
 					for (int i = 1; i < P.size(); ++i)
 					{
 						const double Now = pdistance(QLineF(P[i - 1], P[i]), ThisPoint);
 
-						if (Now <= Radius) ++ON;
+						if (Now <= Radius) ON += 1;
 						OK = qMin(OK, Now);
 					}
 				}
@@ -7151,7 +7151,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					while (Red.Angle < -(M_PI / 2.0)) Red.Angle += M_PI;
 					while (Red.Angle > (M_PI / 2.0)) Red.Angle -= M_PI;
 
-					if (Now <= Radius) ++ON;
+					if (Now <= Radius) ON += 1;
 					OK = qMin(OK, Now);
 
 					if (Red.UID && Now <= Radius)
@@ -7160,7 +7160,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 						for (int i = 0; i < 25; ++i)
 						{
-							if (ABS < (M_PI / qExp(i / 2.0))) ++ON;
+							if (ABS < (M_PI / qExp(i / 2.0))) ON += 1;
 						}
 					}
 				}
@@ -7352,7 +7352,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 				}
 			}
 
-			if (OK <= Radius && OK <= fR && ON >= fN) { fID = Other.UID; fR = OK; fN = ON; }
+			if (OK <= Radius && OK <= fR && ON > fN) { fID = Other.UID; fR = OK; fN = ON; }
 		}
 
 		if (fID && !Geometry[fID].contains(Object.ID))
