@@ -162,6 +162,7 @@ class MainWindow : public QMainWindow
 		void batchActionClicked(void);
 		void interfaceActionClicked(void);
 		void fitActionClicked(void);
+		void unifyActionClicked(void);
 		void unifyjobsActionClicked(void);
 		void refactorjobsActionClicked(void);
 
@@ -170,9 +171,9 @@ class MainWindow : public QMainWindow
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,
-						   const QList<DatabaseDriver::TABLE>& Classes,
-						   const QStringList& Headers, unsigned Common,
-						   const QHash<QString, QSet<QString>>& Variables);
+		                       const QList<DatabaseDriver::TABLE>& Classes,
+		                       const QStringList& Headers, unsigned Common,
+		                       const QHash<QString, QSet<QString>>& Variables);
 
 		void databaseDisconnected(void);
 		void databaseError(const QString& Error);
@@ -181,28 +182,28 @@ class MainWindow : public QMainWindow
 		void updateGroups(const QList<int>& Columns);
 		void updateColumns(const QList<int>& Columns);
 		void updateValues(const QHash<int, QVariant>& Values,
-					   const QHash<int, int>& Reasons);
+		                  const QHash<int, int>& Reasons);
 		void refreshData(const QString& Where, const QString& Script,
-					  const QList<int>& Used,
-					  const QHash<int, QVariant>& Geometry,
-					  const QHash<int, QVariant>& Redaction,
-					  const QString& Limiter, double Radius, int Mode);
+		                 const QList<int>& Used,
+		                 const QHash<int, QVariant>& Geometry,
+		                 const QHash<int, QVariant>& Redaction,
+		                 const QString& Limiter, double Radius, int Mode);
 
 		void updateRow(int Index, const QHash<int, QVariant>& Data);
 		void removeRow(int Index);
 
 		void connectData(const QString& Point, const QString& Line,
-					  bool Override, int Type, double Radius);
+		                 bool Override, int Type, double Radius);
 		void disconnectData(const QString& Point, const QString& Line, int Type);
 		void mergeData(const QList<int>& Fields, const QStringList& Points, double Angle);
 		void cutData(const QStringList& Points, int Endings);
 		void changeClass(const QString& Class, int Line, int Point, int Text,
-					  const QString& Symbol, int Style, const QString& Label,
-					  int Actions, double Radius);
+		                 const QString& Symbol, int Style, const QString& Label,
+		                 int Actions, double Radius);
 		void editText(bool Move, int Justify, bool Rotate, bool Sort, double Length);
 		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, int Jobtype, int X1, int Y1, int X2, int Y2, double R, double L, bool E);
-		void insertBreaks(int Mode, double Radius);
+		void insertBreaks(int Mode, double Radius, const QString& Path);
 		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation);
 		void execBreaks(int Flags, double Angle, double Length, bool Mode);
 
@@ -210,19 +211,19 @@ class MainWindow : public QMainWindow
 
 		void prepareCommonact(const QList<int>& Used);
 		void prepareEdit(const QList<QHash<int, QVariant>>& Values,
-					  const QList<int>& Used);
+		                 const QList<int>& Used);
 		void prepareJoin(const QHash<QString, QString>& Points,
-					  const QHash<QString, QString>& Lines,
-					  const QHash<QString, QString>& Circles);
+		                 const QHash<QString, QString>& Lines,
+		                 const QHash<QString, QString>& Circles);
 		void prepareClass(const QHash<QString, QString>& Classes,
-					   const QHash<QString, QHash<int, QString>>& Lines,
-					   const QHash<QString, QHash<int, QString>>& Points,
-					   const QHash<QString, QHash<int, QString>>& Texts);
+		                  const QHash<QString, QHash<int, QString>>& Lines,
+		                  const QHash<QString, QHash<int, QString>>& Points,
+		                  const QHash<QString, QHash<int, QString>>& Texts);
 
 		void saveData(const QList<int>& Fields, int Type, bool Header);
 
 		void execBatch(const QList<BatchWidget::RECORD>& Roles,
-					const QList<QStringList>& Data);
+		               const QList<QStringList>& Data);
 		void execCopy(const QList<CopyfieldsWidget::RECORD>& Roles, bool Nulls);
 		void execScript(const QString& Code);
 
@@ -260,6 +261,7 @@ class MainWindow : public QMainWindow
 		void dataMerged(int Count);
 		void dataCutted(int Count);
 		void dataFitted(int Count);
+		void dataUnified(int Count);
 
 		void refactorData(int Count);
 
@@ -274,13 +276,13 @@ class MainWindow : public QMainWindow
 	signals:
 
 		void onLoadRequest(const QStringList&, int, int,
-					    RecordModel*, const QSet<int>&);
+		                   RecordModel*, const QSet<int>&);
 		void onReloadRequest(const QString&, const QString&,
-						 const QList<int>&,
-						 const QHash<int, QVariant>&,
-						 const QHash<int, QVariant>&,
-						 const QString&, double, int,
-						 RecordModel*, const QSet<int>&);
+		                     const QList<int>&,
+		                     const QHash<int, QVariant>&,
+		                     const QHash<int, QVariant>&,
+		                     const QString&, double, int,
+		                     RecordModel*, const QSet<int>&);
 
 		void onCommonRequest(const QSet<int>&);
 		void onEditRequest(const QSet<int>&);
@@ -297,7 +299,7 @@ class MainWindow : public QMainWindow
 		void onCutRequest(const QSet<int>&, const QStringList&, int);
 
 		void onRefactorRequest(const QSet<int>&, const QString&, int, int, int,
-						   const QString&, int, const QString&, int, double);
+		                       const QString&, int, const QString&, int, double);
 
 		void onClassRequest(const QSet<int>&);
 
@@ -315,8 +317,9 @@ class MainWindow : public QMainWindow
 		void onRemovelabelRequest(const QSet<int>&);
 
 		void onFitRequest(const QSet<int>&, const QString&, int, int, int, int, int, double, double, bool);
+		void onUnifyRequest(const QSet<int>&, double);
 
-		void onInsertRequest(const QSet<int>&, int, double);
+		void onInsertRequest(const QSet<int>&, int, double, const QString&);
 
 		void onBreaksRequest(const QSet<int>&, int, double, double, bool);
 

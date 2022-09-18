@@ -40,9 +40,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	Thread.start();
 
 	Selector->addItems(QStringList()
-				    << tr("No selection") << tr("Single selection")
-				    << tr("Add to selection") << tr("Remove from selection")
-				    << tr("Unhide item") << tr("Hide item"));
+	                   << tr("No selection") << tr("Single selection")
+	                   << tr("Add to selection") << tr("Remove from selection")
+	                   << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
 
 	Color->setRange(0, 14);
@@ -84,6 +84,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionEdges, &QAction::triggered, this, &MainWindow::edgesActionClicked);
 	connect(ui->actionInterface, &QAction::triggered, this, &MainWindow::interfaceActionClicked);
 	connect(ui->actionFit, &QAction::triggered, this, &MainWindow::fitActionClicked);
+	connect(ui->actionUnifygeometry, &QAction::triggered, this, &MainWindow::unifyActionClicked);
 
 	connect(ui->actionAbout, &QAction::triggered, About, &AboutDialog::open);
 
@@ -127,6 +128,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(Driver, &DatabaseDriver::onCopyExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onScriptExec, this, &MainWindow::batchExec);
 	connect(Driver, &DatabaseDriver::onDataFit, this, &MainWindow::dataFitted);
+	connect(Driver, &DatabaseDriver::onDataUnify, this, &MainWindow::dataUnified);
 	connect(Driver, &DatabaseDriver::onPointInsert, this, &MainWindow::breaksInsert);
 	connect(Driver, &DatabaseDriver::onLabelDelete, this, &MainWindow::labelDelete);
 	connect(Driver, &DatabaseDriver::onLabelEdit, this, &MainWindow::labelEdit);
@@ -186,6 +188,7 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(this, &MainWindow::onScriptRequest, Driver, &DatabaseDriver::execScript);
 
 	connect(this, &MainWindow::onFitRequest, Driver, &DatabaseDriver::fitData);
+	connect(this, &MainWindow::onUnifyRequest, Driver, &DatabaseDriver::unifyData);
 	connect(this, &MainWindow::onInsertRequest, Driver, &DatabaseDriver::insertPoints);
 	connect(this, &MainWindow::onBreaksRequest, Driver, &DatabaseDriver::mergeSegments);
 	connect(this, &MainWindow::onEdgesRequest, Driver, &DatabaseDriver::hideEdges);
@@ -273,8 +276,8 @@ void MainWindow::deleteActionClicked(void)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
-						 tr("Are you sure to delete selected items?"),
-						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	                          tr("Are you sure to delete selected items?"),
+	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		ui->Data->selectionModel()->clearSelection();
 
@@ -289,8 +292,8 @@ void MainWindow::removelabActionClicked(void)
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Delete %n object(s) labels", nullptr, Selected.count()),
-						 tr("Are you sure to delete selected items labels?"),
-						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	                          tr("Are you sure to delete selected items labels?"),
+	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onRemovelabelRequest(Set);
 	}
@@ -299,8 +302,8 @@ void MainWindow::removelabActionClicked(void)
 void MainWindow::refreshActionClicked(void)
 {
 	refreshData(Filter->getFilterRules(), Filter->getAdvancedRules(), Filter->getUsedFields(),
-			  Filter->getGeometryRules(), Filter->getRedactionRules(),
-			  Filter->getLimiterFile(), Filter->getRadius(), 0);
+	            Filter->getGeometryRules(), Filter->getRedactionRules(),
+	            Filter->getLimiterFile(), Filter->getRadius(), 0);
 }
 
 void MainWindow::editActionClicked(void)
@@ -328,8 +331,8 @@ void MainWindow::restoreActionClicked(void)
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Restore %n object(s) oryginal job name", nullptr, Selected.count()),
-						 tr("Are you sure to restore selected items first job name?"),
-						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	                          tr("Are you sure to restore selected items first job name?"),
+	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onRestoreRequest(Set);
 	}
@@ -342,8 +345,8 @@ void MainWindow::historyActionClicked(void)
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Delete %n object(s) history", nullptr, Selected.count()),
-						 tr("Are you sure to delete selected items history?"),
-						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	                          tr("Are you sure to delete selected items history?"),
+	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onHistoryRequest(Set);
 	}
@@ -410,7 +413,7 @@ void MainWindow::unhideActionClicked(void)
 void MainWindow::batchActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
-											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	QSettings Settings("EW-Database");
 
@@ -474,9 +477,35 @@ void MainWindow::interfaceActionClicked(void)
 void MainWindow::fitActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
-											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty()) Fit->open(Path);
+}
+
+void MainWindow::unifyActionClicked(void)
+{
+	QInputDialog dialog(this);
+
+	dialog.setWindowTitle(tr("Unify geometry"));
+	dialog.setLabelText(tr("Radius"));
+
+	dialog.setInputMode(QInputDialog::DoubleInput);
+
+	dialog.setDoubleDecimals(3);
+	dialog.setDoubleMaximum(1.000);
+	dialog.setDoubleMinimum(0.001);
+	dialog.setDoubleStep(0.001);
+	dialog.setDoubleValue(0.05);
+
+	if (dialog.exec() != QDialog::Accepted) return;
+
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
+
+	const double val = dialog.doubleValue();
+
+	lockUi(BUSY); emit onUnifyRequest(Set, val);
 }
 
 void MainWindow::unifyjobsActionClicked(void)
@@ -487,7 +516,7 @@ void MainWindow::unifyjobsActionClicked(void)
 void MainWindow::refactorjobsActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
-											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	QSettings Settings("EW-Database");
 
@@ -573,8 +602,9 @@ void MainWindow::selectionChanged(void)
 	ui->actionScript->setEnabled(Count > 0);
 	ui->actionBreaks->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
+	ui->actionUnifygeometry->setEnabled(Count > 1);
 	ui->actionHide->setEnabled(Count > 0);
-	ui->actionInsert->setEnabled(Count > 1);
+	ui->actionInsert->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
 	ui->actionEdges->setEnabled(Count > 1);
 
@@ -672,13 +702,13 @@ void MainWindow::fitData(const QString& File, int Jobtype, int X1, int Y1, int X
 	lockUi(BUSY); emit onFitRequest(Set, File, Jobtype, X1, Y1, X2, Y2, R, L, E);
 }
 
-void MainWindow::insertBreaks(int Mode, double Radius)
+void MainWindow::insertBreaks(int Mode, double Radius, const QString& Path)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius);
+	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius, Path);
 }
 
 void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation)
@@ -713,7 +743,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
 
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
-										 .replaceInStrings(QRegExp("\\s+"), "_");
+	                                              .replaceInStrings(QRegExp("\\s+"), "_");
 
 	const bool Singletons = ui->actionSingleton->isChecked();
 	allHeaders = Headers; labelCodes = Variables.keys();
@@ -997,6 +1027,11 @@ void MainWindow::dataFitted(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n segment(s)", nullptr, Count));
 }
 
+void MainWindow::dataUnified(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n segment(s)", nullptr, Count));
+}
+
 void MainWindow::refactorData(int Count)
 {
 	lockUi(DONE); ui->statusBar->showMessage(tr("Changed %n object(s)", nullptr, Count));
@@ -1021,9 +1056,9 @@ void MainWindow::readDatagram(void)
 {
 	static const QVector<QItemSelectionModel::SelectionFlag> Actions =
 	{
-		QItemSelectionModel::ClearAndSelect,
-		QItemSelectionModel::Select,
-		QItemSelectionModel::Deselect
+	     QItemSelectionModel::ClearAndSelect,
+	     QItemSelectionModel::Select,
+	     QItemSelectionModel::Deselect
 	};
 
 	QByteArray Data;
@@ -1085,11 +1120,11 @@ void MainWindow::readRequest(void)
 		const auto Mid = Model->index(Index);
 
 		QString Data = QString()
-			.append(Format)
-			.append(Codes.value(Model->fieldData(Mid, 0).toString()))
-			.append(";")
-			.append(Model->fieldData(Mid, 2).toString())
-			.append("\n");
+		     .append(Format)
+		     .append(Codes.value(Model->fieldData(Mid, 0).toString()))
+		     .append(";")
+		     .append(Model->fieldData(Mid, 2).toString())
+		     .append("\n");
 
 		Sender.writeDatagram(Data.toUtf8(), QHostAddress::LocalHost, Port);
 	}
@@ -1152,7 +1187,7 @@ void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHas
 void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 {
 	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"), QString(),
-											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (Path.isEmpty()) return;
 
@@ -1293,6 +1328,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLabel->setEnabled(false);
 			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
+			ui->actionUnifygeometry->setEnabled(false);
 			ui->actionKerg->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
@@ -1329,6 +1365,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionLabel->setEnabled(false);
 			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
+			ui->actionUnifygeometry->setEnabled(false);
 			ui->actionKerg->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
@@ -1393,12 +1430,12 @@ void MainWindow::updateView(RecordModel* Model)
 	delete Selection; Old->deleteLater();
 
 	connect(ui->Data->selectionModel(),
-		   &QItemSelectionModel::selectionChanged,
-		   this, &MainWindow::selectionChanged);
+	        &QItemSelectionModel::selectionChanged,
+	        this, &MainWindow::selectionChanged);
 
 	connect(ui->Data->model(),
-		   &QAbstractItemModel::modelReset,
-		   this, &MainWindow::updateHidden);
+	        &QAbstractItemModel::modelReset,
+	        this, &MainWindow::updateHidden);
 }
 
 void MainWindow::updateHidden(void)

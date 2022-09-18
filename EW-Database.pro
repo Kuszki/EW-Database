@@ -23,7 +23,7 @@ QT			+=	core gui widgets concurrent sql network qml
 TARGET		=	EW-Database
 TEMPLATE		=	app
 
-CONFIG		+=	c++20
+CONFIG		+=	c++21
 
 SOURCES		+=	main.cpp \
 				jshighlighter.cpp \

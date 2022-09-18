@@ -19,6 +19,42 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="fileGroup">
+     <item>
+      <widget class="QLineEdit" name="fileEdit">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="placeholderText">
+        <string>Load points from file</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="clearButton">
+       <property name="text">
+        <string>Clear</string>
+       </property>
+       <property name="icon">
+        <iconset theme="edit-clear">
+         <normaloff>.</normaloff>.</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="openButton">
+       <property name="text">
+        <string>Open</string>
+       </property>
+       <property name="icon">
+        <iconset theme="document-open">
+         <normaloff>.</normaloff>.</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0" colspan="2">
     <widget class="QGroupBox" name="breakGroup">
      <property name="title">
       <string>Insert breakpoints on existing points</string>
@@ -64,7 +100,7 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item row="2" column="0" colspan="2">
     <widget class="QGroupBox" name="segmentGroup">
      <property name="title">
       <string>Insert segments in surface center</string>
@@ -96,7 +132,7 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2">
+   <item row="3" column="0" colspan="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -109,7 +145,7 @@
      </property>
     </spacer>
    </item>
-   <item row="3" column="0">
+   <item row="4" column="0">
     <widget class="QDoubleSpinBox" name="radiusSpin">
      <property name="specialValueText">
       <string>Match exactly</string>
@@ -128,7 +164,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
+   <item row="4" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -157,7 +193,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>289</y>
+     <y>329</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -173,7 +209,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>390</x>
-     <y>289</y>
+     <y>329</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -189,7 +225,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>378</x>
-     <y>56</y>
+     <y>88</y>
     </hint>
     <hint type="destinationlabel">
      <x>399</x>
@@ -204,8 +240,8 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>377</x>
-     <y>81</y>
+     <x>378</x>
+     <y>114</y>
     </hint>
     <hint type="destinationlabel">
      <x>399</x>
@@ -221,7 +257,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>378</x>
-     <y>106</y>
+     <y>140</y>
     </hint>
     <hint type="destinationlabel">
      <x>399</x>
@@ -236,8 +272,8 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>364</x>
-     <y>131</y>
+     <x>378</x>
+     <y>166</y>
     </hint>
     <hint type="destinationlabel">
      <x>399</x>
@@ -252,8 +288,8 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>344</x>
-     <y>14</y>
+     <x>353</x>
+     <y>54</y>
     </hint>
     <hint type="destinationlabel">
      <x>642</x>
@@ -268,8 +304,8 @@
    <slot>insertParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>227</x>
-     <y>159</y>
+     <x>236</x>
+     <y>271</y>
     </hint>
     <hint type="destinationlabel">
      <x>649</x>
@@ -277,8 +313,41 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>clearButton</sender>
+   <signal>clicked()</signal>
+   <receiver>fileEdit</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>343</x>
+     <y>23</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>303</x>
+     <y>22</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>openButton</sender>
+   <signal>clicked()</signal>
+   <receiver>InsertDialog</receiver>
+   <slot>openFileClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>382</x>
+     <y>25</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>597</x>
+     <y>23</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>insertParamsChanged()</slot>
+  <slot>openFileClicked()</slot>
  </slots>
 </ui>

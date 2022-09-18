@@ -58,9 +58,9 @@ SelectorDialog::SelectorDialog(QWidget* Parent)
 	ui->buttonBox->addButton(Save, QDialogButtonBox::YesRole);
 
 	ui->openButton->setFixedSize(ui->sourceEdit->sizeHint().height(),
-						    ui->sourceEdit->sizeHint().height());
+	                             ui->sourceEdit->sizeHint().height());
 	ui->refreshButton->setFixedSize(ui->sourceEdit->sizeHint().height(),
-							  ui->sourceEdit->sizeHint().height());
+	                                ui->sourceEdit->sizeHint().height());
 }
 
 SelectorDialog::~SelectorDialog(void)
@@ -81,7 +81,7 @@ void SelectorDialog::actionIndexChanged(int Index)
 void SelectorDialog::openButtonClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open list file"), QString(),
-											tr("Text files (*.txt);;All files (*.*)"));
+	                                                  tr("Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty()) ui->sourceEdit->setText(Path);
 
@@ -97,12 +97,16 @@ void SelectorDialog::refreshButtonClicked(void)
 
 	if (Index == 0 && !ui->sourceEdit->text().isEmpty())
 	{
-		QFile File(ui->sourceEdit->text()); QTextStream Stream(&File);
+		QFile File(ui->sourceEdit->text());
+		QTextStream Stream(&File);
+		QString List;
 
 		if (File.open(QFile::ReadOnly | QFile::Text)) while (!Stream.atEnd())
 		{
-			ui->listEdit->appendPlainText(Stream.readLine().trimmed().remove(Spliter));
+			List.append(Stream.readLine().trimmed().remove(Spliter)).append('\n');
 		}
+
+		ui->listEdit->appendPlainText(List);
 	}
 	else if (Index == 1)
 	{

@@ -22,10 +22,10 @@
 
 const QStringList DatabaseDriver::Operators =
 {
-	"=", "<>", ">=", ">", "<=", "<", "BETWEEN",
-	"LIKE", "NOT LIKE",
-	"IN", "NOT IN",
-	"IS NULL", "IS NOT NULL"
+     "=", "<>", ">=", ">", "<=", "<", "BETWEEN",
+     "LIKE", "NOT LIKE",
+     "IN", "NOT IN",
+     "IS NULL", "IS NOT NULL"
 };
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
@@ -44,10 +44,10 @@ DatabaseDriver::~DatabaseDriver(void) {}
 QString DatabaseDriver::getDatabaseName(void) const
 {
 	return QString("%1:%2@%3:%4")
-			.arg(Database.driverName())
-			.arg(Database.userName())
-			.arg(Database.hostName())
-			.arg(Database.databaseName());
+	          .arg(Database.driverName())
+	          .arg(Database.userName())
+	          .arg(Database.hostName())
+	          .arg(Database.databaseName());
 }
 
 QString DatabaseDriver::getDatabasePath(void) const
@@ -84,22 +84,22 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 
 	QList<FIELD> Fields =
 	{
-		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
-		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
-		{ READONLY,	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
-		{ READONLY,	"EW_OBIEKTY.IIP",		tr("GML identifier")	},
-		{ DATETIME,	"EW_OBIEKTY.DTU",		tr("Creation date")		},
-		{ DATETIME,	"EW_OBIEKTY.DTW",		tr("Modification date")	},
-		{ INTEGER,	"EW_OBIEKTY.OSOU",		tr("Created by")		},
-		{ INTEGER,	"EW_OBIEKTY.OSOW",		tr("Modified by")		}
+	     { READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
+	     { INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
+	     { READONLY,	"EW_OBIEKTY.NUMER",		tr("Object ID")		},
+	     { READONLY,	"EW_OBIEKTY.IIP",		tr("GML identifier")	},
+	     { DATETIME,	"EW_OBIEKTY.DTU",		tr("Creation date")		},
+	     { DATETIME,	"EW_OBIEKTY.DTW",		tr("Modification date")	},
+	     { INTEGER,	"EW_OBIEKTY.OSOU",		tr("Created by")		},
+	     { INTEGER,	"EW_OBIEKTY.OSOW",		tr("Modified by")		}
 	};
 
 	QHash<QString, QString> Dict =
 	{
-		{ "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY"								},
-		{ "EW_OBIEKTY.OPERAT",		"SELECT UID, COALESCE(NUMER || ':' || OPERACJA, NUMER) FROM EW_OPERATY"	},
-		{ "EW_OBIEKTY.OSOU",		"SELECT ID, NAME FROM EW_USERS"									},
-		{ "EW_OBIEKTY.OSOW",		"SELECT ID, NAME FROM EW_USERS"									}
+	     { "EW_OBIEKTY.KOD",			"SELECT KOD, OPIS FROM EW_OB_OPISY"								},
+	     { "EW_OBIEKTY.OPERAT",		"SELECT UID, COALESCE(NUMER || ':' || OPERACJA, NUMER) FROM EW_OPERATY"	},
+	     { "EW_OBIEKTY.OSOU",		"SELECT ID, NAME FROM EW_USERS"									},
+	     { "EW_OBIEKTY.OSOW",		"SELECT ID, NAME FROM EW_USERS"									}
 	};
 
 	if (Emit) emit onSetupProgress(0, Dict.size());
@@ -133,29 +133,29 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 	}
 
 	Query.prepare(
-		"SELECT "
-			"O.KOD, O.OPIS, O.DANE_DOD, O.OPCJE, "
-			"F.NAZWA, F.TYTUL, F.TYP, "
-			"D.WARTOSC, D.OPIS, "
-			"S.WYPELNIENIE "
-		"FROM "
-			"EW_OB_OPISY O "
-		"LEFT JOIN "
-			"EW_OB_DDSTR F "
-		"ON "
-			"O.KOD = F.KOD "
-		"LEFT JOIN "
-			"EW_OB_DDSTR S "
-		"ON "
-			"F.KOD = S.KOD "
-		"LEFT JOIN "
-			"EW_OB_DDSL D "
-		"ON "
-			"S.UID = D.UIDP OR S.UIDSL = D.UIDP "
-		"WHERE "
-			"S.NAZWA = F.NAZWA OR (S.NAZWA IS NULL AND F.NAZWA IS NULL) "
-		"ORDER BY "
-			"O.KOD, F.NAZWA, D.OPIS");
+	     "SELECT "
+	          "O.KOD, O.OPIS, O.DANE_DOD, O.OPCJE, "
+	          "F.NAZWA, F.TYTUL, F.TYP, "
+	          "D.WARTOSC, D.OPIS, "
+	          "S.WYPELNIENIE "
+	     "FROM "
+	          "EW_OB_OPISY O "
+	     "LEFT JOIN "
+	          "EW_OB_DDSTR F "
+	     "ON "
+	          "O.KOD = F.KOD "
+	     "LEFT JOIN "
+	          "EW_OB_DDSTR S "
+	     "ON "
+	          "F.KOD = S.KOD "
+	     "LEFT JOIN "
+	          "EW_OB_DDSL D "
+	     "ON "
+	          "S.UID = D.UIDP OR S.UIDSL = D.UIDP "
+	     "WHERE "
+	          "S.NAZWA = F.NAZWA OR (S.NAZWA IS NULL AND F.NAZWA IS NULL) "
+	     "ORDER BY "
+	          "O.KOD, F.NAZWA, D.OPIS");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -166,21 +166,21 @@ QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
 
 		if (!Table.isEmpty() && !hasItemByField(List, Table, &TABLE::Name)) List.append(
 		{
-			Table,
-			Query.value(1).toString(),
-			Query.value(2).toString(),
-			bool(Query.value(3).toInt() & 0x100),
-			Query.value(3).toInt() & 266
+		     Table,
+		     Query.value(1).toString(),
+		     Query.value(2).toString(),
+		     bool(Query.value(3).toInt() & 0x100),
+		     Query.value(3).toInt() & 266
 		});
 
 		auto& Tabref = getItemByField(List, Table, &TABLE::Name);
 
 		if (!Fname.isEmpty() && !hasItemByField(Tabref.Fields, Field, &FIELD::Name)) Tabref.Fields.append(
 		{
-			TYPE(Query.value(6).toInt()),
-			Field,
-			Query.value(5).toString(),
-			Query.value(9).toInt() == 2
+		     TYPE(Query.value(6).toInt()),
+		     Field,
+		     Query.value(5).toString(),
+		     Query.value(9).toInt() == 2
 		});
 
 		if (!Fname.isEmpty() && Dict)
@@ -211,12 +211,12 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 	QList<FIELD> List;
 
 	Query.prepare(
-		"SELECT "
-			"D.NAZWA, D.TYTUL, D.TYP, D.WYPELNIENIE "
-		"FROM "
-			"EW_OB_DDSTR D "
-		"WHERE "
-			"D.KOD = :table");
+	     "SELECT "
+	          "D.NAZWA, D.TYTUL, D.TYP, D.WYPELNIENIE "
+	     "FROM "
+	          "EW_OB_DDSTR D "
+	     "WHERE "
+	          "D.KOD = :table");
 
 	Query.bindValue(":table", Table);
 
@@ -226,11 +226,11 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadFields(const QString& Table) co
 
 		List.append(
 		{
-			TYPE(Query.value(2).toInt()),
-			QString("EW_DATA.%1").arg(Query.value(0).toString()),
-			Query.value(1).toString(),
-			Query.value(3).toInt() == 2,
-			loadDict(Data, Table)
+		     TYPE(Query.value(2).toInt()),
+		     QString("EW_DATA.%1").arg(Query.value(0).toString()),
+		     Query.value(1).toString(),
+		     Query.value(3).toInt() == 2,
+		     loadDict(Data, Table)
 		});
 
 		if (List.last().Type == INTEGER && !List.last().Dict.isEmpty())
@@ -250,18 +250,18 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 	QMap<QVariant, QString> List;
 
 	Query.prepare(
-		"SELECT "
-			"L.WARTOSC, L.OPIS "
-		"FROM "
-			"EW_OB_DDSL L "
-		"INNER JOIN "
-			"EW_OB_DDSTR R "
-		"ON "
-			"L.UIDP = R.UID "
-		"WHERE "
-			"R.NAZWA = :field AND R.KOD = :table "
-		"ORDER BY "
-			"L.OPIS");
+	     "SELECT "
+	          "L.WARTOSC, L.OPIS "
+	     "FROM "
+	          "EW_OB_DDSL L "
+	     "INNER JOIN "
+	          "EW_OB_DDSTR R "
+	     "ON "
+	          "L.UIDP = R.UID "
+	     "WHERE "
+	          "R.NAZWA = :field AND R.KOD = :table "
+	     "ORDER BY "
+	          "L.OPIS");
 
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
@@ -269,18 +269,18 @@ QMap<QVariant, QString> DatabaseDriver::loadDict(const QString& Field, const QSt
 	if (Query.exec()) while (Query.next()) List.insert(Query.value(0), Query.value(1).toString());
 
 	Query.prepare(
-		"SELECT "
-			"L.WARTOSC, L.OPIS "
-		"FROM "
-			"EW_OB_DDSL L "
-		"INNER JOIN "
-			"EW_OB_DDSTR R "
-		"ON "
-			"L.UIDP = R.UIDSL "
-		"WHERE "
-			"R.NAZWA = :field AND R.KOD = :table "
-		"ORDER BY "
-			"L.OPIS");
+	     "SELECT "
+	          "L.WARTOSC, L.OPIS "
+	     "FROM "
+	          "EW_OB_DDSL L "
+	     "INNER JOIN "
+	          "EW_OB_DDSTR R "
+	     "ON "
+	          "L.UIDP = R.UIDSL "
+	     "WHERE "
+	          "R.NAZWA = :field AND R.KOD = :table "
+	     "ORDER BY "
+	          "L.OPIS");
 
 	Query.bindValue(":field", Field);
 	Query.bindValue(":table", Table);
@@ -377,28 +377,28 @@ QMap<QString, QSet<int>> DatabaseDriver::getClassGroups(const QSet<int>& Indexes
 	const bool isBinded = Indexes.size() < maxBindedSize;
 
 	if (isBinded) Query.prepare(
-		"SELECT "
-			"D.KOD, D.DANE_DOD "
-		"FROM "
-			"EW_OB_OPISY D "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"D.KOD = O.KOD "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.UID = ?");
+	     "SELECT "
+	          "D.KOD, D.DANE_DOD "
+	     "FROM "
+	          "EW_OB_OPISY D "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "D.KOD = O.KOD "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.UID = ?");
 	else Query.prepare(
-		"SELECT "
-			"O.UID, D.KOD, D.DANE_DOD "
-		"FROM "
-			"EW_OB_OPISY D "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"D.KOD = O.KOD "
-		"WHERE "
-			"O.STATUS = 0");
+	     "SELECT "
+	          "O.UID, D.KOD, D.DANE_DOD "
+	     "FROM "
+	          "EW_OB_OPISY D "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "D.KOD = O.KOD "
+	     "WHERE "
+	          "O.STATUS = 0");
 
 	if (isBinded) for (const auto& ID : Indexes)
 	{
@@ -453,12 +453,12 @@ QMap<QString, QSet<int>> DatabaseDriver::createHistory(const QMap<QString, QSet<
 	}
 
 	Query.prepare("UPDATE EW_OBIEKTY SET "
-				    "DTR = CURRENT_TIMESTAMP, "
-				    "OSOR = 0, "
-				    "STATUS = 3, "
-				    "OPERATR = OPERATR "
-			    "WHERE "
-				    "UID = ?");
+	                   "DTR = CURRENT_TIMESTAMP, "
+	                   "OSOR = 0, "
+	                   "STATUS = 3, "
+	                   "OPERATR = OPERATR "
+	              "WHERE "
+	                   "UID = ?");
 
 	for (const auto& UID : Tasks[QString()])
 	{
@@ -469,18 +469,18 @@ QMap<QString, QSet<int>> DatabaseDriver::createHistory(const QMap<QString, QSet<
 	}
 
 	Query.prepare("INSERT INTO EW_OBIEKTY "
-			    "("
-				    "UID, ID, IDKATALOG, KOD, TYP, NUMER, POZYSKANIE, RODZAJ, "
-				    "ATRYBUT_TYP, ATRYBUT_KUBATURA, ATRYBUT_N1, ATRYBUT_N2, "
-				    "ATRYBUT_N3, ATRYBUT_S, OSOU, OSOW, OSOR, DTU, DTW, DTR, "
-				    "OPERAT, OPERATR, STATUS, OPERATW, IIP, TERYT, DOD_OPERATY"
-			    ") "
-			    "SELECT "
-				    "?, ID, IDKATALOG, KOD, TYP, NUMER, POZYSKANIE, RODZAJ, "
-				    "ATRYBUT_TYP, ATRYBUT_KUBATURA, ATRYBUT_N1, ATRYBUT_N2, "
-				    "ATRYBUT_N3, ATRYBUT_S, OSOU, OSOW, NULL, DTU, CURRENT_TIMESTAMP, "
-				    "NULL, OPERAT, NULL, 0, OPERATW, IIP, TERYT, DOD_OPERATY "
-			    "FROM EW_OBIEKTY WHERE UID = ?");
+	              "("
+	                   "UID, ID, IDKATALOG, KOD, TYP, NUMER, POZYSKANIE, RODZAJ, "
+	                   "ATRYBUT_TYP, ATRYBUT_KUBATURA, ATRYBUT_N1, ATRYBUT_N2, "
+	                   "ATRYBUT_N3, ATRYBUT_S, OSOU, OSOW, OSOR, DTU, DTW, DTR, "
+	                   "OPERAT, OPERATR, STATUS, OPERATW, IIP, TERYT, DOD_OPERATY"
+	              ") "
+	              "SELECT "
+	                   "?, ID, IDKATALOG, KOD, TYP, NUMER, POZYSKANIE, RODZAJ, "
+	                   "ATRYBUT_TYP, ATRYBUT_KUBATURA, ATRYBUT_N1, ATRYBUT_N2, "
+	                   "ATRYBUT_N3, ATRYBUT_S, OSOU, OSOW, NULL, DTU, CURRENT_TIMESTAMP, "
+	                   "NULL, OPERAT, NULL, 0, OPERATW, IIP, TERYT, DOD_OPERATY "
+	              "FROM EW_OBIEKTY WHERE UID = ?");
 
 	for (const auto& UID : Tasks[QString()])
 	{
@@ -492,8 +492,8 @@ QMap<QString, QSet<int>> DatabaseDriver::createHistory(const QMap<QString, QSet<
 	}
 
 	Query.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, N, TYP, ATRYBUT) "
-			    "SELECT ?, IDE, N, TYP, ATRYBUT FROM EW_OB_ELEMENTY "
-			    "WHERE UIDO = ?");
+	              "SELECT ?, IDE, N, TYP, ATRYBUT FROM EW_OB_ELEMENTY "
+	              "WHERE UIDO = ?");
 
 	for (const auto& UID : Tasks[QString()])
 	{
@@ -522,10 +522,10 @@ QMap<QString, QSet<int>> DatabaseDriver::createHistory(const QMap<QString, QSet<
 		const QString List = Fields.join(", ");
 
 		Query.prepare(QString("INSERT INTO %1 (UIDO, %2) "
-						  "SELECT ?, %2 FROM %1 "
-						  "WHERE UIDO = ?")
-				    .arg(Table.Data)
-				    .arg(List));
+		                      "SELECT ?, %2 FROM %1 "
+		                      "WHERE UIDO = ?")
+		              .arg(Table.Data)
+		              .arg(List));
 
 		for (const auto& UID : Tasks[QString()])
 		{
@@ -596,58 +596,58 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 
 	const QString ExecA = Table.Fields.isEmpty() ?
 	QString(
-		"SELECT "
-			"EW_OBIEKTY.UID, %1 "
-		"FROM "
-			"EW_OBIEKTY "
-		"WHERE "
-			"EW_OBIEKTY.KOD = '%3' AND "
-			"EW_OBIEKTY.STATUS = 0")
+	     "SELECT "
+	          "EW_OBIEKTY.UID, %1 "
+	     "FROM "
+	          "EW_OBIEKTY "
+	     "WHERE "
+	          "EW_OBIEKTY.KOD = '%3' AND "
+	          "EW_OBIEKTY.STATUS = 0")
 	.arg(Attribs.join(", "))
 	.arg(Table.Name)
 	:
 	QString(
-		"SELECT "
-			"EW_OBIEKTY.UID, %1 "
-		"FROM "
-			"EW_OBIEKTY "
-		"LEFT JOIN "
-			"%2 EW_DATA "
-		"ON "
-			"EW_OBIEKTY.UID = EW_DATA.UIDO "
-		"WHERE "
-			"EW_OBIEKTY.KOD = '%3' AND "
-			"EW_OBIEKTY.STATUS = 0")
+	     "SELECT "
+	          "EW_OBIEKTY.UID, %1 "
+	     "FROM "
+	          "EW_OBIEKTY "
+	     "LEFT JOIN "
+	          "%2 EW_DATA "
+	     "ON "
+	          "EW_OBIEKTY.UID = EW_DATA.UIDO "
+	     "WHERE "
+	          "EW_OBIEKTY.KOD = '%3' AND "
+	          "EW_OBIEKTY.STATUS = 0")
 	.arg(Attribs.join(", "))
 	.arg(Table.Data)
 	.arg(Table.Name);
 
 	const QString ExecB = Table.Fields.isEmpty() ?
 	QString(
-		"SELECT "
-			"EW_OBIEKTY.UID, %1 "
-		"FROM "
-			"EW_OBIEKTY "
-		"WHERE "
-			"EW_OBIEKTY.KOD = '%3' AND "
-			"EW_OBIEKTY.UID = ? AND "
-			"EW_OBIEKTY.STATUS = 0")
-				.arg(Attribs.join(", "))
-				.arg(Table.Name)
+	     "SELECT "
+	          "EW_OBIEKTY.UID, %1 "
+	     "FROM "
+	          "EW_OBIEKTY "
+	     "WHERE "
+	          "EW_OBIEKTY.KOD = '%3' AND "
+	          "EW_OBIEKTY.UID = ? AND "
+	          "EW_OBIEKTY.STATUS = 0")
+	               .arg(Attribs.join(", "))
+	               .arg(Table.Name)
 	:
 	QString(
-		"SELECT "
-			"EW_OBIEKTY.UID, %1 "
-		"FROM "
-			"EW_OBIEKTY "
-		"LEFT JOIN "
-			"%2 EW_DATA "
-		"ON "
-			"EW_OBIEKTY.UID = EW_DATA.UIDO "
-		"WHERE "
-			"EW_OBIEKTY.KOD = '%3' AND "
-			"EW_OBIEKTY.UID = ? AND "
-			"EW_OBIEKTY.STATUS = 0")
+	     "SELECT "
+	          "EW_OBIEKTY.UID, %1 "
+	     "FROM "
+	          "EW_OBIEKTY "
+	     "LEFT JOIN "
+	          "%2 EW_DATA "
+	     "ON "
+	          "EW_OBIEKTY.UID = EW_DATA.UIDO "
+	     "WHERE "
+	          "EW_OBIEKTY.KOD = '%3' AND "
+	          "EW_OBIEKTY.UID = ? AND "
+	          "EW_OBIEKTY.STATUS = 0")
 	.arg(Attribs.join(", "))
 	.arg(Table.Data)
 	.arg(Table.Name);
@@ -848,7 +848,7 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QS
 
 	const QSet<int> All = Data.keys().toSet(); QMutex Synchronizer;
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
-										 .replaceInStrings(QRegExp("\\s+"), "_");
+	                                              .replaceInStrings(QRegExp("\\s+"), "_");
 
 	emit onBeginProgress(tr("Performing advanced filters"));
 	emit onSetupProgress(0, All.size()); int Step = 0;
@@ -962,10 +962,10 @@ void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const Q
 		}
 
 		attribQuery.prepare(QString("UPDATE OR INSERT INTO %1 (%2, UIDO) "
-							   "VALUES (%3?) MATCHING (UIDO)")
-						.arg(Table.Data)
-						.arg(fieldsNames.join(", "))
-						.arg(QString("?, ").repeated(fieldsNames.size())));
+		                            "VALUES (%3?) MATCHING (UIDO)")
+		                    .arg(Table.Data)
+		                    .arg(fieldsNames.join(", "))
+		                    .arg(QString("?, ").repeated(fieldsNames.size())));
 
 		if (!fieldsNames.isEmpty()) for (const auto& Index : i.value())
 		{
@@ -1147,7 +1147,7 @@ void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 	Settings.endGroup();
 
 	const QString Path = QString("%1/%2_%3.txt").arg(Logdir).arg(Title)
-					 .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
+	                     .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss"));
 
 	QFile File(Path); QTextStream Stream(&File);
 
@@ -1238,7 +1238,7 @@ void DatabaseDriver::loadList(const QStringList& Filter, int Index, int Action, 
 	emit onSetupProgress(0, Hash.size());
 
 	Query.prepare("SELECT O.UID, O.NUMER, O.IIP, K.NUMER FROM EW_OBIEKTY O "
-			    "LEFT JOIN EW_OPERATY K ON O.OPERAT = K.UID WHERE O.STATUS = 0");
+	              "LEFT JOIN EW_OPERATY K ON O.OPERAT = K.UID WHERE O.STATUS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 		if (!Query.value(Index).isNull() && Hash.contains(Query.value(Index).toString()))
@@ -1405,61 +1405,61 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 	const QMap<QString, QSet<int>> Tasks = getClassGroups(Items, false, 1);
 
 	QSqlQuery selectLines(Database), selectTexts(Database), selectUIDS(Database), selectCommon(Database),
-			QueryA(Database), QueryB(Database), QueryC(Database),
-			QueryD(Database), QueryE(Database), QueryF(Database);
+	          QueryA(Database), QueryB(Database), QueryC(Database),
+	          QueryD(Database), QueryE(Database), QueryF(Database);
 
 	QSet<int> Lines, Texts, Common; QHash<int, int> UIDS; int Step = 0;
 	const QString deleteQuery = QString("DELETE FROM %1 WHERE UIDO = ?");
 
 	selectCommon.prepare(
-		"SELECT "
-			"E.UIDO, E.IDE "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"E.TYP = 0 AND O.STATUS = 0");
+	     "SELECT "
+	          "E.UIDO, E.IDE "
+	     "FROM "
+	          "EW_OB_ELEMENTY E "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "WHERE "
+	          "E.TYP = 0 AND O.STATUS = 0");
 
 	selectLines.prepare(
-		"SELECT "
-			"O.UID, P.ID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "O.UID, P.ID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	selectTexts.prepare(
-		"SELECT "
-			"O.UID, P.ID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "O.UID, P.ID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	selectUIDS.prepare("SELECT DISTINCT UID, ID FROM EW_OBIEKTY WHERE STATUS = 0");
 
@@ -1483,7 +1483,7 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 	if (selectUIDS.exec()) while (selectUIDS.next() && !isTerminated())
 	{
 		UIDS.insert(selectUIDS.value(0).toInt(),
-				  selectUIDS.value(1).toInt());
+		            selectUIDS.value(1).toInt());
 	}
 
 	emit onBeginProgress(tr("Loading items"));
@@ -1668,7 +1668,7 @@ void DatabaseDriver::execScript(const QSet<int>& Items, const QString& Script)
 	emit onSetupProgress(0, 0); int Step = 0;
 
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
-										 .replaceInStrings(QRegExp("\\s+"), "_");
+	                                              .replaceInStrings(QRegExp("\\s+"), "_");
 
 	QMutex Synchronizer; const int Size = Props.size();
 
@@ -1767,13 +1767,13 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 	emit onSetupProgress(0, Tasks[Point].size());
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, O.ID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.KOD = :kod");
+	     "SELECT "
+	          "O.UID, O.ID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.KOD = :kod");
 
 	Query.bindValue(":kod", Point);
 
@@ -1791,17 +1791,17 @@ void DatabaseDriver::splitData(const QSet<int>& Items, const QString& Point, con
 	emit onSetupProgress(0, Tasks[From].size()); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"E.UIDO, E.IDE "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"E.TYP = 1 AND "
-			"O.STATUS = 0");
+	     "SELECT "
+	          "E.UIDO, E.IDE "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "WHERE "
+	          "E.TYP = 1 AND "
+	          "O.STATUS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -1856,17 +1856,17 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	emit onSetupProgress(0, 0);
 
 	Query.prepare(
-		"SELECT DISTINCT "
-			"E.IDE "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"E.TYP = 1 AND "
-			"O.STATUS = 0");
+	     "SELECT DISTINCT "
+	          "E.IDE "
+	     "FROM "
+	          "EW_OB_ELEMENTY E "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "E.TYP = 1 AND "
+	          "O.STATUS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -1887,25 +1887,25 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	emit onSetupProgress(0, Tasks[Point].size()); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, O.ID, "
-			"T.POS_X, T.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER "
-			"JOIN EW_TEXT T "
-		"ON "
-			"(E.IDE = T.ID AND E.TYP = 0) "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"T.TYP = 4 AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4");
+	     "SELECT "
+	          "O.UID, O.ID, "
+	          "T.POS_X, T.POS_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER "
+	          "JOIN EW_TEXT T "
+	     "ON "
+	          "(E.IDE = T.ID AND E.TYP = 0) "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "T.TYP = 4 AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 4");
 
 	Query.addBindValue(Point);
 
@@ -1918,9 +1918,9 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 		{
 			if (!Joined.contains(ID)) Points.append(
 			{
-				Query.value(1).toInt(),
-				Query.value(2).toDouble(),
-				Query.value(3).toDouble()
+			     Query.value(1).toInt(),
+			     Query.value(2).toDouble(),
+			     Query.value(3).toDouble()
 			});
 
 			emit onUpdateProgress(++Step);
@@ -1931,18 +1931,18 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	emit onSetupProgress(0, Tasks[Join].size()); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"E.UIDO, E.IDE "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"O.KOD = ? AND "
-			"E.TYP = 1 AND "
-			"O.STATUS = 0");
+	     "SELECT "
+	          "E.UIDO, E.IDE "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "E.TYP = 1 AND "
+	          "O.STATUS = 0");
 
 	Query.addBindValue(Join);
 
@@ -2020,18 +2020,18 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 	if (isTerminated()) { emit onEndProgress(); emit onDataJoin(0); return; }
 
 	QueryA.prepare(
-		"INSERT INTO "
-			"EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
-		"VALUES "
-			"(?, ?, 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?) + 1, 0)");
+	     "INSERT INTO "
+	          "EW_OB_ELEMENTY (UIDO, IDE, TYP, N, ATRYBUT) "
+	     "VALUES "
+	          "(?, ?, 1, (SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?) + 1, 0)");
 
 	QueryB.prepare(
-		"UPDATE "
-			"EW_OBIEKTY "
-		"SET "
-			"OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = ?) "
-		"WHERE "
-			"ID = ?");
+	     "UPDATE "
+	          "EW_OBIEKTY "
+	     "SET "
+	          "OPERAT = (SELECT OPERAT FROM EW_OBIEKTY WHERE UID = ?) "
+	     "WHERE "
+	          "ID = ?");
 
 	for (auto i = Insert.constBegin(); i != Insert.constEnd(); ++i)
 	{
@@ -2131,61 +2131,61 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	if (!Points.isEmpty())
 	{
 		Query.prepare(QString(
-			"SELECT "
-				"ROUND(T.POS_X, 5), "
-				"ROUND(T.POS_Y, 5), "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_TEXT T "
-			"ON "
-				"E.IDE = T.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 4 AND "
-				"E.TYP = 0 AND "
-				"T.STAN_ZMIANY = 0 AND "
-				"T.TYP = 4 AND "
-				"O.KOD IN ('%1')")
-				    .arg(Points.join("', '")));
+		     "SELECT "
+		          "ROUND(T.POS_X, 5), "
+		          "ROUND(T.POS_Y, 5), "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_TEXT T "
+		     "ON "
+		          "E.IDE = T.ID "
+		     "WHERE "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 4 AND "
+		          "E.TYP = 0 AND "
+		          "T.STAN_ZMIANY = 0 AND "
+		          "T.TYP = 4 AND "
+		          "O.KOD IN ('%1')")
+		              .arg(Points.join("', '")));
 
 		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
+		     Query.value(0).toDouble(),
+		     Query.value(1).toDouble()
 		});
 
 		Query.prepare(QString(
-			"SELECT "
-				"ROUND((P.P0_X + P.P1_X) / 2.0, 5), "
-				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 5) "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"E.IDE = P.ID "
-			"WHERE "
-				"P.STAN_ZMIANY = 0 AND "
-				"P.P1_FLAGS = 4 AND "
-				"E.TYP = 0 AND "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 3 AND "
-				"O.KOD IN ('%1')")
-				    .arg(Points.join("', '")));
+		     "SELECT "
+		          "ROUND((P.P0_X + P.P1_X) / 2.0, 5), "
+		          "ROUND((P.P0_Y + P.P1_Y) / 2.0, 5) "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_POLYLINE P "
+		     "ON "
+		          "E.IDE = P.ID "
+		     "WHERE "
+		          "P.STAN_ZMIANY = 0 AND "
+		          "P.P1_FLAGS = 4 AND "
+		          "E.TYP = 0 AND "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 3 AND "
+		          "O.KOD IN ('%1')")
+		              .arg(Points.join("', '")));
 
 		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
+		     Query.value(0).toDouble(),
+		     Query.value(1).toDouble()
 		});
 	}
 
@@ -2193,31 +2193,31 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 	emit onSetupProgress(0, Items.size()); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, "
-			"ROUND(P.P0_X, 5), ROUND(P.P0_Y, 5), "
-			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 5), "
-			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 5), "
-			"E.IDE, E.TYP, IIF(P.ID IS NULL, 1, 0) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"LEFT JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"("
-				"E.IDE = P.ID AND "
-				"P.STAN_ZMIANY = 0 AND "
-				"E.TYP = 0 "
-			")"
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 "
-		"ORDER BY "
-			"O.UID, E.N ASC");
+	     "SELECT "
+	          "O.UID, "
+	          "ROUND(P.P0_X, 5), ROUND(P.P0_Y, 5), "
+	          "ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 5), "
+	          "ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 5), "
+	          "E.IDE, E.TYP, IIF(P.ID IS NULL, 1, 0) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "LEFT JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "("
+	               "E.IDE = P.ID AND "
+	               "P.STAN_ZMIANY = 0 AND "
+	               "E.TYP = 0 "
+	          ")"
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 2 "
+	     "ORDER BY "
+	          "O.UID, E.N ASC");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -2232,17 +2232,17 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 
 			if (Query.value(7).toBool()) Additions[ID].append(
 			{
-				{
-					Query.value(5).toInt(),
-					Query.value(6).toInt()
-				}
+			     {
+			          Query.value(5).toInt(),
+			          Query.value(6).toInt()
+			     }
 			});
 			else Geometries[ID].append(
 			{
-				Query.value(5).toInt(),
-				{
-					PointA, PointB
-				}
+			     Query.value(5).toInt(),
+			     {
+			          PointA, PointB
+			     }
 			});
 
 			appendCount(PointA, Cuts, Counts);
@@ -2384,7 +2384,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 			if (!obValues.isEmpty())
 			{
 				Query.prepare(QString("UPDATE OR INSERT INTO EW_OBIEKTY VALUES (%1%2) MATCHING (UID)")
-						    .arg(Index).arg(QString(",?").repeated(obValues.size())));
+				              .arg(Index).arg(QString(",?").repeated(obValues.size())));
 
 				for (const auto& V : obValues) Query.addBindValue(V); Query.exec();
 			}
@@ -2392,7 +2392,7 @@ void DatabaseDriver::mergeData(const QSet<int>& Items, const QList<int>& Values,
 			if (!ddValues.isEmpty())
 			{
 				Query.prepare(QString("UPDATE OR INSERT INTO %1 VALUES (%2%3) MATCHING (UIDO)")
-						    .arg(Table.Data).arg(Index).arg(QString(",?").repeated(ddValues.size())));
+				              .arg(Table.Data).arg(Index).arg(QString(",?").repeated(ddValues.size())));
 
 				for (const auto& V : ddValues) Query.addBindValue(V); Query.exec();
 			}
@@ -2511,61 +2511,61 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 	if (!Points.isEmpty())
 	{
 		Query.prepare(QString(
-			"SELECT "
-				"ROUND(T.POS_X, 3), "
-				"ROUND(T.POS_Y, 3) "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_TEXT T "
-			"ON "
-				"E.IDE = T.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 4 AND "
-				"E.TYP = 0 AND "
-				"T.STAN_ZMIANY = 0 AND "
-				"T.TYP = 4 AND "
-				"O.KOD IN ('%1')")
-				    .arg(Points.join("', '")));
+		     "SELECT "
+		          "ROUND(T.POS_X, 3), "
+		          "ROUND(T.POS_Y, 3) "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_TEXT T "
+		     "ON "
+		          "E.IDE = T.ID "
+		     "WHERE "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 4 AND "
+		          "E.TYP = 0 AND "
+		          "T.STAN_ZMIANY = 0 AND "
+		          "T.TYP = 4 AND "
+		          "O.KOD IN ('%1')")
+		              .arg(Points.join("', '")));
 
 		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
+		     Query.value(0).toDouble(),
+		     Query.value(1).toDouble()
 		});
 
 		Query.prepare(QString(
-			"SELECT "
-				"ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
-				"ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"E.IDE = P.ID "
-			"WHERE "
-				"P.STAN_ZMIANY = 0 AND "
-				"P.P1_FLAGS = 4 AND "
-				"E.TYP = 0 AND "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 3 AND "
-				"O.KOD IN ('%1')")
-				    .arg(Points.join("', '")));
+		     "SELECT "
+		          "ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
+		          "ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_POLYLINE P "
+		     "ON "
+		          "E.IDE = P.ID "
+		     "WHERE "
+		          "P.STAN_ZMIANY = 0 AND "
+		          "P.P1_FLAGS = 4 AND "
+		          "E.TYP = 0 AND "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 3 AND "
+		          "O.KOD IN ('%1')")
+		              .arg(Points.join("', '")));
 
 		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
+		     Query.value(0).toDouble(),
+		     Query.value(1).toDouble()
 		});
 	}
 
@@ -2575,25 +2575,25 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		QHash<int, QSet<QPair<double, double>>> Unique;
 
 		Query.prepare(
-			"SELECT "
-				"O.UID, ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
-				"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 3), "
-				"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 3) "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"E.IDE = P.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 2 AND "
-				"E.TYP = 0 AND "
-				"P.STAN_ZMIANY = 0");
+		     "SELECT "
+		          "O.UID, ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
+		          "ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 3), "
+		          "ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 3) "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_POLYLINE P "
+		     "ON "
+		          "E.IDE = P.ID "
+		     "WHERE "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 2 AND "
+		          "E.TYP = 0 AND "
+		          "P.STAN_ZMIANY = 0");
 
 		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
@@ -2633,28 +2633,28 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, E.IDE, E.N, "
-			"ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
-			"ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 3), "
-			"ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 3) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 "
-		"ORDER BY "
-			"O.UID, E.N ASC");
+	     "SELECT "
+	          "O.UID, E.IDE, E.N, "
+	          "ROUND(P.P0_X, 3), ROUND(P.P0_Y, 3), "
+	          "ROUND(IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), 3), "
+	          "ROUND(IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), 3) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 2 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0 "
+	     "ORDER BY "
+	          "O.UID, E.N ASC");
 
 	if (Query.exec()) while (Query.next() && !isTerminated()) if (Tasks.first().contains(Query.value(0).toInt()))
 	{
@@ -2664,12 +2664,12 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 		Parts[ID].Lines.append(
 		{
-			Query.value(1).toInt(),
-			Query.value(2).toInt(),
-			Query.value(3).toDouble(),
-			Query.value(4).toDouble(),
-			Query.value(5).toDouble(),
-			Query.value(6).toDouble(),
+		     Query.value(1).toInt(),
+		     Query.value(2).toInt(),
+		     Query.value(3).toDouble(),
+		     Query.value(4).toDouble(),
+		     Query.value(5).toDouble(),
+		     Query.value(6).toDouble(),
 		});
 	}
 
@@ -2707,26 +2707,26 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, E.IDE, "
-			"IIF(T.ODN_X IS NULL, T.POS_X, T.POS_X + T.ODN_X), "
-			"IIF(T.ODN_Y IS NULL, T.POS_Y, T.POS_Y + T.ODN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT T "
-		"ON "
-			"E.IDE = T.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
-			"T.TYP = 6 AND "
-			"E.TYP = 0 AND "
-			"T.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "O.UID, E.IDE, "
+	          "IIF(T.ODN_X IS NULL, T.POS_X, T.POS_X + T.ODN_X), "
+	          "IIF(T.ODN_Y IS NULL, T.POS_Y, T.POS_Y + T.ODN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT T "
+	     "ON "
+	          "E.IDE = T.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 2 AND "
+	          "T.TYP = 6 AND "
+	          "E.TYP = 0 AND "
+	          "T.STAN_ZMIANY = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated()) if (Queue.contains(Query.value(0).toInt()))
 	{
@@ -2734,67 +2734,67 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 		if (Parts.contains(ID)) Parts[ID].Labels.append(
 		{
-			Query.value(1).toInt(), 0,
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble()
+		     Query.value(1).toInt(), 0,
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble()
 		});
 	}
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, E.IDE, ("
-			"SELECT "
-				"TE.POS_X "
-			"FROM "
-				"EW_OB_ELEMENTY EL "
-			"INNER JOIN "
-				"EW_TEXT TE "
-			"ON "
-				"EL.IDE = TE.ID "
-			"WHERE "
-				"EL.TYP = 0 AND "
-				"TE.TYP = 4 AND "
-				"TE.STAN_ZMIANY = 0 AND "
-				"EL.UIDO = ("
-					"SELECT FIRST 1 "
-						"OB.UID "
-					"FROM "
-						"EW_OBIEKTY OB "
-					"WHERE "
-						"OB.ID = E.IDE AND "
-						"OB.STATUS = 0)"
-			"), ("
-			"SELECT "
-				"TE.POS_Y "
-			"FROM "
-				"EW_OB_ELEMENTY EL "
-			"INNER JOIN "
-				"EW_TEXT TE "
-			"ON "
-				"EL.IDE = TE.ID "
-			"WHERE "
-				"EL.TYP = 0 AND "
-				"TE.TYP = 4 AND "
-				"TE.STAN_ZMIANY = 0 AND "
-				"EL.UIDO = ("
-					"SELECT FIRST 1 "
-						"OB.UID "
-					"FROM "
-						"EW_OBIEKTY OB "
-					"WHERE "
-						"OB.ID = E.IDE AND "
-						"OB.STATUS = 0)"
-			") "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
-			"E.TYP = 1");
+	     "SELECT "
+	          "O.UID, E.IDE, ("
+	          "SELECT "
+	               "TE.POS_X "
+	          "FROM "
+	               "EW_OB_ELEMENTY EL "
+	          "INNER JOIN "
+	               "EW_TEXT TE "
+	          "ON "
+	               "EL.IDE = TE.ID "
+	          "WHERE "
+	               "EL.TYP = 0 AND "
+	               "TE.TYP = 4 AND "
+	               "TE.STAN_ZMIANY = 0 AND "
+	               "EL.UIDO = ("
+	                    "SELECT FIRST 1 "
+	                         "OB.UID "
+	                    "FROM "
+	                         "EW_OBIEKTY OB "
+	                    "WHERE "
+	                         "OB.ID = E.IDE AND "
+	                         "OB.STATUS = 0)"
+	          "), ("
+	          "SELECT "
+	               "TE.POS_Y "
+	          "FROM "
+	               "EW_OB_ELEMENTY EL "
+	          "INNER JOIN "
+	               "EW_TEXT TE "
+	          "ON "
+	               "EL.IDE = TE.ID "
+	          "WHERE "
+	               "EL.TYP = 0 AND "
+	               "TE.TYP = 4 AND "
+	               "TE.STAN_ZMIANY = 0 AND "
+	               "EL.UIDO = ("
+	                    "SELECT FIRST 1 "
+	                         "OB.UID "
+	                    "FROM "
+	                         "EW_OBIEKTY OB "
+	                    "WHERE "
+	                         "OB.ID = E.IDE AND "
+	                         "OB.STATUS = 0)"
+	          ") "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 2 AND "
+	          "E.TYP = 1");
 
 	if (Query.exec()) while (Query.next() && !isTerminated()) if (Queue.contains(Query.value(0).toInt()))
 	{
@@ -2802,9 +2802,9 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 
 		if (Parts.contains(ID)) Parts[ID].Objects.append(
 		{
-			Query.value(1).toInt(), 0,
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble()
+		     Query.value(1).toInt(), 0,
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble()
 		});
 	}
 
@@ -2822,11 +2822,11 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		QStringList Names; for (const auto& Field : Table.Fields) Names.append(QString(Field.Name).remove("EW_DATA."));
 
 		const QString dataInsert = QString("INSERT INTO %1 (UIDO, %2) "
-									"SELECT %3, %2 FROM %1 WHERE UIDO = %4")
-							  .arg(Table.Data).arg(Names.join(", "));
+		                                   "SELECT %3, %2 FROM %1 WHERE UIDO = %4")
+		                           .arg(Table.Data).arg(Names.join(", "));
 
 		const QString objectInsert = QString("INSERT INTO EW_OBIEKTY (UID, NUMER, IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS) "
-									  "SELECT %1, 'OB_ID_' || '%2', IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %3");
+		                                     "SELECT %1, 'OB_ID_' || '%2', IDKATALOG, KOD, RODZAJ, OSOU, OSOW, DTU, DTW, OPERAT, STATUS FROM EW_OBIEKTY WHERE UID = %3");
 
 		for (auto i = Queue.constBegin(); i != Queue.constEnd(); ++i) if (t.value().contains(i.key()))
 		{
@@ -2854,24 +2854,24 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 				for (const auto& Line : Parts[i.key()].Lines) if (Line.N > From && Line.N <= To)
 				{
 					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-								    "VALUES (%1, %2, 0, %3)")
-							 .arg(Index).arg(Line.ID).arg(++n));
+					                   "VALUES (%1, %2, 0, %3)")
+					           .arg(Index).arg(Line.ID).arg(++n));
 				}
 
 				for (const auto& Line : Parts[i.key()].Lines) if (Line.N > From && Line.N <= To)
 					for (const auto& T : Parts[i.key()].Labels) if (T.LID == Line.ID)
 					{
 						Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-									    "VALUES (%1, %2, 0, %3)")
-								 .arg(Index).arg(T.ID).arg(++n));
+						                   "VALUES (%1, %2, 0, %3)")
+						           .arg(Index).arg(T.ID).arg(++n));
 					}
 
 				for (const auto& Line : Parts[i.key()].Lines) if (Line.N > From && Line.N <= To)
 					for (const auto& T : Parts[i.key()].Objects) if (T.LID == Line.ID)
 					{
 						Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-									    "VALUES (%1, %2, 1, %3)")
-								 .arg(Index).arg(T.ID).arg(++n));
+						                   "VALUES (%1, %2, 1, %3)")
+						           .arg(Index).arg(T.ID).arg(++n));
 					}
 			}
 
@@ -2879,16 +2879,16 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 				for (const auto& T : Parts[i.key()].Labels) if (T.LID == Line.ID)
 				{
 					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-								    "VALUES (%1, %2, 0, %3)")
-							 .arg(i.key()).arg(T.ID).arg(++on));
+					                   "VALUES (%1, %2, 0, %3)")
+					           .arg(i.key()).arg(T.ID).arg(++on));
 				}
 
 			for (const auto& Line : Parts[i.key()].Lines) if (Line.N <= Jobs.first())
 				for (const auto& T : Parts[i.key()].Objects) if (T.LID == Line.ID)
 				{
 					Query.exec(QString("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-								    "VALUES (%1, %2, 1, %3)")
-							 .arg(i.key()).arg(T.ID).arg(++on));
+					                   "VALUES (%1, %2, 1, %3)")
+					           .arg(i.key()).arg(T.ID).arg(++on));
 				}
 
 			emit onUpdateProgress(++Step);
@@ -2907,7 +2907,7 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); QSet<int> Lines, Symbols, Texts;
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol; int Step = 0;
 	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database),
-			ClassQuery(Database), selectLines(Database), selectTexts(Database);
+	          ClassQuery(Database), selectLines(Database), selectTexts(Database);
 
 	const int Type = Class != "NULL" ? getItemByField(Tables, Class, &TABLE::Name).Type : 0;
 
@@ -2986,69 +2986,69 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 	}
 
 	selectLines.prepare(
-		"SELECT "
-			"O.UID, P.ID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "O.UID, P.ID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	selectTexts.prepare(
-		"SELECT "
-			"O.UID, P.TYP, P.ID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "O.UID, P.TYP, P.ID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	LineQuery.prepare(
-		"UPDATE "
-			"EW_POLYLINE "
-		"SET "
-			"TYP_LINII = COALESCE(?, TYP_LINII), "
-			"ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
-		"WHERE "
-			"ID = ?");
+	     "UPDATE "
+	          "EW_POLYLINE "
+	     "SET "
+	          "TYP_LINII = COALESCE(?, TYP_LINII), "
+	          "ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
+	     "WHERE "
+	          "ID = ?");
 
 	SymbolQuery.prepare(
-		"UPDATE "
-			"EW_TEXT "
-		"SET "
-			"TEXT = COALESCE(?, TEXT), "
-			"ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
-		"WHERE "
-			"ID = ?");
+	     "UPDATE "
+	          "EW_TEXT "
+	     "SET "
+	          "TEXT = COALESCE(?, TEXT), "
+	          "ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
+	     "WHERE "
+	          "ID = ?");
 
 	LabelQuery.prepare(
-		"UPDATE "
-			"EW_TEXT "
-		"SET "
-			"TEXT = COALESCE(?, TEXT), "
-			"ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
-		"WHERE "
-			"ID = ?");
+	     "UPDATE "
+	          "EW_TEXT "
+	     "SET "
+	          "TEXT = COALESCE(?, TEXT), "
+	          "ID_WARSTWY = COALESCE(?, ID_WARSTWY) "
+	     "WHERE "
+	          "ID = ?");
 
 	ClassQuery.prepare("UPDATE EW_OBIEKTY SET KOD = ? WHERE UID = ?");
 
@@ -3108,16 +3108,16 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 		for (const auto& Item : i.value()) if (Change.contains(Item))
 		{
 			Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
-						    "SELECT UIDO, %2 FROM %3 "
-						    "WHERE UIDO = '%4'")
-					 .arg(Table.Data)
-					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
-					 .arg(i.key())
-					 .arg(Item));
+			                   "SELECT UIDO, %2 FROM %3 "
+			                   "WHERE UIDO = '%4'")
+			           .arg(Table.Data)
+			           .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+			           .arg(i.key())
+			           .arg(Item));
 
 			Query.exec(QString("DELETE FROM %1 WHERE UIDO = '%2'")
-					 .arg(i.key())
-					 .arg(Item));
+			           .arg(i.key())
+			           .arg(Item));
 
 			ClassQuery.addBindValue(Class);
 			ClassQuery.addBindValue(Item);
@@ -3197,7 +3197,7 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 	const auto& Table = getItemByField(Tables, Class, &TABLE::Name); int Step = 0;
 	QSqlQuery Query(Database); Query.setForwardOnly(true); int LineStyle(0); QString NewSymbol;
 	QSqlQuery LineQuery(Database), SymbolQuery(Database), LabelQuery(Database),
-			ClassQuery(Database), ElementsQuery(Database), GeometryQuery(Database);
+	          ClassQuery(Database), ElementsQuery(Database), GeometryQuery(Database);
 
 	QSqlQuery getUidQuery(Database), getIdQuery(Database);
 
@@ -3226,74 +3226,74 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 	}
 
 	LineQuery.prepare(
-		"INSERT INTO "
-			"EW_POLYLINE (ID, ID_WARSTWY, TYP_LINII, STAN_ZMIANY, OPERAT, POINTCOUNT, P0_X, P0_Y, P1_FLAGS, P1_X, P1_Y, PN_X, PN_Y) "
-		"SELECT "
-			"?, ?, ?, 0, OPERAT, POINTCOUNT, P0_X, P0_Y, P1_FLAGS, P1_X, P1_Y, PN_X, PN_Y "
-		"FROM "
-			"EW_POLYLINE "
-		"WHERE "
-			"ID = ?");
+	     "INSERT INTO "
+	          "EW_POLYLINE (ID, ID_WARSTWY, TYP_LINII, STAN_ZMIANY, OPERAT, POINTCOUNT, P0_X, P0_Y, P1_FLAGS, P1_X, P1_Y, PN_X, PN_Y) "
+	     "SELECT "
+	          "?, ?, ?, 0, OPERAT, POINTCOUNT, P0_X, P0_Y, P1_FLAGS, P1_X, P1_Y, PN_X, PN_Y "
+	     "FROM "
+	          "EW_POLYLINE "
+	     "WHERE "
+	          "ID = ?");
 
 	SymbolQuery.prepare(
-		"INSERT INTO "
-			"EW_TEXT (ID, ID_WARSTWY, TEXT, STAN_ZMIANY, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP) "
-		"SELECT "
-			"?, ?, ?, 0, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP "
-		"FROM "
-			"EW_TEXT "
-		"WHERE "
-			"ID = ?");
+	     "INSERT INTO "
+	          "EW_TEXT (ID, ID_WARSTWY, TEXT, STAN_ZMIANY, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP) "
+	     "SELECT "
+	          "?, ?, ?, 0, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP "
+	     "FROM "
+	          "EW_TEXT "
+	     "WHERE "
+	          "ID = ?");
 
 	LabelQuery.prepare(
-		"INSERT INTO "
-			"EW_TEXT (ID, ID_WARSTWY, TEXT, STAN_ZMIANY, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP) "
-		"SELECT "
-			"?, ?, TEXT, 0, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP "
-		"FROM "
-			"EW_TEXT "
-		"WHERE "
-			"ID = ?");
+	     "INSERT INTO "
+	          "EW_TEXT (ID, ID_WARSTWY, TEXT, STAN_ZMIANY, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP) "
+	     "SELECT "
+	          "?, ?, TEXT, 0, OPERAT, KAT, POS_X, POS_Y, JUSTYFIKACJA, ODN_X, ODN_Y, TYP "
+	     "FROM "
+	          "EW_TEXT "
+	     "WHERE "
+	          "ID = ?");
 
 	ClassQuery.prepare(
-		"INSERT INTO "
-			"EW_OBIEKTY (UID, NUMER, KOD, STATUS, IDKATALOG, RODZAJ, OSOU, OSOW, DTU, DTR, OPERAT) "
-		"SELECT "
-			"?, ?, ?, 0, IDKATALOG, RODZAJ, OSOU, OSOW, DTU, DTR, OPERAT "
-		"FROM "
-			"EW_OBIEKTY "
-		"WHERE "
-			"UIDO = ?");
+	     "INSERT INTO "
+	          "EW_OBIEKTY (UID, NUMER, KOD, STATUS, IDKATALOG, RODZAJ, OSOU, OSOW, DTU, DTR, OPERAT) "
+	     "SELECT "
+	          "?, ?, ?, 0, IDKATALOG, RODZAJ, OSOU, OSOW, DTU, DTR, OPERAT "
+	     "FROM "
+	          "EW_OBIEKTY "
+	     "WHERE "
+	          "UIDO = ?");
 
 	ElementsQuery.prepare(
-		"INSERT INTO "
-			"EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
-		"VALUES "
-			"(?, ?, 0, ?)");
+	     "INSERT INTO "
+	          "EW_OB_ELEMENTY (UIDO, IDE, TYP, N) "
+	     "VALUES "
+	          "(?, ?, 0, ?)");
 
 	GeometryQuery.prepare(
-		"SELECT "
-			"E.UIDO, E.IDE, T.TYP "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"LEFT JOIN "
-			"EW_TEXT T "
-		"ON "
-			"(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
-		"LEFT JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 "
-		"ORDER BY "
-			"O.UID ASC, "
-			"E.N ASC");
+	     "SELECT "
+	          "E.UIDO, E.IDE, T.TYP "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "LEFT JOIN "
+	          "EW_TEXT T "
+	     "ON "
+	          "(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
+	     "LEFT JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 "
+	     "ORDER BY "
+	          "O.UID ASC, "
+	          "E.N ASC");
 
 	getUidQuery.prepare("SELECT GEN_ID(EW_OBIEKTY_UID_GEN, 1) FROM RDB$DATABASE");
 	getIdQuery.prepare("SELECT GEN_ID(EW_OBIEKTY_ID_GEN, 1) FROM RDB$DATABASE");
@@ -3327,8 +3327,8 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 
 			Elements[UID].append(
 			{
-				GeometryQuery.value(1).toInt(),
-				GeometryQuery.value(2).toInt()
+			     GeometryQuery.value(1).toInt(),
+			     GeometryQuery.value(2).toInt()
 			});
 
 			emit onUpdateProgress(++Step);
@@ -3366,13 +3366,13 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 			const QString Numer = QString("OB_ID_%1%2").arg(qHash(QDateTime::currentMSecsSinceEpoch()), 0, 16).arg(qHash(UIDO), 0, 16);
 
 			Query.exec(QString("INSERT INTO %1 (UIDO, %2) "
-						    "SELECT '%3', %2 FROM %4 "
-						    "WHERE UIDO = '%5'")
-					 .arg(Table.Data)
-					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
-					 .arg(UIDO)
-					 .arg(i.key())
-					 .arg(Item));
+			                   "SELECT '%3', %2 FROM %4 "
+			                   "WHERE UIDO = '%5'")
+			           .arg(Table.Data)
+			           .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+			           .arg(UIDO)
+			           .arg(i.key())
+			           .arg(Item));
 
 			ClassQuery.addBindValue(UIDO);
 			ClassQuery.addBindValue(Numer);
@@ -3448,7 +3448,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 
 	QHash<int, DATA> Objects; QList<LINE> lUpdates; QList<POINT> pUpdates;
 	QSqlQuery LoadLines(Database), LoadPoints(Database),
-			UpdateLines(Database), UpdatePoints(Database);
+	          UpdateLines(Database), UpdatePoints(Database);
 
 	QMutex Synchronizer; int Step = 0; if (Jobtype == 0) X2 = Y2 = 0;
 
@@ -3460,46 +3460,46 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 	Settings.endGroup();
 
 	LoadLines.prepare(
-		"SELECT "
-			"O.UID, P.ID, P.P1_FLAGS, P.P0_X, P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ IN (2, 3) AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, P.ID, P.P1_FLAGS, P.P0_X, P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ IN (2, 3) AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0");
 
 	LoadPoints.prepare(
-		"SELECT "
-			"O.UID, P.ID, "
-			"P.POS_X, P.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.TYP = 4 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, P.ID, "
+	          "P.POS_X, P.POS_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 4 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.TYP = 4 AND "
+	          "E.TYP = 0");
 
 	UpdateLines.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ? AND STAN_ZMIANY = 0");
 	UpdatePoints.prepare("UPDATE EW_TEXT SET POS_X = ?, POS_Y = ? WHERE ID = ? AND STAN_ZMIANY = 0");
@@ -3577,11 +3577,11 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 		if (Items.contains(UID))
 		{
 			pUpdates.append({
-				LoadPoints.value(1).toInt(),
-				{
-					LoadPoints.value(2).toDouble(),
-					LoadPoints.value(3).toDouble()
-				}
+			     LoadPoints.value(1).toInt(),
+			     {
+			          LoadPoints.value(2).toDouble(),
+			          LoadPoints.value(3).toDouble()
+			     }
 			});
 
 			emit onUpdateProgress(++Step);
@@ -3641,7 +3641,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 			const QLineF& L = Object.Lines[i]; QLineF Current = L;
 
 			const bool isEnd = Object.Points.contains(L.p1()) ||
-						    Object.Points.contains(L.p2());
+			                   Object.Points.contains(L.p2());
 
 			if (Endings && !isEnd) continue;
 
@@ -3720,7 +3720,7 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 			const QLineF& L = Object.Lines[i]; QLineF Current = L;
 
 			const bool isEnd = Object.Points.contains(L.p1()) ||
-						    Object.Points.contains(L.p2());
+			                   Object.Points.contains(L.p2());
 
 			if (Endings && !isEnd) continue;
 
@@ -3990,6 +3990,378 @@ void DatabaseDriver::fitData(const QSet<int>& Items, const QString& Path, int Jo
 	emit onDataFit(lUpdates.size() + pUpdates.size() - Rejected);
 }
 
+void DatabaseDriver::unifyData(const QSet<int>& Items, double Radius)
+{
+	if (!Database.open()) { emit onDataUnify(0); return; }
+
+	QList<QPointF> Points; int Step(0);
+
+	emit onBeginProgress(tr("Loading points"));
+	emit onSetupProgress(0, 0);
+
+	Terminator.lock(); Terminated = false; Terminator.unlock();
+
+	QSqlQuery Query(Database); QList<QPointF> Base; QMutex Locker;
+	QList<QPair<QPointF*, QSet<QPointF*>>> Pools; QSet<QPointF*> Rem;
+
+	Query.prepare(
+	               "SELECT "
+	               "T.POS_X, T.POS_Y, O.UID "
+	               "FROM "
+	               "EW_TEXT T "
+	               "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = T.ID "
+	               "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	               "WHERE "
+	               "T.STAN_ZMIANY = 0 AND "
+	               "T.TYP = 4 AND "
+	               "O.STATUS = 0 "
+
+	               "UNION "
+	               "SELECT "
+	               "F.P0_X, F.P0_Y, O.UID "
+	               "FROM "
+	               "EW_POLYLINE F "
+	               "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = F.ID "
+	               "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	               "WHERE "
+	               "F.STAN_ZMIANY = 0 AND "
+	               "F.P1_FLAGS <> 4 AND "
+	               "O.STATUS = 0 "
+
+	               "UNION "
+	               "SELECT "
+	               "L.P1_X, L.P1_Y, O.UID "
+	               "FROM "
+	               "EW_POLYLINE L "
+	               "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = L.ID "
+	               "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	               "WHERE "
+	               "L.STAN_ZMIANY = 0 AND "
+	               "L.P1_FLAGS = 0 AND "
+	               "O.STATUS = 0 "
+
+	               "UNION "
+	               "SELECT "
+	               "A.PN_X, A.PN_Y, O.UID "
+	               "FROM "
+	               "EW_POLYLINE A "
+	               "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = A.ID "
+	               "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	               "WHERE "
+	               "A.STAN_ZMIANY = 0 AND "
+	               "A.P1_FLAGS = 2 AND "
+	               "O.STATUS = 0 "
+
+	               "UNION "
+	               "SELECT "
+	               "(C.P0_X + C.P1_X) / 2.0, "
+	               "(C.P0_Y + C.P1_Y) / 2.0, "
+	               "O.UID "
+	               "FROM "
+	               "EW_POLYLINE C "
+	               "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = C.ID "
+	               "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	               "WHERE "
+	               "C.STAN_ZMIANY = 0 AND "
+	               "C.P1_FLAGS = 4 AND "
+	               "O.STATUS = 0 "
+
+	               );
+
+	if (Query.exec()) while (Query.next())
+		if (Items.contains(Query.value(2).toInt()))
+			Base.append(
+			{
+			     Query.value(0).toDouble(),
+			     Query.value(1).toDouble()
+			});
+
+	emit onSetupProgress(0, Base.size() * 2);
+
+	QtConcurrent::blockingMap(Base, [this, &Pools, &Base, &Locker, &Step, Radius] (QPointF& I) -> void
+	{
+		QSet<QPointF*> List; for (auto& P : Base) if (&P != &I)
+		{
+			const double l = QLineF(I, P).length();
+
+			if (l <= Radius) List.insert(&P);
+		}
+
+		QMutexLocker Synchronizer(&Locker); emit onUpdateProgress(++Step);
+
+		for (int i = 0; i < Pools.size(); ++i)
+		{
+			if (List.size() >= Pools[i].second.size())
+			{
+				Pools.insert(i, qMakePair(&I, List)); return;
+			}
+		}
+
+		Pools.append(qMakePair(&I, List));
+	});
+
+	for (auto P : Pools) if (!Rem.contains(P.first))
+	{
+		double X(0.0), Y(0.0); unsigned Count(0); Rem.insert(P.first);
+
+		for (auto O : P.second) if (!Rem.contains(O))
+		{
+			X += O->x(); Y += O->y(); ++Count; Rem.insert(O);
+		}
+
+		if (Count)
+		{
+			X += P.first->x(); Y += P.first->y(); ++Count;
+
+			Points.append({ X / Count, Y / Count });
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onBeginProgress(tr("Fitting geometry"));
+	emit onSetupProgress(0, 0);
+
+	QList<QPair<int, QPointF>> Symbols;
+	QList<QPair<int, QLineF>> Circles;
+	QList<QPair<int, QLineF>> Lines;
+
+	QHash<int, QVariant> Updates;
+
+	Query.prepare(
+	     "SELECT "
+	          "P.ID, P.POS_X, P.POS_Y, O.UID "
+	     "FROM "
+	          "EW_TEXT P "
+	     "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = P.ID "
+	     "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	     "WHERE "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.TYP = 4 AND "
+	          "O.STATUS = 0");
+
+	if (Query.exec()) while (Query.next())
+		if (Items.contains(Query.value(3).toInt()))
+			Symbols.append(
+			{
+			     Query.value(0).toInt(),
+			     {
+			          Query.value(1).toDouble(),
+			          Query.value(2).toDouble()
+			     }
+			});
+
+	Query.prepare(
+	     "SELECT "
+	          "P.ID, P.P0_X, P.P0_Y, P.P1_X, P.P1_Y, O.UID "
+	     "FROM "
+	          "EW_POLYLINE P "
+	     "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = P.ID "
+	     "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	     "WHERE "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS = 4 AND "
+	          "O.STATUS = 0");
+
+	if (Query.exec()) while (Query.next())
+		if (Items.contains(Query.value(5).toInt()))
+			Circles.append(
+			{
+			     Query.value(0).toInt(),
+			     {
+			          {
+			               Query.value(1).toDouble(),
+			               Query.value(2).toDouble()
+			          },
+			          {
+			               Query.value(3).toDouble(),
+			               Query.value(4).toDouble()
+			          }
+			     }
+			});
+
+	Query.prepare(
+	     "SELECT "
+	          "P.ID, P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y),"
+	          "O.UID "
+	     "FROM "
+	          "EW_POLYLINE P "
+	     "INNER JOIN EW_OB_ELEMENTY E ON E.IDE = P.ID "
+	     "INNER JOIN EW_OBIEKTY O ON O.UID = E.UIDO "
+	     "WHERE "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS IN (0, 2) AND "
+	          "O.STATUS = 0");
+
+	if (Query.exec()) while (Query.next())
+		if (Items.contains(Query.value(5).toInt()))
+			Lines.append(
+			{
+			     Query.value(0).toInt(),
+			     {
+			          {
+			               Query.value(1).toDouble(),
+			               Query.value(2).toDouble()
+			          },
+			          {
+			               Query.value(3).toDouble(),
+			               Query.value(4).toDouble()
+			          }
+			     }
+			});
+
+	emit onSetupProgress(0, Symbols.size() + Circles.size() + Lines.size());
+
+	QtConcurrent::blockingMap(Symbols, [this, &Points, &Updates, &Locker, &Step, Radius] (QPair<int, QPointF>& S) -> void
+	{
+		double L = NAN; QPointF Found;
+
+		for (const auto& P : Points) if (P != S.second)
+		{
+			const double l = QLineF(S.second, P).length();
+
+			if (l <= Radius && (qIsNaN(L) || L > l))
+			{
+				L = l; Found = P;
+			}
+		}
+
+		if (Found != QPointF())
+		{
+			Locker.lock();
+			Updates.insert(S.first, Found);
+			Locker.unlock();
+		}
+
+		Locker.lock();
+		emit onUpdateProgress(++Step);
+		Locker.unlock();
+	});
+
+	QtConcurrent::blockingMap(Circles, [this, &Points, &Updates, &Locker, &Step, Radius] (QPair<int, QLineF>& S) -> void
+	{
+		double L = NAN; QPointF Found; QPointF C =
+		{
+		     (S.second.x1() + S.second.x2()) / 2.0,
+		     (S.second.y1() + S.second.y2()) / 2.0
+		};
+
+		const double R = qAbs(S.second.x1() - S.second.x2()) / 2.0;
+
+		for (const auto& P : Points) if (P != C)
+		{
+			const double l = QLineF(C, P).length();
+
+			if (l <= Radius && (qIsNaN(L) || L > l))
+			{
+				L = l; Found = P;
+			}
+		}
+
+		if (Found != QPointF())
+		{
+			QLineF Updated(Found.x() - R, Found.y(),
+			               Found.x() + R, Found.y());
+
+			Locker.lock();
+			Updates.insert(S.first, Updated);
+			Locker.unlock();
+		}
+
+		Locker.lock();
+		emit onUpdateProgress(++Step);
+		Locker.unlock();
+	});
+
+	QtConcurrent::blockingMap(Lines, [this, &Points, &Updates, &Locker, &Step, Radius] (QPair<int, QLineF>& S) -> void
+	{
+		double L1 = NAN, L2 = NAN; QPointF Found1, Found2;
+
+		for (const auto& P : Points) if (P != S.second.p1() || P != S.second.p2())
+		{
+			const double l1 = QLineF(S.second.p1(), P).length();
+			const double l2 = QLineF(S.second.p2(), P).length();
+
+			if (l1 <= Radius && (qIsNaN(L1) || L1 > l1))
+			{
+				L1 = l1; Found1 = P;
+			}
+
+			if (l2 <= Radius && (qIsNaN(L2) || L2 > l2))
+			{
+				L2 = l2; Found2 = P;
+			}
+		}
+
+		if (Found1 == Found2) return;
+		else if (Found1 != QPointF() || Found2 != QPointF())
+		{
+			QLineF Updated = S.second;
+
+			if (Found1 != QPointF()) Updated.setP1(Found1);
+			if (Found2 != QPointF()) Updated.setP2(Found2);
+
+			Locker.lock();
+			Updates.insert(S.first, Updated);
+			Locker.unlock();
+		}
+
+		Locker.lock();
+		emit onUpdateProgress(++Step);
+		Locker.unlock();
+	});
+
+	emit onBeginProgress(tr("Updating database"));
+	emit onSetupProgress(0, Updates.size());
+
+	QSqlQuery lineQuery(Database), roundQuery(Database), pointQuery(Database);
+
+	lineQuery.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ? WHERE ID = ? AND P1_FLAGS IN (0, 4)");
+	roundQuery.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, PN_X = ?, PN_Y = ? WHERE ID = ? AND P1_FLAGS IN (2)");
+	pointQuery.prepare("UPDATE EW_TEXT SET POS_X = ?, POS_Y = ? WHERE ID = ?");
+
+	for (auto i = Updates.constBegin(); i != Updates.constEnd(); ++i) if (!isTerminated())
+	{
+		if (i.value().type() == QVariant::PointF)
+		{
+			const auto P = i.value().toPointF();
+
+			pointQuery.addBindValue(P.x());
+			pointQuery.addBindValue(P.y());
+			pointQuery.addBindValue(i.key());
+
+			pointQuery.exec();
+		}
+		else if (i.value().type() == QVariant::LineF)
+		{
+			const auto L = i.value().toLineF();
+
+			lineQuery.addBindValue(L.x1());
+			lineQuery.addBindValue(L.y1());
+			lineQuery.addBindValue(L.x2());
+			lineQuery.addBindValue(L.y2());
+			lineQuery.addBindValue(i.key());
+
+			lineQuery.exec();
+
+			roundQuery.addBindValue(L.x1());
+			roundQuery.addBindValue(L.y1());
+			roundQuery.addBindValue(L.x2());
+			roundQuery.addBindValue(L.y2());
+			roundQuery.addBindValue(i.key());
+
+			roundQuery.exec();
+		}
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onDataUnify(Updates.size());
+}
+
 void DatabaseDriver::restoreJob(const QSet<int>& Items)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onJobsRestore(0); return; }
@@ -4001,31 +4373,31 @@ void DatabaseDriver::restoreJob(const QSet<int>& Items)
 	emit onSetupProgress(0, Tasks.first().size());
 
 	QueryA.prepare(
-		"SELECT "
-			"O.OPERAT "
-		"FROM "
-			"EW_OBIEKTY O "
-		"WHERE "
-			"O.UID = ?");
+	     "SELECT "
+	          "O.OPERAT "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "WHERE "
+	          "O.UID = ?");
 
 	QueryB.prepare(
-		"SELECT FIRST 1 "
-			"O.OPERAT "
-		"FROM "
-			"EW_OBIEKTY O "
-		"WHERE "
-			"O.STATUS = 3 AND O.ID = ("
-				"SELECT U.ID FROM EW_OBIEKTY U WHERE U.UID = ?"
-			") "
-		"ORDER BY O.DTR ASCENDING");
+	     "SELECT FIRST 1 "
+	          "O.OPERAT "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "WHERE "
+	          "O.STATUS = 3 AND O.ID = ("
+	               "SELECT U.ID FROM EW_OBIEKTY U WHERE U.UID = ?"
+	          ") "
+	     "ORDER BY O.DTR ASCENDING");
 
 	QueryC.prepare(
-		"UPDATE "
-			"EW_OBIEKTY O "
-		"SET "
-			"O.OPERAT = ? "
-		"WHERE "
-			"O.UID = ?");
+	     "UPDATE "
+	          "EW_OBIEKTY O "
+	     "SET "
+	          "O.OPERAT = ? "
+	     "WHERE "
+	          "O.UID = ?");
 
 	for (const auto& ID : Tasks.first())
 	{
@@ -4076,14 +4448,14 @@ void DatabaseDriver::removeHistory(const QSet<int>& Items)
 	emit onSetupProgress(0, Items.size());
 
 	QueryA.prepare(
-		"SELECT "
-			"O.UID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"WHERE "
-			"O.ID = ("
-				"SELECT U.ID FROM EW_OBIEKTY U WHERE U.UID = ?"
-			") AND O.STATUS = 3");
+	     "SELECT "
+	          "O.UID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "WHERE "
+	          "O.ID = ("
+	               "SELECT U.ID FROM EW_OBIEKTY U WHERE U.UID = ?"
+	          ") AND O.STATUS = 3");
 
 	QueryB.prepare("DELETE FROM EW_OBIEKTY WHERE UID = ?");
 	QueryC.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ?");
@@ -4153,22 +4525,22 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, 0);
 
 	Query.prepare(
-		"SELECT "
-			"S.UID, D.UID "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"INNER JOIN "
-			"EW_OBIEKTY S "
-		"ON "
-			"S.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_OBIEKTY D "
-		"ON "
-			"D.ID = E.IDE "
-		"WHERE "
-			"E.TYP = 1 AND "
-			"S.STATUS = 0 AND "
-			"D.STATUS = 0");
+	     "SELECT "
+	          "S.UID, D.UID "
+	     "FROM "
+	          "EW_OB_ELEMENTY E "
+	     "INNER JOIN "
+	          "EW_OBIEKTY S "
+	     "ON "
+	          "S.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_OBIEKTY D "
+	     "ON "
+	          "D.ID = E.IDE "
+	     "WHERE "
+	          "E.TYP = 1 AND "
+	          "S.STATUS = 0 AND "
+	          "D.STATUS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -4184,28 +4556,28 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, 0);
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, T.UID, T.TYP, "
-			"ROUND(T.POS_X, 3), "
-			"ROUND(T.POS_Y, 3), "
-			"T.JUSTYFIKACJA "
-		"FROM "
-			"EW_TEXT T "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"T.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4 AND "
-			"E.TYP = 0 AND "
-			"T.STAN_ZMIANY = 0 "
-		"ORDER BY "
-			"T.TYP DESC");
+	     "SELECT "
+	          "O.UID, T.UID, T.TYP, "
+	          "ROUND(T.POS_X, 3), "
+	          "ROUND(T.POS_Y, 3), "
+	          "T.JUSTYFIKACJA "
+	     "FROM "
+	          "EW_TEXT T "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "T.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 4 AND "
+	          "E.TYP = 0 AND "
+	          "T.STAN_ZMIANY = 0 "
+	     "ORDER BY "
+	          "T.TYP DESC");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -4241,38 +4613,38 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"E.UIDO, E.IDE, "
-			"ROUND(P.P0_X, 3), "
-			"ROUND(P.P0_Y, 3), "
-			"ROUND(P.P1_X, 3), "
-			"ROUND(P.P1_Y, 3) "
-		"FROM "
-			"EW_POLYLINE P "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"P.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 0");
+	     "SELECT "
+	          "E.UIDO, E.IDE, "
+	          "ROUND(P.P0_X, 3), "
+	          "ROUND(P.P0_Y, 3), "
+	          "ROUND(P.P1_X, 3), "
+	          "ROUND(P.P1_Y, 3) "
+	     "FROM "
+	          "EW_POLYLINE P "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "P.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		Lines.append(
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toInt(),
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble(),
-			Query.value(4).toDouble(),
-			Query.value(5).toDouble()
+		     Query.value(0).toInt(),
+		     Query.value(1).toInt(),
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble(),
+		     Query.value(4).toDouble(),
+		     Query.value(5).toDouble()
 		});
 	}
 
@@ -4280,39 +4652,39 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"E.UIDO, E.IDE, "
-			"ROUND(P.P0_X, 3), "
-			"ROUND(P.P0_Y, 3), "
-			"ROUND(P.P1_X, 3), "
-			"ROUND(P.P1_Y, 3) "
-		"FROM "
-			"EW_POLYLINE P "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"P.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 3 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 0");
+	     "SELECT "
+	          "E.UIDO, E.IDE, "
+	          "ROUND(P.P0_X, 3), "
+	          "ROUND(P.P0_Y, 3), "
+	          "ROUND(P.P1_X, 3), "
+	          "ROUND(P.P1_Y, 3) "
+	     "FROM "
+	          "EW_POLYLINE P "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "P.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 3 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS = 0");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
 		Surfaces.append(
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toInt(),
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble(),
-			Query.value(4).toDouble(),
-			Query.value(5).toDouble()
+		     Query.value(0).toInt(),
+		     Query.value(1).toInt(),
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble(),
+		     Query.value(4).toDouble(),
+		     Query.value(5).toDouble()
 		});
 	}
 
@@ -4320,29 +4692,29 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, 0); Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, T.UID, "
-			"ROUND(T.POS_X, 3), "
-			"ROUND(T.POS_Y, 3), "
-			"T.JUSTYFIKACJA "
-		"FROM "
-			"EW_TEXT T "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"T.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ IN (2, 3) AND "
-			"E.TYP = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"T.TYP = 6 "
-		"ORDER BY "
-			"O.UID ASC");
+	     "SELECT "
+	          "O.UID, T.UID, "
+	          "ROUND(T.POS_X, 3), "
+	          "ROUND(T.POS_Y, 3), "
+	          "T.JUSTYFIKACJA "
+	     "FROM "
+	          "EW_TEXT T "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "T.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ IN (2, 3) AND "
+	          "E.TYP = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "T.TYP = 6 "
+	     "ORDER BY "
+	          "O.UID ASC");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -4351,13 +4723,13 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 		if (Items.contains(UID)) Texts.insert(IDE,
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toInt(),
-			0.0, 0.0,
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble(),
-			0.0,
-			Query.value(4).toUInt()
+		     Query.value(0).toInt(),
+		     Query.value(1).toInt(),
+		     0.0, 0.0,
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble(),
+		     0.0,
+		     Query.value(4).toUInt()
 		});
 	}
 
@@ -4370,26 +4742,26 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, 0);  Step = 0;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, P.UID, "
-			"ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
-			"ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 4 AND "
-			"E.TYP = 0 AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 3");
+	     "SELECT "
+	          "O.UID, P.UID, "
+	          "ROUND((P.P0_X + P.P1_X) / 2.0, 3), "
+	          "ROUND((P.P0_Y + P.P1_Y) / 2.0, 3) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS = 4 AND "
+	          "E.TYP = 0 AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 3");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -4397,10 +4769,10 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 		if (!Objects.contains(ID)) Objects.insert(ID,
 		{
-			Query.value(0).toInt(),
-			Query.value(1).toInt(),
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble()
+		     Query.value(0).toInt(),
+		     Query.value(1).toInt(),
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble()
 		});
 	}
 
@@ -4491,7 +4863,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		if (Rotate && !Found) for (const auto& Line : Lines)
 			if (!Found && Subobjects.value(Line.UIDO).contains(Point.UIDO))
 				if (distance(QLineF(Line.X1, Line.Y1, Line.X2, Line.Y2),
-						   QPointF(Point.WX, Point.WY)) <= 0.05)
+				             QPointF(Point.WX, Point.WY)) <= 0.05)
 				{
 					Match = &Line; Found = true;
 				}
@@ -4588,9 +4960,9 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			const auto& b = Distances[1].Line;
 
 			Delete = (cmp(a->X1, b->X1) && cmp(a->Y1, b->Y1)) ||
-				    (cmp(a->X1, b->X2) && cmp(a->Y1, b->Y2)) ||
-				    (cmp(a->X2, b->X1) && cmp(a->Y2, b->Y1)) ||
-				    (cmp(a->X2, b->X2) && cmp(a->Y2, b->Y2));
+			         (cmp(a->X1, b->X2) && cmp(a->Y1, b->Y2)) ||
+			         (cmp(a->X2, b->X1) && cmp(a->Y2, b->Y1)) ||
+			         (cmp(a->X2, b->X2) && cmp(a->Y2, b->Y2));
 
 			if (Delete) Distances.removeAt(1);
 		}
@@ -4609,8 +4981,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			const double dd24 = QLineF(pp2, pp4).length();
 
 			const QPolygonF Polly = dd23 < dd24 ?
-				QVector<QPointF>({ pp1, pp2, pp3, pp4, pp1 }) :
-				QVector<QPointF>({ pp1, pp2, pp4, pp3, pp1 });
+			     QVector<QPointF>({ pp1, pp2, pp3, pp4, pp1 }) :
+			     QVector<QPointF>({ pp1, pp2, pp4, pp3, pp1 });
 
 			for (const auto& p : Polly) qDebug() << Qt::fixed << qSetRealNumberPrecision(2) << p.x() << p.y();
 
@@ -4755,9 +5127,9 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			const auto& b = Distances[1].Line;
 
 			Delete = (cmp(a->X1, b->X1) && cmp(a->Y1, b->Y1)) ||
-				    (cmp(a->X1, b->X2) && cmp(a->Y1, b->Y2)) ||
-				    (cmp(a->X2, b->X1) && cmp(a->Y2, b->Y1)) ||
-				    (cmp(a->X2, b->X2) && cmp(a->Y2, b->Y2));
+			         (cmp(a->X1, b->X2) && cmp(a->Y1, b->Y2)) ||
+			         (cmp(a->X2, b->X1) && cmp(a->Y2, b->Y1)) ||
+			         (cmp(a->X2, b->X2) && cmp(a->Y2, b->Y2));
 
 			if (Delete) Distances.removeAt(1);
 		}
@@ -4776,15 +5148,15 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			const double dd24 = QLineF(pp2, pp4).length();
 
 			const QPolygonF Polly = dd23 < dd24 ?
-				QVector<QPointF>({ pp1, pp2, pp3, pp4, pp1 }) :
-				QVector<QPointF>({ pp1, pp2, pp4, pp3, pp1 });
+			     QVector<QPointF>({ pp1, pp2, pp3, pp4, pp1 }) :
+			     QVector<QPointF>({ pp1, pp2, pp4, pp3, pp1 });
 
 			if (!Polly.containsPoint({ Point.DX, Point.DY }, Qt::OddEvenFill)) return;
 
 			if (Move)
 			{
 				const QLineF Axis((m1->X1 + m2->X1) / 2.0, (m1->Y1 + m2->Y1) / 2.0,
-							   (m1->X2 + m2->X2) / 2.0, (m1->Y2 + m2->Y2) / 2.0);
+				                  (m1->X2 + m2->X2) / 2.0, (m1->Y2 + m2->Y2) / 2.0);
 
 				QLineF Offset(Point.DX, Point.DY, 0, 0);
 				Offset.setAngle(Axis.angle() + 90.0);
@@ -4839,15 +5211,15 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	emit onSetupProgress(0, Union.size()); Step = 0;
 
 	Query.prepare(
-		"UPDATE "
-			"EW_TEXT "
-		"SET "
-			"POS_X = ?, "
-			"POS_Y = ?, "
-			"KAT = ?, "
-			"JUSTYFIKACJA = ? "
-		"WHERE "
-			"UID = ?");
+	     "UPDATE "
+	          "EW_TEXT "
+	     "SET "
+	          "POS_X = ?, "
+	          "POS_Y = ?, "
+	          "KAT = ?, "
+	          "JUSTYFIKACJA = ? "
+	     "WHERE "
+	          "UID = ?");
 
 	for (const auto& Point : Union)
 	{
@@ -4891,129 +5263,129 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 	if (P) J |= 0b110000;
 
 	Symbols.prepare(
-		"SELECT "
-			"O.UID, T.POS_X, T.POS_Y, IIF(("
-				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
-				"INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
-				"WHERE G.NAZWA = ("
-					"SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
-					"INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
-					"WHERE J.ID = T.ID_WARSTWY "
-				") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
-				") IS NOT NULL, ("
-				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P  "
-				"INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
-				"WHERE G.NAZWA = ("
-					"SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
-					"INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
-					"WHERE J.ID = T.ID_WARSTWY "
-				") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
-				"), T.ID_WARSTWY) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN  "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"E.UIDO = O.UID "
-		"INNER JOIN  "
-			"EW_TEXT T "
-		"ON "
-			"(T.ID = E.IDE AND E.TYP = 0) "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.RODZAJ = 4 AND "
-			"O.STATUS = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"0 = ("
-				"SELECT COUNT(L.ID) FROM EW_TEXT L "
-				"INNER JOIN EW_OB_ELEMENTY Q "
-				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
-				"WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
-			")");
+	     "SELECT "
+	          "O.UID, T.POS_X, T.POS_Y, IIF(("
+	               "SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+	               "INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
+	               "WHERE G.NAZWA = ("
+	                    "SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
+	                    "INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
+	                    "WHERE J.ID = T.ID_WARSTWY "
+	               ") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
+	               ") IS NOT NULL, ("
+	               "SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P  "
+	               "INNER JOIN EW_GRUPY_WARSTW G ON P.ID_GRUPY = G.ID "
+	               "WHERE G.NAZWA = ("
+	                    "SELECT H.NAZWA FROM EW_GRUPY_WARSTW H "
+	                    "INNER JOIN EW_WARSTWA_TEXTOWA J ON H.ID = J.ID_GRUPY "
+	                    "WHERE J.ID = T.ID_WARSTWY "
+	               ") || '_E' AND P.NAZWA LIKE O.KOD || '%' "
+	               "), T.ID_WARSTWY) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN  "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "INNER JOIN  "
+	          "EW_TEXT T "
+	     "ON "
+	          "(T.ID = E.IDE AND E.TYP = 0) "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.RODZAJ = 4 AND "
+	          "O.STATUS = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "0 = ("
+	               "SELECT COUNT(L.ID) FROM EW_TEXT L "
+	               "INNER JOIN EW_OB_ELEMENTY Q "
+	               "ON (L.ID = Q.IDE AND Q.TYP = 0) "
+	               "WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
+	          ")");
 
 	Lines.prepare(
-		"SELECT "
-			"O.UID, ROUND(T.P0_X, 5), ROUND(T.P0_Y, 5), "
-			"ROUND(IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), 5), "
-			"ROUND(IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), 5), "
-			"("
-				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
-				"INNER JOIN EW_GRUPY_WARSTW M ON P.ID_GRUPY = M.ID "
-				"WHERE P.NAZWA = ("
-					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
-					"WHERE H.ID = T.ID_WARSTWY"
-				") AND M.NAZWA LIKE '%#_E' ESCAPE '#'"
-			") "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"E.UIDO = O.UID "
-		"INNER JOIN "
-			"EW_POLYLINE T "
-		"ON "
-			"(T.ID = E.IDE AND E.TYP = 0) "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.RODZAJ = 2 AND "
-			"O.STATUS = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"0 = ("
-				"SELECT COUNT(L.ID) FROM EW_TEXT L "
-				"INNER JOIN EW_OB_ELEMENTY Q "
-				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
-				"WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
-			") "
-		"ORDER BY "
-			"E.N ASCENDING");
+	     "SELECT "
+	          "O.UID, ROUND(T.P0_X, 5), ROUND(T.P0_Y, 5), "
+	          "ROUND(IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), 5), "
+	          "ROUND(IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), 5), "
+	          "("
+	               "SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+	               "INNER JOIN EW_GRUPY_WARSTW M ON P.ID_GRUPY = M.ID "
+	               "WHERE P.NAZWA = ("
+	                    "SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
+	                    "WHERE H.ID = T.ID_WARSTWY"
+	               ") AND M.NAZWA LIKE '%#_E' ESCAPE '#'"
+	          ") "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "INNER JOIN "
+	          "EW_POLYLINE T "
+	     "ON "
+	          "(T.ID = E.IDE AND E.TYP = 0) "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.RODZAJ = 2 AND "
+	          "O.STATUS = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "0 = ("
+	               "SELECT COUNT(L.ID) FROM EW_TEXT L "
+	               "INNER JOIN EW_OB_ELEMENTY Q "
+	               "ON (L.ID = Q.IDE AND Q.TYP = 0) "
+	               "WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
+	          ") "
+	     "ORDER BY "
+	          "E.N ASCENDING");
 
 	Surfaces.prepare(
-		"SELECT "
-			"O.UID, T.P1_FLAGS, ROUND(T.P0_X, 5), ROUND(T.P0_Y, 5), "
-			"ROUND(IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), 5), "
-			"ROUND(IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), 5), "
-			"("
-				"SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
-				"WHERE P.NAZWA = LEFT(("
-					"SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
-					"WHERE H.ID = T.ID_WARSTWY "
-				"), 6) "
-			") "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"E.UIDO = O.UID "
-		"INNER JOIN "
-			"EW_POLYLINE T "
-		"ON "
-			"(T.ID = E.IDE AND E.TYP = 0) "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.RODZAJ = 3 AND "
-			"O.STATUS = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"0 = ("
-				"SELECT COUNT(L.ID) FROM EW_TEXT L "
-				"INNER JOIN EW_OB_ELEMENTY Q "
-				"ON (L.ID = Q.IDE AND Q.TYP = 0) "
-				"WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
-			") "
-		"ORDER BY "
-			"E.N ASCENDING");
+	     "SELECT "
+	          "O.UID, T.P1_FLAGS, ROUND(T.P0_X, 5), ROUND(T.P0_Y, 5), "
+	          "ROUND(IIF(T.PN_X IS NULL, T.P1_X, T.PN_X), 5), "
+	          "ROUND(IIF(T.PN_Y IS NULL, T.P1_Y, T.PN_Y), 5), "
+	          "("
+	               "SELECT FIRST 1 P.ID FROM EW_WARSTWA_TEXTOWA P "
+	               "WHERE P.NAZWA = LEFT(("
+	                    "SELECT H.NAZWA FROM EW_WARSTWA_LINIOWA H "
+	                    "WHERE H.ID = T.ID_WARSTWY "
+	               "), 6) "
+	          ") "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "INNER JOIN "
+	          "EW_POLYLINE T "
+	     "ON "
+	          "(T.ID = E.IDE AND E.TYP = 0) "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.RODZAJ = 3 AND "
+	          "O.STATUS = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "0 = ("
+	               "SELECT COUNT(L.ID) FROM EW_TEXT L "
+	               "INNER JOIN EW_OB_ELEMENTY Q "
+	               "ON (L.ID = Q.IDE AND Q.TYP = 0) "
+	               "WHERE Q.UIDO = O.UID AND L.TYP = 6 AND L.STAN_ZMIANY = 0 "
+	          ") "
+	     "ORDER BY "
+	          "E.N ASCENDING");
 
 	Select.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
 
 	Text.prepare(QString("INSERT INTO EW_TEXT (ID, STAN_ZMIANY, CREATE_TS, MODIFY_TS, TYP, TEXT, POS_X, POS_Y, KAT, ID_WARSTWY, JUSTYFIKACJA, ODN_X, ODN_Y) "
-					 "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, ?, %2, %3, %4)")
-			   .arg(Label).arg(J).arg(-X).arg(-Y));
+	                     "VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 6, '%1', ?, ?, ?, ?, %2, %3, %4)")
+	             .arg(Label).arg(J).arg(-X).arg(-Y));
 
 	Element.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, TYP, IDE, N) "
-				 "VALUES (?, 0, ?, 1 + ("
-					"SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?)"
-				 ")");
+	                "VALUES (?, 0, ?, 1 + ("
+	                    "SELECT MAX(N) FROM EW_OB_ELEMENTY WHERE UIDO = ?)"
+	                ")");
 
 	emit onBeginProgress(tr("Generating tasklist for symbols"));
 	emit onSetupProgress(0, Items.size() - Used.size()); Step = 0;
@@ -5030,10 +5402,10 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 
 			Insertions.append(
 			{
-				Symbols.value(0).toInt(),
-				Symbols.value(1).toDouble(),
-				Symbols.value(2).toDouble(),
-				0.0, Symbols.value(3).toInt()
+			     Symbols.value(0).toInt(),
+			     Symbols.value(1).toDouble(),
+			     Symbols.value(2).toDouble(),
+			     0.0, Symbols.value(3).toInt()
 			});
 		}
 
@@ -5054,14 +5426,14 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 		{
 			const QPointF First =
 			{
-				Lines.value(1).toDouble(),
-				Lines.value(2).toDouble()
+			     Lines.value(1).toDouble(),
+			     Lines.value(2).toDouble()
 			};
 
 			const QPointF Last =
 			{
-				Lines.value(3).toDouble(),
-				Lines.value(4).toDouble()
+			     Lines.value(3).toDouble(),
+			     Lines.value(4).toDouble()
 			};
 
 			if (!Line.isEmpty())
@@ -5096,14 +5468,14 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 		{
 			const QPointF First =
 			{
-				Surfaces.value(2).toDouble(),
-				Surfaces.value(3).toDouble()
+			     Surfaces.value(2).toDouble(),
+			     Surfaces.value(3).toDouble()
 			};
 
 			const QPointF Last =
 			{
-				Surfaces.value(4).toDouble(),
-				Surfaces.value(5).toDouble()
+			     Surfaces.value(4).toDouble(),
+			     Surfaces.value(5).toDouble()
 			};
 
 			if (Surfaces.value(1).toInt() == 4)
@@ -5229,14 +5601,14 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 					for (int i = 1; i < Surface.Surface.size(); ++i)
 					{
 						const QLineF vLine(Surface.Surface[i - 1],
-									    Surface.Surface[i]);
+						                   Surface.Surface[i]);
 
 						auto Type = Step.intersects(vLine, &Int);
 
 						if (Type == QLineF::BoundedIntersection)
 						{
 							const double ang = qAtan((vLine.y1() - vLine.y2()) /
-												(vLine.x1() - vLine.x2()));
+							                         (vLine.x1() - vLine.x2()));
 
 							Angles.append({ Int, normalizeAngle(ang - M_PI_2) });
 							Intersections.append(Int);
@@ -5252,7 +5624,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 					while (Intersections.size() >= 2)
 					{
 						QLineF vLine(Intersections.takeFirst(),
-								   Intersections.takeFirst());
+						             Intersections.takeFirst());
 
 						const double vLength = vLine.length();
 						const double a1 = getAngle(Angles, vLine.p1());
@@ -5311,14 +5683,14 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 					for (int i = 1; i < Surface.Surface.size(); ++i)
 					{
 						const QLineF hLine(Surface.Surface[i - 1],
-									    Surface.Surface[i]);
+						                   Surface.Surface[i]);
 
 						auto Type = Step.intersects(hLine, &Int);
 
 						if (Type == QLineF::BoundedIntersection)
 						{
 							const double ang = qAtan((hLine.y1() - hLine.y2()) /
-												(hLine.x1() - hLine.x2()));
+							                         (hLine.x1() - hLine.x2()));
 
 							Angles.append({ Int, normalizeAngle(ang - M_PI_2) });
 							Intersections.append(Int);
@@ -5334,7 +5706,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 					while (Intersections.size() >= 2)
 					{
 						QLineF hLine(Intersections.takeFirst(),
-								   Intersections.takeFirst());
+						             Intersections.takeFirst());
 
 						const double hLength = hLine.length();
 						const double a1 = getAngle(Angles, hLine.p1());
@@ -5431,24 +5803,24 @@ void DatabaseDriver::removeLabel(const QSet<int>& Items)
 	Select.setForwardOnly(true);
 
 	Select.prepare(
-		"SELECT "
-			"O.UID, "
-			"P.ID "
-		"FROM "
-			"EW_TEXT P "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"P.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.TYP <> 4");
+	     "SELECT "
+	          "O.UID, "
+	          "P.ID "
+	     "FROM "
+	          "EW_TEXT P "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "P.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.TYP <> 4");
 
 	DeleteA.prepare("DELETE FROM EW_OB_ELEMENTY WHERE TYP = 0 AND IDE = ?");
 	DeleteB.prepare("DELETE FROM EW_TEXT WHERE ID = ?");
@@ -5507,54 +5879,54 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 	QSqlQuery selectQuery(Database), updateQuery(Database), pointsQuery(Database);
 
 	pointsQuery.prepare(
-		"SELECT "
-			"O.UID, T.POS_X, T.POS_Y "
-		"FROM "
-			"EW_TEXT T "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"T.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4 AND "
-			"E.TYP = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"T.TYP = 4");
+	     "SELECT "
+	          "O.UID, T.POS_X, T.POS_Y "
+	     "FROM "
+	          "EW_TEXT T "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "T.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 4 AND "
+	          "E.TYP = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "T.TYP = 4");
 
 	selectQuery.prepare(
-		"SELECT "
-			"O.UID, P.ID, P.POS_X, P.POS_Y, P.JUSTYFIKACJA, P.ODN_X, P.ODN_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.TYP = 6");
+	     "SELECT "
+	          "O.UID, P.ID, P.POS_X, P.POS_Y, P.JUSTYFIKACJA, P.ODN_X, P.ODN_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.TYP = 6");
 
 	updateQuery.prepare(
-		"UPDATE "
-			"EW_TEXT "
-		"SET "
-			"TEXT = COALESCE(?, TEXT), "
-			"JUSTYFIKACJA = ?, "
-			"ODN_X = ?, ODN_Y = ?, "
-			"KAT = COALESCE(?, KAT) "
-		"WHERE "
-			"ID = ?");
+	     "UPDATE "
+	          "EW_TEXT "
+	     "SET "
+	          "TEXT = COALESCE(?, TEXT), "
+	          "JUSTYFIKACJA = ?, "
+	          "ODN_X = ?, ODN_Y = ?, "
+	          "KAT = COALESCE(?, KAT) "
+	     "WHERE "
+	          "ID = ?");
 
 	emit onBeginProgress(tr("Loading texts"));
 	emit onSetupProgress(0, 0);
@@ -5565,12 +5937,12 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 
 		if (Items.contains(UIDO)) Labels.insert(UIDO,
 		{
-			selectQuery.value(1).toInt(), NAN, NAN,
-			selectQuery.value(2).toDouble(),
-			selectQuery.value(3).toDouble(),
-			selectQuery.value(4).toUInt(),
-			selectQuery.value(5),
-			selectQuery.value(6),
+		     selectQuery.value(1).toInt(), NAN, NAN,
+		     selectQuery.value(2).toDouble(),
+		     selectQuery.value(3).toDouble(),
+		     selectQuery.value(4).toUInt(),
+		     selectQuery.value(5),
+		     selectQuery.value(6),
 		});
 	}
 
@@ -5630,17 +6002,54 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 	emit onLabelEdit(Step);
 }
 
-void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radius)
+void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radius, const QString& Path)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onPointInsert(0); return; }
 
+	QSet<QPair<double, double>> Predef;
 	int Count(0), Current(0);
+
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Locale");
+	const auto csvSep = Settings.value("csv", ",").toString();
+	const auto txtSep = Settings.value("txt", "\\s+").toString();
+	Settings.endGroup();
+
+	if (Mode & 0x8 && !Path.isEmpty())
+	{
+		QFile File(Path); File.open(QFile::ReadOnly | QFile::Text);
+
+		if (File.isOpen())
+		{
+			const QString Extension = QFileInfo(Path).suffix(); QRegExp Separator;
+
+			if (Extension != "csv") Separator = QRegExp(txtSep);
+			else Separator = QRegExp(QString("\\s*%1\\s*").arg(csvSep));
+
+			while (!File.atEnd())
+			{
+				const QString Line = File.readLine().trimmed(); if (Line.isEmpty()) continue;
+				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
+
+				if (Data.size() == 2)
+				{
+					bool ok = true;
+
+					const double a = Data[0].toDouble(&ok);
+					const double b = Data[1].toDouble(&ok);
+
+					if (ok) Predef.insert({ a, b });
+				}
+			}
+		}
+	}
 
 	if (Mode & 0x10) Count += insertSurfsegments(Items, Radius, Mode);
 
 	if ((Mode & 0x0F) && !isTerminated()) do
 	{
-		Current = insertBreakpoints(Items, Mode, Radius); Count += Current;
+		Current = insertBreakpoints(Items, Mode, Radius, Predef); Count += Current;
 	}
 	while (Current && !isTerminated());
 
@@ -5674,56 +6083,56 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 		Query.prepare(
-			"SELECT "
-				"T.POS_X, T.POS_Y "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_TEXT T "
-			"ON "
-				"E.IDE = T.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 4 AND "
-				"E.TYP = 0 AND "
-				"T.STAN_ZMIANY = 0 AND "
-				"T.TYP = 4");
+		     "SELECT "
+		          "T.POS_X, T.POS_Y "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_TEXT T "
+		     "ON "
+		          "E.IDE = T.ID "
+		     "WHERE "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 4 AND "
+		          "E.TYP = 0 AND "
+		          "T.STAN_ZMIANY = 0 AND "
+		          "T.TYP = 4");
 
 		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
+		     Query.value(0).toDouble(),
+		     Query.value(1).toDouble()
 		});
 
 		Query.prepare(
-			"SELECT "
-				"(P.P0_X + P.P1_X) / 2.0, "
-				"(P.P0_Y + P.P1_Y) / 2.0 "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"E.IDE = P.ID "
-			"WHERE "
-				"P.STAN_ZMIANY = 0 AND "
-				"P.P1_FLAGS = 4 AND "
-				"E.TYP = 0 AND "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 3");
+		     "SELECT "
+		          "(P.P0_X + P.P1_X) / 2.0, "
+		          "(P.P0_Y + P.P1_Y) / 2.0 "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_POLYLINE P "
+		     "ON "
+		          "E.IDE = P.ID "
+		     "WHERE "
+		          "P.STAN_ZMIANY = 0 AND "
+		          "P.P1_FLAGS = 4 AND "
+		          "E.TYP = 0 AND "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 3");
 
 		if (Query.exec()) while (Query.next() && !isTerminated()) Cuts.insert(
 		{
-			Query.value(0).toDouble(),
-			Query.value(1).toDouble()
+		     Query.value(0).toDouble(),
+		     Query.value(1).toDouble()
 		});
 	}
 
@@ -5732,25 +6141,25 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 		Query.prepare(
-			"SELECT "
-				"P.P0_X, P.P0_Y, "
-				"P.P1_X, P.P1_Y "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"INNER JOIN "
-				"EW_POLYLINE T "
-			"ON "
-				"E.IDE = T.ID "
-			"WHERE "
-				"O.STATUS = 0 AND "
-				"O.RODZAJ = 4 AND "
-				"E.TYP = 0 AND "
-				"T.STAN_ZMIANY = 0 AND "
-				"T.P1_FLAGS = 0");
+		     "SELECT "
+		          "P.P0_X, P.P0_Y, "
+		          "P.P1_X, P.P1_Y "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "INNER JOIN "
+		          "EW_POLYLINE T "
+		     "ON "
+		          "E.IDE = T.ID "
+		     "WHERE "
+		          "O.STATUS = 0 AND "
+		          "O.RODZAJ = 4 AND "
+		          "E.TYP = 0 AND "
+		          "T.STAN_ZMIANY = 0 AND "
+		          "T.P1_FLAGS = 0");
 
 		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
@@ -5762,38 +6171,38 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 	}
 
 	QSqlQuery Objects(Database), deleteGeometry(Database),
-			updateSegment(Database), deleteSegment(Database);
+	          updateSegment(Database), deleteSegment(Database);
 
 	QMutex Synchronizer; int Step(0);
 
 	Objects.prepare(
-		"SELECT "
-			"O.UID, P.ID, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS <> 4 AND "
-			"E.TYP = 0 "
-		"ORDER BY "
-			"O.UID ASC, "
-			"E.N ASC");
+	     "SELECT "
+	          "O.UID, P.ID, P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS <> 4 AND "
+	          "E.TYP = 0 "
+	     "ORDER BY "
+	          "O.UID ASC, "
+	          "E.N ASC");
 
 	deleteGeometry.prepare("DELETE FROM EW_OB_ELEMENTY WHERE UIDO = ? AND IDE = ? AND TYP = 0");
 	deleteSegment.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
 	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ?,"
-					  "PN_X = NULL, PN_Y = NULL, P1_FLAGS = 0 WHERE ID = ? AND STAN_ZMIANY = 0");
+	                      "PN_X = NULL, PN_Y = NULL, P1_FLAGS = 0 WHERE ID = ? AND STAN_ZMIANY = 0");
 
 	QHash<int, QList<LINE>> Geometry;
 	QSet<QPair<int, int>> Deletes;
@@ -5810,13 +6219,13 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 
 		Geometry[UID].append(
 		{
-			Objects.value(1).toInt(),
-			{
-				Objects.value(2).toDouble(),
-				Objects.value(3).toDouble(),
-				Objects.value(4).toDouble(),
-				Objects.value(5).toDouble()
-			}
+		     Objects.value(1).toInt(),
+		     {
+		          Objects.value(2).toDouble(),
+		          Objects.value(3).toDouble(),
+		          Objects.value(4).toDouble(),
+		          Objects.value(5).toDouble()
+		     }
 		});
 	}
 
@@ -5933,8 +6342,8 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 
 	if (Query.exec()) while (Query.next()) Mapping.insert
 	(
-		Query.value(1).toString(),
-		Query.value(0).toInt()
+	     Query.value(1).toString(),
+	     Query.value(0).toInt()
 	);
 
 	if (Action == 1)
@@ -5968,25 +6377,25 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 	if (Action == 1)
 	{
 		Query.prepare(
-			"SELECT DISTINCT "
-				"O.UID, COALESCE(P.OPERAT, T.OPERAT, 0), COALESCE(T.TYP, 0) "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"LEFT JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
-			"LEFT JOIN "
-				"EW_TEXT T "
-			"ON "
-				"(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
-			"WHERE "
-				"COALESCE(P.OPERAT, T.OPERAT, 0) <> 0 AND "
-				"O.STATUS = 0 AND E.TYP = 0");
+		     "SELECT DISTINCT "
+		          "O.UID, COALESCE(P.OPERAT, T.OPERAT, 0), COALESCE(T.TYP, 0) "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "LEFT JOIN "
+		          "EW_POLYLINE P "
+		     "ON "
+		          "(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+		     "LEFT JOIN "
+		          "EW_TEXT T "
+		     "ON "
+		          "(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
+		     "WHERE "
+		          "COALESCE(P.OPERAT, T.OPERAT, 0) <> 0 AND "
+		          "O.STATUS = 0 AND E.TYP = 0");
 
 		if (Query.exec()) while (Query.next() && !isTerminated())
 		{
@@ -6041,24 +6450,24 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 		QSqlQuery lineQuery(Database), textQuery(Database);
 
 		selectQuery.prepare(
-			"SELECT "
-				"O.UID, O.OPERAT, COALESCE(P.UID, T.UID), COALESCE(T.TYP, 0) "
-			"FROM "
-				"EW_OBIEKTY O "
-			"INNER JOIN "
-				"EW_OB_ELEMENTY E "
-			"ON "
-				"O.UID = E.UIDO "
-			"LEFT JOIN "
-				"EW_POLYLINE P "
-			"ON "
-				"(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
-			"LEFT JOIN "
-				"EW_TEXT T "
-			"ON "
-				"(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
-			"WHERE "
-				"O.STATUS = 0 AND E.TYP = 0");
+		     "SELECT "
+		          "O.UID, O.OPERAT, COALESCE(P.UID, T.UID), COALESCE(T.TYP, 0) "
+		     "FROM "
+		          "EW_OBIEKTY O "
+		     "INNER JOIN "
+		          "EW_OB_ELEMENTY E "
+		     "ON "
+		          "O.UID = E.UIDO "
+		     "LEFT JOIN "
+		          "EW_POLYLINE P "
+		     "ON "
+		          "(E.IDE = P.ID AND P.STAN_ZMIANY = 0) "
+		     "LEFT JOIN "
+		          "EW_TEXT T "
+		     "ON "
+		          "(E.IDE = T.ID AND T.STAN_ZMIANY = 0) "
+		     "WHERE "
+		          "O.STATUS = 0 AND E.TYP = 0");
 
 		if (selectQuery.exec()) while (selectQuery.next() && !isTerminated())
 		{
@@ -6069,15 +6478,15 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 			{
 				case 0:
 					if (Elements & 0x1) Lines.insert(selectQuery.value(2).toInt(),
-											   selectQuery.value(1).toInt());
+					                                 selectQuery.value(1).toInt());
 				break;
 				case 4:
 					if (Elements & 0x2) Texts.insert(selectQuery.value(2).toInt(),
-											   selectQuery.value(1).toInt());
+					                                 selectQuery.value(1).toInt());
 				break;
 				case 6:
 					if (Elements & 0x4) Texts.insert(selectQuery.value(2).toInt(),
-											   selectQuery.value(1).toInt());
+					                                 selectQuery.value(1).toInt());
 				break;
 			}
 		}
@@ -6123,7 +6532,7 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 	}
 
 	const QMap<QString, QSet<int>> Views = Action ? getClassGroups(Items, true, 0) :
-										   QMap<QString, QSet<int>>();
+	                                                QMap<QString, QSet<int>>();
 
 	emit onBeginProgress(tr("Updating view"));
 	emit onSetupProgress(0, Views.size());
@@ -6171,43 +6580,43 @@ void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
 	QSqlQuery selectQuery(Database), updateQuery(Database);
 
 	selectQuery.prepare(
-		"SELECT "
-			"O.UID, P.ID, P.UID, "
-			"ROUND(P.P0_X, 3), "
-			"ROUND(P.P0_Y, 3), "
-			"ROUND(P.P1_X, 3), "
-			"ROUND(P.P1_Y, 3) "
-		"FROM "
-			"EW_POLYLINE P "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"P.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"E.UIDO = O.UID "
-		"WHERE "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS = 0 AND "
-			"O.STATUS = 0 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, P.ID, P.UID, "
+	          "ROUND(P.P0_X, 3), "
+	          "ROUND(P.P0_Y, 3), "
+	          "ROUND(P.P1_X, 3), "
+	          "ROUND(P.P1_Y, 3) "
+	     "FROM "
+	          "EW_POLYLINE P "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "P.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "E.UIDO = O.UID "
+	     "WHERE "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS = 0 AND "
+	          "O.STATUS = 0 AND "
+	          "E.TYP = 0");
 
 	if (selectQuery.exec()) while (selectQuery.next())
 	{
 		if (Items.contains(selectQuery.value(0).toInt())) Lines.append(
 		{
-			selectQuery.value(0).toInt(),
-			selectQuery.value(1).toInt(),
-			selectQuery.value(2).toInt(),
-			{
-				selectQuery.value(3).toDouble(),
-				selectQuery.value(4).toDouble()
-			},
-			{
-				selectQuery.value(5).toDouble(),
-				selectQuery.value(6).toDouble()
-			}
+		     selectQuery.value(0).toInt(),
+		     selectQuery.value(1).toInt(),
+		     selectQuery.value(2).toInt(),
+		     {
+		          selectQuery.value(3).toDouble(),
+		          selectQuery.value(4).toDouble()
+		     },
+		     {
+		          selectQuery.value(5).toDouble(),
+		          selectQuery.value(6).toDouble()
+		     }
 		});
 	}
 
@@ -6326,9 +6735,9 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 		bool operator== (const PART& P)
 		{
 			return
-				X1 == P.X1 && Y1 == P.Y1 &&
-				X2 == P.X2 && Y2 == P.Y2 &&
-				R == P.R;
+			     X1 == P.X1 && Y1 == P.Y1 &&
+			     X2 == P.X2 && Y2 == P.Y2 &&
+			     R == P.R;
 		}
 	};
 
@@ -6337,29 +6746,29 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 	QMutex Locker; QMap<int, QList<PART>> Parts;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, P.P1_FLAGS, "
-			"P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.KOD = ? AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"E.TYP = 0 AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 3 "
-		"ORDER BY "
-			"E.N ASCENDING");
+	     "SELECT "
+	          "O.UID, P.P1_FLAGS, "
+	          "P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0 AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 3 "
+	     "ORDER BY "
+	          "E.N ASCENDING");
 
 	Query.addBindValue(Class);
 
@@ -6383,12 +6792,12 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 			{
 				Parts[UID].append(
 				{
-					UID,
-					Query.value(2).toDouble(),
-					Query.value(3).toDouble(),
-					0.0,
-					Query.value(4).toDouble(),
-					Query.value(5).toDouble()
+				     UID,
+				     Query.value(2).toDouble(),
+				     Query.value(3).toDouble(),
+				     0.0,
+				     Query.value(4).toDouble(),
+				     Query.value(5).toDouble()
 				});
 			}
 		}
@@ -6410,7 +6819,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& 
 					{
 						Polygon.append(
 						{
-							List.first().X1, List.first().Y1
+						     List.first().X1, List.first().Y1
 						});
 
 						Used.insert(i);
@@ -6523,27 +6932,27 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 	};
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, "
-			"P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.KOD = ? AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"E.TYP = 0 AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2");
+	     "SELECT "
+	          "O.UID, "
+	          "P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0 AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 2");
 
 	Query.addBindValue(Class);
 
@@ -6592,25 +7001,25 @@ QHash<int, QSet<int>> DatabaseDriver::joinPoints(const QHash<int, QSet<int>>& Ge
 	QHash<int, QSet<int>> Insert; QSet<int> Used;
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, T.POS_X, T.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT T "
-		"ON "
-			"E.IDE = T.ID "
-		"WHERE "
-			"O.KOD = ? AND "
-			"E.TYP = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"T.TYP = 4 AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4");
+	     "SELECT "
+	          "O.UID, T.POS_X, T.POS_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT T "
+	     "ON "
+	          "E.IDE = T.ID "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "E.TYP = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "T.TYP = 4 AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 4");
 
 	Query.addBindValue(Class);
 
@@ -6677,8 +7086,8 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 
 			return qMin
 			(
-				qMin(pdistance(A, B.p1()), pdistance(A, B.p2())),
-				qMin(pdistance(B, A.p1()), pdistance(B, A.p2()))
+			     qMin(pdistance(A, B.p1()), pdistance(A, B.p2())),
+			     qMin(pdistance(B, A.p1()), pdistance(B, A.p2()))
 			);
 		};
 
@@ -6731,8 +7140,8 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					double Angle = qAtan2(Lin.y1() - Lin.y2(), Lin.x1() - Lin.x2()) - M_PI / 2.0;
 
 					auto Red = hasItemByField(Redaction, Object.UID, &REDACTION::UID) ?
-								 getItemByField(Redaction, Object.UID, &REDACTION::UID) :
-								 REDACTION({ 0, 0, 0 });
+					                getItemByField(Redaction, Object.UID, &REDACTION::UID) :
+					                REDACTION({ 0, 0, 0 });
 
 					const double Now = pdistance(Part.toLineF(), ThisPoint);
 
@@ -6961,60 +7370,60 @@ void DatabaseDriver::convertSurfaceToPoint(const QSet<int>& Objects, const QStri
 	if (!Database.isOpen()) return; QSet<int> Used;
 
 	QSqlQuery selectCirclesQuery(Database), selectLinesQuery(Database),
-			insertQuery(Database), deleteQuery(Database),
-			updateQuery(Database), elementsQuery(Database);
+	          insertQuery(Database), deleteQuery(Database),
+	          updateQuery(Database), elementsQuery(Database);
 
 	selectCirclesQuery.prepare(
-		"SELECT "
-			"E.IDE, P.OPERAT, "
-			"(P.P0_X + P.P1_X) / 2.0, "
-			"(P.P0_Y + P.P1_Y) / 2.0 "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 3 AND "
-			"E.TYP = 0 AND "
-			"P.P1_FLAGS = 4 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "E.IDE, P.OPERAT, "
+	          "(P.P0_X + P.P1_X) / 2.0, "
+	          "(P.P0_Y + P.P1_Y) / 2.0 "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 3 AND "
+	          "E.TYP = 0 AND "
+	          "P.P1_FLAGS = 4 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	selectLinesQuery.prepare(
-		"SELECT "
-			"E.IDE, P.OPERAT, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 3 AND "
-			"E.TYP = 0 AND "
-			"P.P1_FLAGS <> 4 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "E.IDE, P.OPERAT, P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 3 AND "
+	          "E.TYP = 0 AND "
+	          "P.P1_FLAGS <> 4 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	insertQuery.prepare(
-		"INSERT INTO EW_TEXT "
-			"(ID, ID_WARSTWY, OPERAT, TEXT, POS_X, POS_Y, TYP, KAT, JUSTYFIKACJA, STAN_ZMIANY) "
-		"VALUES "
-			"(?, ?, ?, ?, ?, ?, 4, 0.0, 5, 0)");
+	     "INSERT INTO EW_TEXT "
+	          "(ID, ID_WARSTWY, OPERAT, TEXT, POS_X, POS_Y, TYP, KAT, JUSTYFIKACJA, STAN_ZMIANY) "
+	     "VALUES "
+	          "(?, ?, ?, ?, ?, ?, 4, 0.0, 5, 0)");
 
 	deleteQuery.prepare("DELETE FROM EW_POLYLINE WHERE ID = ?");
 	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 4 WHERE UID = ?");
@@ -7056,10 +7465,10 @@ void DatabaseDriver::convertSurfaceToPoint(const QSet<int>& Objects, const QStri
 		if (selectLinesQuery.exec()) while (selectLinesQuery.next())
 		{
 			const QPointF A = QPointF(selectLinesQuery.value(2).toDouble(),
-								 selectLinesQuery.value(3).toDouble());
+			                          selectLinesQuery.value(3).toDouble());
 
 			const QPointF B = QPointF(selectLinesQuery.value(4).toDouble(),
-								 selectLinesQuery.value(5).toDouble());
+			                          selectLinesQuery.value(5).toDouble());
 
 			IDES.append(selectLinesQuery.value(0).toInt());
 
@@ -7111,34 +7520,34 @@ void DatabaseDriver::convertPointToSurface(const QSet<int>& Objects, int Style, 
 	if (!Database.isOpen()) return;
 
 	QSqlQuery selectQuery(Database), insertQuery(Database),
-			deleteQuery(Database), updateQuery(Database);
+	          deleteQuery(Database), updateQuery(Database);
 
 	selectQuery.prepare(
-		"SELECT "
-			"E.IDE, P.OPERAT, P.POS_X, P.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 4 AND "
-			"E.TYP = 0 AND "
-			"P.TYP = 4 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "E.IDE, P.OPERAT, P.POS_X, P.POS_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 4 AND "
+	          "E.TYP = 0 AND "
+	          "P.TYP = 4 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	insertQuery.prepare(
-		"INSERT INTO EW_POLYLINE "
-			"(ID, ID_WARSTWY, OPERAT, TYP_LINII, P0_X, P1_X, P0_Y, P1_Y, POINTCOUNT, P1_FLAGS, STAN_ZMIANY) "
-		"VALUES "
-			"(?, ?, ?, ?, ?, ?, ?, ?, 2, 4, 0)");
+	     "INSERT INTO EW_POLYLINE "
+	          "(ID, ID_WARSTWY, OPERAT, TYP_LINII, P0_X, P1_X, P0_Y, P1_Y, POINTCOUNT, P1_FLAGS, STAN_ZMIANY) "
+	     "VALUES "
+	          "(?, ?, ?, ?, ?, ?, ?, ?, 2, 4, 0)");
 
 	deleteQuery.prepare("DELETE FROM EW_TEXT WHERE ID = ?");
 	updateQuery.prepare("UPDATE EW_OBIEKTY SET RODZAJ = 3 WHERE UID = ?");
@@ -7182,24 +7591,24 @@ void DatabaseDriver::convertSurfaceToLine(const QSet<int>& Objects)
 	emit onSetupProgress(0, 0);
 
 	selectQuery.prepare(
-		"SELECT DISTINCT "
-			"O.UID "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 3 AND "
-			"E.TYP = 0 AND "
-			"P.P1_FLAGS = 4 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT DISTINCT "
+	          "O.UID "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 3 AND "
+	          "E.TYP = 0 AND "
+	          "P.P1_FLAGS = 4 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	if (selectQuery.exec()) while (selectQuery.next()) Tasks.remove(selectQuery.value(0).toInt());
 
@@ -7223,27 +7632,27 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 	QSqlQuery selectQuery(Database), updateQuery(Database);
 
 	selectQuery.prepare(
-		"SELECT "
-			"P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ = 2 AND "
-			"E.TYP = 0 AND "
-			"P.P1_FLAGS <> 4 AND "
-			"P.STAN_ZMIANY = 0");
+	     "SELECT "
+	          "P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ = 2 AND "
+	          "E.TYP = 0 AND "
+	          "P.P1_FLAGS <> 4 AND "
+	          "P.STAN_ZMIANY = 0");
 
 	emit onSetupProgress(0, Objects.size()); Step = 0;
 
@@ -7254,10 +7663,10 @@ void DatabaseDriver::convertLineToSurface(const QSet<int>& Objects)
 		int Size(0); if (selectQuery.exec()) while (selectQuery.next())
 		{
 			const QPointF A = QPointF(selectQuery.value(0).toDouble(),
-								 selectQuery.value(1).toDouble());
+			                          selectQuery.value(1).toDouble());
 
 			const QPointF B = QPointF(selectQuery.value(2).toDouble(),
-								 selectQuery.value(3).toDouble());
+			                          selectQuery.value(3).toDouble());
 
 			if (Points.contains(A)) Points.removeOne(A);
 			else Points.append(A);
@@ -7297,47 +7706,47 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 	emit onSetupProgress(0, Limiter.size()); int Step(0);
 
 	selectPoint.prepare(
-		"SELECT "
-			"O.UID, O.ID, O.KOD, P.POS_X, P.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.TYP = 4 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, O.ID, O.KOD, P.POS_X, P.POS_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.TYP = 4 AND "
+	          "E.TYP = 0");
 
 	selectLine.prepare(
-		"SELECT "
-			"O.UID, O.ID, O.KOD, O.RODZAJ, "
-			"P.P1_FLAGS, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"E.TYP = 0 "
-		"ORDER BY "
-			"E.UIDO ASCENDING,"
-			"E.N ASCENDING");
+	     "SELECT "
+	          "O.UID, O.ID, O.KOD, O.RODZAJ, "
+	          "P.P1_FLAGS, P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0 "
+	     "ORDER BY "
+	          "E.UIDO ASCENDING,"
+	          "E.N ASCENDING");
 
 	if (selectPoint.exec()) while (selectPoint.next() && !isTerminated())
 	{
@@ -7347,10 +7756,10 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 		{
 			Objects.insert(UID,
 			{
-				UID, selectPoint.value(1).toInt(),
-				selectPoint.value(2).toString(), 4,
-				QPointF(selectPoint.value(3).toDouble(),
-					   selectPoint.value(4).toDouble())
+			     UID, selectPoint.value(1).toInt(),
+			     selectPoint.value(2).toString(), 4,
+			     QPointF(selectPoint.value(3).toDouble(),
+			             selectPoint.value(4).toDouble())
 			});
 
 			emit onUpdateProgress(++Step);
@@ -7369,11 +7778,11 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 			{
 				Objects.insert(UID,
 				{
-					UID, selectLine.value(1).toInt(),
-					selectLine.value(2).toString(), Type,
-					(Type == 2) ? QVariant(QVariant::List) :
-					(Type == 3) ? QVariant(QVariant::PolygonF) :
-					QVariant()
+				     UID, selectLine.value(1).toInt(),
+				     selectLine.value(2).toString(), Type,
+				     (Type == 2) ? QVariant(QVariant::List) :
+				     (Type == 3) ? QVariant(QVariant::PolygonF) :
+				     QVariant()
 				});
 
 				emit onUpdateProgress(++Step);
@@ -7390,9 +7799,9 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 						QVariantList List = Obj.Geometry.toList();
 
 						List.append(QLineF(selectLine.value(5).toDouble(),
-									    selectLine.value(6).toDouble(),
-									    selectLine.value(7).toDouble(),
-									    selectLine.value(8).toDouble()));
+						                   selectLine.value(6).toDouble(),
+						                   selectLine.value(7).toDouble(),
+						                   selectLine.value(8).toDouble()));
 
 						Obj.Geometry = List;
 					}
@@ -7403,10 +7812,10 @@ QList<DatabaseDriver::OBJECT> DatabaseDriver::loadGeometry(const QSet<int>& Limi
 					QPolygonF Polygon = Obj.Geometry.value<QPolygonF>();
 
 					const QPointF A(selectLine.value(5).toDouble(),
-								 selectLine.value(6).toDouble());
+					                selectLine.value(6).toDouble());
 
 					const QPointF B(selectLine.value(7).toDouble(),
-								 selectLine.value(8).toDouble());
+					                selectLine.value(8).toDouble());
 
 					if (selectLine.value(4).toInt() == 4)
 					{
@@ -7457,40 +7866,40 @@ QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& 
 	emit onSetupProgress(0, Limiter.size()); int Step(0);
 
 	selectPoint.prepare(
-		"SELECT "
-			"O.UID, O.ID, P.TYP, P.TEXT, P.KAT, P.JUSTYFIKACJA "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, O.ID, P.TYP, P.TEXT, P.KAT, P.JUSTYFIKACJA "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0");
 
 	selectLine.prepare(
-		"SELECT "
-			"O.UID, O.ID, P.TYP_LINII "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, O.ID, P.TYP_LINII "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0");
 
 	if (selectPoint.exec()) while (selectPoint.next() && !isTerminated())
 	{
@@ -7502,11 +7911,11 @@ QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& 
 		{
 			List.append(
 			{
-				UID, selectPoint.value(1).toInt(),
-				selectPoint.value(2).toInt(),
-				selectPoint.value(3).toString(),
-				selectPoint.value(4).toDouble(),
-				selectPoint.value(5).toInt()
+			     UID, selectPoint.value(1).toInt(),
+			     selectPoint.value(2).toInt(),
+			     selectPoint.value(3).toString(),
+			     selectPoint.value(4).toDouble(),
+			     selectPoint.value(5).toInt()
 			});
 
 			emit onUpdateProgress(++Step);
@@ -7521,8 +7930,8 @@ QList<DatabaseDriver::REDACTION> DatabaseDriver::loadRedaction(const QSet<int>& 
 		{
 			List.append(
 			{
-				UID, selectLine.value(1).toInt(), 0,
-				selectLine.value(2).toInt(), 0.0, 0
+			     UID, selectLine.value(1).toInt(), 0,
+			     selectLine.value(2).toInt(), 0.0, 0
 			});
 
 			emit onUpdateProgress(++Step);
@@ -7539,33 +7948,33 @@ DatabaseDriver::SUBOBJECTSTABLE DatabaseDriver::loadSubobjects(void)
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
 	Query.prepare(
-		"SELECT "
-			"S.UID, S.KOD, D.UID, D.KOD "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"INNER JOIN "
-			"EW_OBIEKTY S "
-		"ON "
-			"S.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_OBIEKTY D "
-		"ON "
-			"D.ID = E.IDE "
-		"WHERE "
-			"E.TYP = 1 AND "
-			"S.STATUS = 0 AND "
-			"D.STATUS = 0");
+	     "SELECT "
+	          "S.UID, S.KOD, D.UID, D.KOD "
+	     "FROM "
+	          "EW_OB_ELEMENTY E "
+	     "INNER JOIN "
+	          "EW_OBIEKTY S "
+	     "ON "
+	          "S.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_OBIEKTY D "
+	     "ON "
+	          "D.ID = E.IDE "
+	     "WHERE "
+	          "E.TYP = 1 AND "
+	          "S.STATUS = 0 AND "
+	          "D.STATUS = 0");
 
 	if (Query.exec()) while (Query.next()) List.append(
 	{
-		{
-			Query.value(0).toInt(),
-			Query.value(1).toString()
-		},
-		{
-			Query.value(2).toInt(),
-			Query.value(3).toString()
-		}
+	     {
+	          Query.value(0).toInt(),
+	          Query.value(1).toString()
+	     },
+	     {
+	          Query.value(2).toInt(),
+	          Query.value(3).toString()
+	     }
 	});
 
 	return List;
@@ -7777,7 +8186,7 @@ QSet<int> DatabaseDriver::filterDataByContaining(const QList<DatabaseDriver::OBJ
 			if (Object.Geometry.type() == QVariant::PointF)
 			{
 				const QLineF Distance(Object.Geometry.toPointF(),
-								  Other.Geometry.toPointF());
+				                      Other.Geometry.toPointF());
 
 				if (Distance.length() <= Radius)
 				{
@@ -7949,8 +8358,8 @@ QSet<int> DatabaseDriver::filterDataByIsnear(const QList<DatabaseDriver::OBJECT>
 
 			return qMin
 			(
-				qMin(pdistance(A, B.p1()), pdistance(A, B.p2())),
-				qMin(pdistance(B, A.p1()), pdistance(B, A.p2()))
+			     qMin(pdistance(A, B.p1()), pdistance(A, B.p2())),
+			     qMin(pdistance(B, A.p1()), pdistance(B, A.p2()))
 			);
 		};
 
@@ -8425,11 +8834,11 @@ QSet<int> DatabaseDriver::filterDataByHasGeoemetry(const QSet<int>& Data, const 
 	if (!Types.contains(100)) return QSet<int>(Data).intersect(Filtered);
 
 	Query.prepare("SELECT DISTINCT O.UID FROM EW_OBIEKTY O "
-			    "INNER JOIN EW_OB_ELEMENTY E ON O.UID = E.UIDO "
-			    "INNER JOIN EW_POLYLINE P ON E.IDE = P.ID "
-			    "WHERE "
-			    "O.STATUS = 0 AND E.TYP = 0 AND "
-			    "P.STAN_ZMIANY = 0 AND P.P1_FLAGS = 4");
+	              "INNER JOIN EW_OB_ELEMENTY E ON O.UID = E.UIDO "
+	              "INNER JOIN EW_POLYLINE P ON E.IDE = P.ID "
+	              "WHERE "
+	              "O.STATUS = 0 AND E.TYP = 0 AND "
+	              "P.STAN_ZMIANY = 0 AND P.P1_FLAGS = 4");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -8446,26 +8855,26 @@ QSet<int> DatabaseDriver::filterDataByHasMulrel(const QSet<int>& Data)
 	emit onSetupProgress(0, 0); QSet<int> Filtered;
 
 	Query.prepare(
-		"SELECT "
-			"S.UID "
-		"FROM "
-			"EW_OBIEKTY S "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"S.ID = E.IDE "
-		"INNER JOIN "
-			"EW_OBIEKTY D "
-		"ON "
-			"D.UID = E.UIDO "
-		"WHERE "
-			"S.STATUS = 0 AND "
-			"E.TYP = 1 AND "
-			"D.STATUS = 0 "
-		"GROUP BY "
-			"S.UID "
-		"HAVING "
-			"COUNT(D.UID) > 1");
+	     "SELECT "
+	          "S.UID "
+	     "FROM "
+	          "EW_OBIEKTY S "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "S.ID = E.IDE "
+	     "INNER JOIN "
+	          "EW_OBIEKTY D "
+	     "ON "
+	          "D.UID = E.UIDO "
+	     "WHERE "
+	          "S.STATUS = 0 AND "
+	          "E.TYP = 1 AND "
+	          "D.STATUS = 0 "
+	     "GROUP BY "
+	          "S.UID "
+	     "HAVING "
+	          "COUNT(D.UID) > 1");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -8475,7 +8884,7 @@ QSet<int> DatabaseDriver::filterDataByHasMulrel(const QSet<int>& Data)
 	return QSet<int>(Data).intersect(Filtered);
 }
 
-int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double Radius)
+int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double Radius, const QSet<QPair<double, double>>& Predef)
 {
 	struct LINE { int ID; QLineF Line; int Type; bool Changed = false; };
 
@@ -8484,76 +8893,76 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 	struct ELEMENT { int IDE, Typ; };
 
 	QSqlQuery Symbols(Database), Objects(Database), Elements(Database), getIndex(Database),
-			deleteElement(Database), insertElement(Database),
-			updateSegment(Database), insertSegment(Database);
+	          deleteElement(Database), insertElement(Database),
+	          updateSegment(Database), insertSegment(Database);
 
 	QMutex Synchronizer; int Currentrun(0), Step(0);
 
 	Symbols.prepare(
-		"SELECT "
-			"O.UID,"
-			"T.POS_X, "
-			"T.POS_Y "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_TEXT T "
-		"ON "
-			"E.IDE = T.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"T.STAN_ZMIANY = 0 AND "
-			"T.TYP = 4 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID,"
+	          "T.POS_X, "
+	          "T.POS_Y "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_TEXT T "
+	     "ON "
+	          "E.IDE = T.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "T.STAN_ZMIANY = 0 AND "
+	          "T.TYP = 4 AND "
+	          "E.TYP = 0");
 
 	Objects.prepare(
-		"SELECT "
-			"O.UID, P.ID, "
-			"P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
-			"P.P1_FLAGS "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"INNER JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"E.IDE = P.ID "
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"P.STAN_ZMIANY = 0 AND "
-			"P.P1_FLAGS <> 4 AND "
-			"E.TYP = 0");
+	     "SELECT "
+	          "O.UID, P.ID, "
+	          "P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
+	          "P.P1_FLAGS "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "P.P1_FLAGS <> 4 AND "
+	          "E.TYP = 0");
 
 	Elements.prepare(
-		"SELECT "
-			"E.UIDO, "
-			"E.IDE, "
-			"E.TYP "
-		"FROM "
-			"EW_OB_ELEMENTY E "
-		"INNER JOIN "
-			"EW_OBIEKTY O "
-		"ON "
-			"O.UID = E.UIDO "
-		"WHERE "
-			"O.STATUS = 0 "
-		"ORDER BY "
-			"E.UIDO ASC, "
-			"E.N ASC");
+	     "SELECT "
+	          "E.UIDO, "
+	          "E.IDE, "
+	          "E.TYP "
+	     "FROM "
+	          "EW_OB_ELEMENTY E "
+	     "INNER JOIN "
+	          "EW_OBIEKTY O "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "WHERE "
+	          "O.STATUS = 0 "
+	     "ORDER BY "
+	          "E.UIDO ASC, "
+	          "E.N ASC");
 
 	insertSegment.prepare(
-		"INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT, CREATE_TS, MODIFY_TS) "
-		"SELECT ?, ?, ?, ?, ?, 0, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
-		"FROM EW_POLYLINE WHERE ID = ? AND STAN_ZMIANY = 0");
+	     "INSERT INTO EW_POLYLINE (ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT, CREATE_TS, MODIFY_TS) "
+	     "SELECT ?, ?, ?, ?, ?, 0, 0, ID_WARSTWY, OPERAT, TYP_LINII, MNOZNIK, POINTCOUNT, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
+	     "FROM EW_POLYLINE WHERE ID = ? AND STAN_ZMIANY = 0");
 
 	updateSegment.prepare("UPDATE EW_POLYLINE SET P0_X = ?, P0_Y = ?, P1_X = ?, P1_Y = ?, PN_X = NULL, PN_Y = NULL, P1_FLAGS = 0 WHERE ID = ?");
 
@@ -8576,11 +8985,13 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 		{
 			Points.insert(
 			{
-				Symbols.value(1).toDouble(),
-				Symbols.value(2).toDouble()
+			     Symbols.value(1).toDouble(),
+			     Symbols.value(2).toDouble()
 			});
 		}
 	}
+
+	if (Mode & 0x8) Points += Predef;
 
 	emit onBeginProgress(tr("Loading lines"));
 	emit onSetupProgress(0, 0);
@@ -8590,10 +9001,10 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 		const int UID = Objects.value(0).toInt();
 
 		const QPointF A(Objects.value(2).toDouble(),
-					 Objects.value(3).toDouble());
+		                Objects.value(3).toDouble());
 
 		const QPointF B(Objects.value(4).toDouble(),
-					 Objects.value(5).toDouble());
+		                Objects.value(5).toDouble());
 
 		if (Tasks.contains(UID))
 		{
@@ -8613,12 +9024,12 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 
 			Lines.insert(Objects.value(1).toInt(),
 			{
-				Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
+			     Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
 			});
 
 			Origins.insert(Objects.value(1).toInt(),
 			{
-				Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
+			     Objects.value(1).toInt(), QLineF(A, B), Objects.value(6).toInt()
 			});
 		}
 	}
@@ -8639,8 +9050,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 
 			Geometry[UID].append(
 			{
-				Elements.value(1).toInt(),
-				Elements.value(2).toInt()
+			     Elements.value(1).toInt(),
+			     Elements.value(2).toInt()
 			});
 		}
 	}
@@ -8814,17 +9225,17 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 					Inserted.append({ IDE, 0 }); Inserted.append({ IID, 0 });
 				}
 				else if (pointComp(A.p1(), Prev.p1()) || pointComp(A.p1(), Prev.p2()) ||
-					    pointComp(A.p2(), Prev.p1()) || pointComp(A.p2(), Prev.p2()))
+				         pointComp(A.p2(), Prev.p1()) || pointComp(A.p2(), Prev.p2()))
 				{
 					Inserted.append({ IID, 0 }); Inserted.append({ IDE, 0 });
 				}
 				else if (pointComp(B.p1(), Next.p1()) || pointComp(B.p1(), Next.p2()) ||
-					    pointComp(B.p2(), Next.p1()) || pointComp(B.p2(), Next.p2()))
+				         pointComp(B.p2(), Next.p1()) || pointComp(B.p2(), Next.p2()))
 				{
 					Inserted.append({ IID, 0 }); Inserted.append({ IDE, 0 });
 				}
 				else if (pointComp(B.p1(), Prev.p1()) || pointComp(B.p1(), Prev.p2()) ||
-					    pointComp(B.p2(), Prev.p1()) || pointComp(B.p2(), Prev.p2()))
+				         pointComp(B.p2(), Prev.p1()) || pointComp(B.p2(), Prev.p2()))
 				{
 
 					Inserted.append({ IDE, 0 }); Inserted.append({ IID, 0 });
@@ -8911,31 +9322,31 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 	Index.prepare("SELECT GEN_ID(EW_ELEMENT_ID_GEN, 1) FROM RDB$DATABASE");
 
 	Query.prepare(
-		"SELECT "
-			"O.UID, O.RODZAJ, P.P0_X, P.P0_Y, "
-			"IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
-			"IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
-			"E.IDE, E.TYP, IIF(P.ID IS NULL, 1, 0),"
-			"P.TYP_LINII, P.ID_WARSTWY, P.P1_FLAGS "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_ELEMENTY E "
-		"ON "
-			"O.UID = E.UIDO "
-		"LEFT JOIN "
-			"EW_POLYLINE P "
-		"ON "
-			"("
-				"E.IDE = P.ID AND "
-				"P.STAN_ZMIANY = 0 AND "
-				"E.TYP = 0 "
-			")"
-		"WHERE "
-			"O.STATUS = 0 AND "
-			"O.RODZAJ IN (2, 3) "
-		"ORDER BY "
-			"O.UID, E.N ASC");
+	     "SELECT "
+	          "O.UID, O.RODZAJ, P.P0_X, P.P0_Y, "
+	          "IIF(P.PN_X IS NULL, P.P1_X, P.PN_X), "
+	          "IIF(P.PN_Y IS NULL, P.P1_Y, P.PN_Y), "
+	          "E.IDE, E.TYP, IIF(P.ID IS NULL, 1, 0),"
+	          "P.TYP_LINII, P.ID_WARSTWY, P.P1_FLAGS "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "LEFT JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "("
+	               "E.IDE = P.ID AND "
+	               "P.STAN_ZMIANY = 0 AND "
+	               "E.TYP = 0 "
+	          ")"
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "O.RODZAJ IN (2, 3) "
+	     "ORDER BY "
+	          "O.UID, E.N ASC");
 
 	if (Query.exec()) while (Query.next() && !isTerminated())
 	{
@@ -8948,35 +9359,35 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 
 		if (Ot == 2 && Gt) Addons[ID].append(
 		{
-			Query.value(6).toInt(),
-			Query.value(7).toInt()
+		     Query.value(6).toInt(),
+		     Query.value(7).toInt()
 		});
 		else if (Ot == 2 && !Gt) Segments[ID].append(
 		{
-			Query.value(6).toInt(),
-			{
-				Query.value(2).toDouble(),
-				Query.value(3).toDouble(),
-				Query.value(4).toDouble(),
-				Query.value(5).toDouble()
-			}
+		     Query.value(6).toInt(),
+		     {
+		          Query.value(2).toDouble(),
+		          Query.value(3).toDouble(),
+		          Query.value(4).toDouble(),
+		          Query.value(5).toDouble()
+		     }
 		});
 		else if (Ot == 3 && !Gt && !Cr) append_pl(Polygons[ID],
 		{
-			Query.value(2).toDouble(),
-			Query.value(3).toDouble()
+		     Query.value(2).toDouble(),
+		     Query.value(3).toDouble()
 		},
 		{
-			Query.value(4).toDouble(),
-			Query.value(5).toDouble()
+		     Query.value(4).toDouble(),
+		     Query.value(5).toDouble()
 		});
 		else if (Ot == 3 && !Gt && Cr) Circles[ID] =
 		{
-			{
-				(Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0,
-				(Query.value(3).toDouble() + Query.value(5).toDouble()) / 2.0,
-			},
-			qAbs(Query.value(2).toDouble() - ((Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0))
+		     {
+		          (Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0,
+		          (Query.value(3).toDouble() + Query.value(5).toDouble()) / 2.0,
+		     },
+		     qAbs(Query.value(2).toDouble() - ((Query.value(2).toDouble() + Query.value(4).toDouble()) / 2.0))
 		};
 
 		const int IW = Query.value(10).toInt();
@@ -9126,9 +9537,9 @@ int DatabaseDriver::insertSurfsegments(const QSet<int>& Tasks, double Radius, in
 	Insert.prepare("INSERT INTO EW_OB_ELEMENTY (UIDO, IDE, TYP, N) VALUES (?, ?, ?, ?)");
 
 	Line.prepare(
-		"INSERT INTO EW_POLYLINE "
-			"(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, TYP_LINII, MNOZNIK, POINTCOUNT, CREATE_TS, MODIFY_TS) "
-		"VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, 0.0, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+	     "INSERT INTO EW_POLYLINE "
+	          "(ID, P0_X, P0_Y, P1_X, P1_Y, P1_FLAGS, STAN_ZMIANY, ID_WARSTWY, TYP_LINII, MNOZNIK, POINTCOUNT, CREATE_TS, MODIFY_TS) "
+	     "VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, 0.0, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
 
 	emit onBeginProgress(tr("Inserting segments"));
 	emit onSetupProgress(0, Mods.size());
@@ -9227,17 +9638,17 @@ void DatabaseDriver::getJoins(const QSet<int>& Items)
 	emit onSetupProgress(0, Items.size()); Step = 0;
 
 	Query.prepare(
-		"SELECT DISTINCT "
-			"O.RODZAJ, D.KOD, D.OPIS "
-		"FROM "
-			"EW_OBIEKTY O "
-		"INNER JOIN "
-			"EW_OB_OPISY D "
-		"ON "
-			"O.KOD = D.KOD "
-		"WHERE "
-			"O.UID = ? AND "
-			"O.STATUS = 0");
+	     "SELECT DISTINCT "
+	          "O.RODZAJ, D.KOD, D.OPIS "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_OPISY D "
+	     "ON "
+	          "O.KOD = D.KOD "
+	     "WHERE "
+	          "O.UID = ? AND "
+	          "O.STATUS = 0");
 
 	for (const auto& UID : Items)
 	{
@@ -9271,7 +9682,7 @@ void DatabaseDriver::getClass(const QSet<int>& Items)
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onClassReady(QHash<QString, QString>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>(), QHash<QString, QHash<int, QString>>()); return; }
 
 	QSqlQuery QueryA(Database), QueryB(Database), QueryC(Database), QueryD(Database),
-			QueryE(Database), QueryF(Database), QueryG(Database), QueryH(Database);
+	          QueryE(Database), QueryF(Database), QueryG(Database), QueryH(Database);
 
 	QHash<QString, QHash<int, QString>> Lines, Points, Texts;
 	QHash<QString, QString> Classes;
@@ -9279,164 +9690,164 @@ void DatabaseDriver::getClass(const QSet<int>& Items)
 	const int Type = 8 | 2 | 256; int Step = 0;
 
 	QueryA.prepare(
-		"SELECT "
-			"L.ID, G.NAZWA_L "
-		"FROM "
-			"EW_WARSTWA_LINIOWA L "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"L.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"L.NAZWA LIKE (O.KOD || '%') "
-		"ORDER BY "
-			"G.NAZWA_L");
+	     "SELECT "
+	          "L.ID, G.NAZWA_L "
+	     "FROM "
+	          "EW_WARSTWA_LINIOWA L "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "L.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "L.NAZWA LIKE (O.KOD || '%') "
+	     "ORDER BY "
+	          "G.NAZWA_L");
 
 	QueryB.prepare(
-		"SELECT "
-			"L.ID, L.DLUGA_NAZWA "
-		"FROM "
-			"EW_WARSTWA_LINIOWA L "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"L.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
-		"ORDER BY "
-			"L.DLUGA_NAZWA");
+	     "SELECT "
+	          "L.ID, L.DLUGA_NAZWA "
+	     "FROM "
+	          "EW_WARSTWA_LINIOWA L "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "L.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "L.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
+	     "ORDER BY "
+	          "L.DLUGA_NAZWA");
 
 	QueryC.prepare(
-		"SELECT "
-			"T.ID, G.NAZWA_L "
-		"FROM "
-			"EW_WARSTWA_TEXTOWA T "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"T.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.NAZWA = O.KOD AND "
-			"G.NAZWA NOT LIKE '%#_E' "
-		"ESCAPE "
-			"'#' "
-		"ORDER BY "
-			"G.NAZWA_L");
+	     "SELECT "
+	          "T.ID, G.NAZWA_L "
+	     "FROM "
+	          "EW_WARSTWA_TEXTOWA T "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "T.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.NAZWA = O.KOD AND "
+	          "G.NAZWA NOT LIKE '%#_E' "
+	     "ESCAPE "
+	          "'#' "
+	     "ORDER BY "
+	          "G.NAZWA_L");
 
 	QueryD.prepare(
-		"SELECT "
-			"T.ID, G.NAZWA_L "
-		"FROM "
-			"EW_WARSTWA_TEXTOWA T "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"T.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.NAZWA LIKE (O.KOD || '#_%') "
-		"ESCAPE "
-			"'#' "
-		"ORDER BY "
-			"G.NAZWA_L");
+	     "SELECT "
+	          "T.ID, G.NAZWA_L "
+	     "FROM "
+	          "EW_WARSTWA_TEXTOWA T "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "T.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.NAZWA LIKE (O.KOD || '#_%') "
+	     "ESCAPE "
+	          "'#' "
+	     "ORDER BY "
+	          "G.NAZWA_L");
 
 	QueryE.prepare(
-		"SELECT "
-			"T.ID, G.NAZWA_L "
-		"FROM "
-			"EW_WARSTWA_TEXTOWA T "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"T.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.NAZWA = O.KOD AND "
-			"G.NAZWA LIKE '%#_E' "
-		"ESCAPE "
-			"'#' "
-		"ORDER BY "
-			"G.NAZWA_L");
+	     "SELECT "
+	          "T.ID, G.NAZWA_L "
+	     "FROM "
+	          "EW_WARSTWA_TEXTOWA T "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "T.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.NAZWA = O.KOD AND "
+	          "G.NAZWA LIKE '%#_E' "
+	     "ESCAPE "
+	          "'#' "
+	     "ORDER BY "
+	          "G.NAZWA_L");
 
 	QueryF.prepare(
-		"SELECT "
-			"T.ID, G.NAZWA_L "
-		"FROM "
-			"EW_WARSTWA_TEXTOWA T "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"T.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.NAZWA = O.KOD "
-		"ORDER BY "
-			"G.NAZWA_L");
+	     "SELECT "
+	          "T.ID, G.NAZWA_L "
+	     "FROM "
+	          "EW_WARSTWA_TEXTOWA T "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "T.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.NAZWA = O.KOD "
+	     "ORDER BY "
+	          "G.NAZWA_L");
 
 	QueryG.prepare(
-		"SELECT "
-			"T.ID, T.DLUGA_NAZWA "
-		"FROM "
-			"EW_WARSTWA_TEXTOWA T "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"T.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
-		"ORDER BY "
-			"T.DLUGA_NAZWA");
+	     "SELECT "
+	          "T.ID, T.DLUGA_NAZWA "
+	     "FROM "
+	          "EW_WARSTWA_TEXTOWA T "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "T.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
+	     "ORDER BY "
+	          "T.DLUGA_NAZWA");
 
 	QueryH.prepare(
-		"SELECT "
-			"T.ID, G.NAZWA_L "
-		"FROM "
-			"EW_WARSTWA_TEXTOWA T "
-		"INNER JOIN "
-			"EW_GRUPY_WARSTW G "
-		"ON "
-			"T.ID_GRUPY = G.ID "
-		"INNER JOIN "
-			"EW_OB_KODY_OPISY O "
-		"ON "
-			"G.ID = O.ID_WARSTWY "
-		"WHERE "
-			"O.KOD = ? AND "
-			"T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
-		"ORDER BY "
-			"G.NAZWA_L");
+	     "SELECT "
+	          "T.ID, G.NAZWA_L "
+	     "FROM "
+	          "EW_WARSTWA_TEXTOWA T "
+	     "INNER JOIN "
+	          "EW_GRUPY_WARSTW G "
+	     "ON "
+	          "T.ID_GRUPY = G.ID "
+	     "INNER JOIN "
+	          "EW_OB_KODY_OPISY O "
+	     "ON "
+	          "G.ID = O.ID_WARSTWY "
+	     "WHERE "
+	          "O.KOD = ? AND "
+	          "T.NAZWA LIKE (SUBSTRING(O.KOD FROM 1 FOR 4) || '%') "
+	     "ORDER BY "
+	          "G.NAZWA_L");
 
 	emit onBeginProgress(tr("Selecting layers data"));
 	emit onSetupProgress(0, Tables.size());  Step = 0;
@@ -9544,12 +9955,12 @@ bool DatabaseDriver::addInterface(const QString& Path, int Type, bool Modal)
 	QSqlQuery Query(Database);
 
 	Query.prepare(
-		"UPDATE OR INSERT INTO "
-			"EW_OB_INTERFEJSY (NAZWA, PROGRAM, TYP, MODALNY, IDKATALOG) "
-		"VALUES "
-			"('EW-Database', ?, ?, ?, 1) "
-		"MATCHING "
-			"(PROGRAM)");
+	     "UPDATE OR INSERT INTO "
+	          "EW_OB_INTERFEJSY (NAZWA, PROGRAM, TYP, MODALNY, IDKATALOG) "
+	     "VALUES "
+	          "('EW-Database', ?, ?, ?, 1) "
+	     "MATCHING "
+	          "(PROGRAM)");
 
 	Query.addBindValue(Path);
 	Query.addBindValue(Type);
@@ -9581,12 +9992,12 @@ void DatabaseDriver::unifyJobs(void)
 	QHash<QString, QList<int>> Jobs; int Count(0);
 
 	Query.prepare(
-		"SELECT "
-			"UID, NUMER "
-		"FROM "
-			"EW_OPERATY "
-		"ORDER BY "
-			"OPERACJA DESC");
+	     "SELECT "
+	          "UID, NUMER "
+	     "FROM "
+	          "EW_OPERATY "
+	     "ORDER BY "
+	          "OPERACJA DESC");
 
 	if (Query.exec()) while (Query.next())
 	{
@@ -9606,16 +10017,16 @@ void DatabaseDriver::unifyJobs(void)
 		}
 
 		Query.exec(QString("UPDATE EW_OBIEKTY SET OPERAT = %1 WHERE OPERAT IN (%2)")
-				 .arg(New).arg(Old.join(',')));
+		           .arg(New).arg(Old.join(',')));
 		Query.exec(QString("UPDATE EW_POLYLINE SET OPERAT = %1 WHERE OPERAT IN (%2)")
-				 .arg(New).arg(Old.join(',')));
+		           .arg(New).arg(Old.join(',')));
 		Query.exec(QString("UPDATE EW_TEXT SET OPERAT = %1 WHERE OPERAT IN (%2)")
-				 .arg(New).arg(Old.join(',')));
+		           .arg(New).arg(Old.join(',')));
 
 		Query.exec(QString("DELETE FROM EW_OPERATY WHERE UID IN (%1)").arg(Old.join(',')));
 		Query.exec(QString("UPDATE EW_OPERATY SET "
-					    "OSOZ = NULL, DTZ = NULL, OPERACJA = 1 "
-					    "WHERE UID = %1)").arg(New));
+		                   "OSOZ = NULL, DTZ = NULL, OPERACJA = 1 "
+		                   "WHERE UID = %1)").arg(New));
 
 		emit onUpdateProgress(++Step); Count += 1;
 	}
@@ -9646,8 +10057,8 @@ void DatabaseDriver::refactorJobs(const QHash<QString, QString>& Dict)
 	emit onSetupProgress(0, Jobs.size());
 
 	Query.prepare("UPDATE EW_OPERATY O SET O.NUMER = ?, "
-			    "O.OPERACJA = (SELECT COALESCE(MAX(N.OPERACJA), 0) FROM EW_OPERATY N WHERE N.NUMER = ?) + 1 "
-			    "WHERE O.UID = ?");
+	              "O.OPERACJA = (SELECT COALESCE(MAX(N.OPERACJA), 0) FROM EW_OPERATY N WHERE N.NUMER = ?) + 1 "
+	              "WHERE O.UID = ?");
 
 	for (auto i = Jobs.constBegin(); i != Jobs.constEnd(); ++i)
 	{
@@ -9683,10 +10094,10 @@ bool operator == (const DatabaseDriver::FIELD& One, const DatabaseDriver::FIELD&
 {
 	return
 	(
-		One.Type == Two.Type &&
-		One.Name == Two.Name &&
-		One.Label == Two.Label &&
-		One.Dict == Two.Dict
+	     One.Type == Two.Type &&
+	     One.Name == Two.Name &&
+	     One.Label == Two.Label &&
+	     One.Dict == Two.Dict
 	);
 }
 
@@ -9694,10 +10105,10 @@ bool operator == (const DatabaseDriver::TABLE& One, const DatabaseDriver::TABLE&
 {
 	return
 	(
-		One.Name == Two.Name &&
-		One.Label == Two.Label &&
-		One.Data == Two.Data &&
-		One.Fields == Two.Fields
+	     One.Name == Two.Name &&
+	     One.Label == Two.Label &&
+	     One.Data == Two.Data &&
+	     One.Fields == Two.Fields
 	);
 }
 
@@ -9803,19 +10214,19 @@ QVariant castVariantTo(const QVariant& Variant, DatabaseDriver::TYPE Type)
 	{
 		case DatabaseDriver::READONLY:
 		case DatabaseDriver::STRING:
-			return Variant;
+		     return Variant;
 		case DatabaseDriver::MASK:
 		case DatabaseDriver::INTEGER:
 		case DatabaseDriver::SMALLINT:
-			return Variant.toInt();
+		     return Variant.toInt();
 		case DatabaseDriver::BOOL:
-			return Variant.toBool();
+		     return Variant.toBool();
 		case DatabaseDriver::DOUBLE:
-			return Variant.toDouble();
+		     return Variant.toDouble();
 		case DatabaseDriver::DATE:
-			return castStrToDate(Variant.toString());
+		     return castStrToDate(Variant.toString());
 		case DatabaseDriver::DATETIME:
-			return castStrToDatetime(Variant.toString());
+		     return castStrToDatetime(Variant.toString());
 	}
 	else return Variant;
 }
@@ -9824,7 +10235,7 @@ QDateTime castStrToDatetime(const QString& String)
 {
 	static const QStringList Formats =
 	{
-		"d.M.yyyy h:m:s", "d/M/yyyy h:m:s", "yyyy-M-d h:m:s"
+	     "d.M.yyyy h:m:s", "d/M/yyyy h:m:s", "yyyy-M-d h:m:s"
 	};
 
 	for (const auto& Fmt : Formats)
@@ -9841,7 +10252,7 @@ QDate castStrToDate(const QString& String)
 {
 	static const QStringList Formats =
 	{
-		"d.M.yyyy", "d/M/yyyy", "yyyy-M-d"
+	     "d.M.yyyy", "d/M/yyyy", "yyyy-M-d"
 	};
 
 	for (const auto& Fmt : Formats)

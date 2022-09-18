@@ -37,13 +37,13 @@ void HarmonizeDialog::accept(void)
 	QDialog::accept();
 
 	emit onFitRequest(File, ui->sourceCombo->currentIndex(),
-				   ui->x1Spin->value() - 1,
-				   ui->y1Spin->value() - 1,
-				   ui->x2Spin->value() - 1,
-				   ui->y2Spin->value() - 1,
-				   ui->distanceSpin->value(),
-				   ui->lengthSpin->value(),
-				   ui->endingsCheck->isChecked());
+	                  ui->x1Spin->value() - 1,
+	                  ui->y1Spin->value() - 1,
+	                  ui->x2Spin->value() - 1,
+	                  ui->y2Spin->value() - 1,
+	                  ui->distanceSpin->value(),
+	                  ui->lengthSpin->value(),
+	                  ui->endingsCheck->isChecked());
 }
 
 void HarmonizeDialog::open(const QString& Path)
@@ -80,7 +80,7 @@ void HarmonizeDialog::fitParametersChanged(void)
 	QSet<int> Indexes; bool Accepted;
 
 	const bool Range = ui->lengthSpin->value() >= ui->distanceSpin->value();
-	const bool Point = ui->sourceCombo->currentIndex() == 0;
+	const bool Point = ui->sourceCombo->currentIndex() != 2;
 
 	Indexes.insert(ui->x1Spin->value());
 	Indexes.insert(ui->y1Spin->value());

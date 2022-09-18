@@ -23,6 +23,7 @@
 
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QFileDialog>
 #include <QDialog>
 
 namespace Ui
@@ -53,10 +54,11 @@ class InsertDialog : public QDialog
 	private slots:
 
 		void insertParamsChanged(void);
+		void openFileClicked(void);
 
 	signals:
 
-		void onInsertRequest(int, double);
+		void onInsertRequest(int, double, const QString&);
 
 };
 

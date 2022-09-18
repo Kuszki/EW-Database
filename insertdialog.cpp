@@ -37,24 +37,36 @@ int InsertDialog::getMode(void) const
 	int Mode = 0;
 
 	if (ui->breakGroup->isChecked()) Mode = Mode |
-		(ui->endsCheck->isChecked() << 0) |
-		(ui->breaksCheck->isChecked() << 1) |
-		(ui->intersectCheck->isChecked() << 2) |
-		(ui->symbolCheck->isChecked() << 3);
+	     (ui->endsCheck->isChecked() << 0) |
+	     (ui->breaksCheck->isChecked() << 1) |
+	     (ui->intersectCheck->isChecked() << 2) |
+	     (ui->symbolCheck->isChecked() << 3);
 
 	if (ui->segmentGroup->isChecked()) Mode = Mode | (1 << 4) |
-		(ui->outsideCheck->isChecked() << 5) |
-		(ui->hideCheck->isChecked() << 6);
+	     (ui->outsideCheck->isChecked() << 5) |
+	     (ui->hideCheck->isChecked() << 6);
 
 	return Mode;
 }
 
 void InsertDialog::accept(void)
 {
-	QDialog::accept(); emit onInsertRequest(getMode(), ui->radiusSpin->value());
+	QDialog::accept();
+
+	emit onInsertRequest(getMode(),
+	                     ui->radiusSpin->value(),
+	                     ui->fileEdit->text());
 }
 
 void InsertDialog::insertParamsChanged(void)
 {
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(getMode());
+}
+
+void InsertDialog::openFileClicked(void)
+{
+	const QString Path = QFileDialog::getOpenFileName(this, tr("Open list file"), QString(),
+	                                                  tr("Text files (*.txt);;CSV files (*.csv);;All files (*.*)"));
+
+	if (!Path.isEmpty()) ui->fileEdit->setText(Path);
 }
