@@ -29,7 +29,7 @@ const QStringList DatabaseDriver::Operators =
 };
 
 DatabaseDriver::DatabaseDriver(QObject* Parent)
-: QObject(Parent), Terminated(false)
+: QObject(Parent), Terminated(false), makeHistory(false), Dateupdate(false)
 {
 	QSettings Settings("EW-Database");
 
@@ -569,7 +569,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QHash<int, QHash<int, QVariant>> List; QStringList Attribs;
 
-	for (const auto& Field : Common) Attribs.append(Field.Name);
+	for (const auto& Field : qAsConst(Common)) Attribs.append(Field.Name);
 	for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
 
 	const auto append = [&] (QSqlQuery& Query, int Index) -> void
@@ -1160,7 +1160,7 @@ void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
 
 	if (Items.size()) while (Query.next()) if (Items.contains(Query.value(0).toInt()))
 	{
-		Stream << Query.value(1).toString() << endl; emit onUpdateProgress(++Step);
+		Stream << Query.value(1).toString() << Qt::endl; emit onUpdateProgress(++Step);
 	}
 }
 
@@ -4100,11 +4100,11 @@ void DatabaseDriver::unifyData(const QSet<int>& Items, double Radius)
 		Pools.append(qMakePair(&I, List));
 	});
 
-	for (auto P : Pools) if (!Rem.contains(P.first))
+	for (const auto& P : qAsConst(Pools)) if (!Rem.contains(P.first))
 	{
 		double X(0.0), Y(0.0); unsigned Count(0); Rem.insert(P.first);
 
-		for (auto O : P.second) if (!Rem.contains(O))
+		for (const auto& O : qAsConst(P.second)) if (!Rem.contains(O))
 		{
 			X += O->x(); Y += O->y(); ++Count; Rem.insert(O);
 		}
@@ -5204,8 +5204,8 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 	if (isTerminated()) { emit onEndProgress(); emit onTextEdit(0); return; }
 
-	for (const auto& Point : Points) if (Point.Changed) Union.append(&Point);
-	for (const auto& Point : Texts) if (Point.Changed) Union.append(&Point);
+	for (const auto& Point : qAsConst(Points)) if (Point.Changed) Union.append(&Point);
+	for (const auto& Point : qAsConst(Texts)) if (Point.Changed) Union.append(&Point);
 
 	emit onBeginProgress(tr("Saving changes"));
 	emit onSetupProgress(0, Union.size()); Step = 0;
@@ -5515,11 +5515,13 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 	{
 		if (this->isTerminated()) return;
 
-		double Length(0.0); for (const auto& Segment : Line.Lines) Length += Segment.length(); if (Length < L) return;
+		double Length(0.0);
+		for (const auto& Segment : qAsConst(Line.Lines)) Length += Segment.length();
+		if (Length < L) return;
 
 		double Step((R != 0.0) ? ((Length - (int(Length / R) * R)) / 2.0) : (Length / 2.0)), Now(0.0);
 
-		for (const auto& Segment : Line.Lines) if (const double Len = Segment.length())
+		for (const auto& Segment : qAsConst(Line.Lines)) if (const double Len = Segment.length())
 		{
 			const double Last = Now; Now += Len; while (Now >= Step)
 			{
@@ -5545,7 +5547,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 
 		QLineF Radius(INFINITY, INFINITY, -INFINITY, -INFINITY);
 
-		for (const auto& P : Surface.Surface)
+		for (const auto& P : qAsConst(Surface.Surface))
 		{
 			if (P.x() < Radius.x1()) Radius.setP1({ P.x(), Radius.y1() });
 			if (P.x() > Radius.x2()) Radius.setP2({ P.x(), Radius.y2() });
@@ -5560,8 +5562,9 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 			const double Mul = 1.0 / (Surface.Surface.size() - 1);
 			double X(0.0), Y(0.0); bool Skip(true);
 
-			for (const auto& P : Surface.Surface) if (Skip) Skip = false;
-			else { X += Mul * P.x(); Y += Mul * P.y(); }
+			for (const auto& P : qAsConst(Surface.Surface))
+				if (Skip) Skip = false;
+				else { X += Mul * P.x(); Y += Mul * P.y(); }
 
 			Synchronizer.lock();
 			Insertions.append({ Surface.ID, X, Y, 0.0, Surface.Layer });
@@ -5764,7 +5767,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 	emit onBeginProgress(tr("Inserting labels"));
 	emit onSetupProgress(0, Insertions.size()); Step = 0;
 
-	for (const auto& Item : Insertions) if (!isTerminated())
+	for (const auto& Item : qAsConst(Insertions)) if (!isTerminated())
 	{
 		if (Select.exec() && Select.next())
 		{
@@ -5982,7 +5985,7 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 	const QVariant vLabel = Label.isEmpty() ? QVariant() : Label;
 	const QVariant vRotation = qIsNaN(Rotation) ? QVariant() : Rotation;
 
-	for (const auto& Item : Labels)
+	for (const auto& Item : qAsConst(Labels))
 	{
 		if (isTerminated()) break;
 
@@ -6421,7 +6424,7 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 	{
 		int Finall(0); QDate Current;
 
-		for (const auto& OP : Kergs[UID])
+		for (const auto& OP : qAsConst(Kergs[UID]))
 		{
 			const QDate Date = Dates.value(OP);
 
@@ -6635,7 +6638,7 @@ void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
 			return (A.LID == B.LID) || (A.A == B.A && A.B == B.B) || (A.B == B.A && A.A == B.B);
 		};
 
-		for (const auto& Other : Lines) if (Other.OID != Segment.OID)
+		for (const auto& Other : qAsConst(Lines)) if (Other.OID != Segment.OID)
 		{
 			if (compare(Segment, Other) && check(Segment.OID, Other.OID))
 			{
@@ -6653,7 +6656,7 @@ void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
 
 	updateQuery.prepare("UPDATE EW_POLYLINE SET TYP_LINII = 14 WHERE UID = ?");
 
-	for (const auto& Line : Lines)
+	for (const auto& Line : qAsConst(Lines))
 	{
 		if (Hides.contains(Line.ID))
 		{
@@ -6671,7 +6674,7 @@ void DatabaseDriver::hideEdges(const QSet<int>& Items, const QList<int>& Values)
 
 void DatabaseDriver::saveGeometry(const QSet<int>& Items, const QString& Path)
 {
-	QList<QLineF> Set; QSqlQuery Query(Database);
+	QList<QLineF> Set;
 
 	const auto Geometry = loadGeometry(Items); emit onEndProgress();
 
@@ -6720,7 +6723,7 @@ void DatabaseDriver::saveGeometry(const QSet<int>& Items, const QString& Path)
 
 	for (const auto& L : Set)
 	{
-		Stream << L.x1() << '\t' << L.y1() << '\t' << L.x2() << '\t' << L.y2() << endl;
+		Stream << L.x1() << '\t' << L.y1() << '\t' << L.x2() << '\t' << L.y2() << Qt::endl;
 	}
 }
 
