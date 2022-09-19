@@ -7108,7 +7108,7 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 				if (Other.Geometry.type() == QVariant::PointF)
 				{
 					OK = QLineF(ThisPoint, Other.Geometry.toPointF()).length();
-					if (OK <= Radius) ON += 5;
+					if (OK <= Radius) ON += 100;
 				}
 				else if (Other.Geometry.type() == QVariant::LineF)
 				{
@@ -7120,15 +7120,14 @@ QHash<int, QSet<int>> DatabaseDriver::joinMixed(const QHash<int, QSet<int>>& Geo
 					const double Y = (Circle.y1() + Circle.y2()) / 2.0;
 
 					OK = qSqrt(qPow(P.x() - X, 2) + qPow(P.y() - Y, 2)) - R;
-					if (OK <= Radius) ON += 5;
+					if (OK <= Radius) ON += 75;
 				}
 				else if (Other.Geometry.type() == QVariant::PolygonF)
 				{
 					const QPolygonF P = Other.Geometry.value<QPolygonF>();
 
-					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) { OK = 0.0; ON += 10; }
-
-					for (int i = 1; i < P.size(); ++i)
+					if (P.containsPoint(ThisPoint, Qt::OddEvenFill)) { OK = 0.0; ON += 75; }
+					else for (int i = 1; i < P.size(); ++i)
 					{
 						const double Now = pdistance(QLineF(P[i - 1], P[i]), ThisPoint);
 
