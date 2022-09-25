@@ -6727,6 +6727,156 @@ void DatabaseDriver::saveGeometry(const QSet<int>& Items, const QString& Path)
 	}
 }
 
+void DatabaseDriver::fixGeometry(const QSet<int>& Items)
+{
+	if (!Database.open()) { emit onError(tr("Database is not opened")); emit onGeometryFix(0); return; }
+
+	struct SEGMENT { int OID, LID; QLineF Line; int N1 = 0, N2 = 0; };
+
+	QSqlQuery Query(Database); Query.setForwardOnly(true);
+	QMutex Locker; QList<QPair<int, int>> Deletes;
+	QHash<int, QList<SEGMENT>> Objects;
+
+	emit onBeginProgress(tr("Loading geometry"));
+	emit onSetupProgress(0, 0); int Step(0);
+
+	Query.prepare(
+	     "SELECT "
+	          "O.UID, P.ID, "
+	          "ROUND(P.P0_X, 5), ROUND(P.P0_Y, 5), "
+	          "ROUND(P.P1_X, 5), ROUND(P.P1_Y, 5) "
+	     "FROM "
+	          "EW_OBIEKTY O "
+	     "INNER JOIN "
+	          "EW_OB_ELEMENTY E "
+	     "ON "
+	          "O.UID = E.UIDO "
+	     "INNER JOIN "
+	          "EW_POLYLINE P "
+	     "ON "
+	          "E.IDE = P.ID "
+	     "WHERE "
+	          "O.STATUS = 0 AND "
+	          "P.STAN_ZMIANY = 0 AND "
+	          "E.TYP = 0 AND "
+	          "P.P1_FLAGS = 0 "
+	     "ORDER BY "
+	          "E.UIDO ASCENDING,"
+	          "E.N ASCENDING");
+
+	if (Query.exec()) while (Query.next() && !isTerminated())
+	{
+		const int UID = Query.value(0).toInt();
+
+		if (Items.isEmpty() || Items.contains(UID))
+		{
+			Objects[UID].append(
+			{
+			     UID, Query.value(1).toInt(),
+			     QLineF(Query.value(2).toDouble(),
+			            Query.value(3).toDouble(),
+			            Query.value(4).toDouble(),
+			            Query.value(5).toDouble())
+			});
+		}
+	}
+	else qDebug() << Query.lastError().text();
+
+	emit onBeginProgress(tr("Calculating geometry"));
+	emit onSetupProgress(0, Objects.size()); Step = 0;
+
+	QtConcurrent::blockingMap(Objects, [this, &Deletes, &Step, &Locker] (QList<SEGMENT>& Obj) -> void
+	{
+		QSet<int> Rem; const int UID = Obj.first().OID;
+
+		for (SEGMENT& S : Obj) for (const SEGMENT& O : Obj) if (S.LID != O.LID)
+		{
+			if (S.Line.p1() == O.Line.p1()) ++S.N1;
+			if (S.Line.p1() == O.Line.p2()) ++S.N1;
+			if (S.Line.p2() == O.Line.p1()) ++S.N2;
+			if (S.Line.p2() == O.Line.p2()) ++S.N2;
+		}
+
+		for (const SEGMENT& S : Obj) if (S.N1 > 1)
+			for (SEGMENT& O : Obj) if (S.LID != O.LID)
+			{
+				if (S.Line.p1() == O.Line.p1())
+				{
+					if (O.N2 > S.N2 || O.Line.length() > S.Line.length())
+					{
+						Rem.insert(S.LID); --O.N1;
+					}
+				}
+				else if (S.Line.p1() == O.Line.p2())
+				{
+					if (O.N1 > S.N2 || O.Line.length() > S.Line.length())
+					{
+						Rem.insert(S.LID); --O.N2;
+					}
+				}
+			}
+
+		for (const SEGMENT& S : Obj) if (S.N2 > 1)
+			for (SEGMENT& O : Obj) if (S.LID != O.LID)
+			{
+				if (S.Line.p2() == O.Line.p1())
+				{
+					if (O.N2 > S.N1 || O.Line.length() > S.Line.length())
+					{
+						Rem.insert(S.LID); --O.N1;
+					}
+				}
+				else if (S.Line.p2() == O.Line.p2())
+				{
+					if (O.N1 > S.N1 || O.Line.length() > S.Line.length())
+					{
+						Rem.insert(S.LID); --O.N2;
+					}
+				}
+			}
+
+		if (Obj.size() > 1) for (const SEGMENT& S : Obj) if (S.N1 == 0 && S.N2 == 0) Rem.insert(S.LID);
+		for (const SEGMENT& S : Obj) if (S.Line.length() < 0.01) Rem.insert(S.LID);
+
+		QMutexLocker ML(&Locker);
+
+		for (const int& ID : Rem) Deletes.append({ UID, ID });
+
+		emit onUpdateProgress(++Step);
+	});
+
+	emit onBeginProgress(tr("Updating geometry"));
+	emit onSetupProgress(0, Deletes.size()*2); Step = 0;
+
+	Query.prepare(
+	     "DELETE FROM EW_OB_ELEMENTY E "
+	     "WHERE E.UIDO = ? AND E.IDE = ? AND E.TYP = 0");
+
+	for (const auto& P : qAsConst(Deletes))
+	{
+		Query.addBindValue(P.first);
+		Query.addBindValue(P.second);
+
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	Query.prepare("DELETE FROM EW_POLYLINE P WHERE P.ID = ?");
+
+	for (const auto& P : qAsConst(Deletes))
+	{
+		Query.addBindValue(P.second);
+
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
+	emit onGeometryFix(Deletes.size());
+}
+
 QHash<int, QSet<int>> DatabaseDriver::joinSurfaces(const QHash<int, QSet<int>>& Geometry, const QList<DatabaseDriver::POINT>& Points, const QSet<int>& Tasks, const QString& Class, double Radius)
 {
 	if (!Database.isOpen()) return QHash<int, QSet<int>>();
@@ -9120,8 +9270,8 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 				const QLineF NewA(Part.Line.p1(), P);
 				const QLineF NewB(P, Part.Line.p2());
 
-				if (NewA.length() >= 2.5 * Radius &&
-				    NewB.length() >= 2.5 * Radius)
+				if (NewA.length() >= Radius &&
+				    NewB.length() >= Radius)
 				{
 					const INSERT Insert = { 0, Part.ID, NewA };
 

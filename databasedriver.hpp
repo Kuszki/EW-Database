@@ -332,6 +332,8 @@ class DatabaseDriver : public QObject
 
 		void saveGeometry(const QSet<int>& Items, const QString& Path);
 
+		void fixGeometry(const QSet<int>& Items);
+
 		void getCommon(const QSet<int>& Items);
 		void getPreset(const QSet<int>& Items);
 		void getJoins(const QSet<int>& Items);
@@ -415,6 +417,8 @@ class DatabaseDriver : public QObject
 
 		void onJobsUnify(int);
 		void onJobsRefactor(int);
+
+		void onGeometryFix(int);
 
 };
 

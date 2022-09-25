@@ -164,6 +164,7 @@ class MainWindow : public QMainWindow
 		void fitActionClicked(void);
 		void unifyActionClicked(void);
 		void unifyjobsActionClicked(void);
+		void fixgeometryActionClicked(void);
 		void refactorjobsActionClicked(void);
 
 		void selectionActionToggled(bool Allow);
@@ -268,6 +269,8 @@ class MainWindow : public QMainWindow
 		void jobsUnified(int Count);
 		void jobsRefactored(int Count);
 
+		void geometryFixed(int Count);
+
 		void loginAttempt(void);
 
 		void readDatagram(void);
@@ -328,6 +331,8 @@ class MainWindow : public QMainWindow
 		void onGroupRequest(const QList<int>&);
 
 		void onEdgesRequest(const QSet<int>&, const QList<int>&);
+
+		void onFixgeometryRequest(const QSet<int>&);
 
 		void onUnifyjobsRequest(void);
 		void onRefactorJobsRequest(const QHash<QString, QString>&);

@@ -68,7 +68,7 @@
      <x>0</x>
      <y>0</y>
      <width>1366</width>
-     <height>21</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDatabase">
@@ -132,6 +132,7 @@
     <addaction name="actionDeletelab"/>
     <addaction name="separator"/>
     <addaction name="actionFit"/>
+    <addaction name="actionFixGeometry"/>
     <addaction name="actionUnifygeometry"/>
     <addaction name="actionInsert"/>
     <addaction name="actionBreaks"/>
@@ -226,6 +227,7 @@
    <addaction name="actionJoin"/>
    <addaction name="actionMerge"/>
    <addaction name="actionSplit"/>
+   <addaction name="actionFixGeometry"/>
    <addaction name="actionUnifygeometry"/>
    <addaction name="actionFit"/>
    <addaction name="actionInsert"/>
@@ -754,6 +756,18 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionFixGeometry">
+   <property name="icon">
+    <iconset theme="applications-development">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Fix geometry</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+]</string>
    </property>
   </action>
  </widget>

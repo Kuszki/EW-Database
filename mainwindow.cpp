@@ -103,6 +103,8 @@ MainWindow::MainWindow(QWidget* Parent)
 	connect(ui->actionUnifyJobs, &QAction::triggered, this, &MainWindow::unifyjobsActionClicked);
 	connect(ui->actionRefactorJobs, &QAction::triggered, this, &MainWindow::refactorjobsActionClicked);
 
+	connect(ui->actionFixGeometry, &QAction::triggered, this, &MainWindow::fixgeometryActionClicked);
+
 	connect(Driver, &DatabaseDriver::onConnect, this, &MainWindow::databaseConnected);
 	connect(Driver, &DatabaseDriver::onDisconnect, this, &MainWindow::databaseDisconnected);
 	connect(Driver, &DatabaseDriver::onError, this, &MainWindow::databaseError);
@@ -146,6 +148,8 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(Driver, &DatabaseDriver::onJobsUnify, this, &MainWindow::jobsUnified);
 	connect(Driver, &DatabaseDriver::onJobsRefactor, this, &MainWindow::jobsRefactored);
+
+	connect(Driver, &DatabaseDriver::onGeometryFix, this, &MainWindow::geometryFixed);
 
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
 	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
@@ -195,6 +199,8 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(this, &MainWindow::onUnifyjobsRequest, Driver, &DatabaseDriver::unifyJobs);
 	connect(this, &MainWindow::onRefactorJobsRequest, Driver, &DatabaseDriver::refactorJobs);
+
+	connect(this, &MainWindow::onFixgeometryRequest, Driver, &DatabaseDriver::fixGeometry);
 
 	connect(Terminator, &QPushButton::clicked, Terminator, &QPushButton::hide, Qt::DirectConnection);
 	connect(Terminator, &QPushButton::clicked, Driver, &DatabaseDriver::terminate, Qt::DirectConnection);
@@ -513,6 +519,15 @@ void MainWindow::unifyjobsActionClicked(void)
 	lockUi(BUSY); emit onUnifyjobsRequest();
 }
 
+void MainWindow::fixgeometryActionClicked(void)
+{
+	const auto Selected = ui->Data->selectionModel()->selectedRows();
+	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
+	auto Set = Model->getUids(Selected).subtract(hiddenRows);
+
+	lockUi(BUSY); emit onFixgeometryRequest(Set);
+}
+
 void MainWindow::refactorjobsActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
@@ -603,6 +618,7 @@ void MainWindow::selectionChanged(void)
 	ui->actionBreaks->setEnabled(Count > 0);
 	ui->actionFit->setEnabled(Count > 0);
 	ui->actionUnifygeometry->setEnabled(Count > 1);
+	ui->actionFixGeometry->setEnabled(Count > 0);
 	ui->actionHide->setEnabled(Count > 0);
 	ui->actionInsert->setEnabled(Count > 0);
 	ui->actionJoin->setEnabled(Count > 1);
@@ -1047,6 +1063,11 @@ void MainWindow::jobsRefactored(int Count)
 	lockUi(DONE); ui->statusBar->showMessage(tr("Refactored %n job(s)", nullptr, Count));
 }
 
+void MainWindow::geometryFixed(int Count)
+{
+	lockUi(DONE); ui->statusBar->showMessage(tr("Deleted %n segment(s)", nullptr, Count));
+}
+
 void MainWindow::loginAttempt(void)
 {
 	ui->actionConnect->setEnabled(false);
@@ -1329,6 +1350,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
 			ui->actionUnifygeometry->setEnabled(false);
+			ui->actionFixGeometry->setEnabled(false);
 			ui->actionKerg->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
@@ -1366,6 +1388,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRelabel->setEnabled(false);
 			ui->actionFit->setEnabled(false);
 			ui->actionUnifygeometry->setEnabled(false);
+			ui->actionFixGeometry->setEnabled(false);
 			ui->actionKerg->setEnabled(false);
 			ui->actionInsert->setEnabled(false);
 			ui->actionHide->setEnabled(false);
