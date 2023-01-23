@@ -5251,7 +5251,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 	struct SURFACE { int ID; QPolygonF Surface; int Layer; };
 
 	QSqlQuery Symbols(Database), Lines(Database), Surfaces(Database), Select(Database), Text(Database), Element(Database);
-	QList<LINE> LineList; QList<SURFACE> SurfaceList; QList<LABEL> Insertions; QSet<int> Used;
+	QList<LINE> LineList; QList<SURFACE> SurfaceList; QList<LABEL> Insertions; QSet<int> Used, Set;
 	QMutex Synchronizer; int Step = 0, Count = 0;
 
 	if (!J)
@@ -5789,6 +5789,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 			Element.addBindValue(Item.ID);
 
 			if (!Element.exec()) continue;
+			else Set.insert(Item.ID);
 
 			Count += 1;
 		}
@@ -5796,17 +5797,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 		emit onUpdateProgress(++Step);
 	}
 
-	if (Dateupdate)
-	{
-		QSet<int> Set;
-
-		for (const auto& Item : qAsConst(Insertions))
-		{
-			Set.insert(Item.ID);
-		}
-
-		updateModDate(Set);
-	}
+	if (Dateupdate) updateModDate(Set);
 
 	emit onEndProgress();
 	emit onLabelInsert(Count);
