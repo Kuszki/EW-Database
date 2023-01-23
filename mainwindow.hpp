@@ -202,7 +202,7 @@ class MainWindow : public QMainWindow
 					  const QString& Symbol, int Style, const QString& Label,
 					  int Actions, double Radius);
 		void editText(bool Move, int Justify, bool Rotate, bool Sort, double Length, bool Ignrel);
-		void insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R);
+		void insertLabel(const QString& Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, int Jobtype, int X1, int Y1, int X2, int Y2, double R, double L, bool E);
 		void insertBreaks(int Mode, double Radius, const QString& Path);
 		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation);

@@ -4519,7 +4519,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QMap<int, POINT> Points, Texts, Objects; int Step = 0;
 	QList<LINE> Lines, Surfaces; QList<const POINT*> Union;
-	QHash<int, QSet<int>> Subobjects;
+	QHash<int, QSet<int>> Subobjects; QSet<int> Set;
 
 	emit onBeginProgress(tr("Loading subobjects"));
 	emit onSetupProgress(0, 0);
@@ -5231,10 +5231,12 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		Query.addBindValue(Point->J);
 		Query.addBindValue(Point->IDE);
 
-		Query.exec();
+		if (Query.exec()) Set.insert(Point->UIDO);
 
 		emit onUpdateProgress(++Step);
 	}
+
+	if (Dateupdate) updateModDate(Set);
 
 	emit onEndProgress();
 	emit onTextEdit(Step);

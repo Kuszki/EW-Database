@@ -700,7 +700,7 @@ void MainWindow::editText(bool Move, int Justify, bool Rotate, bool Sort, double
 	lockUi(BUSY); emit onTextRequest(Set, Move, Justify, Rotate, Sort, Length, Ignrel);
 }
 
-void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R)
+void MainWindow::insertLabel(const QString& Text, int J, double X, double Y, bool P, double L, double R)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());

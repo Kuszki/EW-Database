@@ -48,6 +48,8 @@ class HarmonizeDialog : public QDialog
 		explicit HarmonizeDialog(QWidget* Parent = nullptr, const QString& Path = QString());
 		virtual ~HarmonizeDialog(void) override;
 
+		QString getPath(void) const;
+
 	public slots:
 
 		virtual void accept(void) override;
@@ -55,8 +57,6 @@ class HarmonizeDialog : public QDialog
 		virtual void open(const QString& Path);
 
 		void setPath(const QString& Path);
-
-		QString getPath(void) const;
 
 	private slots:
 
