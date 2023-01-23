@@ -4483,7 +4483,7 @@ void DatabaseDriver::removeHistory(const QSet<int>& Items)
 	emit onHistoryRemove(Count);
 }
 
-void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bool Rotate, bool Sort, double Length)
+void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bool Rotate, bool Sort, double Length, bool Ignrel)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onTextEdit(0); return; }
 
@@ -4820,7 +4820,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 	const auto cmp = [] (double a, double b) { return diffComp(a, b, 0.01); };
 
-	QtConcurrent::blockingMap(Points, [this, &Lines, &Subobjects, Move, Justify, Rotate, Length, distance, cmp] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Points, [this, &Lines, &Subobjects, Move, Justify, Rotate, Length, Ignrel, distance, cmp] (POINT& Point) -> void
 	{
 		if (this->isTerminated()) return;
 
@@ -4852,16 +4852,16 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			Point.Changed = true;
 		}
 
-		if (Rotate && !Found) for (const auto& Line : Lines)
-			if (!Found && Subobjects.value(Line.UIDO).contains(Point.UIDO))
+		if (Rotate && !Found) for (const auto& Line : qAsConst(Lines))
+			if (!Found && (Ignrel || Subobjects.value(Line.UIDO).contains(Point.UIDO)))
 				if ((cmp(Point.WX, Line.X1) && cmp(Point.WY, Line.Y1)) ||
 				    (cmp(Point.WX, Line.X2) && cmp(Point.WY, Line.Y2)))
 				{
 					Match = &Line; Found = true;
 				}
 
-		if (Rotate && !Found) for (const auto& Line : Lines)
-			if (!Found && Subobjects.value(Line.UIDO).contains(Point.UIDO))
+		if (Rotate && !Found) for (const auto& Line : qAsConst(Lines))
+			if (!Found && (Ignrel || Subobjects.value(Line.UIDO).contains(Point.UIDO)))
 				if (distance(QLineF(Line.X1, Line.Y1, Line.X2, Line.Y2),
 						   QPointF(Point.WX, Point.WY)) <= 0.05)
 				{
@@ -4901,7 +4901,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		}
 	});
 
-	QtConcurrent::blockingMap(Points, [this, &Surfaces, &Subobjects, Move, Justify, Rotate, distance, length, cmp] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Points, [this, &Surfaces, &Subobjects, Move, Justify, Rotate, Ignrel, distance, length, cmp] (POINT& Point) -> void
 	{
 		if (this->isTerminated()) return; QList<MATCH> Distances;
 
@@ -4933,7 +4933,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 
 		if (Rotate) for (const auto& L : Surfaces)
 		{
-			if (Subobjects.value(L.UIDO).contains(Point.UIDO))
+			if (Ignrel || Subobjects.value(L.UIDO).contains(Point.UIDO))
 			{
 				const auto F = QLineF(L.X1, L.Y1, L.X2, L.Y2);
 				const auto P = QPointF(Point.DX, Point.DY);

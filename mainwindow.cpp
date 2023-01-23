@@ -40,9 +40,9 @@ MainWindow::MainWindow(QWidget* Parent)
 	Thread.start();
 
 	Selector->addItems(QStringList()
-	                   << tr("No selection") << tr("Single selection")
-	                   << tr("Add to selection") << tr("Remove from selection")
-	                   << tr("Unhide item") << tr("Hide item"));
+				    << tr("No selection") << tr("Single selection")
+				    << tr("Add to selection") << tr("Remove from selection")
+				    << tr("Unhide item") << tr("Hide item"));
 	Selector->setLayoutDirection(Qt::LeftToRight);
 
 	Color->setRange(0, 14);
@@ -282,8 +282,8 @@ void MainWindow::deleteActionClicked(void)
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 
 	if (QMessageBox::question(this, tr("Delete %n object(s)", nullptr, Selected.count()),
-	                          tr("Are you sure to delete selected items?"),
-	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+						 tr("Are you sure to delete selected items?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		ui->Data->selectionModel()->clearSelection();
 
@@ -298,8 +298,8 @@ void MainWindow::removelabActionClicked(void)
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Delete %n object(s) labels", nullptr, Selected.count()),
-	                          tr("Are you sure to delete selected items labels?"),
-	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+						 tr("Are you sure to delete selected items labels?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onRemovelabelRequest(Set);
 	}
@@ -308,8 +308,8 @@ void MainWindow::removelabActionClicked(void)
 void MainWindow::refreshActionClicked(void)
 {
 	refreshData(Filter->getFilterRules(), Filter->getAdvancedRules(), Filter->getUsedFields(),
-	            Filter->getGeometryRules(), Filter->getRedactionRules(),
-	            Filter->getLimiterFile(), Filter->getRadius(), 0);
+			  Filter->getGeometryRules(), Filter->getRedactionRules(),
+			  Filter->getLimiterFile(), Filter->getRadius(), 0);
 }
 
 void MainWindow::editActionClicked(void)
@@ -337,8 +337,8 @@ void MainWindow::restoreActionClicked(void)
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Restore %n object(s) oryginal job name", nullptr, Selected.count()),
-	                          tr("Are you sure to restore selected items first job name?"),
-	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+						 tr("Are you sure to restore selected items first job name?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onRestoreRequest(Set);
 	}
@@ -351,8 +351,8 @@ void MainWindow::historyActionClicked(void)
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
 	if (QMessageBox::question(this, tr("Delete %n object(s) history", nullptr, Selected.count()),
-	                          tr("Are you sure to delete selected items history?"),
-	                          QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+						 tr("Are you sure to delete selected items history?"),
+						 QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		lockUi(BUSY); emit onHistoryRequest(Set);
 	}
@@ -419,7 +419,7 @@ void MainWindow::unhideActionClicked(void)
 void MainWindow::batchActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
-	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	QSettings Settings("EW-Database");
 
@@ -483,7 +483,7 @@ void MainWindow::interfaceActionClicked(void)
 void MainWindow::fitActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
-	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (!Path.isEmpty()) Fit->open(Path);
 }
@@ -531,7 +531,7 @@ void MainWindow::fixgeometryActionClicked(void)
 void MainWindow::refactorjobsActionClicked(void)
 {
 	const QString Path = QFileDialog::getOpenFileName(this, tr("Open data file"), QString(),
-	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	QSettings Settings("EW-Database");
 
@@ -691,13 +691,13 @@ void MainWindow::changeClass(const QString& Class, int Line, int Point, int Text
 	lockUi(BUSY); emit onRefactorRequest(Set, Class, Line, Point, Text, Symbol, Style, Label, Actions, Radius);
 }
 
-void MainWindow::editText(bool Move, int Justify, bool Rotate, bool Sort, double Length)
+void MainWindow::editText(bool Move, int Justify, bool Rotate, bool Sort, double Length, bool Ignrel)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onTextRequest(Set, Move, Justify, Rotate, Sort, Length);
+	lockUi(BUSY); emit onTextRequest(Set, Move, Justify, Rotate, Sort, Length, Ignrel);
 }
 
 void MainWindow::insertLabel(const QString Text, int J, double X, double Y, bool P, double L, double R)
@@ -759,7 +759,7 @@ void MainWindow::databaseConnected(const QList<DatabaseDriver::FIELD>& Fields, c
 	Codes.clear(); for (const auto& Code : Classes) Codes.insert(Code.Label, Code.Name);
 
 	const QStringList Props = QStringList(Headers).replaceInStrings(QRegExp("\\W+"), " ")
-	                                              .replaceInStrings(QRegExp("\\s+"), "_");
+										 .replaceInStrings(QRegExp("\\s+"), "_");
 
 	const bool Singletons = ui->actionSingleton->isChecked();
 	allHeaders = Headers; labelCodes = Variables.keys();
@@ -1077,9 +1077,9 @@ void MainWindow::readDatagram(void)
 {
 	static const QVector<QItemSelectionModel::SelectionFlag> Actions =
 	{
-	     QItemSelectionModel::ClearAndSelect,
-	     QItemSelectionModel::Select,
-	     QItemSelectionModel::Deselect
+		QItemSelectionModel::ClearAndSelect,
+		QItemSelectionModel::Select,
+		QItemSelectionModel::Deselect
 	};
 
 	QByteArray Data;
@@ -1141,11 +1141,11 @@ void MainWindow::readRequest(void)
 		const auto Mid = Model->index(Index);
 
 		QString Data = QString()
-		     .append(Format)
-		     .append(Codes.value(Model->fieldData(Mid, 0).toString()))
-		     .append(";")
-		     .append(Model->fieldData(Mid, 2).toString())
-		     .append("\n");
+			.append(Format)
+			.append(Codes.value(Model->fieldData(Mid, 0).toString()))
+			.append(";")
+			.append(Model->fieldData(Mid, 2).toString())
+			.append("\n");
 
 		Sender.writeDatagram(Data.toUtf8(), QHostAddress::LocalHost, Port);
 	}
@@ -1208,7 +1208,7 @@ void MainWindow::prepareClass(const QHash<QString, QString>& Classes, const QHas
 void MainWindow::saveData(const QList<int>& Fields, int Type, bool Header)
 {
 	const QString Path = QFileDialog::getSaveFileName(this, tr("Select file to save data"), QString(),
-	                                                  tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
+											tr("CSV files (*.csv);;Text files (*.txt);;All files (*.*)"));
 
 	if (Path.isEmpty()) return;
 
@@ -1453,12 +1453,12 @@ void MainWindow::updateView(RecordModel* Model)
 	delete Selection; Old->deleteLater();
 
 	connect(ui->Data->selectionModel(),
-	        &QItemSelectionModel::selectionChanged,
-	        this, &MainWindow::selectionChanged);
+		   &QItemSelectionModel::selectionChanged,
+		   this, &MainWindow::selectionChanged);
 
 	connect(ui->Data->model(),
-	        &QAbstractItemModel::modelReset,
-	        this, &MainWindow::updateHidden);
+		   &QAbstractItemModel::modelReset,
+		   this, &MainWindow::updateHidden);
 }
 
 void MainWindow::updateHidden(void)

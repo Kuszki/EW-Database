@@ -166,50 +166,50 @@ class DatabaseDriver : public QObject
 		QStringList normalizeHeaders(QList<TABLE>& Tabs, const QList<FIELD>& Base) const;
 
 		QMap<QString, QSet<int>> getClassGroups(const QSet<int>& Indexes,
-		                                        bool Common, int Index);
+										bool Common, int Index);
 
 		QMap<QString, QSet<int>> createHistory(const QMap<QString, QSet<int>>& Tasks,
-		                                       QHash<int, int>* Updates = nullptr);
+									    QHash<int, int>* Updates = nullptr);
 
 		QHash<int, QHash<int, QVariant>> loadData(const TABLE& Table,
-		                                          const QSet<int>& Filter,
-		                                          const QString& Where,
-		                                          bool Dict, bool View);
+										  const QSet<int>& Filter,
+										  const QString& Where,
+										  bool Dict, bool View);
 
 		void filterData(QHash<int, QHash<int, QVariant>>& Data,
-		                const QHash<int, QVariant>& Geometry,
-		                const QHash<int, QVariant>& Redaction,
-		                const QString& Limiter, double Radius);
+					 const QHash<int, QVariant>& Geometry,
+					 const QHash<int, QVariant>& Redaction,
+					 const QString& Limiter, double Radius);
 
 		void filterData(QHash<int, QHash<int, QVariant>>& Data,
-		                const QString& Expression);
+					 const QString& Expression);
 
 		void performDataUpdates(QMap<QString, QSet<int>>& Tasks,
-		                        const QHash<int, QVariant>& Values,
-		                        const QHash<int, int>& Reasons, bool Emit);
+						    const QHash<int, QVariant>& Values,
+						    const QHash<int, int>& Reasons, bool Emit);
 
 		QSet<int> performBatchUpdates(const QMap<QString, QSet<int>> Items,
-		                              const QList<BatchWidget::RECORD>& Functions,
-		                              const QList<QVariantList>& Values);
+								const QList<BatchWidget::RECORD>& Functions,
+								const QList<QVariantList>& Values);
 
 		QList<int> getUsedFields(const QString& Filter) const;
 		QList<int> getCommonFields(const QStringList& Classes) const;
 
 		QHash<int, QSet<int>> joinSurfaces(const QHash<int, QSet<int>>& Geometry,
-		                                   const QList<DatabaseDriver::POINT>& Points,
-		                                   const QSet<int>& Tasks, const QString& Class,
-		                                   double Radius = 0.0);
+									const QList<DatabaseDriver::POINT>& Points,
+									const QSet<int>& Tasks, const QString& Class,
+									double Radius = 0.0);
 		QHash<int, QSet<int>> joinLines(const QHash<int, QSet<int>>& Geometry,
-		                                const QList<DatabaseDriver::POINT>& Points,
-		                                const QSet<int>& Tasks, const QString& Class,
-		                                double Radius = 0.0);
+								  const QList<DatabaseDriver::POINT>& Points,
+								  const QSet<int>& Tasks, const QString& Class,
+								  double Radius = 0.0);
 		QHash<int, QSet<int>> joinPoints(const QHash<int, QSet<int>>& Geometry,
-		                                 const QList<DatabaseDriver::POINT>& Points,
-		                                 const QSet<int>& Tasks, const QString& Class,
-		                                 double Radius = 0.0);
+								   const QList<DatabaseDriver::POINT>& Points,
+								   const QSet<int>& Tasks, const QString& Class,
+								   double Radius = 0.0);
 		QHash<int, QSet<int>> joinMixed(const QHash<int, QSet<int>>& Geometry,
-		                                const QSet<int>& Obj, const QSet<int>& Sub,
-		                                double Radius = 0.0);
+								  const QSet<int>& Obj, const QSet<int>& Sub,
+								  double Radius = 0.0);
 
 		void convertSurfaceToPoint(const QSet<int>& Objects, const QString& Symbol, int Layer);
 		void convertPointToSurface(const QSet<int>& Objects, int Style, int Layer, double Radius);
@@ -230,9 +230,9 @@ class DatabaseDriver : public QObject
 		QSet<int> filterDataByIsnear(const QList<OBJECT>& Data, double Radius = 0.001, bool Not = false, int Count = 0);
 
 		QSet<int> filterDataByIsSubobject(const QSet<int>& Data, const QSet<int>& Objects,
-		                                  const SUBOBJECTSTABLE& Table, bool Not = false);
+								    const SUBOBJECTSTABLE& Table, bool Not = false);
 		QSet<int> filterDataByHasSubobject(const QSet<int>& Data, const QSet<int>& Objects,
-		                                   const SUBOBJECTSTABLE& Table, bool Not = false);
+									const SUBOBJECTSTABLE& Table, bool Not = false);
 
 		QSet<int> filterDataBySymbolAngle(const QList<REDACTION>& Data, double Minimum, double Maximum);
 		QSet<int> filterDataByLabelAngle(const QList<REDACTION>& Data, double Minimum, double Maximum);
@@ -261,26 +261,26 @@ class DatabaseDriver : public QObject
 	public slots:
 
 		bool openDatabase(const QString& Server, const QString& Base,
-		                  const QString& User, const QString& Pass);
+					   const QString& User, const QString& Pass);
 
 		bool closeDatabase(void);
 
 		void loadList(const QStringList& Filter, int Index, int Action,
-		              const RecordModel* Current = nullptr,
-		              const QSet<int>& Items = QSet<int>());
+				    const RecordModel* Current = nullptr,
+				    const QSet<int>& Items = QSet<int>());
 		void reloadData(const QString& Filter, const QString& Script, QList<int> Used,
-		                const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction,
-		                const QString& Limiter, double Radius, int Mode,
-		                const RecordModel* Current = nullptr,
-		                const QSet<int>& Items = QSet<int>());
+					 const QHash<int, QVariant>& Geometry, const QHash<int, QVariant>& Redaction,
+					 const QString& Limiter, double Radius, int Mode,
+					 const RecordModel* Current = nullptr,
+					 const QSet<int>& Items = QSet<int>());
 		void updateData(const QSet<int>& Items,
-		                const QHash<int, QVariant>& Values,
-		                const QHash<int, int>& Reasons);
+					 const QHash<int, QVariant>& Values,
+					 const QHash<int, int>& Reasons);
 		void removeData(const QSet<int>& Items);
 
 		void execBatch(const QSet<int>& Items,
-		               const QList<BatchWidget::RECORD>& Functions,
-		               const QList<QStringList>& Values);
+					const QList<BatchWidget::RECORD>& Functions,
+					const QList<QStringList>& Values);
 
 		void execFieldcopy(const QSet<int>& Items, const QList<CopyfieldsWidget::RECORD>& Functions, bool Nulls);
 		void execScript(const QSet<int>& Items, const QString& Script);
@@ -288,22 +288,22 @@ class DatabaseDriver : public QObject
 		void splitData(const QSet<int>& Items, const QString& Point, const QString& From, int Type);
 
 		void joinData(const QSet<int>& Items, const QString& Point, const QString& Join,
-		              bool Override, int Type, double Radius);
+				    bool Override, int Type, double Radius);
 
 		void mergeData(const QSet<int>& Items, const QList<int>& Values, const QStringList& Points, double Diff);
 
 		void cutData(const QSet<int>& Items, const QStringList& Points, int Endings);
 
 		void refactorData(const QSet<int>& Items, const QString& Class, int Line, int Point, int Text,
-		                  const QString& Symbol, int Style, const QString& Label, int Actions, double Radius);
+					   const QString& Symbol, int Style, const QString& Label, int Actions, double Radius);
 
 		void copyData(const QSet<int>& Items, const QString& Class,
-		              int Line, int Point, int Text,
-		              const QString& Symbol, int Style);
+				    int Line, int Point, int Text,
+				    const QString& Symbol, int Style);
 
 		void fitData(const QSet<int>& Items, const QString& Path,
-		             int Jobtype, int X1, int Y1, int X2, int Y2,
-		             double Radius, double Length, bool Endings);
+				   int Jobtype, int X1, int Y1, int X2, int Y2,
+				   double Radius, double Length, bool Endings);
 
 		void unifyData(const QSet<int>& Items, double Radius);
 
@@ -312,15 +312,15 @@ class DatabaseDriver : public QObject
 		void removeHistory(const QSet<int>& Items);
 
 		void editText(const QSet<int>& Items, bool Move, int Justify,
-		              bool Rotate, bool Sort, double Length);
+				    bool Rotate, bool Sort, double Length, bool Ignrel);
 
 		void insertLabel(const QSet<int>& Items, const QString& Label,
-		                 int J, double X, double Y, bool P, double L, double R);
+					  int J, double X, double Y, bool P, double L, double R);
 
 		void removeLabel(const QSet<int>& Items);
 
 		void editLabel(const QSet<int>& Items, const QString& Label,
-		               int Underline, int Pointer, double Rotation);
+					int Underline, int Pointer, double Rotation);
 
 		void insertPoints(const QSet<int>& Items, int Mode, double Radius, const QString& Path);
 
@@ -355,8 +355,8 @@ class DatabaseDriver : public QObject
 		void onError(const QString&);
 
 		void onConnect(const QList<FIELD>&, const QList<TABLE>&,
-		               const QStringList&, unsigned,
-		               const QHash<QString, QSet<QString>>&);
+					const QStringList&, unsigned,
+					const QHash<QString, QSet<QString>>&);
 		void onDisconnect(void);
 		void onLogin(bool);
 
@@ -381,14 +381,14 @@ class DatabaseDriver : public QObject
 
 		void onCommonReady(const QList<int>&);
 		void onPresetReady(const QList<QHash<int, QVariant>>&,
-		                   const QList<int>&);
+					    const QList<int>&);
 		void onJoinsReady(const QHash<QString, QString>&,
-		                  const QHash<QString, QString>&,
-		                  const QHash<QString, QString>&);
+					   const QHash<QString, QString>&,
+					   const QHash<QString, QString>&);
 		void onClassReady(const QHash<QString, QString>&,
-		                  const QHash<QString, QHash<int, QString>>&,
-		                  const QHash<QString, QHash<int, QString>>&,
-		                  const QHash<QString, QHash<int, QString>>&);
+					   const QHash<QString, QHash<int, QString>>&,
+					   const QHash<QString, QHash<int, QString>>&,
+					   const QHash<QString, QHash<int, QString>>&);
 
 		void onRowsUpdate(const QHash<int, QHash<int, QVariant>>&);
 		void onRowsRemove(const QSet<int>&);

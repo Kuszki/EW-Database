@@ -53,7 +53,7 @@ class TextDialog : public QDialog
 
 	signals:
 
-		void onEditRequest(bool, int, bool, bool, double);
+		void onEditRequest(bool, int, bool, bool, double, bool);
 
 };
 

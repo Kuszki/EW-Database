@@ -50,5 +50,6 @@ void TextDialog::accept(void)
 				    ui->Justify->currentIndex(),
 				    ui->Rotate->isChecked(),
 				    ui->Sort->isChecked(),
-				    ui->Length->value());
+				    ui->Length->value(),
+				    ui->Relation->isChecked());
 }
