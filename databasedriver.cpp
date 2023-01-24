@@ -1130,10 +1130,10 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 			Query.prepare("UPDATE EW_OBIEKTY SET DTW = CURRENT_TIMESTAMP WHERE UID = ?");
 		break;
 		case 1:
-			Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STATUS = 0");
+			Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STAN_ZMIANY = 0");
 		break;
 		case 2:
-			Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STATUS = 0");
+			Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STAN_ZMIANY = 0");
 		break;
 		default: return;
 	}
