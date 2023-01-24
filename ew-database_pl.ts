@@ -2226,7 +2226,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="mainwindow.cpp" line="983"/>
         <source>Inserted %n label(s)</source>
         <translation>
-            <numerusform>Wstawiono %n etykiete</numerusform>
+            <numerusform>Wstawiono %n etykietę</numerusform>
             <numerusform>Wstawiono %n etykiety</numerusform>
             <numerusform>Wstawiono %n etykiet</numerusform>
         </translation>
