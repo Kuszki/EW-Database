@@ -80,10 +80,10 @@ void ProgressWidget::hide(void)
 
 void ProgressWidget::updateEta(void)
 {
-	const unsigned span = maximum() - minimum();
-	const unsigned prog = value() - minimum();
+	const int span = maximum() - minimum();
+	const int prog = value() - minimum();
 
-	if (prog == 0) return;
+	if (span <= 0 || prog <= 0) return;
 	else if (prog == span) QProgressBar::setFormat(fmt);
 	else
 	{
