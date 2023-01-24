@@ -5019,7 +5019,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		}
 	});
 
-	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate, distance] (POINT& Point) -> void
+	QtConcurrent::blockingMap(Texts, [this, &Lines, Move, Justify, Rotate, Ignrel, distance] (POINT& Point) -> void
 	{
 		if (this->isTerminated()) return;
 		if (!(Move || Rotate)) return;
@@ -5039,7 +5039,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 			}
 		}
 
-		if (!Match) return;
+		if (!Match || (Ignrel && Distance > 0.1)) return;
 
 		if (Move)
 		{
