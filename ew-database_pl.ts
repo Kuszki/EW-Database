@@ -2507,7 +2507,7 @@ Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on użyteczny �
         <location filename="mainwindow.cpp" line="988"/>
         <source>Updated %n label(s)</source>
         <translation>
-            <numerusform>Zmieniono %n etykiete</numerusform>
+            <numerusform>Zmieniono %n etykietę</numerusform>
             <numerusform>Zmieniono %n etykiety</numerusform>
             <numerusform>Zmieniono %n etykiet</numerusform>
         </translation>
