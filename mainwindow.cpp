@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	Color = new QSpinBox(this);
 	Selector = new QComboBox(this);
-	Progress = new QProgressBar(this);
+	Progress = new ProgressWidget(this);
 	Driver = new DatabaseDriver(nullptr);
 	About = new AboutDialog(this);
 
@@ -151,11 +151,11 @@ MainWindow::MainWindow(QWidget* Parent)
 
 	connect(Driver, &DatabaseDriver::onGeometryFix, this, &MainWindow::geometryFixed);
 
-	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::show);
-	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setRange);
-	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &QProgressBar::setValue);
-	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &QProgressBar::setValue);
-	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &QProgressBar::hide);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &ProgressWidget::show);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &ProgressWidget::setRange);
+	connect(Driver, &DatabaseDriver::onUpdateProgress, Progress, &ProgressWidget::setValue);
+	connect(Driver, &DatabaseDriver::onSetupProgress, Progress, &ProgressWidget::setValue);
+	connect(Driver, &DatabaseDriver::onEndProgress, Progress, &ProgressWidget::hide);
 
 	connect(Driver, &DatabaseDriver::onSetupProgress, Terminator, &QToolButton::show);
 	connect(Driver, &DatabaseDriver::onEndProgress, Terminator, &QToolButton::hide);
@@ -727,13 +727,13 @@ void MainWindow::insertBreaks(int Mode, double Radius, const QString& Path)
 	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius, Path);
 }
 
-void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation)
+void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double dX, double dY)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation);
+	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation, Posset, dX, dY);
 }
 
 void MainWindow::execBreaks(int Flags, double Angle, double Length, bool Mode)

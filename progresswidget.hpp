@@ -18,49 +18,46 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef VARIABLESDIALOG_HPP
-#define VARIABLESDIALOG_HPP
+#ifndef PROGRESSWIDGET_HPP
+#define PROGRESSWIDGET_HPP
 
-#include <QDialogButtonBox>
-#include <QPushButton>
-#include <QDialog>
+#include <QProgressBar>
+#include <QObject>
+#include <QWidget>
+#include <QTimer>
+#include <QTime>
 
-#include <QtCore>
-
-namespace Ui
-{
-	class VariablesDialog;
-}
-
-class VariablesDialog : public QDialog
+class ProgressWidget : public QProgressBar
 {
 
 		Q_OBJECT
 
-	private:
+	protected:
 
-		const QHash<QString, QSet<QString>> Data;
+		QTimer etaTimer;
+		QTimer trgTimer;
 
-		Ui::VariablesDialog* ui;
+		QTime startTime;
+
+		QString fmt;
 
 	public:
 
-		explicit VariablesDialog(const QHash<QString, QSet<QString>>& Items, QWidget* Parent = nullptr);
-		virtual ~VariablesDialog(void) override;
+		explicit ProgressWidget(QWidget* parent = nullptr);
+		virtual ~ProgressWidget(void) override;
 
 	public slots:
 
-		virtual void accept(void) override;
+		void setFormat(const QString& format);
+		void setRange(int min, int max);
+		void setValue(int val);
+
+		void hide(void);
 
 	private slots:
 
-		void variableIndexChanged(int Index);
-		void dialogParamsChanged(void);
-
-	signals:
-
-		void onChangeRequest(const QString&, int, int, double, int, double, double);
+		void updateEta(void);
 
 };
 
-#endif // VARIABLESDIALOG_HPP
+#endif // PROGRESSWIDGET_HPP

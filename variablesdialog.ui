@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>329</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,33 +18,19 @@
     <normaloff>.</normaloff>.</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="variableLabel">
-     <property name="text">
-      <string>Variable</string>
+   <item row="5" column="1">
+    <widget class="QDoubleSpinBox" name="xposSpin">
+     <property name="suffix">
+      <string notr="true"> m</string>
      </property>
-     <property name="buddy">
-      <cstring>variableCombo</cstring>
+     <property name="minimum">
+      <double>-5.000000000000000</double>
      </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QComboBox" name="variableCombo">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+     <property name="maximum">
+      <double>5.000000000000000</double>
      </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="underlineLabel">
-     <property name="text">
-      <string>Underline</string>
-     </property>
-     <property name="buddy">
-      <cstring>underlineCombo</cstring>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
      </property>
     </widget>
    </item>
@@ -71,6 +57,129 @@
        <string>Remove</string>
       </property>
      </item>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QDoubleSpinBox" name="rotationSpin">
+     <property name="specialValueText">
+      <string>Keep current</string>
+     </property>
+     <property name="suffix">
+      <string>°</string>
+     </property>
+     <property name="decimals">
+      <number>0</number>
+     </property>
+     <property name="minimum">
+      <double>-1.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>360.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>-1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="xposLabel">
+     <property name="text">
+      <string>X</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>382</width>
+        <height>68</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QLabel" name="affectsLabel">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="rotationLabel">
+     <property name="text">
+      <string>Rotation</string>
+     </property>
+     <property name="buddy">
+      <cstring>rotationSpin</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDoubleSpinBox" name="yposSpin">
+     <property name="suffix">
+      <string notr="true"> m</string>
+     </property>
+     <property name="minimum">
+      <double>-5.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>5.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="underlineLabel">
+     <property name="text">
+      <string>Underline</string>
+     </property>
+     <property name="buddy">
+      <cstring>underlineCombo</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="variableLabel">
+     <property name="text">
+      <string>Variable</string>
+     </property>
+     <property name="buddy">
+      <cstring>variableCombo</cstring>
+     </property>
     </widget>
    </item>
    <item row="2" column="0">
@@ -108,83 +217,46 @@
      </item>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="QScrollArea" name="scrollArea">
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
-     </property>
-     <property name="lineWidth">
-      <number>0</number>
-     </property>
-     <property name="widgetResizable">
-      <bool>true</bool>
-     </property>
-     <widget class="QWidget" name="scrollAreaWidgetContents">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>382</width>
-        <height>111</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="affectsLabel">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </widget>
-   </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="rotationLabel">
+   <item row="6" column="0">
+    <widget class="QLabel" name="yposLabel">
      <property name="text">
-      <string>Rotation</string>
-     </property>
-     <property name="buddy">
-      <cstring>rotationSpin</cstring>
+      <string>Y</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QDoubleSpinBox" name="rotationSpin">
-     <property name="specialValueText">
-      <string>Keep current</string>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="variableCombo">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="suffix">
-      <string>°</string>
-     </property>
-     <property name="decimals">
-      <number>0</number>
-     </property>
-     <property name="minimum">
-      <double>-1.000000000000000</double>
-     </property>
-     <property name="maximum">
-      <double>360.000000000000000</double>
-     </property>
-     <property name="value">
-      <double>-1.000000000000000</double>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QComboBox" name="posactCombo">
+     <item>
+      <property name="text">
+       <string>Keep current</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Move current</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Set absolute</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="posactLabel">
+     <property name="text">
+      <string>Position</string>
      </property>
     </widget>
    </item>
@@ -206,8 +278,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>257</x>
-     <y>290</y>
+     <x>266</x>
+     <y>319</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -222,8 +294,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>325</x>
-     <y>290</y>
+     <x>334</x>
+     <y>319</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -242,7 +314,7 @@
      <y>21</y>
     </hint>
     <hint type="destinationlabel">
-     <x>522</x>
+     <x>399</x>
      <y>31</y>
     </hint>
    </hints>
@@ -258,7 +330,7 @@
      <y>19</y>
     </hint>
     <hint type="destinationlabel">
-     <x>619</x>
+     <x>399</x>
      <y>18</y>
     </hint>
    </hints>
@@ -270,11 +342,11 @@
    <slot>dialogParamsChanged()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>375</x>
-     <y>38</y>
+     <x>390</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
-     <x>578</x>
+     <x>399</x>
      <y>44</y>
     </hint>
    </hints>
@@ -290,7 +362,7 @@
      <y>77</y>
     </hint>
     <hint type="destinationlabel">
-     <x>627</x>
+     <x>399</x>
      <y>82</y>
     </hint>
    </hints>
@@ -306,8 +378,24 @@
      <y>103</y>
     </hint>
     <hint type="destinationlabel">
-     <x>670</x>
+     <x>399</x>
      <y>106</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>posactCombo</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>VariablesDialog</receiver>
+   <slot>dialogParamsChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>274</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>544</x>
+     <y>141</y>
     </hint>
    </hints>
   </connection>

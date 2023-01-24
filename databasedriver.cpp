@@ -1127,10 +1127,10 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 			Query.prepare("UPDATE EW_OBIEKTY SET DTW = CURRENT_TIMESTAMP WHERE UID = ?");
 		break;
 		case 1:
-			Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ?");
+			Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STATUS = 0");
 		break;
 		case 2:
-			Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ?");
+			Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STATUS = 0");
 		break;
 		default: return;
 	}
@@ -4519,7 +4519,7 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 	QMap<int, POINT> Points, Texts, Objects; int Step = 0;
 	QList<LINE> Lines, Surfaces; QList<const POINT*> Union;
-	QHash<int, QSet<int>> Subobjects; QSet<int> Set;
+	QHash<int, QSet<int>> Subobjects; QSet<int> SetA, SetB;
 
 	emit onBeginProgress(tr("Loading subobjects"));
 	emit onSetupProgress(0, 0);
@@ -5231,12 +5231,20 @@ void DatabaseDriver::editText(const QSet<int>& Items, bool Move, int Justify, bo
 		Query.addBindValue(Point->J);
 		Query.addBindValue(Point->IDE);
 
-		if (Query.exec()) Set.insert(Point->UIDO);
+		if (Query.exec())
+		{
+			SetA.insert(Point->UIDO);
+			SetB.insert(Point->IDE);
+		}
 
 		emit onUpdateProgress(++Step);
 	}
 
-	if (Dateupdate) updateModDate(Set);
+	if (Dateupdate)
+	{
+		updateModDate(SetA, 0);
+		updateModDate(SetB, 2);
+	}
 
 	emit onEndProgress();
 	emit onTextEdit(Step);
@@ -5873,13 +5881,13 @@ void DatabaseDriver::removeLabel(const QSet<int>& Items)
 	emit onLabelDelete(Step);
 }
 
-void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int Underline, int Pointer, double Rotation)
+void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double setX, double setY)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelEdit(0); return; }
 
 	struct POINT
 	{
-		int IDE;
+		int IDE, UIDO;
 
 		double WX, WY;
 		double DX, DY;
@@ -5889,7 +5897,7 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 		QVariant OX, OY;
 	};
 
-	QHash<int, POINT> Labels; int Step = 0;
+	QHash<int, POINT> Labels; QSet<int> SetA, SetB; int Step = 0;
 	QSqlQuery selectQuery(Database), updateQuery(Database), pointsQuery(Database);
 
 	pointsQuery.prepare(
@@ -5937,9 +5945,9 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 		"SET "
 			"TEXT = COALESCE(?, TEXT), "
 			"JUSTYFIKACJA = ?, "
+			"POS_X = ?, POS_Y = ?, "
 			"ODN_X = ?, ODN_Y = ?, "
-			"KAT = COALESCE(?, KAT), "
-			"MODIFY_TS = IIF(?, CURRENT_TIMESTAMP, MODIFY_TS) "
+			"KAT = COALESCE(?, KAT) "
 		"WHERE "
 			"ID = ?");
 
@@ -5952,7 +5960,8 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 
 		if (Items.contains(UIDO)) Labels.insert(UIDO,
 		{
-			selectQuery.value(1).toInt(), NAN, NAN,
+			selectQuery.value(1).toInt(),
+			UIDO, NAN, NAN,
 			selectQuery.value(2).toDouble(),
 			selectQuery.value(3).toDouble(),
 			selectQuery.value(4).toUInt(),
@@ -5961,7 +5970,7 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 		});
 	}
 
-	if (Pointer == 1 && pointsQuery.exec()) while (pointsQuery.next() && !isTerminated())
+	if (pointsQuery.exec()) while (pointsQuery.next() && !isTerminated())
 	{
 		const int UIDO = pointsQuery.value(0).toInt();
 
@@ -5994,6 +6003,20 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 		else if (Pointer == 2) Point.J &= ~32;
 	});
 
+	if (Posset) QtConcurrent::blockingMap(Labels, [Posset,setX, setY] (POINT& Point) -> void
+	{
+		if (Posset == 1)
+		{
+			Point.DX += setX;
+			Point.DY += setY;
+		}
+		else if (!qIsNaN(Point.WX) && !qIsNaN(Point.WY))
+		{
+			Point.DX = Point.WX + setX;
+			Point.DY = Point.WY + setY;
+		}
+	});
+
 	const QVariant vLabel = Label.isEmpty() ? QVariant() : Label;
 	const QVariant vRotation = qIsNaN(Rotation) ? QVariant() : Rotation;
 
@@ -6003,21 +6026,32 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 
 		updateQuery.addBindValue(vLabel);
 		updateQuery.addBindValue(Item.J);
+		updateQuery.addBindValue(Item.DX);
+		updateQuery.addBindValue(Item.DY);
 		updateQuery.addBindValue(Item.OX);
 		updateQuery.addBindValue(Item.OY);
 		updateQuery.addBindValue(vRotation);
-		updateQuery.addBindValue(Dateupdate);
 		updateQuery.addBindValue(Item.IDE);
 
-		updateQuery.exec();
+		qDebug() << updateQuery.boundValues();
+
+		if (updateQuery.exec())
+		{
+			SetA.insert(Item.UIDO);
+			SetB.insert(Item.IDE);
+		}
 
 		emit onUpdateProgress(++Step);
 	}
 
-	if (Dateupdate) updateModDate(Labels.keys().toSet());
+	if (Dateupdate)
+	{
+		updateModDate(SetA, 0);
+		updateModDate(SetB, 2);
+	}
 
 	emit onEndProgress();
-	emit onLabelEdit(Step);
+	emit onLabelEdit(SetA.size());
 }
 
 void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radius, const QString& Path)

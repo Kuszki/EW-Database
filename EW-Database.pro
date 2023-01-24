@@ -34,6 +34,7 @@ SOURCES		+=	main.cpp \
 				groupdialog.cpp \
 				filterdialog.cpp \
 				filterwidget.cpp \
+				progresswidget.cpp \
 				queryhlighter.cpp \
 				queryeditor.cpp \
 				recordmodel.cpp \
@@ -74,6 +75,7 @@ HEADERS		+=	mainwindow.hpp \
 				filterdialog.hpp \
 				filterwidget.hpp \
 				jshighlighter.hpp \
+				progresswidget.hpp \
 				queryhlighter.hpp \
 				queryeditor.hpp \
 				recordmodel.hpp \

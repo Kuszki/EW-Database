@@ -320,7 +320,8 @@ class DatabaseDriver : public QObject
 		void removeLabel(const QSet<int>& Items);
 
 		void editLabel(const QSet<int>& Items, const QString& Label,
-					int Underline, int Pointer, double Rotation);
+					int Underline, int Pointer, double Rotation,
+					int Posset, double setX, double setY);
 
 		void insertPoints(const QSet<int>& Items, int Mode, double Radius, const QString& Path);
 

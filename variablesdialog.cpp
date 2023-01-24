@@ -32,7 +32,7 @@ VariablesDialog::VariablesDialog(const QHash<QString, QSet<QString>>& Items, QWi
 	ui->variableCombo->insertItem(0, tr("Keep current"));
 	ui->variableCombo->setCurrentIndex(0);
 
-	ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(false);
+	dialogParamsChanged();
 }
 
 VariablesDialog::~VariablesDialog(void)
@@ -50,9 +50,14 @@ void VariablesDialog::accept(void)
 
 	const double Rotation = ui->rotationSpin->value();
 
+	const int Mvact = ui->posactCombo->currentIndex();
+	const double MvX = Mvact ? ui->xposSpin->value() : NAN;
+	const double MvY = Mvact ? ui->yposSpin->value() : NAN;
+
 	QDialog::accept(); emit onChangeRequest(Varchange ? Variable : QString(),
 									Underline, Pointer,
-									Rotation != -1 ? Rotation : NAN);
+									Rotation != -1 ? Rotation : NAN,
+									Mvact, MvX, MvY);
 }
 
 void VariablesDialog::variableIndexChanged(int Index)
@@ -75,5 +80,9 @@ void VariablesDialog::dialogParamsChanged(void)
 				ui->variableCombo->currentIndex() ||
 				ui->underlineCombo->currentIndex() ||
 				ui->pointerCombo->currentIndex() ||
+				ui->posactCombo->currentIndex() ||
 				ui->rotationSpin->value() != -1.0);
+
+	ui->xposSpin->setEnabled(ui->posactCombo->currentIndex());
+	ui->yposSpin->setEnabled(ui->posactCombo->currentIndex());
 }
