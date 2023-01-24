@@ -1121,6 +1121,9 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 {
 	if (!Database.isOpen()) return; QSqlQuery Query(Database);
 
+	emit onBeginProgress(tr("Updating mod date"));
+	emit onSetupProgress(0, Objects.size()); int Step = 0;
+
 	switch (Type)
 	{
 		case 0:
@@ -1135,7 +1138,15 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 		default: return;
 	}
 
-	for (const auto& ID : Objects) { Query.addBindValue(ID); Query.exec(); }
+	for (const auto& ID : Objects)
+	{
+		Query.addBindValue(ID);
+		Query.exec();
+
+		emit onUpdateProgress(++Step);
+	}
+
+	emit onEndProgress();
 }
 
 void DatabaseDriver::appendLog(const QString& Title, const QSet<int>& Items)
@@ -2008,9 +2019,6 @@ void DatabaseDriver::joinData(const QSet<int>& Items, const QString& Point, cons
 
 		emit onUidsUpdate(Newuids);
 	}
-
-	emit onBeginProgress(tr("Updating data"));
-	emit onSetupProgress(0, 0);
 
 	if (Dateupdate) updateModDate(Newuids.values().toSet(), 0);
 
