@@ -933,8 +933,6 @@ void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const Q
 		emit onUpdateProgress(++Step);
 	}
 
-	if (Dateupdate) updateModDate(Tasks.first(), 0);
-
 	emit onBeginProgress(tr("Updating special data"));
 	emit onSetupProgress(0, Tasks.first().size()); Step = 0;
 
@@ -983,6 +981,8 @@ void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const Q
 		}
 		else emit onUpdateProgress(Step += i.value().size());
 	}
+
+	if (Dateupdate) updateModDate(Tasks.first(), 0);
 
 	if (!Emit) blockSignals(Signals);
 }
