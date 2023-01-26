@@ -206,7 +206,7 @@ class MainWindow : public QMainWindow
 		void insertLabel(const QString& Text, int J, double X, double Y, bool P, double L, double R);
 		void fitData(const QString& File, int Jobtype, int X1, int Y1, int X2, int Y2, double R, double L, bool E);
 		void insertBreaks(int Mode, double Radius, const QString& Path);
-		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double dX, double dY);
+		void relabelData(const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double dX, double dY, int Just);
 		void execBreaks(int Flags, double Angle, double Length, bool Mode);
 
 		void hideEdges(const QList<int>& List);
@@ -316,7 +316,7 @@ class MainWindow : public QMainWindow
 
 		void onLabelRequest(const QSet<int>&, const QString&, int, double, double, bool, double, double);
 
-		void onRelabelRequest(const QSet<int>&, const QString, int, int, double, int, double, double);
+		void onRelabelRequest(const QSet<int>&, const QString, int, int, double, int, double, double, int);
 
 		void onRemovelabelRequest(const QSet<int>&);
 

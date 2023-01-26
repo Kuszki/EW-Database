@@ -59,7 +59,7 @@ class VariablesDialog : public QDialog
 
 	signals:
 
-		void onChangeRequest(const QString&, int, int, double, int, double, double);
+		void onChangeRequest(const QString&, int, int, double, int, double, double, int);
 
 };
 

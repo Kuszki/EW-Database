@@ -54,10 +54,12 @@ void VariablesDialog::accept(void)
 	const double MvX = Mvact ? ui->xposSpin->value() : NAN;
 	const double MvY = Mvact ? ui->yposSpin->value() : NAN;
 
+	const int Just = ui->justSpin->value();
+
 	QDialog::accept(); emit onChangeRequest(Varchange ? Variable : QString(),
 									Underline, Pointer,
 									Rotation != -1 ? Rotation : NAN,
-									Mvact, MvX, MvY);
+									Mvact, MvX, MvY, Just);
 }
 
 void VariablesDialog::variableIndexChanged(int Index)
@@ -81,7 +83,8 @@ void VariablesDialog::dialogParamsChanged(void)
 				ui->underlineCombo->currentIndex() ||
 				ui->pointerCombo->currentIndex() ||
 				ui->posactCombo->currentIndex() ||
-				ui->rotationSpin->value() != -1.0);
+				ui->rotationSpin->value() >= 0.0 ||
+				ui->justSpin->value() > 0);
 
 	ui->xposSpin->setEnabled(ui->posactCombo->currentIndex());
 	ui->yposSpin->setEnabled(ui->posactCombo->currentIndex());

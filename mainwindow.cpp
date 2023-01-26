@@ -727,13 +727,13 @@ void MainWindow::insertBreaks(int Mode, double Radius, const QString& Path)
 	lockUi(BUSY); emit onInsertRequest(Set, Mode, Radius, Path);
 }
 
-void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double dX, double dY)
+void MainWindow::relabelData(const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double dX, double dY, int Just)
 {
 	const auto Selected = ui->Data->selectionModel()->selectedRows();
 	auto Model = dynamic_cast<RecordModel*>(ui->Data->model());
 	auto Set = Model->getUids(Selected).subtract(hiddenRows);
 
-	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation, Posset, dX, dY);
+	lockUi(BUSY); emit onRelabelRequest(Set, Label, Underline, Pointer, Rotation, Posset, dX, dY, Just);
 }
 
 void MainWindow::execBreaks(int Flags, double Angle, double Length, bool Mode)

@@ -5889,7 +5889,7 @@ void DatabaseDriver::removeLabel(const QSet<int>& Items)
 	emit onLabelDelete(Step);
 }
 
-void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double setX, double setY)
+void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int Underline, int Pointer, double Rotation, int Posset, double setX, double setY, int Just)
 {
 	if (!Database.isOpen()) { emit onError(tr("Database is not opened")); emit onLabelEdit(0); return; }
 
@@ -5994,22 +5994,7 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 	if (isTerminated()) { emit onEndProgress(); emit onLabelEdit(0); return; }
 
 	emit onBeginProgress(tr("Updating texts"));
-	emit onSetupProgress(0, Labels.size());
-
-	if (Underline || Pointer) QtConcurrent::blockingMap(Labels, [Underline, Pointer] (POINT& Point) -> void
-	{
-		if (Underline == 1) Point.J |= 16;
-		if (Underline == 2) Point.J &= ~16;
-
-		if (Pointer == 1 && !qIsNaN(Point.WX) && !qIsNaN(Point.WY))
-		{
-			Point.OX = Point.WX - Point.DX;
-			Point.OY = Point.WY - Point.DY;
-
-			Point.J |= 32;
-		}
-		else if (Pointer == 2) Point.J &= ~32;
-	});
+	emit onSetupProgress(0, 0);
 
 	if (Posset) QtConcurrent::blockingMap(Labels, [Posset,setX, setY] (POINT& Point) -> void
 	{
@@ -6024,6 +6009,32 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 			Point.DY = Point.WY + setY;
 		}
 	});
+
+	if (Pointer) QtConcurrent::blockingMap(Labels, [Pointer] (POINT& Point) -> void
+	{
+		if (Pointer == 1 && !qIsNaN(Point.WX) && !qIsNaN(Point.WY))
+		{
+			Point.OX = Point.WX - Point.DX;
+			Point.OY = Point.WY - Point.DY;
+
+			Point.J |= 32;
+		}
+		else if (Pointer == 2) Point.J &= ~32;
+	});
+
+	if (Underline) QtConcurrent::blockingMap(Labels, [Underline] (POINT& Point) -> void
+	{
+		if (Underline == 1) Point.J |= 16;
+		if (Underline == 2) Point.J &= ~16;
+	});
+
+	if (Just) QtConcurrent::blockingMap(Labels, [Just] (POINT& Point) -> void
+	{
+		Point.J = (Point.J & ~0b1111) | (Just & 0b1111);
+	});
+
+	emit onBeginProgress(tr("Updating texts"));
+	emit onSetupProgress(0, Labels.size());
 
 	const QVariant vLabel = Label.isEmpty() ? QVariant() : Label;
 	const QVariant vRotation = qIsNaN(Rotation) ? QVariant() : Rotation;
