@@ -53,6 +53,10 @@ void SettingsDialog::loadValues(void)
 	ui->txtSep->setText(Settings.value("txt").toString());
 	Settings.endGroup();
 
+	Settings.beginGroup("Misc");
+	ui->promptCombo->setCurrentIndex(Settings.value("prompt", 0).toInt());
+	Settings.endGroup();
+
 	ui->logopenButton->setFixedSize(ui->logdirEdit->sizeHint().height(),
 							  ui->logdirEdit->sizeHint().height());
 }
@@ -80,6 +84,8 @@ void SettingsDialog::dialogButtonClicked(QAbstractButton* Button)
 
 		ui->logCombo->setCurrentIndex(0);
 		ui->logdirEdit->clear();
+
+		ui->promptCombo->setCurrentIndex(0);
 	}
 }
 
@@ -92,7 +98,7 @@ void SettingsDialog::openButtonClicked(void)
 
 void SettingsDialog::accept(void)
 {
-	QDialog::accept(); QSettings Settings("EW-Database");
+	QSettings Settings("EW-Database");
 
 	Settings.beginGroup("Database");
 	Settings.setValue("driver", ui->driverCombo->currentText());
@@ -102,8 +108,12 @@ void SettingsDialog::accept(void)
 	Settings.endGroup();
 
 	Settings.beginGroup("History");
-	Settings.setValue("server", ui->serversEdit->toPlainText().split('\n', QString::SkipEmptyParts));
-	Settings.setValue("path", ui->basesEdit->toPlainText().split('\n', QString::SkipEmptyParts));
+	Settings.setValue("server", ui->serversEdit->toPlainText().split('\n', Qt::SkipEmptyParts));
+	Settings.setValue("path", ui->basesEdit->toPlainText().split('\n', Qt::SkipEmptyParts));
+	Settings.endGroup();
+
+	Settings.beginGroup("Misc");
+	Settings.setValue("prompt", ui->promptCombo->currentIndex());
 	Settings.endGroup();
 
 	Settings.beginGroup("Locale");
@@ -115,4 +125,6 @@ void SettingsDialog::accept(void)
 	else Settings.setValue("txt", ui->txtSep->text());
 
 	Settings.endGroup();
+
+	QDialog::accept();
 }

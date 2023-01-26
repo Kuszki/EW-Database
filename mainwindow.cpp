@@ -72,6 +72,10 @@ MainWindow::MainWindow(QWidget* Parent)
 	headerState = Settings.value("header").toByteArray();
 	Settings.endGroup();
 
+	Settings.beginGroup("Misc");
+	ExitPrompt = Settings.value("prompt", 0).toInt();
+	Settings.endGroup();
+
 	connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteActionClicked);
 	connect(ui->actionDeletelab, &QAction::triggered, this, &MainWindow::removelabActionClicked);
 	connect(ui->actionEdit, &QAction::triggered, this, &MainWindow::editActionClicked);
@@ -274,6 +278,8 @@ void MainWindow::settingsActionClicked(void)
 
 	connect(Dialog, &SettingsDialog::accepted, Dialog, &SettingsDialog::deleteLater);
 	connect(Dialog, &SettingsDialog::rejected, Dialog, &SettingsDialog::deleteLater);
+
+	connect(Dialog, &SettingsDialog::accepted, this, &MainWindow::settingsChanged);
 }
 
 void MainWindow::deleteActionClicked(void)
@@ -585,6 +591,15 @@ void MainWindow::selectionActionToggled(bool Allow)
 
 		ui->Data->update();
 	}
+}
+
+void MainWindow::settingsChanged(void)
+{
+	QSettings Settings("EW-Database");
+
+	Settings.beginGroup("Misc");
+	ExitPrompt = Settings.value("prompt", 0).toInt();
+	Settings.endGroup();
 }
 
 void MainWindow::selectionChanged(void)
@@ -1322,6 +1337,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRefactorJobs->setEnabled(true);
 			ui->actionQuery->setEnabled(true);
 			ui->actionSingleton->setEnabled(false);
+
+			CurrentStatus = STATUS::CONNECTED;
 		break;
 		case DISCONNECTED:
 			ui->statusBar->showMessage(tr("Database disconnected"));
@@ -1364,6 +1381,8 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionRefactorJobs->setEnabled(false);
 			ui->actionSingleton->setEnabled(true);
 			ui->actionQuery->setEnabled(false);
+
+			CurrentStatus = STATUS::DISCONNECTED;
 		break;
 		case BUSY:
 			ui->actionDisconnect->setEnabled(false);
@@ -1403,6 +1422,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 			ui->actionQuery->setEnabled(false);
 			ui->Data->setEnabled(false);
 
+			CurrentStatus = STATUS::BUSY;
 			Driver->unterminate();
 		break;
 		case DONE:
@@ -1424,6 +1444,7 @@ void MainWindow::lockUi(MainWindow::STATUS Status)
 
 			selectionChanged();
 
+			CurrentStatus = STATUS::CONNECTED;
 			Driver->unterminate();
 		break;
 	}
@@ -1505,4 +1526,25 @@ void MainWindow::freeSockets(void)
 
 	Settings.beginGroup("Sockets");
 	Settings.remove(dbPath);
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+	const bool isBusy = CurrentStatus == STATUS::BUSY;
+	const bool isConn = isBusy || CurrentStatus == STATUS::CONNECTED;
+
+	if ((ExitPrompt == 0 && !isBusy) ||
+	    (ExitPrompt == 1 && !isConn) ||
+	    ExitPrompt == 3) event->accept();
+
+	else
+	{
+		const QString question = isBusy ? tr("Are you sure to close application while job is running?") :
+								    tr("Are you sure to close application?");
+
+		const auto answer = QMessageBox::question(this, tr("Close application"), question);
+
+		if (answer == QMessageBox::Yes) event->accept();
+		else event->ignore();
+	}
 }

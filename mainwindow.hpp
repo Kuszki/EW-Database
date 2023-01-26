@@ -23,6 +23,7 @@
 
 #include <QInputDialog>
 #include <QProgressBar>
+#include <QMessageBox>
 #include <QTextStream>
 #include <QMainWindow>
 #include <QFileDialog>
@@ -116,6 +117,7 @@ class MainWindow : public QMainWindow
 		EdgesDialog* Edges;
 
 		QThread Thread;
+		STATUS CurrentStatus = STATUS::DISCONNECTED;
 
 		QMap<QString, QString> Codes;
 		QStringList labelCodes;
@@ -126,6 +128,7 @@ class MainWindow : public QMainWindow
 		QSet<int> hiddenRows;
 
 		int CommonAction = 0;
+		int ExitPrompt = 0;
 
 	private:
 
@@ -136,6 +139,10 @@ class MainWindow : public QMainWindow
 
 		void registerSockets(const QString& Database);
 		void freeSockets(void);
+
+	protected:
+
+		virtual void closeEvent(QCloseEvent* event) override;
 
 	public:
 
@@ -170,6 +177,7 @@ class MainWindow : public QMainWindow
 
 		void selectionActionToggled(bool Allow);
 
+		void settingsChanged(void);
 		void selectionChanged(void);
 
 		void databaseConnected(const QList<DatabaseDriver::FIELD>& Fields,
