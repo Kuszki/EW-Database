@@ -47,11 +47,12 @@ void ProgressWidget::setFormat(const QString& format)
 void ProgressWidget::setRange(int min, int max)
 {
 	QProgressBar::setRange(min, max);
+	QProgressBar::setFormat(fmt);
 
 	startTime = QTime::currentTime();
+	etaTimer.stop();
 
 	if (min != max) trgTimer.start();
-	else etaTimer.stop();
 }
 
 void ProgressWidget::setValue(int val)
