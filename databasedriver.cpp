@@ -82,7 +82,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 {
 	if (!Database.isOpen()) return QList<FIELD>();
 
-	QList<FIELD> Fields =
+	QList<FIELD> Fieldlst =
 	{
 		{ READONLY,	"EW_OBIEKTY.KOD",		tr("Object code")		},
 		{ INTEGER,	"EW_OBIEKTY.OPERAT",	tr("Job name")			},
@@ -106,7 +106,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 
 	int j = 0; for (auto i = Dict.constBegin(); i != Dict.constEnd(); ++i)
 	{
-		auto& Field = getItemByField(Fields, i.key(), &FIELD::Name);
+		auto& Field = getItemByField(Fieldlst, i.key(), &FIELD::Name);
 
 		if (Field.Name.isEmpty()) continue;
 
@@ -327,7 +327,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::normalizeFields(QList<DatabaseDrive
 
 	QtConcurrent::blockingMap(Tabs, [&List] (TABLE& Tab) -> void
 	{
-		for (auto& Field : Tab.Fields) Tab.Indexes.append(List.indexOf(Field));
+		for (const auto& Field : Tab.Fields) Tab.Indexes.append(List.indexOf(Field));
 	});
 
 	return List;
@@ -349,7 +349,7 @@ QStringList DatabaseDriver::normalizeHeaders(QList<DatabaseDriver::TABLE>& Tabs,
 
 	QtConcurrent::blockingMap(Tabs, [&List] (TABLE& Tab) -> void
 	{
-		for (auto& Field : Tab.Fields) Tab.Headers.append(List.indexOf(Field.Label));
+		for (const auto& Field : Tab.Fields) Tab.Headers.append(List.indexOf(Field.Label));
 	});
 
 	return List;
@@ -507,25 +507,23 @@ QMap<QString, QSet<int>> DatabaseDriver::createHistory(const QMap<QString, QSet<
 	for (auto i = Tasks.constBegin() + 1; i != Tasks.constEnd(); ++i)
 	{
 		const auto& Table = getItemByField(Tables, i.key(), &TABLE::Data);
-
-		QStringList Fields;
+		QStringList Fieldlst;
 
 		for (const auto& F : Table.Fields)
 		{
 			const QString Name = QString(F.Name).remove("EW_DATA.");
 
-			Fields.append(Name);
+			Fieldlst.append(Name);
 
-			if (F.Missing) Fields.append(Name + "_V");
+			if (F.Missing) Fieldlst.append(Name + "_V");
 		}
 
-		const QString List = Fields.join(", ");
+		const QString List = Fieldlst.join(", ");
 
 		Query.prepare(QString("INSERT INTO %1 (UIDO, %2) "
 						  "SELECT ?, %2 FROM %1 "
 						  "WHERE UIDO = ?")
-				    .arg(Table.Data)
-				    .arg(List));
+				    .arg(Table.Data, List));
 
 		for (const auto& UID : Tasks[QString()])
 		{
@@ -572,7 +570,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 	for (const auto& Field : qAsConst(Common)) Attribs.append(Field.Name);
 	for (const auto& Field : Table.Fields) Attribs.append(Field.Name);
 
-	const auto append = [&] (QSqlQuery& Query, int Index) -> void
+	const auto append = [&] (const QSqlQuery& Query, int Index) -> void
 	{
 		const int Size = Common.size() + qMax(Table.Headers.size(), Table.Indexes.size());
 		static QHash<int, QVariant> Values; int i = 1; Values.reserve(Size);
@@ -603,8 +601,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 		"WHERE "
 			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.STATUS = 0")
-	.arg(Attribs.join(", "))
-	.arg(Table.Name)
+	.arg(Attribs.join(", "), Table.Name)
 	:
 	QString(
 		"SELECT "
@@ -618,9 +615,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 		"WHERE "
 			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.STATUS = 0")
-	.arg(Attribs.join(", "))
-	.arg(Table.Data)
-	.arg(Table.Name);
+	.arg(Attribs.join(", "), Table.Data, Table.Name);
 
 	const QString ExecB = Table.Fields.isEmpty() ?
 	QString(
@@ -632,8 +627,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.UID = ? AND "
 			"EW_OBIEKTY.STATUS = 0")
-				.arg(Attribs.join(", "))
-				.arg(Table.Name)
+	.arg(Attribs.join(", "), Table.Name)
 	:
 	QString(
 		"SELECT "
@@ -648,9 +642,7 @@ QHash<int, QHash<int, QVariant>> DatabaseDriver::loadData(const DatabaseDriver::
 			"EW_OBIEKTY.KOD = '%3' AND "
 			"EW_OBIEKTY.UID = ? AND "
 			"EW_OBIEKTY.STATUS = 0")
-	.arg(Attribs.join(", "))
-	.arg(Table.Data)
-	.arg(Table.Name);
+	.arg(Attribs.join(", "), Table.Data, Table.Name);
 
 	const bool isBinded = Filter.size() < maxBindedSize;
 	const bool isEmpty = Filter.isEmpty();
@@ -709,9 +701,9 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QH
 	{
 		QSqlQuery Query(Database); Query.setForwardOnly(true);
 
-		Query.prepare("SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND NUMER = ?");
+		const bool ok = Query.prepare("SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND NUMER = ?");
 
-		while (!Stream.atEnd() && !isTerminated())
+		while (ok && !Stream.atEnd() && !isTerminated())
 		{
 			Query.addBindValue(Stream.readLine().trimmed());
 
@@ -724,7 +716,8 @@ void DatabaseDriver::filterData(QHash<int, QHash<int, QVariant>>& Data, const QH
 
 		for (int i = 4; i <= 15; ++i) if (Geometry.contains(i)) All.append(Geometry[i].toStringList());
 
-		const int loadAll = All.contains("*"); QString Classes = All.toSet().toList().join("', '");
+		const int loadAll = All.contains("*");
+		const QString Classes = All.toSet().toList().join("', '");
 
 		const QString Str = "SELECT UID FROM EW_OBIEKTY WHERE STATUS = 0 AND (1 = '%1' OR KOD IN ('%2'))";
 
@@ -892,6 +885,7 @@ void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const Q
 
 	const bool Signals = signalsBlocked();
 	if (!Emit) blockSignals(true);
+	bool ok = true;
 
 	if (makeHistory)
 	{
@@ -916,9 +910,9 @@ void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const Q
 		commonBinds.append(Values[i]);
 	}
 
-	commonQuery.prepare(QString("UPDATE EW_OBIEKTY SET %1 WHERE UID = ?").arg(All.join(", ")));
+	ok = commonQuery.prepare(QString("UPDATE EW_OBIEKTY SET %1 WHERE UID = ?").arg(All.join(", ")));
 
-	if (!All.isEmpty()) for (const auto& Index : Tasks.first())
+	if (ok && !All.isEmpty()) for (const auto& Index : Tasks.first())
 	{
 		if (isTerminated()) break;
 
@@ -959,13 +953,13 @@ void DatabaseDriver::performDataUpdates(QMap<QString, QSet<int>>& Tasks, const Q
 			attribBinds.append(Reasons[Index]);
 		}
 
-		attribQuery.prepare(QString("UPDATE OR INSERT INTO %1 (%2, UIDO) "
+		ok = attribQuery.prepare(QString("UPDATE OR INSERT INTO %1 (%2, UIDO) "
 							   "VALUES (%3?) MATCHING (UIDO)")
-						.arg(Table.Data)
-						.arg(fieldsNames.join(", "))
-						.arg(QString("?, ").repeated(fieldsNames.size())));
+							.arg(Table.Data)
+							.arg(fieldsNames.join(", "))
+							.arg(QString("?, ").repeated(fieldsNames.size())));
 
-		if (!fieldsNames.isEmpty()) for (const auto& Index : i.value())
+		if (ok && !fieldsNames.isEmpty()) for (const auto& Index : i.value())
 		{
 			if (isTerminated()) break;
 
@@ -1100,11 +1094,11 @@ QList<int> DatabaseDriver::getCommonFields(const QStringList& Classes) const
 	for (const auto& Class : Classes) All.unite(getItemByField(Tables, Class, &TABLE::Data).Indexes.toSet());
 	for (const auto& Class : Classes) Disabled.unite(QSet<int>(All).subtract(getItemByField(Tables, Class, &TABLE::Data).Indexes.toSet()));
 
-	All.subtract(Disabled).toList();
+	All.subtract(Disabled).values();
 
 	for (int i = 0; i < Common.size(); ++i) All.insert(i);
 
-	return All.toList();
+	return All.values();
 }
 
 bool DatabaseDriver::hasAllIndexes(const DatabaseDriver::TABLE& Tab, const QList<int>& Used)
@@ -1122,23 +1116,24 @@ void DatabaseDriver::updateModDate(const QSet<int>& Objects, int Type)
 	if (!Database.isOpen()) return; QSqlQuery Query(Database);
 
 	emit onBeginProgress(tr("Updating mod date"));
-	emit onSetupProgress(0, Objects.size()); int Step = 0;
+	emit onSetupProgress(0, Objects.size());
+	int Step = 0; bool ok = true;
 
 	switch (Type)
 	{
 		case 0:
-			Query.prepare("UPDATE EW_OBIEKTY SET DTW = CURRENT_TIMESTAMP WHERE UID = ?");
+			ok = Query.prepare("UPDATE EW_OBIEKTY SET DTW = CURRENT_TIMESTAMP WHERE UID = ?");
 		break;
 		case 1:
-			Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STAN_ZMIANY = 0");
+			ok = Query.prepare("UPDATE EW_POLYLINE SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STAN_ZMIANY = 0");
 		break;
 		case 2:
-			Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STAN_ZMIANY = 0");
+			ok = Query.prepare("UPDATE EW_TEXT SET MODIFY_TS = CURRENT_TIMESTAMP WHERE ID = ? AND STAN_ZMIANY = 0");
 		break;
 		default: return;
 	}
 
-	for (const auto& ID : Objects)
+	if (ok) for (const auto& ID : Objects)
 	{
 		Query.addBindValue(ID);
 		Query.exec();
@@ -1419,7 +1414,7 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 			QueryA(Database), QueryB(Database), QueryC(Database),
 			QueryD(Database), QueryE(Database), QueryF(Database);
 
-	QSet<int> Lines, Texts, Common; QHash<int, int> UIDS; int Step = 0;
+	QSet<int> Lines, Texts, Commonlst; QHash<int, int> UIDS; int Step = 0;
 	const QString deleteQuery = QString("DELETE FROM %1 WHERE UIDO = ?");
 
 	selectCommon.prepare(
@@ -1487,7 +1482,7 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 	{
 		if (!Items.contains(selectCommon.value(0).toInt()))
 		{
-			Common.insert(selectCommon.value(1).toInt());
+			Commonlst.insert(selectCommon.value(1).toInt());
 		}
 	}
 
@@ -1507,7 +1502,7 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 		if (selectLines.exec()) while (selectLines.next())
 		{
 			const int IDE = selectLines.value(1).toInt();
-			if (!Common.contains(IDE)) Lines.insert(IDE);
+			if (!Commonlst.contains(IDE)) Lines.insert(IDE);
 		}
 
 		selectTexts.addBindValue(UID);
@@ -1515,7 +1510,7 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 		if (selectTexts.exec()) while (selectTexts.next())
 		{
 			const int IDE = selectTexts.value(1).toInt();
-			if (!Common.contains(IDE)) Texts.insert(IDE);
+			if (!Commonlst.contains(IDE)) Texts.insert(IDE);
 		}
 
 		emit onUpdateProgress(++Step);
@@ -1528,9 +1523,9 @@ void DatabaseDriver::removeData(const QSet<int>& Items)
 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
-		QueryF.prepare(deleteQuery.arg(i.key()));
+		const bool ok = QueryF.prepare(deleteQuery.arg(i.key()));
 
-		for (const auto& Index : i.value())
+		if (ok) for (const auto& Index : i.value())
 		{
 			QueryC.addBindValue(UIDS[Index]); QueryC.exec();
 			QueryD.addBindValue(Index); QueryD.exec();
@@ -2709,7 +2704,7 @@ void DatabaseDriver::cutData(const QSet<int>& Items, const QStringList& Points, 
 		}
 	});
 
-	QtConcurrent::blockingMap(Queue, [] (QList<int>& List) -> void { qSort(List); });
+	QtConcurrent::blockingMap(Queue, [] (QList<int>& List) -> void { std::stable_sort(List.begin(), List.end()); });
 
 	emit onBeginProgress(tr("Loading geometry"));
 	emit onSetupProgress(0, 0); Step = 0;
@@ -3098,7 +3093,7 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 	{
 		const auto& Tab = getItemByField(Tables, i.key(), &TABLE::Data);
 
-		if (Tab.Name == Class) continue; QStringList Fields;
+		if (Tab.Name == Class) continue; QStringList Fieldlst;
 
 		for (const auto& Field : Table.Fields)
 		{
@@ -3108,7 +3103,7 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 
 				if (Field.Type == B.Type && Field.Name == B.Name && Field.Dict == B.Dict)
 				{
-					Fields.append(Field.Name);
+					Fieldlst.append(Field.Name);
 				}
 			}
 		}
@@ -3119,7 +3114,7 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 						    "SELECT UIDO, %2 FROM %3 "
 						    "WHERE UIDO = '%4'")
 					 .arg(Table.Data)
-					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+					 .arg(Fieldlst.replaceInStrings("EW_DATA.", "").join(", "))
 					 .arg(i.key())
 					 .arg(Item));
 
@@ -3185,8 +3180,8 @@ void DatabaseDriver::refactorData(const QSet<int>& Items, const QString& Class, 
 
 	if (!vClass.isNull() || Dateupdate) for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
-		const auto& Table = getItemByField(Tables, Class, &TABLE::Name);
-		const auto Data = loadData(Table, i.value(), QString(), true, true);
+		const auto& Tab = getItemByField(Tables, Class, &TABLE::Name);
+		const auto Data = loadData(Tab, i.value(), QString(), true, true);
 
 		emit onRowsUpdate(Data); emit onUpdateProgress(++Step);
 	}
@@ -3351,7 +3346,7 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 	for (auto i = Tasks.constBegin(); i != Tasks.constEnd(); ++i)
 	{
 		const auto& Tab = getItemByField(Tables, i.key(), &TABLE::Data);
-		QStringList Fields;
+		QStringList Fieldlst;
 
 		for (const auto& Field : Table.Fields)
 		{
@@ -3359,7 +3354,7 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 			{
 				const auto& B = getItemByField(Tab.Fields, Field.Name, &FIELD::Name);
 
-				if (Field == B) Fields.append(Field.Name);
+				if (Field == B) Fieldlst.append(Field.Name);
 			}
 		}
 
@@ -3377,7 +3372,7 @@ void DatabaseDriver::copyData(const QSet<int>& Items, const QString& Class, int 
 						    "SELECT '%3', %2 FROM %4 "
 						    "WHERE UIDO = '%5'")
 					 .arg(Table.Data)
-					 .arg(Fields.replaceInStrings("EW_DATA.", "").join(", "))
+					 .arg(Fieldlst.replaceInStrings("EW_DATA.", "").join(", "))
 					 .arg(UIDO)
 					 .arg(i.key())
 					 .arg(Item));
@@ -5501,10 +5496,10 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 
 			if (Surfaces.value(1).toInt() == 4)
 			{
-				const double X = (First.x() + Last.x()) / 2.0;
-				const double Y = (First.y() + Last.y()) / 2.0;
+				const double sX = (First.x() + Last.x()) / 2.0;
+				const double sY = (First.y() + Last.y()) / 2.0;
 
-				Insertions.append({ UID, X, Y, 0.0, Surfaces.value(6).toInt() });
+				Insertions.append({ UID, sX, sY, 0.0, Surfaces.value(6).toInt() });
 			}
 			else
 			{
@@ -5604,7 +5599,7 @@ void DatabaseDriver::insertLabel(const QSet<int>& Items, const QString& Label, i
 				return rad;
 			};
 
-			auto getAngle = [] (const QList<QPair<QPointF, double>> L, const QPointF& P) -> double
+			auto getAngle = [] (const QList<QPair<QPointF, double>>& L, const QPointF& P) -> double
 			{
 				for (const auto& I : L) if (I.first == P) return I.second; return NAN;
 			};
@@ -5984,10 +5979,10 @@ void DatabaseDriver::editLabel(const QSet<int>& Items, const QString& Label, int
 
 		if (Labels.contains(UIDO))
 		{
-			auto& Label = Labels[UIDO];
+			auto& Labelr = Labels[UIDO];
 
-			Label.WX = pointsQuery.value(1).toDouble();
-			Label.WY = pointsQuery.value(2).toDouble();
+			Labelr.WX = pointsQuery.value(1).toDouble();
+			Labelr.WY = pointsQuery.value(2).toDouble();
 		}
 	}
 
@@ -6101,7 +6096,7 @@ void DatabaseDriver::insertPoints(const QSet<int>& Items, int Mode, double Radiu
 			while (!File.atEnd())
 			{
 				const QString Line = File.readLine().trimmed(); if (Line.isEmpty()) continue;
-				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
+				const QStringList Data = Line.split(Separator, Qt::KeepEmptyParts);
 
 				if (Data.size() == 2)
 				{
@@ -6339,10 +6334,11 @@ void DatabaseDriver::mergeSegments(const QSet<int>& Items, int Flags, double Dif
 			else if (pointComp(L2.Line.p2(), L1.Line.p2()) && !isCut(L2.Line.p2(), Cuts)) New.setP2(L1.Line.p1());
 			else OK = false;
 
-			if (New.length() < L1.Line.length() || New.length() < L2.Line.length()) continue; if (OK) L2.Line = New;
-
-			if (OK)
+			if (New.length() < L1.Line.length() || New.length() < L2.Line.length()) continue;
+			else if (OK)
 			{
+				L2.Line = New;
+
 				Synchronizer.lock();
 				Deletes.insert({ UID, L1.ID });
 				Updates.remove(L1.ID);
@@ -6431,7 +6427,7 @@ void DatabaseDriver::updateKergs(const QSet<int>& Items, const QString& Path, in
 			while (!File.atEnd())
 			{
 				const QString Line = File.readLine().trimmed(); if (Line.isEmpty()) continue;
-				const QStringList Data = Line.split(Separator, QString::KeepEmptyParts);
+				const QStringList Data = Line.split(Separator, Qt::KeepEmptyParts);
 
 				if (Data.size() < 2 || !Mapping.contains(Data[0])) continue;
 
@@ -7193,9 +7189,9 @@ QHash<int, QSet<int>> DatabaseDriver::joinLines(const QHash<int, QSet<int>>& Geo
 
 				bool Continue = false;
 
-				if (!Continue) Continue = QLineF(X1, Y1, P.X, P.Y).length() <= Radius;
-				if (!Continue) Continue = QLineF(X2, Y2, P.X, P.Y).length() <= Radius;
-				if (!Continue) Continue = distance(QLineF(X1, Y1, X2, Y2), QPointF(P.X, P.Y)) <= Radius;
+				Continue = Continue || (QLineF(X1, Y1, P.X, P.Y).length() <= Radius);
+				Continue = Continue || (QLineF(X2, Y2, P.X, P.Y).length() <= Radius);
+				Continue = Continue || (distance(QLineF(X1, Y1, X2, Y2), QPointF(P.X, P.Y)) <= Radius);
 
 				if (Continue)
 				{
@@ -9035,7 +9031,7 @@ QSet<int> DatabaseDriver::filterDataByLabelStyle(const QList<DatabaseDriver::RED
 
 QSet<int> DatabaseDriver::filterDataByHasGeoemetry(const QSet<int>& Data, const QSet<int>& Types)
 {
-	static const QSet<int> Common = { 2, 3, 4 }; QSet<int> Filtered;
+	static const QSet<int> Commonlst = { 2, 3, 4 }; QSet<int> Filtered;
 
 	QSqlQuery Query(Database); Query.setForwardOnly(true);
 
@@ -9043,7 +9039,7 @@ QSet<int> DatabaseDriver::filterDataByHasGeoemetry(const QSet<int>& Data, const 
 
 	Query.prepare("SELECT UID, RODZAJ FROM EW_OBIEKTY WHERE STATUS = 0");
 
-	if (Common.intersects(Types)) if (Query.exec()) while (Query.next())
+	if (Commonlst.intersects(Types)) if (Query.exec()) while (Query.next())
 	{
 		const int UID = Query.value(0).toInt();
 		const int Type = Query.value(1).toInt();
@@ -9238,8 +9234,11 @@ int DatabaseDriver::insertBreakpoints(const QSet<int>& Tasks, int Mode, double R
 				if (!Unique[UID].contains(B)) Unique[UID].append(B);
 				else Unique[UID].removeAll(B);
 
-				if (Mode & 0x2) Breaks.insert({ A.x(), A.y() });
-				if (Mode & 0x2) Breaks.insert({ B.x(), B.y() });
+				if (Mode & 0x2)
+				{
+					Breaks.insert({ A.x(), A.y() });
+					Breaks.insert({ B.x(), B.y() });
+				}
 			}
 
 			Lines.insert(Objects.value(1).toInt(),
