@@ -117,7 +117,7 @@ QList<DatabaseDriver::FIELD> DatabaseDriver::loadCommon(bool Emit)
 		if (Emit) emit onUpdateProgress(++j);
 	}
 
-	return Fields;
+	return Fieldlst;
 }
 
 QList<DatabaseDriver::TABLE> DatabaseDriver::loadTables(bool Emit)
